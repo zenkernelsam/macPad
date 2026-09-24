@@ -18,6 +18,51 @@
 
 ---
 
+## 0.5 我方现状：iPad 上跑 macOS 的两条路线
+
+> 目的：先建立**全局图景**，避免把"VirtualMac 那套（**虚拟机**）"和"macPad 这套（**chroot**）"混为一谈。
+
+### A. 硬件 / 宿主（"两台机器"其实是**同一个 iPad**）
+
+| 项 | 值 |
+|---|---|
+| 设备 | iPad Pro 11" M1（`iPad13,11`），**16GB** RAM |
+| 宿主系统 | iPadOS **16.3 (20D47)** + **Dopamine 3.0.2（rootless）** |
+| 越狱形态 | rootless（`RootHide jailbreak root: (none)`），路径形如 `…/dopamine-IWpVUH/procursus/` |
+
+### B. 路线 1（**当前在用**）：VirtualMacOniPad — 硬件虚拟机
+
+- **形态**：用 **Apple Virtualization.framework** 开**硬件虚拟化 VM**（宿主进程 `com.apple.Virtualization.VirtualMachine`）；GPU 走 **ParavirtualizedGraphics(PG) + MetalSerializer**，把客机 Metal 转发到 iPad 真 GPU（**有翻译损耗**，这是它 GPU 偏慢的原因）。
+- **客机**：**macOS 15.6.1（Sequoia, 24G90）**，**8 vCPU / 10GB**，显示 1920×1200@2x，MetalBC / OpenGL 加速 / VideoToolbox 均开启，网络 NAT；VM 包名 `Sequoia.bundle`。
+- **仓库（就在本机桌面）**：`~/Desktop/VirtualMacOniPad`（fork `zenkernelsam/VirtualMacOniPad`，upstream `nfzerox/VirtualMacOniPad`），应用版本 1.2.3。
+- **我们在此仓库做过的事（重要：说明本机工具链与经验都已具备）**：
+  1. **修过 VM 崩溃 bug**：`vz/host/pvg_trace.m` 中 `mappedAddressForOffset` 回退到 Apple 原生 `base+offset` → A 类（Metal 断言 `Corrupted library`）/ B 类（`memmove` 越界）崩溃；已改为 `create=YES` + 已映射区间覆盖校验 + 安全失败。
+  2. **修过 macOS 15 构建兼容**：重建二进制的 chained fixups 不被 `dyld_info`/`ld` 解析 → 改用 `llvm-objdump --macho --exports-trie`、链接加 `-Wl,-ld_classic`；**a2sb 符号缓存必须使用**（否则重建的框架不忠实 → App 启动即闪退）。
+  3. 产出过 `VirtualMac_1.2.3_046abc6e0a.deb`（`2:1.2.3+608.vmfix2`），笔记见该仓库 `docs/VM-crash-fix-and-build-notes.md`。
+- **对本任务的直接价值 / 陷阱**：
+  - ✅ 本机**就是 macOS 15.6.1** ⇒ §3 探针所需的 **15.6.1 共享缓存就是本机系统缓存**（真实目标版本，不是近似）。
+  - ⚠️ 但 **VM 的宿主是 iPad**，客机（本机）经 NAT 出网；若要 **SSH 到 iPad**（如作者用的 `172.20.10.3:2222`），**需先验证路由**，否则改用飞牛 NAS 中转。
+
+### C. 路线 2（**本交接的目标**）：macPad — chroot
+
+- **形态**：**chroot 进 macOS rootfs + dyld interposition**，共享 **iOS 16.3 内核**，用**原生 CPU/GPU 驱动**（无 hypervisor、无 GPU 翻译）⇒ 理论性能更好、隔离更差。
+- **需要**：**macOS 13.4 rootfs**（作者验证组合）；我们手头只有 **13.2.1** 的 IPSW；**15.6.1 rootfs 未准备**。
+- **目标**：把硬编码补丁从 13.4 适配到 **15.6.1**（见 §1–§7）。
+
+### D. 本机可用工具（都在这台 15.6.1 客机里）
+
+| 工具/资源 | 状态 |
+|---|---|
+| Homebrew / clang / Xcode | `/opt/homebrew`、`/usr/bin/clang`、`/Applications/Xcode.app` ✅ |
+| `ldid` / `dpkg-deb` | `/opt/homebrew/bin/{ldid,dpkg-deb}` ✅；**`fakeroot` 缺**（构建 macPad 才需要） |
+| Theos | **未安装**（构建 macPad 才需要） |
+| IDA Pro + MCP | **IDA Pro 9.2 已装** + `ida-pro-mcp`（`decompile`/`disasm`/`xrefs_to`/`find_bytes`/`py_eval`…） |
+| dyld 抽取 / ipsw | `~/Desktop/VirtualMacOniPad/VirtualMac/build/toolchain/{venv/bin/dyldex, bin/ipsw-a2sb}` |
+| 现成镜像 | `UniversalMac_13.2.1_22D68_Restore.ipsw`(12G)、`UniversalMac_11.6_20G165_Restore.ipsw`(13G)、`iPad_Spring_2021_14.5_18E199_Restore.ipsw`(4.9G) |
+| 环境陷阱 | **无 `timeout`**（未装 coreutils）；`fakeroot` 缺失 |
+
+---
+
 ## 1. 硬编码在哪、有多少（实测）
 
 ### 1.1 代码规模（`libmachook/`，含 `.m/.x/.c`，合计 ≈ 60,826 行）
