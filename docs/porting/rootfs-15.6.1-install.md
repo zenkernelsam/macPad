@@ -1,103 +1,148 @@
-# macOS 15.6.1 rootfs install runbook (iPadOS 16.3 / 20D47)
+# macOS 15.6.1 rootfs 安装与启动 runbook（iPadOS 16.3 / 20D47）
 
-Status: staging-tree builder + device installer written 2026-09-24;
-not yet executed on device.
+状态：构建与脚本就绪于 2026-09-25；尚未在设备上执行过。
+阅读对象：在 iPad 上操作的人。照抄命令即可，每步写了预期输出和失败分支。
 
-## What changed vs the 13.4 flow
+## 你手里的两个文件（飞牛同步 macPad_iOS/）
 
-| piece | 13.4 | 15.6.1 | handled by |
-|---|---|---|---|
-| rootfs source | full-filesystem dmg | this VirtualMac VM (24G90, sealed) | `build-rootfs-15.6.1.sh` |
-| dyld cache CDHash | b5da3940…/bbb76598… | 2b9cccd5…/8c7ba7e5… | postinst selects by ProductBuildVersion |
-| exec cpusubtype | arm64/ALL already | all fat x86_64+arm64e | `misc/arm64ify_macho.py` |
-| launchservicesd.dylib | shipped pre-converted | must re-convert | `misc/exec_to_dylib.py` |
-| patches | original | dual-gated (4567225) | libmachook already handles both |
+| 文件 | 大小 | 说明 |
+|---|---|---|
+| `macos-15.6.1-rootfs.tar` | 19 GB | 15.6.1 (24G90) 完整 rootfs |
+| `com.kdt.macosbooter_0.3.4_iphoneos-arm64.deb` | 5.6 MB | tweak 包（VM 交叉编译，含全部 15.6.1 补丁） |
 
-## Phase A — on the VM (this machine, no sudo needed)
+备用：`install_rootfs_15.sh`、`arm64ify_macho.py`、`exec_to_dylib.py`
+（这三个 iPad 上 git 同步 repo 后就有，同步文件夹里的只是备份）。
+
+## Step 0 — 文件落到 iPad
+
+飞牛 App 里把两个文件下载到 iPad 本地（比如 iCloud Drive/文件 App 可见目录），
+然后终端里确认路径。本文假设放在 `/var/mobile/Documents/`：
 
 ```bash
-~/Desktop/build-rootfs-15.6.1.sh        # ~25GB into ~/Desktop/macos-15.6.1-rootfs
+ls -lh /var/mobile/Documents/macos-15.6.1-rootfs.tar \
+       /var/mobile/Documents/com.kdt.macosbooter_0.3.4_iphoneos-arm64.deb
 ```
 
-Produces the upstream-guide layout: SSV (`System/usr/bin/sbin`),
-`System/Volumes/Preboot/Cryptexes/OS` (real cryptex, dyld cache inside),
-`System/Volumes/Data -> ../..`, `Templates/Data` skeleton merged at root,
-`etc->private/etc`, `var->private/var`, `tmp->private/tmp`,
-`home->System/Volumes/Data/home`, `var/folders/zz -> /var/folders/zz`,
-`Users/root`.
-
-Known skipped (permission denied without sudo, all confirmed
-non-load-bearing for chroot boot):
-`System/Library/DirectoryServices/DefaultLocalDB/Default` (local OD node —
-recreate on device if dscl needed), `Templates/Data/private/var/spool/postfix/*`
-(empty mail queues).
-
-Then enable **Remote Login** on the VM (System Settings -> Sharing) so the
-iPad can pull. The VM is behind the host's VZ NAT at 192.168.64.2.
-
-## Phase B — on the iPad (root shell)
-
-Two artifacts were produced on the VM (cross-compile, no Theos on device
-needed for the package itself):
-
-- `~/Desktop/macPad/packages/com.kdt.macosbooter_0.3.4_iphoneos-arm64.deb`
-  (5.6 MB — built 2026-09-25 via theos + dpkg-deb --root-owner-group;
-  verified: postinst carries the 24G90 dyld-cache hash pair, libmachook
-  carries the dual-variant 15.6.1 code)
-- `~/Desktop/macos-15.6.1-rootfs.tar` (19 GB)
-
-Order matters — the deb refreshes the tools (incl. postinst) that the
-rootfs installer invokes at the end:
+## Step 1 — 同步代码（拿 misc/ 新脚本）
 
 ```bash
 cd /var/jb/var/mobile/MacWSBootingGuide
-git fetch origin && git reset --hard origin/main   # gets misc scripts
-sudo dpkg -i /path/to/com.kdt.macosbooter_0.3.4_iphoneos-arm64.deb
-sudo bash misc/install_rootfs_15.sh /path/to/macos-15.6.1-rootfs.tar
-# (or with no arg: ssh-pull from ciscohe@192.168.64.2 staging dir)
+git fetch origin && git reset --hard origin/main
 ```
 
-The script: preflight (20D47, ~25GB free, tools) -> stream/extract to
-`/var/mnt/rootfs-15.new` -> `chown -R root:wheel` -> verify 24G90 + key
-binaries -> arm64ify WindowServer + Installer Progress + /bin/bash ->
-convert launchservicesd -> umount old binds -> swap (`/var/mnt/rootfs` ->
-`rootfs-13.4.bak`) -> `mount_bindfs /var/jb` -> `postinst.sh` -> smoke test.
+预期：HEAD 落在 `af4974c` 或更新。验证：`ls misc/arm64ify_macho.py` 存在。
 
-## Phase C — build + boot
+## Step 2 — 装 deb（先装包，再装 rootfs，顺序别反）
 
 ```bash
-THEOS=/var/jb/var/mobile/theos bash misc/build_on_ios.sh
-bash /var/jb/usr/macOS/bin/macos_gui.sh start
-sudo oslog | grep "AMFI\|debugbydcmmc\|WindowSer\|MTL\|Metal"
+sudo dpkg -i /var/mobile/Documents/com.kdt.macosbooter_0.3.4_iphoneos-arm64.deb
 ```
 
-Watch for the new dual-variant log lines: `CURSOR-ABI resolved`,
-`IOMFB-ABI resolved`, `QC-FRAMEINFO resolved`, `STUB_FIX repaired-early`,
-`COEXIST verified kern_SwapEnd BL`, `CANCEL-COMPLETION observer`.
+预期：一堆 `add_all_trustcache`/签名日志，结尾不报错。
+这一步同时会对现有 13.4 rootfs 幂等跑一遍 postinst——正常现象。
 
-## Rollback
+## Step 3 — 装 15.6.1 rootfs
 
 ```bash
-bash /var/jb/var/mobile/MacWSBootingGuide/misc/cleanup_all.sh   # stop loops
+sudo bash misc/install_rootfs_15.sh /var/mobile/Documents/macos-15.6.1-rootfs.tar
+```
+
+脚本自动做：预检（内核 20D47、磁盘 ≥25GB）→ 解包到
+`/var/mnt/rootfs-15.new` → chown root:wheel → 校验 24G90 →
+arm64ify（WindowServer/Installer Progress/bash）→ 转换 launchservicesd →
+换 rootfs（旧的留 `rootfs-13.4.bak`）→ 收割 iOS 注入组件 →
+bind `/var/jb` → postinst（命中 24G90 分支注册新 dyld 缓存 hash）→
+冒烟测试 `run_bash.sh -c "echo hi"`。
+
+**成功标志**：最后输出 `hi`（`chdir: No such file or directory` 无害）。
+
+失败分支：
+- `FAIL: missing ...` → tar 不完整，重传
+- `SMOKE-FAIL` → `sudo oslog | grep -i amfi` 看拒绝原因，发我日志；
+  恢复：`bash misc/cleanup_all.sh`，回滚见文末
+
+## Step 4 — 首次启动（coexist，最安全）
+
+```bash
+sudo bash /var/jb/usr/macOS/bin/macos_gui.sh start coexist
+sudo oslog | grep "AMFI\|debugbydcmmc\|WindowSer\|MTL\|Metal\|CURSOR-ABI\|IOMFB-ABI\|QC-FRAMEINFO\|STUB_FIX\|COEXIST"
+```
+
+coexist = iPad 屏继续显示 iOS，macOS 画面走 VNC（`OSXvnc-server`，
+localhost + 指针代理已配好）。这是验证链路的第一步。
+
+**预期日志行**（逐条对应移植点）：
+`CURSOR-ABI resolved` `IOMFB-ABI resolved` `QC-FRAMEINFO`
+`STUB_FIX repaired-early` `COEXIST verified kern_SwapEnd BL`
+`CANCEL-COMPLETION observer` `PREREGISTER ... AGXMetal13_3`
+
+出现 `variant miss` / `no variant matched` = 某补丁没命中，把该行发我。
+
+## Step 5 — 画面验证的两种路径
+
+**路径 A：MTLSim（原作者演示用的，出画面概率最高）**
+
+当前 WindowServer.plist 强制 `MACWS_AGX_NATIVE=1`（直碰 IOGPU，
+会撞 `0xe00002c2` 内核拒绝——13.4 上就没解）。要回退到模拟器渲染：
+
+```bash
+sudo /var/jb/usr/bin/plutil -remove EnvironmentVariables.MACWS_AGX_NATIVE \
+    /var/jb/usr/macOS/LaunchDaemons/com.apple.WindowServer.plist
+sudo bash /var/jb/usr/macOS/bin/macos_gui.sh restart coexist
+```
+
+然后 VNC 连 `localhost`（iPad 上装个 VNC viewer，或 Mac 上
+`ssh -L 5900:localhost:5900 -p 2222 root@<iPad>` 再连）看画面。
+已知缺陷：毛玻璃/vibrancy 渲染黑块、重 GPU 应用跑不动——那是
+sim 驱动的固有限制，不是 port 的锅。
+
+**路径 B：整屏独占（exclusive）**
+
+```bash
+sudo bash /var/jb/usr/macOS/bin/macos_gui.sh start exclusive
+```
+
+macOS WindowServer 直接驱动物理屏（停 SpringBoard/backboardd）。
+脚本自带警告：这条 GPU 路径在本机上最易 panic——**先确认 coexist
+有画面再上 exclusive**。退回 iOS 界面：`macos_gui.sh start coexist`
+会自动 reload SpringBoard/backboardd。
+
+## 验收标准（证据纪律）
+
+| 层级 | 证据 |
+|---|---|
+| rootfs 装好 | `run_bash.sh -c "sw_vers"` 输出 15.6.1 |
+| hooks 命中 | oslog 里各 `resolved/verified` 行，无 variant miss |
+| WindowServer 活着 | `ps aux | grep WindowServer` 有 PID |
+| **出画面** | VNC 截图非全零 / exclusive 屏亮 —— 唯一算数的验收 |
+| 输入 | 触屏手势/VNC 指针移动鼠标 |
+
+## 回滚到 13.4
+
+```bash
+sudo bash /var/jb/var/mobile/MacWSBootingGuide/misc/cleanup_all.sh
 umount /var/mnt/rootfs/var/jb 2>/dev/null
 mv /var/mnt/rootfs /var/mnt/rootfs-15.failed
 mv /var/mnt/rootfs-13.4.bak /var/mnt/rootfs
-mount_bindfs /var/jb /var/mnt/rootfs/var/jb
+mkdir -p /var/mnt/rootfs/var/jb
+/var/jb/usr/local/bin/mount_bindfs /var/jb /var/mnt/rootfs/var/jb
 bash /var/jb/usr/macOS/bin/postinst.sh
 ```
 
-## Open risks (evidence-based, not theories)
+## 已知风险（证据型，非猜测）
 
-1. **arm64e-exec**: if iOS rejects arm64e macOS execs generally (not just
-   WS/InstallerProgress), smoke test fails with exec errors; widen the
-   arm64ify list in the installer.
-2. **launchservicesd**: converted fresh; if the shim's dlopen_entry_point
-   needs more than LC_MAIN, watch its crash log — isolated to its own job.
-3. **DefaultLocalDB absent**: dscl/OpenDirectory lookups in chroot may
-   fail; only matters for loginwindow/user-switch flows, not first pixels.
-4. **xattr loss**: tar stream drops xattrs (staging tree was rsync anyway).
-   Rootless-attr-dependent paths would show as weird "Operation not
-   permitted" — none expected on the SSV payload.
-5. **dyld cache .atlas**: 15.6.1 adds `.atlas`/`.map` siblings; dyld may
-   want them trusted too — if WS dies in dyld-map, register their CDHashes
-   (they showed no signature on the VM — likely unsigned data files).
+1. **0xe00002c2 AGX blocker**（最大项）：chroot 直开 IOGPU 建
+   heap/queue 被 iPadOS 16.3 内核拒绝，13.4 上未解。MTLSim 回退绕过它
+   （GPU UC 由 iOS 原生宿主进程持有）。
+2. **arm64e-exec**：若 iOS 普遍拒绝 arm64e macOS 可执行（不止
+   WS/InstallerProgress），冒烟测试会 exec 失败——把安装器里的
+   arm64ify 列表扩大即可。
+3. **IOSurface 修复刻意未移植**：15.6.1 client 布局大变，宁可走
+   stock 也不猜（fail-closed）。若日志出现 IOSurface 相关断言，
+   那时再重推导。
+4. **launchservicesd 现场转换**：若 shim 的 dlopen_entry_point 需要
+   的不止 LC_MAIN，看该 daemon 自己的崩溃日志——隔离在它一个 job。
+5. **DefaultLocalDB/dslocal 缺失**（无 sudo 拷不过来）：影响
+   dscl/用户查询，不影响首屏。已从旧 rootfs 收割兜底。
+6. **dyld .atlas/.map**：15.6.1 新增缓存伴生文件，若在 dyld-map
+   阶段挂掉，再注册它们的 CDHash（VM 上看是无签名数据文件）。
