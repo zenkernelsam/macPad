@@ -953,10 +953,30 @@ sign_and_trustcache_merging_native_entitlements \
     "$GEOD_NATIVE_ENT" \
     '<key>com.apple.private.network.socket-delegate</key>' \
     'com.apple.geod' || exit 1
-# codesign -vvv -d dyld_shared_cache_arm64e 2>&1 | grep CDHash=
-jbctl trustcache add b5da39409492ac85e5a8e8ab618fe77e2d7a2980
-# codesign -vvv -d dyld_shared_cache_arm64e.01 2>&1 | grep CDHash=
-jbctl trustcache add bbb765988e2677b98d47a549d612fa0d4af25f69
+# Register the rootfs's dyld shared cache CDHashes. These are per macOS
+# build (codesign -vvv -d dyld_shared_cache_arm64e | grep CDHash=); the
+# build is read from the mounted rootfs so 13.4 and 15.6.1 installs share
+# this script. Unknown builds skip the cache hashes rather than registering
+# stale ones — everything else is still provisioned.
+MACWS_ROOTFS_BUILD=$(/var/jb/usr/bin/plutil -extract ProductBuildVersion raw \
+    /var/mnt/rootfs/System/Library/CoreServices/SystemVersion.plist 2>/dev/null \
+    | tr -d '[:space:]')
+case "$MACWS_ROOTFS_BUILD" in
+    22F82|22F66|"" )
+        # macOS 13.4 (22F82) — historical values; also the fallback for an
+        # unreadable plist so the proven 13.4 path is never regressed.
+        jbctl trustcache add b5da39409492ac85e5a8e8ab618fe77e2d7a2980  # dyld_shared_cache_arm64e
+        jbctl trustcache add bbb765988e2677b98d47a549d612fa0d4af25f69  # dyld_shared_cache_arm64e.01
+        ;;
+    24G90 )
+        # macOS 15.6.1 — extracted on the VM via codesign 2026-09-24.
+        jbctl trustcache add 2b9cccd5c5728972bc2a3b7f251114e6f1ff9b5e  # dyld_shared_cache_arm64e
+        jbctl trustcache add 8c7ba7e588b0edd43f7334e2de11688cd4732192  # dyld_shared_cache_arm64e.01
+        ;;
+    * )
+        echo "MacWS: unknown rootfs build '$MACWS_ROOTFS_BUILD'; skipping dyld cache trust" >&2
+        ;;
+esac
 add_all_trustcache "/var/mnt/rootfs/bin/bash"
 add_all_trustcache "/var/mnt/rootfs/System/Library/CoreServices/launchservicesd"
 SYSTEMSTATUSD="/var/mnt/rootfs/System/Library/PrivateFrameworks/SystemStatusServer.framework/Support/systemstatusd"
