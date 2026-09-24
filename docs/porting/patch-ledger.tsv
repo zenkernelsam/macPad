@@ -1,0 +1,58 @@
+# macPad patch ledger — macOS 15.6.1 (24G90)
+# Columns: target_image	symbol/function	15.6.1 image-offset	old_sig_or_uuid(13.4)	new_sig_or_uuid(15.6.1)	semantic_basis	action	status
+# status: ready=re-derived offset+sig available; needs-ida=function exists but offset/sig needs IDA; needs-adapt=semantics changed; n/a-ios=iOS-side axis; app=app-specific
+#
+# === SkyLight (UUID n/a — path-gated; all offsets re-derived 2026-09-24 via ipsw extract + nm) ===
+SkyLight	_CGXHideCursor	0x167e3c	sig=7f2303d5ff0301d1f44f02a9fd7b03a9fdc30091	sig=7f2303d5ff0301d1f44f02a9fd7b03a9fd430091	prologue identical except word5 (add x29,sp,#0x10 vs #0x30)	update offset+sig	ready
+SkyLight	__ZN12MetalContext19EndCurrentCompositeEb	0x186c50	sig@0x14753c(48B)	sig=7f2303d5f44fbea9fd7b01a9fd430091	symbol exists; MSFindSymbol primary path anyway	update fallback offset+sig	ready
+SkyLight	__ZN12MetalContext9EndUpdateEbb	0x1867b8	sig@0x1470b0(48B,EndUpdateEb)	sig=7f2303d5f657bda9f44f01a9fd7b02a9	15.6.1 renamed EndUpdateEb->EndUpdateEbb (2 bool params)	adapt hook typedef+args	needs-adapt
+SkyLight	__ZN12MetalContext30StartCompositeForDisplayStreamEPU21objcproto10MTLTexture11objc_objectS1_13MTLLoadAction14MTLStoreAction	0x1883a4	symbol-hook	sig=7f2303d5ff8302d1e923056df85f06a9	symbol exists	update via symbol	ready
+SkyLight	__ZN12MetalContext14StartCompositeEP22WSCompositeDestination13MTLLoadAction14MTLStoreAction	0x187a10	symbol-hook	sig=7f2303d5ff8305d1ef3b0c6ded330d6d	symbol exists	update via symbol	ready
+SkyLight	__ZN12MetalContext14StartCompositeEPU21objcproto10MTLTexture11objc_object13MTLLoadAction14MTLStoreAction	0x1885e4	symbol-hook	sig=7f2303d5e923bc6df65701a9f44f02a9	symbol exists	update via symbol	ready
+SkyLight	__ZN21MetalIOSurfaceBacking13PrepareForUseEP12MetalContexty	0x3e9364	symbol-hook	sig=7f2303d5ff0302d1f85f04a9f65705a9	symbol exists	update via symbol	ready
+SkyLight	__ZNSt3__15dequeI11RenderStateNS_9allocatorIS1_EEE8pop_backEv	0x1851a0	symbol-hook	sig=7f2303d5f44fbea9fd7b01a9fd430091	symbol exists	update via symbol	ready
+SkyLight	_WSCompositeDestinationCreateWithMetalTexture	0x18ac10	symbol-hook	sig=7f2303d5ff4303d1ed33046deb2b056d	symbol exists	update via symbol	ready
+SkyLight	__ZN12MetalContext11StopCaptureEv	0x1868cc	symbol-hook	sig=7f2303d5ff0305d1fc6f0ea9fa670fa9	symbol exists	update via symbol	ready
+SkyLight	WS::Globals static layout (cursor hide count)	static:0x1d8bcd460?	sig=static-ptr chain +0x20/+0x108	TBD — verify WS::Globals*/CGXSession*/+0x108 layout unchanged	layout may have shifted	verify in IDA	needs-ida
+# === QuartzCore (UUID CF853BBD -> 31921699-8990-3ACE-8D83-16E7BE814C6F) ===
+QuartzCore	__ZN2CA12WindowServer11IOMFBServer26enable_frame_info_tag_listEPPKcmS4_m	0x2c63d8	sig=7f2303d5ff4302d1fc6f03a9fa6704a9	sig=7f2303d5ff8302d1fc6f04a9fa6705a9	symbol exists	update offset+sig+uuid	ready
+QuartzCore	__ZN2CA12WindowServer11IOMFBServer22finish_skylight_updateEPNS_6Render6UpdateEjy	0x2c4500	sig=7f2303d5f44fbea9fd7b01a9fd430091	sig=7f2303d5f44fbea9fd7b01a9fd430091	same prologue — only offset+uuid change	update offset+uuid	ready
+QuartzCore	__ZN2CA12WindowServer11IOMFBServer21begin_skylight_updateEPNS_6Render6UpdateE	0x2c4568	sig=7f2303d5f44fbea9fd7b01a9fd430091	sig=7f2303d5f44fbea9fd7b01a9fd430091	same prologue — only offset+uuid change	update offset+uuid	ready
+QuartzCore	__ZN2CA3OGL12MetalContext12update_imageEPNS0_10MetalImageEPNS_6Render5ImageEjPKc	0x6e9cc	sig=7f2303d5ffc303d1fc6f09a9fa670aa9f85f0ba9f6570ca9	sig=7f2303d5ff0303d1fc6f06a9fa6707a9	symbol exists; prologue shape same	different update-image path? verify semantics still "client-storage update"	needs-ida
+QuartzCore	default.metallib	Resources/	path unchanged	path+new default.pipelinelib exists	exists in 15.6.1	verify hook targets still apply	ready
+# === IOMobileFramebuffer (path-gated) ===
+IOMobileFramebuffer	_IOMobileFramebufferSwapEnd	0x1750	sig=800000b4019443f9410000b43f081fd6	sig=800000b4017044f9410000b43f081fd6	same 4-insn wrapper; ldr x1,[x0,#0x728]->[#0x880]	conn struct field moved +0x158	update offset+sig	ready
+IOMobileFramebuffer	_kern_SwapEnd	0x5450	expect mov w3,#0x468 -> #0x46c	now mov w3,#0x514 @+0x24; BL=0x940023a7 @+0x30	same structure (mov w1,#5; mov w3,#size; bl ioconnect)	inputStructCnt grew 0x468->0x514 — re-derive patch value semantics	needs-adapt
+# === IOSurface (UUID 2B44B850 -> B681DAE8-0089-38F1-98E0-FAC680608E1F) ===
+IOSurface	protectionOptions ivar getter	@0x3df8 old	sig=ldr x0,[x0,#0xc8];ret	-[IOSurface protectionOptions]@0x4844=ldr x0,[x0,#0x8];b	ivar moved 0xc8->0x8; code's ivar_getOffset==8 check already matches new layout	update expected bytes to f9400400+tail-branch	needs-adapt
+# === HIToolbox (UUID D800278B -> 1A037942-11E0-3FC8-AAD2-20B11E7AE1A4) ===
+HIToolbox	_SetMenuBarObscured	0xecb8c	sig@0x467f4	sym=0x18c1a3b8c (private external)	symbol exists	update offset+sig+uuid	ready
+HIToolbox	_RecalcBar	0xae3c0	sig@0x11878	sym=0x18c0333c0	symbol exists	update offset+sig+uuid	ready
+HIToolbox	__ZN13HIApplication12GetAppObjectEv	0xc231c	sig@0x59778	sym=0x18bf5431c	symbol exists	update offset+sig+uuid	ready
+HIToolbox	__ZN13HIApplication11FrontUILostEv	0xc4168	sig@0x4d608	sym=0x18bf56168	symbol exists	update offset+sig+uuid	ready
+# === IOKit — exported-symbol hooks, no byte sigs ===
+IOKit	_IOHIDEventSystemClientCreate(+15 syms)	0x14780/0x9870/...	exported exports still exported	symbol hooks unaffected	ready
+# === Metal (UUID 2BAB169C -> F83EE1A6-49CC-3A46-80AF-1B8B07EE0322) ===
+Metal	dyld_get_active_platform interpose	interpose	until-launch import present	15 call sites found	5 source-builder return offsets needed	re-derive which of 15 sites are source-builder path	needs-ida
+Metal	source_builder_platform_returns[5]	0xedf14,0xedf28,0xee018,0xee654,0xee690	offset list	offsets changed — 15 candidates (0x03b30,0x0ac34,0x28db8,0x8645c,0xa5090,0xe671c,0xe677c,0xf22a0,0x138908,0x138920,0x138a88,0x139088,0x1390c0,0x13d8ec,0x13f528)	pick source-builder ones by containing function	needs-ida
+# === AGXMetal13_3 (disk bundle, UUID 727C250E -> B303B4E8-5F17-39B8-8505-326AAF870F39 arm64e) ===
+AGXMetal13_3	objc_msgSendSuper2 authenticated stub	static:0x1e5a5dfc0	sig=f1f71cd031a23291300240f9110a1fd7	stub table exists (1163 braa x16,x17 sites)	identify stub whose GOT slot -> objc_msgSendSuper2	needs-ida
+AGXMetal13_3	MacWSAGXNoCopyABIReady agx_initializer	+0x1f4bb4	expect init fn	offset lands in AGX::FramebufferDriverConfig::C2+0x224 (macOS 15.6.1 bundle)	check probably targets iOS 16.3 AGX not macOS — iOS-axis	verify which image feeds initializer	n/a-ios
+# === IOGPU (UUID CE2B5551 -> 68B70E83-BBDA-3411-A487-E52797174518) ===
+IOGPU	MacWSAGXNoCopyABIReady iogpu_initializer	+0x1c24	expect init fn	offset lands in -[IOGPUMetalBuffer ...]+0xd0 (macOS 15.6.1)	same iOS-axis question as above	n/a-ios
+# === Diagnostics-only (low value) ===
+CoreServicesInternal	_FileCacheFinalize	0x8cb4	uuid=DC429505	uuid=059EC98D-B718-3028-B844-6CB1590B2E2A	env-gated diagnostic (MACWS_FILECACHE_DIAG)	update uuid+offset if kept	ready
+DesktopServicesPriv	volume map_find/SamePhysicalDevice	0xef968/0xe8f3c	uuid=C76AB28E	uuid=C01F3662-2FD3-3A0C-9F37-CFF1ABFA0ABF	env-gated diagnostic (MACWS_DESKTOPSERVICES_DIAG)	update uuid+offsets if kept	ready
+Image.qlgenerator	GenerateThumbnailForURL	0x3b30	uuid=388DEE66	uuid=B6E7BDE8-EFED-3F4B-9992-1CC96483DC8A	bundle exists on 15.6.1	re-derive entry offset+uuid	needs-ida
+# === App-specific (out of system-image scope; unchanged by macOS version) ===
+Stray exe	mac_key/slate_key/slate_key_up prologues	0x168ded4/0x17d0a88/0x17d1c5c	uuid=C72D3F73 + 3x8w sigs	n/a	app binary — unchanged	app
+Stray exe	submit_prologue/surface_lock/debugLevel	0x1210218/0x1239d34/0x53bc010	uuid=C72D3F73 + 2x8w sigs	n/a	app binary — unchanged	app
+Electron Framework	chromium_composite_overlays prologue+adapter	0x0ca1254/+0x44	uuid=4C4C4442 + 2x8w sigs	n/a	app framework — unchanged	app
+Electron exe	page allocator thunk/ctor	0x61d2398/0x61d2354	uuid=4C4C4442 + thunk6w/ctor7w	n/a	app binary — unchanged	app
+Steam gameoverlayrenderer	overlay debug label sequence	0x154e0	uuid=529F4E8F + 6w sig	n/a	app dylib — unchanged	app
+Steam client/UI	semaphore+process uuids	—	2F008D6B/1372EF86	n/a	app — unchanged	app
+Sublime Text	process uuid	—	4C4C44C0	n/a	app — unchanged	app
+Geekbench 6	numeric diagnostics	—	uuid=49124C96	n/a	app — unchanged	app
+locationd	initial idle window callsite	0x46579c	uuid=DA334E85 + 5w sig	n/a	executable — re-derive for 15.6.1 locationd	build	app
+# === Runtime-data sentinels (protocol constants, not image bytes — verify at runtime not scan) ===
+SkyLight/XPC	subtype3 sentinels (ff*12 / 01000000+ff*8)	n/a	data-pattern ~30 memcmp sites	n/a	XPC command records — protocol check	runtime
