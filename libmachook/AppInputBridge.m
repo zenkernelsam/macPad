@@ -717,9 +717,14 @@ typedef void *(*MacWSHIApplicationGetAppObject)(void);
 typedef void (*MacWSHIApplicationFrontUILost)(void *);
 typedef void (*MacWSSetMenuBarObscured)(uint8_t);
 typedef void (*MacWSRecalcBar)(uint8_t);
-static void *MacWSResolveHIToolboxLocal(uintptr_t imageOffset,
-                                        const uint8_t *expectedPrologue,
-                                        size_t expectedPrologueSize);
+typedef struct {
+    uint8_t uuid[16];
+    uintptr_t imageOffset;
+    const uint8_t *expectedPrologue;
+    size_t expectedPrologueSize;
+} MacWSHIToolboxVariant;
+static void *MacWSResolveHIToolboxLocal(
+    const MacWSHIToolboxVariant *variants, size_t variantCount);
 
 typedef struct {
     int32_t getStatus;
@@ -824,13 +829,23 @@ static BOOL MacWSRepairFrontUIApplication(id application, const char *phase) {
         setMenuBarObscured = (MacWSSetMenuBarObscured)dlsym(
             RTLD_DEFAULT, "SetMenuBarObscured");
         if (!setMenuBarObscured) {
+            // RE-confirmed prologue is identical across both supported
+            // HIToolbox builds; only the image offset differs.
             static const uint8_t prologue[16] = {
                 0x7f, 0x23, 0x03, 0xd5, 0xff, 0xc3, 0x00, 0xd1,
                 0xf4, 0x4f, 0x01, 0xa9, 0xfd, 0x7b, 0x02, 0xa9,
             };
+            static const MacWSHIToolboxVariant variants[] = {
+                { { 0x1a, 0x03, 0x79, 0x42, 0x11, 0xe0, 0x3f, 0xc8,
+                    0xaa, 0xd2, 0x20, 0xb1, 0x1e, 0x7a, 0xe1, 0xa4 },
+                  0x267b8c, prologue, sizeof(prologue) }, // 15.6.1
+                { { 0xd8, 0x00, 0x27, 0x8b, 0x4e, 0x6c, 0x30, 0x32,
+                    0xb5, 0x6f, 0x02, 0x7a, 0x93, 0x8a, 0x51, 0xd6 },
+                  0x467f4, prologue, sizeof(prologue) },  // 13.4
+            };
             setMenuBarObscured = (MacWSSetMenuBarObscured)
                 MacWSResolveHIToolboxLocal(
-                    0x467f4, prologue, sizeof(prologue));
+                    variants, sizeof(variants) / sizeof(variants[0]));
         }
         // RE-confirmed against this HIToolbox UUID: SetRootMenu calls
         // RecalcBarIfRoot, but skips that entire transaction when the target
@@ -838,12 +853,27 @@ static BOOL MacWSRepairFrontUIApplication(id application, const char *phase) {
         // session menu-bar owner. Resolve the exact downstream RecalcBar(1)
         // used by RecalcBarIfRoot+0x84 so the owner handoff can recompute and
         // invalidate the target process's real root menu.
-        static const uint8_t recalcBarPrologue[12] = {
+        static const uint8_t recalcBarPrologue134[12] = {
             0x7f, 0x23, 0x03, 0xd5, 0xfd, 0x7b, 0xbf, 0xa9,
             0xfd, 0x03, 0x00, 0x91,
         };
+        // 15.6.1 RecalcBar is a leaf: adrp+ldr+cmp+b.le+ret, no pacibsp.
+        static const uint8_t recalcBarPrologue1561[16] = {
+            0xa8, 0x03, 0x30, 0xd0, 0x08, 0xd1, 0x45, 0xb9,
+            0x1f, 0x00, 0x01, 0x71, 0x4d, 0x00, 0x00, 0x54,
+        };
+        static const MacWSHIToolboxVariant recalcVariants[] = {
+            { { 0x1a, 0x03, 0x79, 0x42, 0x11, 0xe0, 0x3f, 0xc8,
+                0xaa, 0xd2, 0x20, 0xb1, 0x1e, 0x7a, 0xe1, 0xa4 },
+              0xf73c0, recalcBarPrologue1561,
+              sizeof(recalcBarPrologue1561) },              // 15.6.1
+            { { 0xd8, 0x00, 0x27, 0x8b, 0x4e, 0x6c, 0x30, 0x32,
+                0xb5, 0x6f, 0x02, 0x7a, 0x93, 0x8a, 0x51, 0xd6 },
+              0x11878, recalcBarPrologue134,
+              sizeof(recalcBarPrologue134) },               // 13.4
+        };
         recalcBar = (MacWSRecalcBar)MacWSResolveHIToolboxLocal(
-            0x11878, recalcBarPrologue, sizeof(recalcBarPrologue));
+            recalcVariants, sizeof(recalcVariants) / sizeof(recalcVariants[0]));
     });
     if (diagnostics && getKeyFocusProcess) {
         keyFocusBeforeStatus = getKeyFocusProcess(
@@ -6699,17 +6729,14 @@ static BOOL MacWSDeliverMissingDeactivateEvent(id application) {
 // HIApplicationGetCurrent/GetApplication returns the HIObject wrapper;
 // GetAppObject is the RE-confirmed accessor that loads wrapper+0x10 and returns
 // the internal C++ object required as FrontUILost's this pointer.
-static void *MacWSResolveHIToolboxLocal(uintptr_t imageOffset,
-                                        const uint8_t *expectedPrologue,
-                                        size_t expectedPrologueSize) {
+static void *MacWSResolveHIToolboxLocal(
+    const MacWSHIToolboxVariant *variants, size_t variantCount) {
     // These routines are present in LLDB's local-symbol view but absent from
-    // HIToolbox's export trie.  Use the exact macOS 13.4 image only after both
-    // its LC_UUID and the RE-captured function prologue match.  Any other
-    // build stays unsupported instead of jumping through an unverified offset.
-    static const uint8_t expectedUUID[16] = {
-        0xd8, 0x00, 0x27, 0x8b, 0x4e, 0x6c, 0x30, 0x32,
-        0xb5, 0x6f, 0x02, 0x7a, 0x93, 0x8a, 0x51, 0xd6,
-    };
+    // HIToolbox's export trie.  Use a candidate only after both its LC_UUID
+    // and the RE-captured function prologue match.  Any other build stays
+    // unsupported instead of jumping through an unverified offset.
+    // macOS 13.4 HIToolbox UUID D800278B-4E6C-3032-B56F-027A938A51D6;
+    // macOS 15.6.1 (24G90) UUID 1A037942-11E0-3FC8-AAD2-20B11E7AE1A4.
     uint32_t count = _dyld_image_count();
     for (uint32_t index = 0; index < count; index++) {
         const char *name = _dyld_get_image_name(index);
@@ -6720,25 +6747,30 @@ static void *MacWSResolveHIToolboxLocal(uintptr_t imageOffset,
         const struct load_command *command =
             (const struct load_command *)((const uint8_t *)header +
                                            sizeof(*header));
-        BOOL uuidMatches = NO;
-        for (uint32_t item = 0; item < header->ncmds; item++) {
+        const MacWSHIToolboxVariant *matched = NULL;
+        for (uint32_t item = 0; item < header->ncmds && !matched; item++) {
             if (command->cmdsize < sizeof(*command)) return NULL;
             if (command->cmd == LC_UUID &&
                 command->cmdsize >= sizeof(struct uuid_command)) {
                 const struct uuid_command *uuid =
                     (const struct uuid_command *)command;
-                uuidMatches = memcmp(uuid->uuid, expectedUUID,
-                                     sizeof(expectedUUID)) == 0;
+                for (size_t v = 0; v < variantCount; v++) {
+                    if (memcmp(uuid->uuid, variants[v].uuid,
+                               sizeof(variants[v].uuid)) == 0) {
+                        matched = &variants[v];
+                        break;
+                    }
+                }
                 break;
             }
             command = (const struct load_command *)(
                 (const uint8_t *)command + command->cmdsize);
         }
-        if (!uuidMatches) return NULL;
+        if (!matched) return NULL;
         const uint8_t *candidate =
-            (const uint8_t *)header + imageOffset;
-        if (memcmp(candidate, expectedPrologue,
-                   expectedPrologueSize) != 0) return NULL;
+            (const uint8_t *)header + matched->imageOffset;
+        if (memcmp(candidate, matched->expectedPrologue,
+                   matched->expectedPrologueSize) != 0) return NULL;
         return ptrauth_sign_unauthenticated(
             (void *)candidate, ptrauth_key_function_pointer, 0);
     }
@@ -6754,25 +6786,58 @@ static BOOL MacWSCompleteFrontUILostLifecycle(void) {
             RTLD_DEFAULT, "_ZN13HIApplication12GetAppObjectEv");
         frontUILost = (MacWSHIApplicationFrontUILost)dlsym(
             RTLD_DEFAULT, "_ZN13HIApplication11FrontUILostEv");
-        static const uint8_t getAppObjectPrologue[16] = {
+        static const uint8_t getAppObjectPrologue134[16] = {
             0x7f, 0x23, 0x03, 0xd5, 0xfd, 0x7b, 0xbf, 0xa9,
             0xfd, 0x03, 0x00, 0x91, 0xef, 0xa7, 0xfe, 0x97,
         };
-        static const uint8_t frontUILostPrologue[16] = {
+        static const uint8_t frontUILostPrologue134[16] = {
             0x7f, 0x23, 0x03, 0xd5, 0xf4, 0x4f, 0xbe, 0xa9,
             0xfd, 0x7b, 0x01, 0xa9, 0xfd, 0x43, 0x00, 0x91,
+        };
+        // 15.6.1 GetAppObject keeps the same frame shape; its +0xc bl
+        // targets the new GetApplication address. FrontUILost gained an
+        // ldrh/tbnz flag early-out before pacibsp.
+        static const uint8_t getAppObjectPrologue1561[16] = {
+            0x7f, 0x23, 0x03, 0xd5, 0xfd, 0x7b, 0xbf, 0xa9,
+            0xfd, 0x03, 0x00, 0x91, 0xea, 0xff, 0xff, 0x97,
+        };
+        static const uint8_t frontUILostPrologue1561[16] = {
+            0x08, 0xe0, 0x40, 0x79, 0x68, 0x03, 0x08, 0x37,
+            0x7f, 0x23, 0x03, 0xd5, 0xf4, 0x4f, 0xbe, 0xa9,
+        };
+        static const MacWSHIToolboxVariant getAppObjectVariants[] = {
+            { { 0x1a, 0x03, 0x79, 0x42, 0x11, 0xe0, 0x3f, 0xc8,
+                0xaa, 0xd2, 0x20, 0xb1, 0x1e, 0x7a, 0xe1, 0xa4 },
+              0x1831c, getAppObjectPrologue1561,
+              sizeof(getAppObjectPrologue1561) },            // 15.6.1
+            { { 0xd8, 0x00, 0x27, 0x8b, 0x4e, 0x6c, 0x30, 0x32,
+                0xb5, 0x6f, 0x02, 0x7a, 0x93, 0x8a, 0x51, 0xd6 },
+              0x59778, getAppObjectPrologue134,
+              sizeof(getAppObjectPrologue134) },             // 13.4
+        };
+        static const MacWSHIToolboxVariant frontUILostVariants[] = {
+            { { 0x1a, 0x03, 0x79, 0x42, 0x11, 0xe0, 0x3f, 0xc8,
+                0xaa, 0xd2, 0x20, 0xb1, 0x1e, 0x7a, 0xe1, 0xa4 },
+              0x1a168, frontUILostPrologue1561,
+              sizeof(frontUILostPrologue1561) },             // 15.6.1
+            { { 0xd8, 0x00, 0x27, 0x8b, 0x4e, 0x6c, 0x30, 0x32,
+                0xb5, 0x6f, 0x02, 0x7a, 0x93, 0x8a, 0x51, 0xd6 },
+              0x4d608, frontUILostPrologue134,
+              sizeof(frontUILostPrologue134) },              // 13.4
         };
         if (!getAppObject) {
             getAppObject = (MacWSHIApplicationGetAppObject)
                 MacWSResolveHIToolboxLocal(
-                    0x59778, getAppObjectPrologue,
-                    sizeof(getAppObjectPrologue));
+                    getAppObjectVariants,
+                    sizeof(getAppObjectVariants) /
+                        sizeof(getAppObjectVariants[0]));
         }
         if (!frontUILost) {
             frontUILost = (MacWSHIApplicationFrontUILost)
                 MacWSResolveHIToolboxLocal(
-                    0x4d608, frontUILostPrologue,
-                    sizeof(frontUILostPrologue));
+                    frontUILostVariants,
+                    sizeof(frontUILostVariants) /
+                        sizeof(frontUILostVariants[0]));
         }
         if (MacWSRuntimeDiagnosticsEnabled()) {
             fprintf(stderr,

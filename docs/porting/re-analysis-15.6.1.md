@@ -208,3 +208,93 @@ ipsw-a2sb dyld extract <DSC> <dylib-path> --slide -o <outfile>
 
 15.6.1 extracted images carry full local symbol tables (`t`/`T`/`s`
 symbols), which is what made this whole no-IDA round possible.
+
+## 11. QuartzCore IOMFBServer frame-info ABI (ported)
+
+`enable_frame_info_tag_list` img+`0x2c63d8` (13.4 `0x29285c`); prologue
+`d503237f d10283ff a9046ffc a90567fa` (new). `frame_info_callback`
+img+`0x2c5504` (was `0x29209c`). `begin_skylight_update` img+`0x2c4568`,
+`finish_skylight_update` img+`0x2c4500` — **prologues byte-identical to
+13.4** (`d503237f a9be4ff4 a9017bfd 910043fd`), only offsets+UUID move.
+`vsync_callback` img+`0x2c218c`.
+
+Field-level, all RE-confirmed in the 15.6.1 image:
+
+- `IOMFBServer/AccelServer +0x58` → `IOMFBDisplay*` — **unchanged**
+  (`ldr x8,[x23,#0x58]` inside enable_frame_info_tag_list itself;
+  `ldr x8,[x19,#0x58]` in the AccelServer ctor at img+0x11b3d8).
+- `IOMFBDisplay +0x63d8` → `IOMobileFramebufferRef` (was `+0x300`):
+  the ctor at img+`0x11b3dc` loads `[x8,#0x63d8]` as x0 of the
+  `IOMobileFramebufferFrameInfo(fb, frame_info_callback, server, 1)`
+  registration call. The display object grew substantially.
+- `IOMFBDisplay +0x6d83` byte → `frame_info_enabled` flag (was
+  `+0x9a4` bit 35): `strb w8,[x1,x9]` with `x9=0x6d83` at img+`0x11b410`,
+  `w8 = (FrameInfo() status == 0)`.
+- `fb+0x14` io_connect unchanged (verified via IOMFB kern_SwapBegin/End).
+- Diagnostic-only server fields (+0x324/+0x325 vsync/source, +0x298/+0x2a0
+  timers, +0x278 runLoop) drifted in 15.6.1 (vsync now reads
+  `+0x74f`/`+0x40e`); they are kept 13.4-only — never enabled for the
+  15.6.1 variant.
+
+## 12. SkyLight CAWSManager backboardd-coexist abort (ported)
+
+13.4 patch site `img+0x18013c` = ctor+0x230, `cbz x8,+0xB0` (`0xb4000588`)
+→ nop. 15.6.1: `CAWSManager::CAWSManager` at img+`0x1c8418`
+(vmaddr `0x186677418`); same check at ctor+`0x2b8` = img+`0x1c86d0`,
+`cbz x8,+0xAC` (`0xb4000568`) → nop. x8 is the display-server
+registration object loaded from a global slot (`0x1ebf5e000+0x3c8`);
+the cbz target builds the "another display server" error string — same
+semantics, new offset+imm. Ported as a 2-entry candidate table
+(`kMacWSCAWSAbortSites`) — path-gated, byte-verified per site.
+
+## 13. HIToolbox locals (ported)
+
+All four are absent from the export trie (MSFindSymbol/dlsym miss);
+the AppInputBridge resolver is UUID+prologue gated, now dual-variant.
+15.6.1 UUID `1A037942-11E0-3FC8-AAD2-20B11E7AE1A4`, `__TEXT` base
+`0x18bf3c000`:
+
+| function | 13.4 off | 15.6.1 off | 15.6.1 prologue |
+|---|---|---|---|
+| `_SetMenuBarObscured` | 0x467f4 | **0x267b8c** | `d503237f d100c3ff a9014ff4 a9027bfd` — identical to 13.4 |
+| `_RecalcBar` | 0x11878 | **0xf73c0** | `d03003a8 b945d108 7100011f 5400004d` — leaf, no pacibsp |
+| `HIApplication::GetAppObject` | 0x59778 | **0x1831c** | `d503237f a9bf7bfd 910003fd 97ffffea` |
+| `HIApplication::FrontUILost` | 0x4d608 | **0x1a168** | `7940e008 37080368 d503237f a9be4ff4` — new ldrh/tbnz flag early-out before pacibsp |
+
+## 14. Export-trie vs symtab finding (why most hooks self-port)
+
+All C++ SkyLight/QC symbols (`EndUpdate`, `StartComposite`,
+`PrepareForUse`, `pop_back`, even `_WSCompositeDestinationCreateWith
+MetalTexture`) are **absent from the export trie** in both the 13.2.1
+and 15.6.1 images — yet production logs show those hooks installing on
+13.4. Therefore `MSFindSymbol` resolves through the image **symtab**
+(the dyld cache's shared `__LINKEDIT` table), not the export trie.
+Since the 15.6.1 cache carries the same symtab mechanism, every
+symbol-named hook self-ports to new addresses — only the two functions
+already carrying offset+prologue fallbacks (`EndCurrentComposite`,
+`EndUpdate`) needed table rows, which are now dual-versioned.
+
+## 15. IOMFB swap-id relocation (ported)
+
+Non-coexistence path detail: 15.6.1 userland packs the active swap id at
+`inStruct+0x98` (= fb+0xb0 − input-base fb+0x18), but the iOS 16.3 kernel
+selector-5 ABI still reads `+0x50`. `IOConnectCallStructMethod_new` now
+copies the id into `+0x50` before forwarding when the 15.6.1 ABI row is
+active and `inStructCnt==0x46c`. Coexistence still short-circuits to the
+scalar cancel — unchanged.
+
+## 16. Deliberately NOT ported (fail-closed)
+
+- **IOSurface protection/layout subsystem** — 15.6.1 client getter reads
+  `client+0xf0` (was `+0xc8`); the whole 15-anchor layout differs and is
+  not yet re-derived. Gate stays 13.4-only: UUID + `ldr x0,[x0,#0xc8]`
+  bytes + `ivar_getOffset==8` all must match → 15.6.1 takes stock path.
+- **MTLFragmentReflectionReader / MTLInputStageReflectionReader
+  deserialize-extra 15-NOP workaround** — 15.6.1 restructured the
+  deserializer (`MTLFragmentReflectionDeserializerLegacy` split);
+  whether the workaround is still needed is a runtime question.
+  Byte-gated → silently skips on 15.6.1. Revisit on evidence.
+- **CABackingStore force-accel** — LAZY env-gated diagnostic, byte-gated.
+- **CoreServicesInternal `_FileCacheFinalize` / DesktopServicesPriv
+  volume-map probes** — env-gated diagnostics observing 13.4-specific
+  crash sites; 15.6.1 UUID gate → skipped.

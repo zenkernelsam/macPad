@@ -1477,17 +1477,77 @@ int isJITEnabled(void);
 #define FORCE_M1_DRIVER 1
 #endif
 
-// offsets hardcoded for macOS 13.4
-// IOMobileFramebuffer`kern_SwapEnd + 36
-#define OFF_IOMobileFramebuffer_kern_SwapEnd_inputStructCnt 0x4400 + 0x24
-// IOMobileFramebuffer`kern_SwapEnd + 0x30: expected
-// `bl IOConnectCallStructMethod` callsite. We only READ this instruction to
-// validate the hardcoded ABI before arming the coexistence SwapCancel
-// translation; it must not be NOPed because SwapBegin's DCP object then has no
+// Per-version IOMobileFramebuffer ABI. RE-confirmed by disasm:
+//   13.4:   kern_SwapEnd img+0x4400; +0x24 mov w3,#0x468 (0x52808d03),
+//           +0x30 bl IOConnectCallStructMethod (0x94001f64); public
+//           SwapEnd wrapper img+0x11cc ldr x1,[x0,#0x728]; fb+0x68 swap
+//           id -> inStruct+0x50; fb+0x14 io_connect; input base fb+0x18.
+//   15.6.1: kern_SwapEnd img+0x5450; +0x24 mov w3,#0x514 (0x5280a283),
+//           +0x30 bl IOConnectCallStructMethod (0x940023a7); public
+//           SwapEnd wrapper img+0x1750 ldr x1,[x0,#0x880]; fb+0xb0 swap
+//           id -> inStruct+0x98; fb+0x14 io_connect; input base fb+0x18.
+// The iOS 16.3 kernel still reads the swap id at inStruct+0x50 and wants
+// inStructCnt 0x46c, so the port patches the size AND relocates the id.
+// The +0x30 `bl IOConnectCallStructMethod` callsite is only READ to
+// validate the ABI before arming the coexistence SwapCancel translation;
+// it must not be NOPed because SwapBegin's DCP object then has no
 // matching present/cancel operation.
-#define OFF_IOMobileFramebuffer_kern_SwapEnd_submit 0x4400 + 0x30
-// SkyLight`WS::Displays::CAWSManager::CAWSManager() + 560
-#define OFF_SkyLight_CAWSManager_register_abort 0x18013c
+typedef struct {
+    uintptr_t kernSwapEndOffset;
+    uint32_t  movW3Expected;
+    uint32_t  submitBlExpected;
+    uintptr_t publicSwapEndOffset;
+    uint32_t  wrapperSig0, wrapperSig1, wrapperSig2, wrapperSig3;
+    uint32_t  fbSwapIdOffset;
+    uint32_t  inStructSwapIdOffset;
+} MacWSIOMFBABI;
+
+static const MacWSIOMFBABI kMacWSIOMFBABIs[] = {
+    { 0x5450, 0x5280a283, 0x940023a7, 0x1750,
+      0xb4000080, 0xf9447001, 0xb4000041, 0xd61f083f,
+      0xb0, 0x98 }, // macOS 15.6.1 (24G90)
+    { 0x4400, 0x52808d03, 0x94001f64, 0x11cc,
+      0xb4000080, 0xf9439401, 0xb4000041, 0xd61f083f,
+      0x68, 0x50 }, // macOS 13.4 (Ventura)
+};
+
+static const MacWSIOMFBABI *g_macws_iomfb_abi;
+
+static const MacWSIOMFBABI *MacWSIOMFBABIResolve(
+        const struct mach_header *header) {
+    if (!header) return NULL;
+    for (size_t i = 0;
+         i < sizeof(kMacWSIOMFBABIs) / sizeof(kMacWSIOMFBABIs[0]);
+         i++) {
+        const MacWSIOMFBABI *abi = &kMacWSIOMFBABIs[i];
+        const uint32_t *wrapper = (const uint32_t *)(
+            (uintptr_t)header + abi->publicSwapEndOffset);
+        const uint32_t *movW3 = (const uint32_t *)(
+            (uintptr_t)header + abi->kernSwapEndOffset + 0x24);
+        if (wrapper[0] == abi->wrapperSig0 &&
+            wrapper[1] == abi->wrapperSig1 &&
+            wrapper[2] == abi->wrapperSig2 &&
+            wrapper[3] == abi->wrapperSig3 &&
+            *movW3 == abi->movW3Expected) {
+            return abi;
+        }
+    }
+    return NULL;
+}
+// SkyLight`WS::Displays::CAWSManager::CAWSManager — the "another display
+// server owns the display" cbz x8 -> abort branch. 13.4: ctor+0x230 at
+// img+0x18013c (cbz x8,+0xB0). 15.6.1 (24G90): ctor __ZN2WS8Displays
+// 11CAWSManagerC2Ev img+0x1c8418, the same check is at ctor+0x2b8 =
+// img+0x1c86d0 (cbz x8,+0xAC); x8 is the display-server registration
+// object loaded from a global slot in both. RE-confirmed via disasm.
+typedef struct {
+    uint32_t offset;
+    uint32_t expectedInsn;
+} MacWSCAWSAbortSite;
+static const MacWSCAWSAbortSite kMacWSCAWSAbortSites[] = {
+    { 0x1c86d0, 0xb4000568 }, // macOS 15.6.1
+    { 0x18013c, 0xb4000588 }, // macOS 13.4
+};
 #if FORCE_SW_RENDER
 // SkyLight`WSSystemCanCompositeWithMetal::once
 // #define OFF_SkyLight_WSSystemCanCompositeWithMetal 0x1d72b148
@@ -1544,41 +1604,87 @@ static const struct mach_header *MacWSSkyLightHeader(void) {
     return header;
 }
 
+// Per-version SkyLight cursor ABI. The CGXHideCursor prologue is
+// byte-identical across versions, so probing each candidate offset finds
+// the matching layout. RE-confirmed:
+//   13.4: CGXHideCursor img+0x1322b0, WS::Globals* slot img+0x53ae8460,
+//         globals+0x20->session, session+0x108->cursorState.
+//   15.6.1: CGXHideCursor img+0x167e3c, WS::Globals* slot img+0x65aaffe0,
+//         globals+0x20->session, session+0x100->cursorState.
+// In both, cursorState+0x78 is the balanced hide count and the 0->1
+// transition calls WS::Displays::CAManager()->set_cursor_hidden.
+typedef struct {
+    uint32_t hideCursorOffset;
+    uint32_t globalsPointerOffset;
+    uint32_t sessionCursorStateOffset;
+} MacWSSkyLightCursorABI;
+
+static const MacWSSkyLightCursorABI kMacWSSkyLightCursorABIs[] = {
+    { 0x167e3c, 0x65aaffe0, 0x100 }, // macOS 15.6.1 (24G90)
+    { 0x1322b0, 0x53ae8460, 0x108 }, // macOS 13.4 (Ventura)
+};
+
+static const MacWSSkyLightCursorABI *MacWSSkyLightCursorABIResolve(
+        const struct mach_header *skyLightHeader) {
+    static const MacWSSkyLightCursorABI *resolved;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        if (!skyLightHeader) return;
+        const uint32_t expectedPrologue[] = {
+            0xd503237f, // pacibsp
+            0xd10103ff, // sub sp, sp, #0x40
+            0xa9024ff4, // stp x20, x19, [sp, #0x20]
+            0xa9037bfd, // stp x29, x30, [sp, #0x30]
+            0x9100c3fd, // add x29, sp, #0x30
+        };
+        for (size_t i = 0;
+             i < sizeof(kMacWSSkyLightCursorABIs) /
+                     sizeof(kMacWSSkyLightCursorABIs[0]);
+             i++) {
+            const uint32_t *candidate = (const uint32_t *)(
+                (uintptr_t)skyLightHeader +
+                kMacWSSkyLightCursorABIs[i].hideCursorOffset);
+            if (memcmp(candidate, expectedPrologue,
+                       sizeof(expectedPrologue)) == 0) {
+                resolved = &kMacWSSkyLightCursorABIs[i];
+                fprintf(stderr,
+                    "#### MACWS CURSOR-ABI resolved: hideCursor=+%#x "
+                    "globals=+%#x sessionState=+%#x\n",
+                    kMacWSSkyLightCursorABIs[i].hideCursorOffset,
+                    kMacWSSkyLightCursorABIs[i].globalsPointerOffset,
+                    kMacWSSkyLightCursorABIs[i].sessionCursorStateOffset);
+                break;
+            }
+        }
+    });
+    return resolved;
+}
+
 static bool MacWSSkyLightCursorABIValid(
         const struct mach_header *skyLightHeader) {
-    if (!skyLightHeader) return false;
-    enum { kCGXHideCursorOffset = 0x1322b0 };
-    const uint32_t expectedPrologue[] = {
-        0xd503237f, // pacibsp
-        0xd10103ff, // sub sp, sp, #0x40
-        0xa9024ff4, // stp x20, x19, [sp, #0x20]
-        0xa9037bfd, // stp x29, x30, [sp, #0x30]
-        0x9100c3fd, // add x29, sp, #0x30
-    };
-    const uint32_t *candidate = (const uint32_t *)(
-        (uintptr_t)skyLightHeader + kCGXHideCursorOffset);
-    return memcmp(candidate, expectedPrologue,
-                  sizeof(expectedPrologue)) == 0;
+    return MacWSSkyLightCursorABIResolve(skyLightHeader) != NULL;
 }
 
 static uint64_t MacWSSkyLightCursorHideCount(
         const struct mach_header *skyLightHeader) {
-    if (!MacWSSkyLightCursorABIValid(skyLightHeader)) return 0;
+    const MacWSSkyLightCursorABI *abi =
+        MacWSSkyLightCursorABIResolve(skyLightHeader);
+    if (!abi) return 0;
     // RE-confirmed in CGXHideCursor+0x14..+0x40 and
-    // CGXShowCursor+0x24..+0x50 in Ventura 13.4 SkyLight: the image global at
-    // static 0x1d8bcd460 is WS::Globals*, +0x20 is CGXSession*, +0x108 is the
-    // cursor session state, and +0x78 is the balanced hide count. This lets the
-    // Host policy remain idempotent: repeated frame checks never inflate the
-    // native count, while a later application ShowCursor transition back to
-    // zero is repaired on the next completed composite.
-    enum { kWSGlobalsPointerOffset = 0x53ae8460 };
+    // CGXShowCursor+0x24..+0x50 (13.4 and 15.6.1): the globals slot holds
+    // WS::Globals*, +0x20 is CGXSession*, the per-version session field is
+    // the cursor session state, and +0x78 is the balanced hide count. This
+    // lets the Host policy remain idempotent: repeated frame checks never
+    // inflate the native count, while a later application ShowCursor
+    // transition back to zero is repaired on the next completed composite.
     uintptr_t globalsPointerAddress = (uintptr_t)skyLightHeader +
-        kWSGlobalsPointerOffset;
+        abi->globalsPointerOffset;
     uintptr_t globals = *(const uintptr_t *)globalsPointerAddress;
     if (!globals) return 0;
     uintptr_t session = *(const uintptr_t *)(globals + 0x20);
     if (!session) return 0;
-    uintptr_t cursorState = *(const uintptr_t *)(session + 0x108);
+    uintptr_t cursorState = *(const uintptr_t *)(
+        session + abi->sessionCursorStateOffset);
     if (!cursorState) return 0;
     return *(const uint64_t *)(cursorState + 0x78);
 }
@@ -1599,13 +1705,14 @@ static void MacWSHideNativeCursorOnMainThread(void) {
         return;
     }
     if (MacWSSkyLightCursorHideCount(skyLightHeader) != 0) return;
-    enum { kCGXHideCursorOffset = 0x1322b0 };
-    const uint32_t *candidate = (const uint32_t *)(
-        (uintptr_t)skyLightHeader + kCGXHideCursorOffset);
-    if (!MacWSSkyLightCursorABIValid(skyLightHeader)) {
+    const MacWSSkyLightCursorABI *abi =
+        MacWSSkyLightCursorABIResolve(skyLightHeader);
+    const uint32_t *candidate = abi ? (const uint32_t *)(
+        (uintptr_t)skyLightHeader + abi->hideCursorOffset) : NULL;
+    if (!candidate) {
         fprintf(stderr,
                 "#### MACWS CURSOR-HIDE rejected: SkyLight signature "
-                "mismatch at %p\n", candidate);
+                "mismatch (no ABI resolved)\n");
         return;
     }
     typedef void (*MacWSCGXHideCursor)(void);
@@ -2501,7 +2608,11 @@ static void hooked_skylight_end_current_composite(void *self, bool synchronize) 
 // submitted buffer at self+0x68, and clears self+0x60.  The VNC observer keeps
 // one submitted pair per context and polls that buffer's status off the render
 // thread; it does not wait, commit, or add a post-commit completion handler.
-typedef void (*EndUpdate_t)(void *self, bool waitUntilSubmitted);
+// 15.6.1 renamed this to EndUpdateEbb: x1 still gates
+// CARenderOGLEndRendering and becomes Flush arg1; the new x2 is passed
+// through as Flush arg4. The trailing parameter is ignored by the 13.4
+// Eb variant, so one hooked signature covers both.
+typedef void (*EndUpdate_t)(void *self, bool waitUntilSubmitted, bool extra);
 static EndUpdate_t orig_skylight_end_update = NULL;
 // EndUpdate and IOMFB SwapEnd run on WindowServer's main thread. Preserve the
 // exact MetalContext whose outermost Flush submitted this swap so the
@@ -2515,10 +2626,11 @@ static NSUInteger macws_command_buffer_status(id command_buffer) {
     return ((NSUInteger (*)(id, SEL))objc_msgSend)(command_buffer, selector);
 }
 
-static void hooked_skylight_end_update(void *self, bool waitUntilSubmitted) {
+static void hooked_skylight_end_update(void *self, bool waitUntilSubmitted,
+                                       bool extra) {
     bool outermost = self &&
         *(volatile int32_t *)((char *)self + 0x178) == 1;
-    orig_skylight_end_update(self, waitUntilSubmitted);
+    orig_skylight_end_update(self, waitUntilSubmitted, extra);
     if (outermost) {
         g_macws_last_end_update_metal_context = self;
         extern void macws_vnc_finish_update(void *);
@@ -2667,21 +2779,37 @@ static void install_skylight_prepare_for_use_tolerate_nil_hook(const void *heade
     void *sym_end_composite = MSFindSymbol(sl,
         "__ZN12MetalContext19EndCurrentCompositeEb");
     if (!sym_end_composite && header) {
-        uint32_t *candidate = (uint32_t *)((uintptr_t)header + 0x14753c);
-        static const uint32_t expected[] = {
-            0xd503237f, 0xa9bd57f6, 0xa9014ff4, 0xa9027bfd,
-            0x910083fd, 0xf9401408, 0xb4000b28, 0xaa0003f3,
-            0x340002c1, 0xaa1303e0, 0x9400005d, 0xa9422269,
+        static const struct {
+            uintptr_t offset;
+            uint32_t expected[12];
+        } fallbacks[] = {
+            { 0x186c50, { // 15.6.1
+                0xd503237f, 0xa9be4ff4, 0xa9017bfd, 0x910043fd,
+                0xf9401408, 0xb4000828, 0xaa0003f3, 0xf9403800,
+                0xb40000a0, 0x940e5b8b, 0xf9403a60, 0x940b8b8f } },
+            { 0x14753c, { // 13.4
+                0xd503237f, 0xa9bd57f6, 0xa9014ff4, 0xa9027bfd,
+                0x910083fd, 0xf9401408, 0xb4000b28, 0xaa0003f3,
+                0x340002c1, 0xaa1303e0, 0x9400005d, 0xa9422269 } },
         };
-        if (memcmp(candidate, expected, sizeof(expected)) == 0) {
-            sym_end_composite = candidate;
+        for (size_t i = 0;
+             i < sizeof(fallbacks) / sizeof(fallbacks[0]) &&
+                 !sym_end_composite;
+             i++) {
+            uint32_t *candidate = (uint32_t *)(
+                (uintptr_t)header + fallbacks[i].offset);
+            if (memcmp(candidate, fallbacks[i].expected,
+                       sizeof(fallbacks[i].expected)) == 0) {
+                sym_end_composite = candidate;
+                fprintf(stderr,
+                    "#### SkyLight EndCurrentComposite(bool) "
+                    "RE-verified fallback at %p\n", sym_end_composite);
+            }
+        }
+        if (!sym_end_composite) {
             fprintf(stderr,
-                "#### SkyLight EndCurrentComposite(bool) RE-verified fallback at %p\n",
-                sym_end_composite);
-        } else {
-            fprintf(stderr,
-                "#### SkyLight EndCurrentComposite(bool) fallback rejected: "
-                "instruction signature mismatch at %p\n", candidate);
+                "#### SkyLight EndCurrentComposite(bool) fallback "
+                "rejected: no signature matched\n");
         }
     }
     if (sym_end_composite) {
@@ -2696,24 +2824,46 @@ static void install_skylight_prepare_for_use_tolerate_nil_hook(const void *heade
             "#### SkyLight EndCurrentComposite(bool): symbol not found, skipped\n");
     }
 
+    // 15.6.1 exports __ZN12MetalContext9EndUpdateEbb (second bool ->
+    // Flush arg4); 13.4 exports __ZN12MetalContext9EndUpdateEb. The
+    // 3-arg hooked signature covers both.
     void *sym_end_update = MSFindSymbol(sl,
-        "__ZN12MetalContext9EndUpdateEb");
+        "__ZN12MetalContext9EndUpdateEbb");
+    if (!sym_end_update)
+        sym_end_update = MSFindSymbol(sl,
+            "__ZN12MetalContext9EndUpdateEb");
     if (!sym_end_update && header) {
-        uint32_t *candidate = (uint32_t *)((uintptr_t)header + 0x1470b0);
-        static const uint32_t expected[] = {
-            0xd503237f, 0xa9be4ff4, 0xa9017bfd, 0x910043fd,
-            0xb9417808, 0x7100011f, 0x5400048d, 0xaa0003f3,
-            0x71000508, 0xb9017808, 0x540003a1, 0xaa0103f4,
+        static const struct {
+            uintptr_t offset;
+            uint32_t expected[12];
+        } fallbacks[] = {
+            { 0x1867b8, { // 15.6.1 EndUpdateEbb
+                0xd503237f, 0xa9bd57f6, 0xa9014ff4, 0xa9027bfd,
+                0x910083fd, 0xb9417808, 0x7100011f, 0x540004ad,
+                0xaa0003f3, 0x71000508, 0xb9017808, 0x54000301 } },
+            { 0x1470b0, { // 13.4 EndUpdateEb
+                0xd503237f, 0xa9be4ff4, 0xa9017bfd, 0x910043fd,
+                0xb9417808, 0x7100011f, 0x5400048d, 0xaa0003f3,
+                0x71000508, 0xb9017808, 0x540003a1, 0xaa0103f4 } },
         };
-        if (memcmp(candidate, expected, sizeof(expected)) == 0) {
-            sym_end_update = candidate;
+        for (size_t i = 0;
+             i < sizeof(fallbacks) / sizeof(fallbacks[0]) &&
+                 !sym_end_update;
+             i++) {
+            uint32_t *candidate = (uint32_t *)(
+                (uintptr_t)header + fallbacks[i].offset);
+            if (memcmp(candidate, fallbacks[i].expected,
+                       sizeof(fallbacks[i].expected)) == 0) {
+                sym_end_update = candidate;
+                fprintf(stderr,
+                    "#### SkyLight EndUpdate RE-verified fallback at %p\n",
+                    sym_end_update);
+            }
+        }
+        if (!sym_end_update) {
             fprintf(stderr,
-                "#### SkyLight EndUpdate(bool) RE-verified fallback at %p\n",
-                sym_end_update);
-        } else {
-            fprintf(stderr,
-                "#### SkyLight EndUpdate(bool) fallback rejected: "
-                "instruction signature mismatch at %p\n", candidate);
+                "#### SkyLight EndUpdate fallback rejected: "
+                "no signature matched\n");
         }
     }
     if (sym_end_update) {
@@ -4636,11 +4786,45 @@ static void macws_install_chromium_composite_overlays(
 // the old, late repair point ran: objc_msgSendSuper2's branch target was PAC-
 // poisoned at the call's return address. Repair this exact stub immediately
 // after deriving the image slide, before invoking any ObjC/Metal operation.
-static bool macws_repair_agx_objc_msgsend_super2_stub(intptr_t slide) {
-    static const uintptr_t kStubStatic = 0x1e5a5dfc0;
-    static const uint32_t kOriginal[4] = {
-        0xd01cf7f1, 0x9132a231, 0xf9400230, 0xd71f0a11,
-    };
+// Per-version AGX objc_msgSendSuper2 stub. The authenticated stub is
+// identified by its GOT slot binding _objc_msgSendSuper2 (bind-table
+// walk, no heuristic): 13.4 DSC image stub static VA 0x1e5a5dfc0;
+// 15.6.1 on-disk bundle stub img+0x63bc8c -> GOT 0x69c280.
+typedef struct {
+    uint8_t   uuid[16];
+    uint64_t  textStaticBase; // static VA of __text for slide math
+    uintptr_t stubStatic;     // static VA / image offset of the stub
+    uint32_t  original[4];    // expected adrp/add/ldr/braa words
+} MacWSAGXSuper2Variant;
+
+static const MacWSAGXSuper2Variant kMacWSAGXSuper2Variants[] = {
+    { { 0xb3, 0x03, 0xb4, 0xe8, 0x5f, 0x17, 0x39, 0xb8,
+        0x85, 0x05, 0x32, 0x6a, 0xaf, 0x87, 0x0f, 0x39 },
+      0x4f48, 0x63bc8c,
+      { 0xb0000311, 0x910a0231, 0xf9400230, 0xd71f0a11 } }, // 15.6.1 (24G90)
+    { { 0x72, 0x7c, 0x25, 0x0e, 0x55, 0x4d, 0x39, 0x21,
+        0xa5, 0xb3, 0x48, 0xda, 0xe6, 0x19, 0x5b, 0x79 },
+      0x1e53e321c, 0x1e5a5dfc0,
+      { 0xd01cf7f1, 0x9132a231, 0xf9400230, 0xd71f0a11 } }, // 13.4 (Ventura)
+};
+
+static const MacWSAGXSuper2Variant *macws_agx_super2_variant(
+        const struct mach_header_64 *header) {
+    for (size_t i = 0;
+         i < sizeof(kMacWSAGXSuper2Variants) /
+                 sizeof(kMacWSAGXSuper2Variants[0]);
+         i++) {
+        if (macws_macho_uuid_matches(
+                header, kMacWSAGXSuper2Variants[i].uuid))
+            return &kMacWSAGXSuper2Variants[i];
+    }
+    return NULL;
+}
+
+static bool macws_repair_agx_objc_msgsend_super2_stub(
+        intptr_t slide, const MacWSAGXSuper2Variant *variant) {
+    const uintptr_t kStubStatic = variant->stubStatic;
+    const uint32_t *kOriginal = variant->original;
 
     void *resolved = dlsym(RTLD_DEFAULT, "objc_msgSendSuper2");
     if (!resolved) {
@@ -4659,7 +4843,7 @@ static bool macws_repair_agx_objc_msgsend_super2_stub(intptr_t slide) {
     };
     uint32_t *stub = (uint32_t *)(kStubStatic + slide);
     if (memcmp(stub, replacement, sizeof(replacement)) == 0) return true;
-    if (memcmp(stub, kOriginal, sizeof(kOriginal)) != 0) {
+    if (memcmp(stub, kOriginal, 4 * sizeof(uint32_t)) != 0) {
         fprintf(stderr,
                 "#### MACWS_AGX_STUB_FIX exact-precondition-failed stub=%p "
                 "actual=[%08x %08x %08x %08x]\n",
@@ -4873,19 +5057,23 @@ void loadImageCallback(const struct mach_header* header, intptr_t vmaddr_slide) 
         macws_install_chromium_composite_overlays(header);
     }
     if(!strncmp(info.dli_fname, SkyLightPath, strlen(SkyLightPath))) {
-        // allow coexist with backboardd in WS::Displays::CAWSManager::CAWSManager() + 560
-        // if backboardd is running, WindowServer switches to offscreen rendering
-        uint32_t *check = (uint32_t *)(OFF_SkyLight_CAWSManager_register_abort + (uintptr_t)header);
-        ModifyExecutableRegion(check, sizeof(uint32_t), ^{
-            // TODO: has hardcoded instruction
-            // NSLog(@"#### debugbydcmmc OFF_SkyLight_CAWSManager_register_abort ModifyExecutableRegion addr %lu val %lu, expect: %lu",
-            //     (unsigned long) check, (unsigned long) *check, (unsigned long) 0xb4000588);
-            // Patch only if the expected instruction is present; skip (do not
-            // abort) on a non-matching SkyLight version/arch.
-            if (*check == 0xb4000588) { // cbz    x8, do_abort
-                *check = 0xd503201f; // nop
-            }
-        });
+        // allow coexist with backboardd in WS::Displays::CAWSManager::CAWSManager
+        // if backboardd is running, WindowServer switches to offscreen rendering.
+        // Probe each versioned candidate site and patch only the one whose
+        // expected cbz is present; a non-matching SkyLight version is skipped
+        // (do not abort) rather than corrupted.
+        for (size_t site = 0;
+             site < sizeof(kMacWSCAWSAbortSites) /
+                        sizeof(kMacWSCAWSAbortSites[0]);
+             site++) {
+            uint32_t *check = (uint32_t *)(
+                kMacWSCAWSAbortSites[site].offset + (uintptr_t)header);
+            ModifyExecutableRegion(check, sizeof(uint32_t), ^{
+                if (*check == kMacWSCAWSAbortSites[site].expectedInsn) {
+                    *check = 0xd503201f; // nop — keep the onscreen path
+                }
+            });
+        }
         
         // grant all permissions
         MSHookFunction(MSFindSymbol((MSImageRef)header, "_audit_token_check_tcc_access"), hooked_return_1, NULL);
@@ -5034,19 +5222,30 @@ void loadImageCallback(const struct mach_header* header, intptr_t vmaddr_slide) 
 
         // NSLog(@"#### debugbydcmmc loadImageCallback SkyLight modified");
     } else if(!strncmp(info.dli_fname, IOMFBPath, strlen(IOMFBPath))) {
+        const MacWSIOMFBABI *iomfbAbi = MacWSIOMFBABIResolve(
+            (const struct mach_header *)header);
+        g_macws_iomfb_abi = iomfbAbi;
+        if (!iomfbAbi) {
+            fprintf(stderr,
+                "#### IOMFB: no ABI matched (unknown version) — "
+                "swap patches skipped\n");
+        }
         // patch kern_SwapEnd passing correct inputStructCnt
-        uint32_t *swapEnd = (uint32_t *)(OFF_IOMobileFramebuffer_kern_SwapEnd_inputStructCnt + (uintptr_t)header);
-        ModifyExecutableRegion(swapEnd, sizeof(uint32_t), ^{
-            // NSLog(@"#### debugbydcmmc OFF_IOMobileFramebuffer_kern_SwapEnd_inputStructCnt ModifyExecutableRegion addr %lu val %lu, expect: %lu",
-            //     (unsigned long) swapEnd, (unsigned long) *swapEnd, (unsigned long) 0x52808d03);
-            // Patch only if the expected instruction is present; skip (do not
-            // abort) on a non-matching IOMobileFramebuffer version/arch.  The
-            // arm64 slice differs from arm64e, and CLI tools that merely pull
-            // IOMFB in via libmachook's deps must not crash here.
-            if (*swapEnd == 0x52808d03) { // mov    w3, #0x468
-                *swapEnd = 0x52808d83; // mov    w3, #0x46c
-            }
-        });
+        if (iomfbAbi) {
+            uint32_t *swapEnd = (uint32_t *)(
+                iomfbAbi->kernSwapEndOffset + 0x24 + (uintptr_t)header);
+            ModifyExecutableRegion(swapEnd, sizeof(uint32_t), ^{
+                // Patch only if the expected instruction is present; skip
+                // (do not abort) on a non-matching IOMobileFramebuffer
+                // version/arch.  The arm64 slice differs from arm64e, and
+                // CLI tools that merely pull IOMFB in via libmachook's deps
+                // must not crash here.  Both versions write #0x46c — the
+                // iOS kernel's expected input size is unchanged.
+                if (*swapEnd == iomfbAbi->movW3Expected) {
+                    *swapEnd = 0x52808d83; // mov    w3, #0x46c
+                }
+            });
+        }
         // NSLog(@"#### debugbydcmmc loadImageCallback IOMobileFramebuffer modified");
 
         // Hook the complete exported protocol operation, not the nested
@@ -5056,14 +5255,13 @@ void loadImageCallback(const struct mach_header* header, intptr_t vmaddr_slide) 
         // is only four instructions; require all four before installing a
         // Substrate trampoline.  A second libmachook slice sees the modified
         // prologue and safely skips instead of stacking another hook.
-        {
-            static const uint32_t expectedSwapEndWrapper[4] = {
-                0xb4000080, // cbz x0, +0x10
-                0xf9439401, // ldr x1, [x0, #0x728]
-                0xb4000041, // cbz x1, +0x8
-                0xd61f083f, // braaz x1
+        if (iomfbAbi) {
+            const uint32_t expectedSwapEndWrapper[4] = {
+                iomfbAbi->wrapperSig0, iomfbAbi->wrapperSig1,
+                iomfbAbi->wrapperSig2, iomfbAbi->wrapperSig3,
             };
-            void *publicSwapEnd = (void *)((uintptr_t)header + 0x11cc);
+            void *publicSwapEnd = (void *)(
+                (uintptr_t)header + iomfbAbi->publicSwapEndOffset);
             if (memcmp(publicSwapEnd, expectedSwapEndWrapper,
                        sizeof(expectedSwapEndWrapper)) == 0) {
                 MSHookFunction(publicSwapEnd,
@@ -5089,25 +5287,26 @@ void loadImageCallback(const struct mach_header* header, intptr_t vmaddr_slide) 
         // It also violated the protocol invariant by reporting success without
         // sending either SwapEnd or SwapCancel.
         //
-        // RE-confirmed via project LLDB against the loaded macOS 13.4 binary:
-        //   kern_SwapBegin+60  loads io_connect_t from conn+0x14;
-        //   kern_SwapBegin+84  calls scalar selector 4;
-        //   kern_SwapBegin+140 stores the returned swap ID at conn+0x68;
-        //   kern_SwapEnd+48    calls struct selector 5 with conn+0x18, 0x46c;
-        //   kern_SwapCancel+32 copies w1 (swap ID), then +48/+64 calls scalar
-        //                       selector 0x34 with exactly one input scalar.
+        // RE-confirmed via project LLDB against the loaded macOS 13.4
+        // binary and re-verified on the 15.6.1 image by disasm:
+        //   kern_SwapBegin loads io_connect_t from fb+0x14 (both);
+        //   calls scalar selector 4;
+        //   stores the returned swap ID at fb+0x68 (13.4) / fb+0xb0 (15.6.1);
+        //   kern_SwapEnd calls struct selector 5 with fb+0x18 input;
+        //   kern_SwapCancel copies w1 (swap ID), then calls scalar
+        //   selector 0x34 with exactly one input scalar.
         //
         // Arm a narrow call-layer translation below. Unlike replacing the
         // whole kern_SwapEnd function, it returns the real kernel status and
         // lets kern_SwapEnd continue with its gain-map release/counters.
-        {
+        if (iomfbAbi) {
             char exe[PATH_MAX]; uint32_t exelen = sizeof(exe);
             if(_NSGetExecutablePath(exe, &exelen) == 0 &&
                strstr(exe, "SkyLight.framework/Resources/WindowServer") != NULL &&
                is_process_running("backboardd")) {
                 const uint32_t *swapSubmit = (const uint32_t *)(
-                    OFF_IOMobileFramebuffer_kern_SwapEnd_submit + (uintptr_t)header);
-                if (*swapSubmit == 0x94001f64) {
+                    iomfbAbi->kernSwapEndOffset + 0x30 + (uintptr_t)header);
+                if (*swapSubmit == iomfbAbi->submitBlExpected) {
                     atomic_store(&g_macws_iomfb_coexist_swap_cancel, 1);
                     fprintf(stderr,
                         "#### COEXIST: verified kern_SwapEnd BL; SwapEnd(sel5) -> "
@@ -5396,16 +5595,23 @@ void loadImageCallback(const struct mach_header* header, intptr_t vmaddr_slide) 
         // newCommand crashes on a null base.
         //
         // Removed 2026-06-18 after auditing the patches.
-        uint64_t text_static_base = 0x1e53e321c;
+        const MacWSAGXSuper2Variant *agxVariant = macws_agx_super2_variant(
+            (const struct mach_header_64 *)header);
+        if (!agxVariant) {
+            fprintf(stderr,
+                "#### MACWS_AGX_STUB_FIX: unknown AGXMetal13_3 UUID — "
+                "super2 repair skipped\n");
+            return;
+        }
         unsigned long text_sz = 0;
         uint8_t *text = getsectiondata((const struct mach_header_64 *)header,
                                        "__TEXT", "__text", &text_sz);
-        intptr_t slide = (intptr_t)text - (intptr_t)text_static_base;
+        intptr_t slide = (intptr_t)text - (intptr_t)agxVariant->textStaticBase;
 
         // Fail closed: continuing into AGX class realization with this known-
         // invalid external stub recreates the Maps PAC crash and can leave a
         // partially initialized MTLDevice behind for later callers.
-        if (!macws_repair_agx_objc_msgsend_super2_stub(slide)) {
+        if (!macws_repair_agx_objc_msgsend_super2_stub(slide, agxVariant)) {
             return;
         }
 
@@ -13116,22 +13322,35 @@ static pthread_mutex_t g_macws_quicklook_thumbnail_hook_lock =
 static void macws_install_quicklook_image_thumbnail_repair(
     const struct mach_header *header, intptr_t slide) {
     (void)slide;
-    static const uint8_t imageGeneratorUUID[16] = {
-        0x38, 0x8d, 0xee, 0x66, 0x0d, 0xf5, 0x3d, 0xdc,
-        0x85, 0xe4, 0xdf, 0x8f, 0x9c, 0x9b, 0x83, 0x32
+    // GenerateThumbnailForURL entry per version; both call
+    // QLThumbnailRequestSetImageAtURL at func+0x5c after building the
+    // kCGImageSourceTypeIdentifierHint dictionary (disasm-verified).
+    static const struct { uint8_t uuid[16]; uintptr_t entry; } variants[] = {
+        { { 0xb6, 0xe7, 0xbd, 0xe8, 0xef, 0xed, 0x3f, 0x4b,
+            0x99, 0x92, 0x1c, 0xc9, 0x64, 0x83, 0xdc, 0x8a },
+          0x860 }, // macOS 15.6.1 (24G90)
+        { { 0x38, 0x8d, 0xee, 0x66, 0x0d, 0xf5, 0x3d, 0xdc,
+            0x85, 0xe4, 0xdf, 0x8f, 0x9c, 0x9b, 0x83, 0x32 },
+          0x3b30 }, // macOS 13.4 (Ventura)
     };
-    BOOL uuidMatches = header && header->magic == MH_MAGIC_64 &&
-        macws_macho_uuid_matches(
-            (const struct mach_header_64 *)header, imageGeneratorUUID);
-    if (!uuidMatches || g_macws_orig_image_generator_thumbnail) return;
+    uintptr_t entryOffset = 0;
+    for (size_t i = 0;
+         i < sizeof(variants) / sizeof(variants[0]); i++) {
+        if (header && header->magic == MH_MAGIC_64 &&
+            macws_macho_uuid_matches(
+                (const struct mach_header_64 *)header, variants[i].uuid)) {
+            entryOffset = variants[i].entry;
+            break;
+        }
+    }
+    if (!entryOffset || g_macws_orig_image_generator_thumbnail) return;
     fprintf(stderr,
         "[macws] Quick Look Image.qlgenerator UUID matched at %p\n",
         header);
     pthread_mutex_lock(&g_macws_quicklook_thumbnail_hook_lock);
     if (!g_macws_orig_image_generator_thumbnail) {
-        // __TEXT vmaddr is zero in this bundle; otool -arch arm64e -tvV
-        // identifies 0x3b30 as the exact GenerateThumbnailForURL entry.
-        void *entry = (uint8_t *)header + 0x3b30;
+        // __TEXT vmaddr is zero in this bundle.
+        void *entry = (uint8_t *)header + entryOffset;
         MSHookFunction(entry, (void *)macws_image_generator_thumbnail,
                        (void **)&g_macws_orig_image_generator_thumbnail);
         fprintf(stderr,
@@ -14649,6 +14868,18 @@ DYLD_INTERPOSE(macws_xpc_main, macws_xpc_main_raw);
 // Client C callers use static dyld interposition; the one framework-internal
 // tailcall is -[IOSurface protectionOptions], adapted through its IMP. Never
 // mutate IOSurface's executable pages (including pages inherited across fork).
+// Device is iPadOS 16.3 = build 20D47 (device-confirmed 2026-09-24);
+// 20D67 is 16.3.1. The previous exact-"20D67" gates silently disabled
+// every measured repair on real 16.3 hardware — accept both.
+static BOOL macws_ios16_3_kernel_build(void) {
+    char build[32] = {0};
+    size_t build_size = sizeof(build);
+    return macws_real_sysctlbyname("kern.osversion", build, &build_size,
+                                   NULL, 0) == 0 &&
+        build_size > 0 && build_size < sizeof(build) &&
+        (strcmp(build, "20D47") == 0 || strcmp(build, "20D67") == 0);
+}
+
 static ptrdiff_t g_macws_iosurface_impl_offset = -1;
 // 0 means registration may still be pending, -1 is a measured ABI mismatch,
 // and 1 publishes both the validated layout and the implementation offset.
@@ -14675,12 +14906,7 @@ static BOOL macws_iosurface_protection_abi_ready(void) {
         do {
         // This exact kernel/userland pair was measured on-device. An unknown
         // OS or consumer is not permission to reinterpret an opaque client.
-        char build[32] = {0};
-        size_t buildSize = sizeof(build);
-        if (macws_real_sysctlbyname("kern.osversion", build, &buildSize,
-                                   NULL, 0) != 0 ||
-            buildSize == 0 || buildSize >= sizeof(build) ||
-            strcmp(build, "20D67") != 0) break;
+        if (!macws_ios16_3_kernel_build()) break;
         Dl_info image = {0};
         if (!dladdr((void *)IOSurfaceGetProtectionOptions, &image) ||
             !image.dli_fbase || !macws_macho_uuid_matches(
@@ -17056,34 +17282,102 @@ static MacwsEnableFrameInfoTagListFunction
     g_macws_orig_enable_frame_info_tag_list = NULL;
 static uintptr_t g_macws_quartzcore_header = 0;
 
+// Per-version QuartzCore IOMFBServer frame-info ABI. RE-confirmed by disasm:
+//   13.4   UUID CF853BBD-01B6-3F46-ADA1-EC70FD2DC9DC:
+//          enable_frame_info_tag_list img+0x29285c, frame_info_callback
+//          img+0x29209c, begin_skylight_update img+0x291288,
+//          finish_skylight_update img+0x291220, vsync img+0x28f0fc.
+//          server+0x58 -> IOMFBDisplay*, display+0x300 -> fb ref, enabled
+//          flag = display+0x9a4 bit 35 (set_frame_info_enabled).
+//   15.6.1 UUID 31921699-8990-3ACE-8D83-16E7BE814C6F:
+//          enable_frame_info_tag_list img+0x2c63d8, frame_info_callback
+//          img+0x2c5504, begin_skylight_update img+0x2c4568,
+//          finish_skylight_update img+0x2c4500, vsync img+0x2c218c.
+//          server+0x58 -> IOMFBDisplay* (unchanged; ldr x8,[x23,#0x58]
+//          inside enable_frame_info_tag_list itself), display+0x63d8 ->
+//          fb ref (x0 of the IOMobileFramebufferFrameInfo registration
+//          call at img+0x11b43fc), enabled flag = byte at display+0x6d83
+//          (strb w8,[x1,x9] with x9=0x6d83 at img+0x11b410).
+// Diagnostic-only server field reads (+0x324/+0x325 vsync/source flags,
+// +0x298/+0x2a0 timers, +0x278 runLoop) are 13.4-layout only — the 15.6.1
+// server object drifted (vsync now reads +0x74f/+0x40e), so they are
+// skipped on the 15.6.1 variant rather than guessed.
+typedef struct {
+    uint8_t  uuid[16];
+    uint32_t enableTagListOffset;
+    uint32_t frameInfoCallbackOffset;
+    uint32_t beginSkylightUpdateOffset;
+    uint32_t finishSkylightUpdateOffset;
+    uint32_t enablePrologue[4];
+    uint32_t beginPrologue[4];
+    uint32_t finishPrologue[4];
+    uint32_t displayFbOffset;
+    uint32_t enabledOffset;
+    uint8_t  enabledIsBit35;    // 1: bit35 of u64 at enabledOffset; 0: byte
+    uint8_t  diagFieldsValid;   // 1: +0x324/+0x325/+0x298/+0x2a0/+0x278 OK
+} MacWSQCFrameInfoABI;
+
+static const MacWSQCFrameInfoABI kMacWSQCFrameInfoABIs[] = {
+    { // macOS 15.6.1 (24G90)
+      { 0x31, 0x92, 0x16, 0x99, 0x89, 0x90, 0x3a, 0xce,
+        0x8d, 0x83, 0x16, 0xe7, 0xbe, 0x81, 0x4c, 0x6f },
+      0x2c63d8, 0x2c5504, 0x2c4568, 0x2c4500,
+      { 0xd503237f, 0xd10283ff, 0xa9046ffc, 0xa90567fa },
+      { 0xd503237f, 0xa9be4ff4, 0xa9017bfd, 0x910043fd },
+      { 0xd503237f, 0xa9be4ff4, 0xa9017bfd, 0x910043fd },
+      0x63d8, 0x6d83, 0, 0 },
+    { // macOS 13.4 (Ventura)
+      { 0xcf, 0x85, 0x3b, 0xbd, 0x01, 0xb6, 0x3f, 0x46,
+        0xad, 0xa1, 0xec, 0x70, 0xfd, 0x2d, 0xc9, 0xdc },
+      0x29285c, 0x29209c, 0x291288, 0x291220,
+      { 0xd503237f, 0xd10243ff, 0xa9036ffc, 0xa90467fa },
+      { 0xd503237f, 0xa9be4ff4, 0xa9017bfd, 0x910043fd },
+      { 0xd503237f, 0xa9be4ff4, 0xa9017bfd, 0x910043fd },
+      0x300, 0x9a4, 1, 1 },
+};
+
+static const MacWSQCFrameInfoABI *g_macws_qc_frame_info_abi;
+
 static void macws_enable_frame_info_tag_list(
     void *server, const char *const *available_tags, size_t available_count,
     const char *const *requested_tags, size_t requested_count) {
     g_macws_orig_enable_frame_info_tag_list(server, available_tags,
         available_count, requested_tags, requested_count);
 
-    if (!server || !g_macws_quartzcore_header)
+    const MacWSQCFrameInfoABI *abi = g_macws_qc_frame_info_abi;
+    if (!server || !g_macws_quartzcore_header || !abi)
         return;
     void *display_holder = *(void **)((char *)server + 0x58);
     void *display = display_holder;
     MacwsIOMobileFramebufferRef framebuffer = display_holder
-        ? *(MacwsIOMobileFramebufferRef *)((char *)display_holder + 0x300)
+        ? *(MacwsIOMobileFramebufferRef *)
+            ((char *)display_holder + abi->displayFbOffset)
         : NULL;
-    uint64_t flags = display
-        ? *(const volatile uint64_t *)((const char *)display + 0x9a4)
-        : 0;
-    BOOL frame_info_enabled = (flags & 0x800000000ull) != 0;
+    BOOL frame_info_enabled;
+    if (display && abi->enabledIsBit35) {
+        frame_info_enabled =
+            (*(const volatile uint64_t *)
+                ((const char *)display + abi->enabledOffset)
+             & 0x800000000ull) != 0;
+    } else {
+        frame_info_enabled = display
+            ? *(const volatile uint8_t *)
+                ((const char *)display + abi->enabledOffset) != 0
+            : NO;
+    }
     if (!frame_info_enabled || !framebuffer)
         return;
 
     // RE-confirmed via live iOS 16.3.1 kern_SwapEnd: the io_connect_t used for
     // selector 5 is the uint32_t at IOMobileFramebufferRef+0x14.  QuartzCore's
-    // exact frame_info_callback is at image offset 0x29209c; call its raw code
-    // address from the plain-arm64 WindowServer slice on the main queue.
+    // frame_info_callback image offset is versioned in the ABI table; call
+    // its raw code address from the plain-arm64 WindowServer slice on the
+    // main queue.
     io_connect_t client =
         *(const volatile io_connect_t *)((const char *)framebuffer + 0x14);
     MacwsIOMFBFrameInfoCallback callback =
-        (MacwsIOMFBFrameInfoCallback)(g_macws_quartzcore_header + 0x29209c);
+        (MacwsIOMFBFrameInfoCallback)(g_macws_quartzcore_header +
+            abi->frameInfoCallbackOffset);
     unsigned registration_slot = 0;
     pthread_mutex_lock(&g_macws_iomfb_frame_lock);
     for (; registration_slot < g_macws_iomfb_frame_reg_count;
@@ -17110,17 +17404,24 @@ static void macws_enable_frame_info_tag_list(
     }
     pthread_mutex_unlock(&g_macws_iomfb_frame_lock);
     if (macws_runtime_diagnostics_enabled()) {
-        fprintf(stderr,
-            "#### IOMFB CANCEL-COMPLETION observed enabled registration "
-            "fb=%p client=%u callback=%p context=%p flags=%#llx slot=%u "
-            "vsync=%#x source=%#x displayTimer=%p fallbackTimer=%p runLoop=%p\n",
-            framebuffer, client, callback, server,
-            (unsigned long long)flags, registration_slot,
-            *(const volatile uint8_t *)((const char *)server + 0x324),
-            *(const volatile uint8_t *)((const char *)server + 0x325),
-            *(void *const volatile *)((const char *)server + 0x298),
-            *(void *const volatile *)((const char *)server + 0x2a0),
-            *(void *const volatile *)((const char *)server + 0x278));
+        if (abi->diagFieldsValid) {
+            fprintf(stderr,
+                "#### IOMFB CANCEL-COMPLETION observed enabled registration "
+                "fb=%p client=%u callback=%p context=%p slot=%u "
+                "vsync=%#x source=%#x displayTimer=%p fallbackTimer=%p "
+                "runLoop=%p\n",
+                framebuffer, client, callback, server, registration_slot,
+                *(const volatile uint8_t *)((const char *)server + 0x324),
+                *(const volatile uint8_t *)((const char *)server + 0x325),
+                *(void *const volatile *)((const char *)server + 0x298),
+                *(void *const volatile *)((const char *)server + 0x2a0),
+                *(void *const volatile *)((const char *)server + 0x278));
+        } else {
+            fprintf(stderr,
+                "#### IOMFB CANCEL-COMPLETION observed enabled registration "
+                "fb=%p client=%u callback=%p context=%p slot=%u\n",
+                framebuffer, client, callback, server, registration_slot);
+        }
     }
 }
 
@@ -17131,20 +17432,11 @@ static void macws_install_quartzcore_frame_info_hook(
     //   __TEXT vmaddr                                  0x1879be000
     //   IOMFBServer::enable_frame_info_tag_list        0x187c5085c
     //   IOMFBServer::frame_info_callback               0x187c5009c
-    static const uint8_t expected_uuid[16] = {
-        0xcf, 0x85, 0x3b, 0xbd, 0x01, 0xb6, 0x3f, 0x46,
-        0xad, 0xa1, 0xec, 0x70, 0xfd, 0x2d, 0xc9, 0xdc,
-    };
-    static const uint32_t expected_prologue[4] = {
-        0xd503237f, // pacibsp
-        0xd10243ff, // sub sp, sp, #0x90
-        0xa9036ffc, // stp x28, x27, [sp, #0x30]
-        0xa90467fa, // stp x26, x25, [sp, #0x40]
-    };
-    enum {
-        kQuartzCoreEnableFrameInfoTagListOffset = 0x29285c,
-    };
-
+    // and the macOS 15.6.1 (24G90) image:
+    //   UUID 31921699-8990-3ACE-8D83-16E7BE814C6F
+    //   __TEXT vmaddr                                  0x1895bb000
+    //   IOMFBServer::enable_frame_info_tag_list        0x1898813d8
+    //   IOMFBServer::frame_info_callback               0x189880504
     static _Atomic int installed = 0;
     if (atomic_exchange(&installed, 1))
         return;
@@ -17155,24 +17447,16 @@ static void macws_install_quartzcore_frame_info_hook(
         atomic_store(&installed, 0);
         return;
     }
-    const uint8_t *command_bytes = (const uint8_t *)(header + 1);
-    BOOL uuid_matches = NO;
-    for (uint32_t i = 0; i < header->ncmds; i++) {
-        const struct load_command *command =
-            (const struct load_command *)command_bytes;
-        if (command->cmd == LC_UUID &&
-            command->cmdsize >= sizeof(struct uuid_command)) {
-            const struct uuid_command *uuid =
-                (const struct uuid_command *)command;
-            uuid_matches = memcmp(uuid->uuid, expected_uuid,
-                                  sizeof(expected_uuid)) == 0;
+    const MacWSQCFrameInfoABI *abi = NULL;
+    for (size_t i = 0;
+         i < sizeof(kMacWSQCFrameInfoABIs) / sizeof(kMacWSQCFrameInfoABIs[0]);
+         i++) {
+        if (macws_macho_uuid_matches(header, kMacWSQCFrameInfoABIs[i].uuid)) {
+            abi = &kMacWSQCFrameInfoABIs[i];
             break;
         }
-        if (command->cmdsize < sizeof(*command))
-            break;
-        command_bytes += command->cmdsize;
     }
-    if (!uuid_matches) {
+    if (!abi) {
         fprintf(stderr,
             "#### IOMFB CANCEL-COMPLETION QuartzCore observer skipped: "
             "UUID mismatch\n");
@@ -17180,9 +17464,9 @@ static void macws_install_quartzcore_frame_info_hook(
         return;
     }
 
-    void *target = (void *)((uintptr_t)header +
-        kQuartzCoreEnableFrameInfoTagListOffset);
-    if (memcmp(target, expected_prologue, sizeof(expected_prologue)) != 0) {
+    void *target = (void *)((uintptr_t)header + abi->enableTagListOffset);
+    if (memcmp(target, abi->enablePrologue,
+               sizeof(abi->enablePrologue)) != 0) {
         const uint32_t *actual = (const uint32_t *)target;
         fprintf(stderr,
             "#### IOMFB CANCEL-COMPLETION QuartzCore observer skipped: "
@@ -17192,6 +17476,7 @@ static void macws_install_quartzcore_frame_info_hook(
         return;
     }
 
+    g_macws_qc_frame_info_abi = abi;
     g_macws_quartzcore_header = (uintptr_t)header;
     MSHookFunction(target, (void *)macws_enable_frame_info_tag_list,
         (void **)&g_macws_orig_enable_frame_info_tag_list);
@@ -17199,7 +17484,7 @@ static void macws_install_quartzcore_frame_info_hook(
         "#### IOMFB CANCEL-COMPLETION QuartzCore observer "
         "enable-tag-list=%p trampoline=%p callback=%p\n",
         target, g_macws_orig_enable_frame_info_tag_list,
-        (void *)(g_macws_quartzcore_header + 0x29209c));
+        (void *)(g_macws_quartzcore_header + abi->frameInfoCallbackOffset));
 }
 
 // Keep virtual-display pacing outside QuartzCore's display-server locks.
@@ -17272,47 +17557,42 @@ static uintptr_t macws_iomfbserver_finish_skylight_update(
 
 static void macws_install_quartzcore_coexist_pacing_hooks(
     const struct mach_header *untyped_header) {
-    static const uint8_t expected_uuid[16] = {
-        0xcf, 0x85, 0x3b, 0xbd, 0x01, 0xb6, 0x3f, 0x46,
-        0xad, 0xa1, 0xec, 0x70, 0xfd, 0x2d, 0xc9, 0xdc,
-    };
-    static const uint32_t expected_finish_prologue[4] = {
-        0xd503237f, // pacibsp
-        0xa9be4ff4, // stp x20, x19, [sp, #-0x20]!
-        0xa9017bfd, // stp x29, x30, [sp, #0x10]
-        0x910043fd, // add x29, sp, #0x10
-    };
-    static const uint32_t expected_begin_prologue[4] = {
-        0xd503237f, // pacibsp
-        0xa9be4ff4, // stp x20, x19, [sp, #-0x20]!
-        0xa9017bfd, // stp x29, x30, [sp, #0x10]
-        0x910043fd, // add x29, sp, #0x10
-    };
-    enum {
-        kQuartzCoreIOMFBServerFinishSkylightUpdateOffset = 0x291220,
-        kQuartzCoreIOMFBServerBeginSkylightUpdateOffset = 0x291288,
-    };
-
+    // Both supported QuartzCore builds share the begin/finish skylight_update
+    // prologues (RE-confirmed identical); only UUID and offsets differ. The
+    // 15.6.1 row is the same kMacWSQCFrameInfoABIs entry used by the
+    // frame-info observer.
     static _Atomic int installed;
     if (atomic_exchange_explicit(&installed, 1, memory_order_acq_rel)) return;
     const struct mach_header_64 *header =
         (const struct mach_header_64 *)untyped_header;
-    if (!header || header->magic != MH_MAGIC_64 ||
-        !macws_macho_uuid_matches(header, expected_uuid)) {
+    const MacWSQCFrameInfoABI *abi = NULL;
+    if (header && header->magic == MH_MAGIC_64) {
+        for (size_t i = 0;
+             i < sizeof(kMacWSQCFrameInfoABIs) /
+                     sizeof(kMacWSQCFrameInfoABIs[0]);
+             i++) {
+            if (macws_macho_uuid_matches(header,
+                                         kMacWSQCFrameInfoABIs[i].uuid)) {
+                abi = &kMacWSQCFrameInfoABIs[i];
+                break;
+            }
+        }
+    }
+    if (!abi) {
         atomic_store_explicit(&installed, 0, memory_order_release);
         return;
     }
 
     void *finish_target = (void *)((uintptr_t)header +
-        kQuartzCoreIOMFBServerFinishSkylightUpdateOffset);
+        abi->finishSkylightUpdateOffset);
     void *begin_target = (void *)((uintptr_t)header +
-        kQuartzCoreIOMFBServerBeginSkylightUpdateOffset);
+        abi->beginSkylightUpdateOffset);
     // Validate both endpoints before modifying either one. A partial install
     // would pace before begin and then pace again inside SwapEnd.
-    if (memcmp(finish_target, expected_finish_prologue,
-               sizeof(expected_finish_prologue)) != 0 ||
-        memcmp(begin_target, expected_begin_prologue,
-               sizeof(expected_begin_prologue)) != 0) {
+    if (memcmp(finish_target, abi->finishPrologue,
+               sizeof(abi->finishPrologue)) != 0 ||
+        memcmp(begin_target, abi->beginPrologue,
+               sizeof(abi->beginPrologue)) != 0) {
         if (macws_runtime_diagnostics_enabled()) {
             fprintf(stderr,
                 "#### COEXIST pre-lock pacing skipped: QuartzCore "
@@ -21208,22 +21488,34 @@ static uint32_t dyld_get_active_platform_new(void) {
         0x2b, 0xab, 0x16, 0x9c, 0x42, 0xda, 0x36, 0xe3,
         0x95, 0x5a, 0xf3, 0x0b, 0x70, 0x9e, 0xc2, 0xad,
     };
-    if (strcmp(basename, "Metal") != 0 ||
-        !macws_macho_uuid_matches(
-            (const struct mach_header_64 *)info.dli_fbase,
-            metal_13_4_uuid))
+    static const uint8_t metal_15_6_1_uuid[16] = {
+        0xf8, 0x3e, 0xe1, 0xa6, 0x49, 0xcc, 0x3a, 0x46,
+        0x80, 0xaf, 0x1b, 0x8b, 0x07, 0xee, 0x03, 0x22,
+    };
+    if (strcmp(basename, "Metal") != 0)
+        return actual;
+    BOOL is_13_4 = macws_macho_uuid_matches(
+        (const struct mach_header_64 *)info.dli_fbase, metal_13_4_uuid);
+    BOOL is_15_6_1 = !is_13_4 && macws_macho_uuid_matches(
+        (const struct mach_header_64 *)info.dli_fbase, metal_15_6_1_uuid);
+    if (!is_13_4 && !is_15_6_1)
         return actual;
 
     uintptr_t offset = (uintptr_t)return_address - (uintptr_t)info.dli_fbase;
-    static const uintptr_t source_builder_platform_returns[] = {
+    // LR offsets of the five dyld_get_active_platform calls inside
+    // MTLLibraryBuilder::newLibraryWithSource.  15.6.1 set RE-confirmed:
+    // exactly five bl sites in the function (img+0x138008..0x139918).
+    static const uintptr_t source_builder_returns_15_6_1[] = {
+        0x138908, 0x138920, 0x138a88, 0x139088, 0x1390c0,
+    };
+    static const uintptr_t source_builder_returns_13_4[] = {
         0x0edf14, 0x0edf28, 0x0ee018, 0x0ee654, 0x0ee690,
     };
+    const uintptr_t *returns = is_15_6_1
+        ? source_builder_returns_15_6_1 : source_builder_returns_13_4;
     BOOL exact_callsite = NO;
-    for (size_t i = 0;
-         i < sizeof(source_builder_platform_returns) /
-             sizeof(source_builder_platform_returns[0]);
-         i++) {
-        if (offset == source_builder_platform_returns[i]) {
+    for (size_t i = 0; i < 5; i++) {
+        if (offset == returns[i]) {
             exact_callsite = YES;
             break;
         }
@@ -21464,25 +21756,46 @@ __thread struct MacWSNoCopyScope *g_macws_nocopy_scope;
 
 bool MacWSAGXNoCopyABIReady(const void *agx_initializer,
                            const void *iogpu_initializer) {
-    static const uint8_t agx_uuid[16] = {
-        0x72,0x7c,0x25,0x0e,0x55,0x4d,0x39,0x21,
-        0xa5,0xb3,0x48,0xda,0xe6,0x19,0x5b,0x79};
-    static const uint8_t iogpu_uuid[16] = {
-        0xce,0x2b,0x55,0x51,0x85,0x7f,0x3e,0xdd,
-        0x9e,0x4f,0x43,0x52,0x15,0xcc,0x8c,0x27};
+    // Per-version initializer identities (macOS-side images in chroot):
+    //   13.4:   AGX 727C250E +0x1f4bb4, IOGPU CE2B5551 +0x1c24
+    //   15.6.1: AGX B303B4E8 +0x16c178, IOGPU 68B70E83 +0x1b14
+    // Both are the no-copy designated initializers RE-confirmed in the
+    // respective images (see docs/porting/re-analysis-15.6.1.md).
+    static const struct {
+        uint8_t agx_uuid[16], iogpu_uuid[16];
+        uintptr_t agx_off, iogpu_off;
+    } variants[] = {
+        { { 0xb3,0x03,0xb4,0xe8,0x5f,0x17,0x39,0xb8,
+            0x85,0x05,0x32,0x6a,0xaf,0x87,0x0f,0x39 },
+          { 0x68,0xb7,0x0e,0x83,0xbb,0xda,0x34,0x11,
+            0xa4,0x87,0xe5,0x27,0x97,0x17,0x45,0x18 },
+          0x16c178, 0x1b14 }, // macOS 15.6.1 (24G90)
+        { { 0x72,0x7c,0x25,0x0e,0x55,0x4d,0x39,0x21,
+            0xa5,0xb3,0x48,0xda,0xe6,0x19,0x5b,0x79 },
+          { 0xce,0x2b,0x55,0x51,0x85,0x7f,0x3e,0xdd,
+            0x9e,0x4f,0x43,0x52,0x15,0xcc,0x8c,0x27 },
+          0x1f4bb4, 0x1c24 }, // macOS 13.4 (Ventura)
+    };
+    if (!agx_initializer || !iogpu_initializer) return false;
     Dl_info agx = {0}, iogpu = {0};
-    char build[32] = {0};
-    size_t build_size = sizeof(build);
-    return agx_initializer && iogpu_initializer &&
-        dladdr(agx_initializer, &agx) && dladdr(iogpu_initializer, &iogpu) &&
-        macws_macho_uuid_matches(agx.dli_fbase, agx_uuid) &&
-        macws_macho_uuid_matches(iogpu.dli_fbase, iogpu_uuid) &&
-        (uintptr_t)agx_initializer - (uintptr_t)agx.dli_fbase == 0x1f4bb4 &&
-        (uintptr_t)iogpu_initializer - (uintptr_t)iogpu.dli_fbase == 0x1c24 &&
-        macws_real_sysctlbyname("kern.osversion", build, &build_size,
-                               NULL, 0) == 0 &&
-        build_size > 0 && build_size < sizeof(build) &&
-        strcmp(build, "20D67") == 0;
+    if (!dladdr(agx_initializer, &agx) ||
+        !dladdr(iogpu_initializer, &iogpu)) return false;
+    BOOL abi_matched = NO;
+    for (size_t i = 0;
+         i < sizeof(variants) / sizeof(variants[0]); i++) {
+        if (macws_macho_uuid_matches(agx.dli_fbase, variants[i].agx_uuid) &&
+            macws_macho_uuid_matches(iogpu.dli_fbase,
+                                     variants[i].iogpu_uuid) &&
+            (uintptr_t)agx_initializer - (uintptr_t)agx.dli_fbase ==
+                variants[i].agx_off &&
+            (uintptr_t)iogpu_initializer - (uintptr_t)iogpu.dli_fbase ==
+                variants[i].iogpu_off) {
+            abi_matched = YES;
+            break;
+        }
+    }
+    if (!abi_matched) return false;
+    return macws_ios16_3_kernel_build();
 }
 
 IOReturn IOConnectCallMethod_new(io_connect_t client, uint32_t selector, const uint64_t *in, uint32_t inCnt, const void *inStruct, size_t inStructCnt, uint64_t *out, uint32_t *outCnt, void *outStruct, size_t *outStructCnt) {
@@ -22922,8 +23235,12 @@ static IOReturn MacwsIOMobileFramebufferSwapEnd_new(void *framebuffer) {
             : IOMobileFramebufferSwapEnd(framebuffer);
     }
 
+    // fb+0x68 (13.4) / fb+0xb0 (15.6.1) holds the active swap ID stored
+    // by kern_SwapBegin. fb+0x14 (io_connect) is unchanged across both.
+    uint32_t fbSwapIdOffset = g_macws_iomfb_abi
+        ? g_macws_iomfb_abi->fbSwapIdOffset : 0x68;
     uint32_t swap_id = *(const volatile uint32_t *)
-        ((const char *)framebuffer + 0x68);
+        ((const char *)framebuffer + fbSwapIdOffset);
     uint64_t requested_presentation_time = mach_absolute_time();
     IOReturn result = IOMobileFramebufferSwapCancel(framebuffer, swap_id);
     static _Atomic unsigned long cancel_count = 0;
@@ -22979,11 +23296,13 @@ IOReturn IOConnectCallStructMethod_new(io_connect_t client, uint32_t selector, c
     int struct_skip = caller_is_libmachook(__builtin_return_address(0));
     if (!struct_skip)
         selector = IOConnectTranslateSelector(client, selector);
-    // macOS 13.4 kern_SwapEnd passes conn+0x18 as its 0x46c-byte selector-5
-    // input. SwapBegin stored the active swap ID at conn+0x68, hence input+0x50.
-    // In coexistence, cancel that exact swap through the RE-confirmed iOS ABI
-    // instead of presenting to the panel. Return the real cancel status; the
-    // caller then continues the remainder of kern_SwapEnd normally.
+    // kern_SwapEnd passes fb+0x18 as its selector-5 input (0x46c bytes
+    // post-patch, both versions). SwapBegin stored the active swap ID at
+    // fb+0x68 (13.4 -> inStruct+0x50) or fb+0xb0 (15.6.1 -> inStruct+0x98).
+    // In coexistence, cancel that exact swap through the RE-confirmed iOS
+    // ABI instead of presenting to the panel. Return the real cancel
+    // status; the caller then continues the remainder of kern_SwapEnd
+    // normally.
     // `/tmp/macws_real_swapend` is a short-lived A/B diagnostic only.  It
     // leaves the verified macOS selector-5 call entirely untouched so we can
     // measure whether the Cancel substitution itself breaks page ownership.
@@ -22994,7 +23313,15 @@ IOReturn IOConnectCallStructMethod_new(io_connect_t client, uint32_t selector, c
     if (!struct_skip && !realSwapEndDiagnostic &&
         atomic_load(&g_macws_iomfb_coexist_swap_cancel) &&
         orig == 5 && selector == 5 && inStruct && inStructCnt == 0x46c) {
-        uint32_t swap_id = *(const volatile uint32_t *)((const char *)inStruct + 0x50);
+        // inStruct+0x50 (13.4) / inStruct+0x98 (15.6.1): the macOS-side
+        // slot where kern_SwapBegin stored the active swap ID.  The iOS
+        // kernel's own +0x50 expectation is what the 0x46c size patch
+        // preserves; coexistence reads the ID from the macOS slot and
+        // never forwards this struct to the kernel.
+        uint32_t inStructSwapIdOffset = g_macws_iomfb_abi
+            ? g_macws_iomfb_abi->inStructSwapIdOffset : 0x50;
+        uint32_t swap_id = *(const volatile uint32_t *)(
+            (const char *)inStruct + inStructSwapIdOffset);
         uint64_t scalar = swap_id;
         uint64_t requested_presentation_time = mach_absolute_time();
         IOReturn cancel_r = IOConnectCallScalarMethod(
@@ -23052,6 +23379,19 @@ IOReturn IOConnectCallStructMethod_new(io_connect_t client, uint32_t selector, c
     // outStructCnt 0x78 vs 0x70.)
     if(IOConnectIsIOGPU(client) && selector == 0x100 && outStructCnt && *outStructCnt == 0x78) {
         *outStructCnt = 0x70;
+    }
+    // 15.6.1 userland packs the active swap ID at inStruct+0x98, but the
+    // iOS 16.3 kernel's selector-5 ABI still reads it at +0x50 (the 13.4
+    // layout).  When the real kern_SwapEnd reaches the kernel (non-
+    // coexistence path; coexistence returned above), relocate the ID into
+    // the kernel-compatible slot before forwarding.  The buffer is fb+0x18
+    // inside the framebuffer object — writable in both versions.
+    if (!struct_skip && orig == 5 && selector == 5 && inStruct &&
+        inStructCnt == 0x46c && g_macws_iomfb_abi &&
+        g_macws_iomfb_abi->inStructSwapIdOffset != 0x50) {
+        uint32_t swap_id = *(const volatile uint32_t *)(
+            (const char *)inStruct + g_macws_iomfb_abi->inStructSwapIdOffset);
+        *(uint32_t *)((char *)inStruct + 0x50) = swap_id;
     }
     IOReturn r = IOConnectCallStructMethod(client, selector, inStruct, inStructCnt, outStruct, outStructCnt);
     // Read-only witness for the exclusive-mode control experiment.  The exact

@@ -13050,6 +13050,15 @@ static BOOL macws_texture_has_noop_did_modify_data(id texture) {
     return code && *code == 0xd65f03c0; // ret
 }
 
+// Render::Image field layout drifted between 13.4 and 15.6.1 (MetalImage
+// layout is unchanged: +0x40 texture, +0x78 planeCount, +0x7b flags with
+// 0x200 selecting didModifyData — RE-confirmed in both images' disasm).
+//   13.4:   image+0x60 source, +0x99 mipCount, +0xa0 bytesPerRow
+//   15.6.1: image+0x68 source, +0xa1 mipCount, +0xa8 bytesPerRow
+static size_t g_macws_render_image_source_off = 0x60;
+static size_t g_macws_render_image_mips_off = 0x99;
+static size_t g_macws_render_image_bpr_off = 0xa0;
+
 static void macws_quartzcore_update_image(
         void *context, void *metalImage, void *image, uint32_t flags,
         const char *label) {
@@ -13067,15 +13076,18 @@ static void macws_quartzcore_update_image(
     uint16_t planeCount =
         *(const volatile uint16_t *)((const char *)metalImage + 0x78);
     uint8_t mipLevelCount =
-        *(const volatile uint8_t *)((const char *)image + 0x99);
+        *(const volatile uint8_t *)((const char *)image +
+            g_macws_render_image_mips_off);
     const void *source =
-        *(const void *const volatile *)((const char *)image + 0x60);
+        *(const void *const volatile *)((const char *)image +
+            g_macws_render_image_source_off);
     uint32_t width =
         *(const volatile uint32_t *)((const char *)image + 0x10);
     uint32_t height =
         *(const volatile uint32_t *)((const char *)image + 0x14);
     NSUInteger bytesPerRow =
-        *(const volatile NSUInteger *)((const char *)image + 0xa0);
+        *(const volatile NSUInteger *)((const char *)image +
+            g_macws_render_image_bpr_off);
 
     if (texture != textureBefore || !(metalFlags & 0x200) ||
         planeCount != 1 || mipLevelCount != 1 || !source || !width ||
@@ -13120,22 +13132,49 @@ static void macws_install_quartzcore_update_image(
     Dl_info info = {0};
     if (!dladdr((const void *)header, &info) || !info.dli_fname ||
         !strstr(info.dli_fname, "/QuartzCore.framework/")) return;
-    static const uint8_t expectedUUID[16] = {
-        0xcf, 0x85, 0x3b, 0xbd, 0x01, 0xb6, 0x3f, 0x46,
-        0xad, 0xa1, 0xec, 0x70, 0xfd, 0x2d, 0xc9, 0xdc,
+    // 15.6.1 verified: update_image @ img+0x6e9cc, same signature and
+    // same flag-0x200 -> didModifyData path; only Render::Image fields
+    // moved (see g_macws_render_image_*_off).
+    static const struct {
+        uint8_t uuid[16];
+        uintptr_t offset;
+        uint32_t prologue[9];
+        uint8_t prologueWords;
+        size_t src, mips, bpr;
+    } variants[] = {
+        { { 0x31, 0x92, 0x16, 0x99, 0x89, 0x90, 0x3a, 0xce,
+            0x8d, 0x83, 0x16, 0xe7, 0xbe, 0x81, 0x4c, 0x6f },
+          0x6e9cc,
+          { 0xd503237f, 0xd10303ff, 0xa9066ffc, 0xa90767fa, 0xa9085ff8,
+            0xa90957f6, 0xa90a4ff4, 0xa90b7bfd, 0x9102c3fd },
+          9, 0x68, 0xa1, 0xa8 }, // macOS 15.6.1 (24G90)
+        { { 0xcf, 0x85, 0x3b, 0xbd, 0x01, 0xb6, 0x3f, 0x46,
+            0xad, 0xa1, 0xec, 0x70, 0xfd, 0x2d, 0xc9, 0xdc },
+          0x6f750,
+          { 0xd503237f, 0xd103c3ff, 0xa9096ffc,
+            0xa90a67fa, 0xa90b5ff8, 0xa90c57f6 },
+          6, 0x60, 0x99, 0xa0 }, // macOS 13.4 (Ventura)
     };
-    static const uint32_t expectedPrologue[] = {
-        0xd503237f, 0xd103c3ff, 0xa9096ffc,
-        0xa90a67fa, 0xa90b5ff8, 0xa90c57f6,
-    };
-    if (!macws_macho_has_uuid(header, expectedUUID)) return;
-    void *target = (void *)((uintptr_t)header + 0x6f750);
-    if (memcmp(target, expectedPrologue, sizeof(expectedPrologue)) != 0) {
-        fprintf(stderr,
-            "#### MACWS_AGX_NATIVE QuartzCore update_image skipped: "
-            "version/prologue mismatch at %p\n", target);
-        return;
+    void *target = NULL;
+    for (size_t i = 0;
+         i < sizeof(variants) / sizeof(variants[0]); i++) {
+        if (!macws_macho_has_uuid(header, variants[i].uuid)) continue;
+        void *candidate = (void *)((uintptr_t)header + variants[i].offset);
+        if (memcmp(candidate, variants[i].prologue,
+                   variants[i].prologueWords * sizeof(uint32_t)) != 0) {
+            fprintf(stderr,
+                "#### MACWS_AGX_NATIVE QuartzCore update_image skipped: "
+                "prologue mismatch at %p (variant %zu)\n",
+                candidate, i);
+            return;
+        }
+        target = candidate;
+        g_macws_render_image_source_off = variants[i].src;
+        g_macws_render_image_mips_off = variants[i].mips;
+        g_macws_render_image_bpr_off = variants[i].bpr;
+        break;
     }
+    if (!target) return;
     MSHookFunction(target, (void *)macws_quartzcore_update_image,
         (void **)&g_macws_quartzcore_update_image_original);
     fprintf(stderr,
