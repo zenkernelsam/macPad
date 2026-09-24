@@ -162,29 +162,31 @@ at `inStruct+0x98`. `IOConnectCallStructMethod_new` and
 This is a semantic ABI drift, not a blocker — but it must be handled in
 the hook, not just the `mov w3` patch.
 
-## 8. Open architecture question (affects every iOS-axis gate)
+## 8. Kernel axis — RESOLVED (user-confirmed 2026-09-24)
 
-`MacWSAGXNoCopyABIReady` ends with `kern.osversion == "20D67"` — a
-kernel-build check for iPadOS 16.3.1. Several interposes likewise assume
-the kernel underneath is iOS 16.3.
+The 15.6.1 rootfs/chroot runs on **the iPad's iOS kernel**, same
+architecture as the current 13.4 setup. All iOS-axis patches
+(IOConnect translations, AGX IOC expectations, IOMFB swap translation)
+stay required. The VirtualMac VM is only the analysis host.
 
-If the planned 15.6.1 container runs on **this VM's macOS 15.6.1 kernel**
-(`kern.osversion = 24G90`), every `kern.osversion`-gated feature
-self-disables and all iOS-kernel-ABI translations (IOMFB sel-5 struct,
-IOGPU selector table, AGX IOC expectations) become wrong or unnecessary.
-If the container still runs on the iPad's iOS 16.3 kernel, they stay
-required and the values above apply.
-
-This must be answered before writing the port patches: it decides
-whether the `20D67` term becomes `24G90`, is dropped, or stays.
+**Device build correction:** user reports the iPad is iPadOS **16.3 =
+build 20D47**, not 16.3.1. But `MacWSAGXNoCopyABIReady`
+(mac_hooks.m:21485) and the check at mac_hooks.m:14683 both hard-require
+`kern.osversion == "20D67"` (= 16.3.1). On a 20D47 device these gates
+return false **today** — meaning either the no-copy path has been
+silently disabled all along, or the comments' "16.3.1" was sloppy.
+Port action: widen the build check to accept the real device build
+(`20D47`, and keep `20D67` for safety), or switch to a Darwin-major
+check (`uname.release` major == 22 for iOS 16.x). Needs one runtime
+`sysctl kern.osversion` reading on the device to confirm.
 
 ## 9. iOS-axis version resolution
 
 Code comments consistently say "iPadOS 16.3/16.3.1 runtime" (dozens of
 runtime-confirmed notes). AGENTS.md's "iOS 16.5" refers to the
 **iPhoneOS 16.5 Theos SDK** (build-time headers), not the runtime
-target. Runtime axis = iPadOS 16.3.1 / kernel `20D67`. Resolved — no
-hidden second target.
+target. Runtime axis = iPadOS **16.3 (20D47)** per device check.
+Resolved — no hidden second target.
 
 ## 10. Image.qlgenerator
 
