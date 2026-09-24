@@ -36,7 +36,7 @@ echo "free on /var/mnt: $((AVAIL/1024)) MB"
 [ -x /var/jb/usr/local/bin/mount_bindfs ] || { echo "FAIL: mount_bindfs missing"; exit 1; }
 [ -f "$PY" ] || { echo "FAIL: $PY missing"; exit 1; }
 [ -f "$GUIDE/misc/arm64ify_macho.py" ] || { echo "FAIL: sync macPad repo first (git reset --hard origin/main)"; exit 1; }
-mount | grep -E "on $ROOTFS( |/)" && echo "WARN: mounts inside old rootfs (will be unmounted at swap)"
+mount | grep -E "on $ROOTFS( |/)" && echo "WARN: mounts inside old rootfs (will be unmounted at swap)" || true
 
 rm -rf "$NEW"; mkdir -p "$NEW"
 
@@ -79,7 +79,7 @@ WS="$NEW/System/Library/PrivateFrameworks/SkyLight.framework/Resources/WindowSer
 IP="$NEW/System/Library/CoreServices/Installer Progress.app/Contents/MacOS/Installer Progress"
 for b in "$WS" "$IP"; do
     [ -f "$b" ] || { echo "FAIL: $b missing"; exit 1; }
-    if ! "$PY" "$GUIDE/misc/arm64ify_macho.py" --check "$b" | grep -q arm64; then
+    if ! "$PY" "$GUIDE/misc/arm64ify_macho.py" --check "$b" | grep -qw arm64; then
         "$PY" "$GUIDE/misc/arm64ify_macho.py" "$b"
         /var/jb/usr/bin/ldid -S "$b"
         /var/jb/usr/bin/ldid -S "$b"   # second pass: settled __LINKEDIT
@@ -88,7 +88,7 @@ for b in "$WS" "$IP"; do
     fi
 done
 # bash is the chroot smoke-test exec; convert too — proven harmless pattern.
-"$PY" "$GUIDE/misc/arm64ify_macho.py" --check "$NEW/bin/bash" | grep -q arm64 || {
+"$PY" "$GUIDE/misc/arm64ify_macho.py" --check "$NEW/bin/bash" | grep -qw arm64 || {
     "$PY" "$GUIDE/misc/arm64ify_macho.py" "$NEW/bin/bash"
     /var/jb/usr/bin/ldid -S "$NEW/bin/bash"
 }
