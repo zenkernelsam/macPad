@@ -37,12 +37,24 @@ iPad can pull. The VM is behind the host's VZ NAT at 192.168.64.2.
 
 ## Phase B — on the iPad (root shell)
 
+Two artifacts were produced on the VM (cross-compile, no Theos on device
+needed for the package itself):
+
+- `~/Desktop/macPad/packages/com.kdt.macosbooter_0.3.4_iphoneos-arm64.deb`
+  (5.6 MB — built 2026-09-25 via theos + dpkg-deb --root-owner-group;
+  verified: postinst carries the 24G90 dyld-cache hash pair, libmachook
+  carries the dual-variant 15.6.1 code)
+- `~/Desktop/macos-15.6.1-rootfs.tar` (19 GB)
+
+Order matters — the deb refreshes the tools (incl. postinst) that the
+rootfs installer invokes at the end:
+
 ```bash
 cd /var/jb/var/mobile/MacWSBootingGuide
-git fetch origin && git reset --hard origin/main   # gets the new scripts
-bash misc/install_rootfs_15.sh                   # pulls from ciscohe@192.168.64.2
-# or if ssh to the VM is unreachable: copy a tar of the staging tree to the
-# device any way available, then  bash misc/install_rootfs_15.sh /path/to.tar
+git fetch origin && git reset --hard origin/main   # gets misc scripts
+sudo dpkg -i /path/to/com.kdt.macosbooter_0.3.4_iphoneos-arm64.deb
+sudo bash misc/install_rootfs_15.sh /path/to/macos-15.6.1-rootfs.tar
+# (or with no arg: ssh-pull from ciscohe@192.168.64.2 staging dir)
 ```
 
 The script: preflight (20D47, ~25GB free, tools) -> stream/extract to
