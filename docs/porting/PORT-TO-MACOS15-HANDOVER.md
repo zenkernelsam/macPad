@@ -14,6 +14,7 @@
 | **最大坏消息** | 补丁用 **UUID 严格闸门**（`macws_macho_uuid_matches`）。**已实测**：15.6.1 的 `AGXMetal13_3` arm64e UUID = `B303B4E8-5F17-39B8-8505-326AAF870F39`，**不在**源码 12 个 UUID 中 → **12 个闸门在 15.6.1 上预期全数失效，必须逐条重推** |
 | **最大好消息** | ① 宿主（M1 + iPadOS 16.3）与作者验证矩阵**一致**；② **iOS 侧代码不用移植**（MacWS 守护 / ChrootProxy / `launchdchrootexec`）；③ 本机同时具备 **15.6.1 与 13.2.1 两套共享缓存**，可做对照 |
 | **推荐路径** | 先跑 §3 的**命中率探针**（约 30 分钟，纯本机）→ 用数字决定：全量 port / 只做"最小可启动(MVB)" / 退回 13.4 |
+| **为什么难（先破除误解）** | **不是内核问题**：chroot 共享宿主 **iOS 16.3 内核**，换 macOS 版本**不动内核**。真正原因是：①**用户态二进制字节级变化**→ 12 个 UUID 闸门全失效 + 28 条签名大量失效（机械但量大）；②**图形栈实现演进**（Metal→Skia Graphite、AGX/IOGPU ABI、IOSurface 布局/压缩、SkyLight/WindowServer 管线）→ 部分补丁点在 15.x **根本不存在**，要**重新设计**；③macOS 15 的**密封系统卷/Cryptexes** 使 rootfs 准备流程未验证 |
 
 ---
 
@@ -77,6 +78,14 @@
 2. 定位通常需要**三重匹配**：镜像路径（48 条）+ **Mach-O UUID**（12 个）+ **函数序言字节**（28 条）。
 3. 命中后按**硬编码动作**改写（NOP / 改分支 / 重定向 stub / 填返回值），**全部假定 macOS 13.4 的二进制布局**。
 4. 另有一层 **iOS↔macOS 服务桥**（`*ChrootProxy`、`macws*` 守护）——**与 macOS 版本无关**（宿主恒为 16.3），**不用移植**。
+
+### 2.1 复杂度到底来自哪（澄清一个常见误解）
+
+- **不是"内核版本相差太多"**：chroot **共享宿主 iOS 16.3 内核**；换 macOS 版本 ≠ 换内核。
+- **主要工作量 = 字节级重定位**：补丁靠"路径 + UUID + 序言字节"三重匹配，而 **UUID 每次编译都会变**、函数序言/指令常被重排 → 12 个 UUID 闸门**必全失效**，28 条签名要逐条在 15.6.1 里重新定位等价点。
+- **最大不确定性 = 图形栈"实现"演进**（不是 API 版本号）：Metal 走 Skia Graphite、AGX/IOGPU 的 ABI、IOSurface 布局/压缩、SkyLight/WindowServer 合成管线 → 旧 hook 点可能**消失**，需要**另找思路**而非改字节。
+- **次要但脆**：App 特例（Dock / Settings / ExtensionKit / Preview / Maps）内部实现变化。
+- **独立风险**：**macOS 15 rootfs 准备**（密封系统卷 + Cryptexes + dyld 变化）与 13.x 流程不同，**未验证**。
 
 ---
 
@@ -150,7 +159,45 @@ for f in /tmp/1*-*; do printf "%-22s " "$(basename "$f")"; /usr/bin/dwarfdump --
 
 ---
 
-## 7. 附录
+## 7. IDA Pro 逆向清单（必须逐个处理的文件）
+
+> 环境：本机已装 **IDA Pro 9.2** + `ida-pro-mcp`（工具：`decompile` / `disasm` / `xrefs_to` / `find_bytes` / `get_bytes` / `rename` / `set_comments` / `py_eval`）。
+> 建议工作流：**每个镜像一个 IDB** → `find_bytes` 搜"旧签名" → 命中处 `decompile`/`disasm` 确认语义 → 产出"新签名 + 依据" → 回填台账。
+
+### 7.1 A 类｜macOS 侧（**必须重推**；来源 = rootfs / macOS 共享缓存）
+
+| 优先级 | 二进制 | 位置 | IDA 要做什么 |
+|---|---|---|---|
+| ★★★ | `QuartzCore` | 共享缓存 | 旧 UUID `CF853BBD-01B6-3F46-ADA1-EC70FD2DC9DC`；定位 `macws_install_quartzcore_frame_info_hook` / `Vbl_FrameTime` 对应点，重推 `expectedPrologue`(6B) 与 update-image 调用点 |
+| ★★★ | `Metal` | 共享缓存 | 重推 `submit_prologue`(14B)、`surface_lock_prologue`(14B)、`mac_key_prologue`(8B)；确认 submit 标志位 / 反射反序列化路径是否仍存在 |
+| ★★★ | `IOGPU` | 共享缓存 | 定位 `IOConnectCallMethod` / `IOConnectTrap1` 相关点（旧 UUID `DF041B53-…`、`2B44B850-…`）→ 重定位资源创建路径 |
+| ★★★ | `AGXCompilerCore` | 共享缓存 | `setupCompiler:` / variant 查找链（历史坑：`findOrCreate<X>ProgramVariant`） |
+| ★★☆ | `SkyLight` | 共享缓存 | `MacWSSkyLightCursorABIValid` 对应点（`expectedPrologue` 9B）+ WindowServer 合成/光标 ABI |
+| ★★☆ | `CoreGraphics` | 共享缓存 | 位图/图像 ABI 相关补丁点 |
+| ★★☆ | `IOKit` | 共享缓存 | `mach_port_construct` 等（与 IOGPU 簇交叉） |
+| ★☆☆ | `default.metallib` | `QuartzCore.framework/Versions/A/Resources/` | 确认 15.6.1 是否仍存在 / 路径是否变化 |
+
+### 7.2 B 类｜iOS 侧（宿主恒 16.3 → **原则上不用 port**，但有一处版本线索要核查）
+
+| 二进制 | 说明 |
+|---|---|
+| `AGXMetal13_3.bundle/Contents/MacOS/AGXMetal13_3`（**iPad 自带**的 GPU 驱动） | macPad 走"**real iOS AGX kernel driver**"，即把 **iOS 的** AGX bundle bind-mount 进 rootfs → **iOS 16.3 不变 ⇒ 不用 port**。⚠️ 但需**确认 bind-mount 关系**（rootfs 里同名 bundle 是否被 iOS 的覆盖） |
+| `macws*` 守护 / `*ChrootProxy` / `launchdchrootexec` | 与 macOS 版本无关，**不改** |
+
+> ⚠️ **版本线索矛盾（务必先查）**：README 写测于 **iPadOS 16.3**，而 AGENTS.md 写 "hardcoded for **iOS 16.5** / macOS 13.4"。**若 iOS 侧签名是按 16.5 推的，则 iOS 侧也要重推**——这是**第二条 port 轴**，别漏。
+
+### 7.3 C 类｜App 特例（最低优先级，最后做）
+
+`Dock`、`iconservicesagent`、`System Settings`、`Preview`、`Maps`、`MacWSCatalystLauncher.app/PlugIns/SettingsExtensionProxy.appex`、Visual Studio Code 的 `Electron`、`Steam`、`Geekbench 6`
+→ 每个都要 IDB；多数只是"绕过版本/权限检查"，**先判断 15.6.1 是否还需要**（可能已不需要，直接把补丁删掉更干净）。
+
+### 7.4 IDA 产出物（回填台账）
+
+每条补丁一行：`目标镜像 | 符号/函数 | 15.6.1 地址 | 新签名(hex) | 语义依据(decompile 片段) | 动作 | 状态`
+
+---
+
+## 8. 附录
 
 - **机器**：`VirtualMac2,1` / macOS 15.6.1(24G90) / 8c / 10GB / 宿主 iPadOS 16.3 + Dopamine
 - **工具路径**：`dyldex`=`~/Desktop/VirtualMacOniPad/VirtualMac/build/toolchain/venv/bin/dyldex`；`ipsw`=`…/toolchain/bin/ipsw-a2sb`；IDA Pro 9.2 + `ida-pro-mcp`（`py_eval`/`decompile`/`xrefs_to` 等）
