@@ -112,6 +112,34 @@ mv "$ROOTFS" "$BAK"
 mv "$NEW" "$ROOTFS"
 echo "old rootfs -> $BAK (delete after 15.6.1 is proven)"
 
+echo "=== [5.5/7] harvest iOS-side injections from old rootfs ==="
+# These are not macOS files — they were baked into the 13.4 rootfs at setup
+# and postinst expects them present (System/Tweaks/TweakLoader.dylib,
+# CydiaSubstrate, systemhook). Copy them across unchanged.
+for p in \
+    "System/Tweaks/TweakLoader.dylib" \
+    "System/Library/Frameworks/CydiaSubstrate.framework" \
+    "usr/lib/systemhook.dylib" \
+    "usr/local/Frameworks" \
+    "usr/local/bin" \
+    "usr/local/lib" \
+    "usr/local/libexec" \
+    "usr/local/share" \
+    "opt" \
+    "private/var/root" \
+    "private/var/db/dslocal" \
+    "private/etc/master.passwd" \
+    "System/Library/PrivateFrameworks/SkyLight.framework/Versions/A/Resources/CursorAsset_base"; do
+    if [ -e "$BAK/$p" ] && [ ! -e "$ROOTFS/$p" ]; then
+        mkdir -p "$ROOTFS/$(dirname "$p")"
+        cp -a "$BAK/$p" "$ROOTFS/$p" && echo "  harvested $p"
+    elif [ -e "$ROOTFS/$p" ]; then
+        echo "  already present: $p"
+    else
+        echo "  MISSING in old rootfs too: $p"
+    fi
+done
+
 echo "=== [6/7] bind mount + postinst ==="
 mkdir -p "$ROOTFS/var/jb"
 mount | grep -q "on $ROOTFS/var/jb " || \
