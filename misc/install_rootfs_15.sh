@@ -57,8 +57,25 @@ if [ -d "$ROOTFS" ]; then
 else
     echo "no existing rootfs — fresh install (harvest falls back to /var/jb ElleKit)"
 fi
-[ -x /var/jb/usr/local/bin/mount_bindfs ] || { echo "FAIL: mount_bindfs missing"; exit 1; }
-[ -f "$PY" ] || { echo "FAIL: $PY missing"; exit 1; }
+# Check every external tool this script and the postinst chain need, in one
+# pass — a minimal bootstrap is missing several and whack-a-mole is slow.
+MISSING_TOOLS=""
+for t in /var/jb/usr/bin/python3 /var/jb/usr/bin/ldid /var/jb/usr/bin/grep \
+         /var/jb/usr/bin/jbctl /var/jb/usr/bin/uicache \
+         /var/jb/usr/local/bin/mount_bindfs \
+         tar strings cut timeout realpath; do
+    if [ "${t#/}" != "$t" ]; then
+        [ -x "$t" ] || MISSING_TOOLS="$MISSING_TOOLS $t"
+    else
+        command -v "$t" >/dev/null 2>&1 || MISSING_TOOLS="$MISSING_TOOLS $t"
+    fi
+done
+if [ -n "$MISSING_TOOLS" ]; then
+    echo "FAIL: missing tools:$MISSING_TOOLS"
+    echo "  -> fix with: sudo apt install -y python3 ldid coreutils grep uikittools tar binutils findutils"
+    echo "  -> mount_bindfs ships inside the deb (dpkg -i installs it)"
+    exit 1
+fi
 [ -f "$MISC_DIR/arm64ify_macho.py" ] || { echo "FAIL: arm64ify_macho.py not found next to this script or in the repo clone"; exit 1; }
 mount | grep -E "on $ROOTFS( |/)" && echo "WARN: mounts inside old rootfs (will be unmounted at swap)" || true
 
@@ -82,7 +99,9 @@ echo "chown -R root:wheel (takes a minute)"
 chown -R 0:0 "$NEW"
 
 echo "=== [3/7] verify ==="
-RB=$(/var/jb/usr/bin/plutil -extract ProductBuildVersion raw \
+# plutil may not be installed on a minimal bootstrap — use python3 (already
+# a hard dep) to read the build version.
+RB=$("$PY" -c 'import plistlib,sys; print(plistlib.load(open(sys.argv[1],"rb"))["ProductBuildVersion"])' \
     "$NEW/System/Library/CoreServices/SystemVersion.plist" 2>/dev/null | tr -d '[:space:]')
 echo "rootfs build: $RB"
 [ "$RB" = "24G90" ] || { echo "FAIL: expected 24G90 (15.6.1), got '$RB'"; exit 1; }

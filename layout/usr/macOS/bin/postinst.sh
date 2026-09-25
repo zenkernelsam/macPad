@@ -962,7 +962,8 @@ sign_and_trustcache_merging_native_entitlements \
 # build is read from the mounted rootfs so 13.4 and 15.6.1 installs share
 # this script. Unknown builds skip the cache hashes rather than registering
 # stale ones — everything else is still provisioned.
-MACWS_ROOTFS_BUILD=$(/var/jb/usr/bin/plutil -extract ProductBuildVersion raw \
+MACWS_ROOTFS_BUILD=$(/var/jb/usr/bin/python3 -c \
+    'import plistlib,sys; print(plistlib.load(open(sys.argv[1],"rb"))["ProductBuildVersion"])' \
     /var/mnt/rootfs/System/Library/CoreServices/SystemVersion.plist 2>/dev/null \
     | tr -d '[:space:]')
 case "$MACWS_ROOTFS_BUILD" in

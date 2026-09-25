@@ -25,17 +25,23 @@ ls -lh /var/mobile/Documents/macos-15.6.1-rootfs.tar \
 
 ## Step 1 — 前置依赖 + 同步代码
 
-**装 python3 + 确认 ElleKit**（工具链硬依赖，postinst 里大量 .py 脚本）：
-Sileo 里搜 `python3` 安装（procursus 源），或终端：
+**装依赖包**（postinst/脚本链需要的全部外部工具，一次装齐——极简
+bootstrap 会逐个撞缺）：
 
 ```bash
-sudo apt update && sudo apt install -y python3
-ls -l /var/jb/usr/bin/python3   # 确认存在
+sudo apt update
+sudo apt install -y python3 ldid coreutils grep gawk findutils tar file binutils uikittools file-cmds
+ls -l /var/jb/usr/bin/python3 /var/jb/usr/bin/ldid   # 确认这俩存在
 ```
 
-> 2026-09-25 踩坑记录：`dpkg -i` 报 `python3: not found` + `Unresolved legacy
-> MacWS boot launch configuration` = python3 未装，包处于半配置状态。
-> 装完 python3 后**重跑一次 `dpkg -i`** 即可续上（不是重新来过）。
+> 2026-09-25 踩坑记录：本机先后缺 `python3`、`sysctl` 的 PATH、
+> `awk`、`lipo`、`ldid`、`mount_bindfs`。脚本已内置 PATH 兜底 +
+> 纯 bash df 解析；`lipo` 不再需要（deb 直接带预拆分
+> `libmachook_arm64.dylib`）；`mount_bindfs` 已打进 deb
+> （/var/jb/usr/local/bin/）。剩余无法内置的真依赖：python3/ldid/
+> strings(binutils)/coreutils——上面 apt 一条命令全包。
+> 若 `apt` 里没有 `file-cmds` 这个名字，删掉它再跑（chflags 只有一处
+> quicklook 保护用，缺了也能继续）。
 
 **同步代码**（拿 misc/ 新脚本）：
 
