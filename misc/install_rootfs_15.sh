@@ -1,5 +1,12 @@
-#!/bin/bash
+#!/bin/sh
 # install_rootfs_15.sh — install the macOS 15.6.1 chroot rootfs on the iPad.
+# Needs bash (process substitution); if invoked via a plain sh, re-exec.
+if [ -z "${BASH_VERSION:-}" ]; then
+    for b in /var/jb/usr/bin/bash /bin/bash /usr/bin/bash; do
+        [ -x "$b" ] && exec "$b" "$0" "$@"
+    done
+    echo "FAIL: bash not found — apt install bash" >&2; exit 1
+fi
 # Run ON THE DEVICE as root. The rootfs staging tree is produced on the
 # VirtualMac VM by build-rootfs-15.6.1.sh (Desktop/macos-15.6.1-rootfs).
 #

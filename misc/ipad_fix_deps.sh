@@ -1,5 +1,7 @@
-#!/bin/bash
+#!/bin/sh
 # ipad_fix_deps.sh — one-shot iPad fixer for the macPad install.
+# POSIX-only on purpose: this script must run on a minimal bootstrap where
+# bash itself may not be installed yet (Filza "execute" uses /bin/sh).
 #
 # Two jobs:
 #   1. (with --uninstall) remove the half-configured com.kdt.macosbooter deb
@@ -12,7 +14,7 @@
 #   sudo bash ipad_fix_deps.sh                # just install deps + shims
 #   sudo bash ipad_fix_deps.sh --uninstall    # remove deb first, then deps
 #   sudo bash ipad_fix_deps.sh --uninstall-only
-set -uo pipefail
+set -u
 
 export PATH="/var/jb/usr/bin:/var/jb/usr/sbin:/var/jb/usr/local/bin:/usr/bin:/usr/sbin:/bin:/sbin:$PATH"
 PKG=com.kdt.macosbooter
