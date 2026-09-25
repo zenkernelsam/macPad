@@ -102,7 +102,7 @@ for t in /var/jb/usr/bin/python3 /var/jb/usr/bin/ldid /var/jb/usr/bin/grep \
          /var/jb/usr/bin/jbctl; do
     if [ -x "$t" ]; then echo "  ok $t"; else echo "  MISSING $t"; FAIL=1; fi
 done
-for t in tar strings cut timeout realpath chflags; do
+for t in tar awk strings cut timeout realpath chflags; do
     if command -v "$t" >/dev/null 2>&1; then echo "  ok $t"; else echo "  missing $t (may still be fine)"; fi
 done
 echo
