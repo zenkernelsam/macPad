@@ -44,7 +44,10 @@ cd /var/jb/var/mobile/MacWSBootingGuide
 git fetch origin && git reset --hard origin/main
 ```
 
-预期：HEAD 落在 `af4974c` 或更新。验证：`ls misc/arm64ify_macho.py` 存在。
+预期：HEAD 落在 `a417d41` 或更新。
+**没克隆过 repo 也没关系**：`install_rootfs_15.sh` 会优先用同目录下的
+`arm64ify_macho.py`/`exec_to_dylib.py`（同步文件夹里三个脚本放一起即可），
+只有 `mount_bindfs`/`run_bash.sh`/`postinst.sh` 需要 deb 已安装提供。
 
 > **全新安装（本设备没装过 13.4 macPad）**：脚本会自动检测——`/var/mnt`
 > 不存在就创建、无旧 rootfs 可备份、iOS 注入组件（TweakLoader/

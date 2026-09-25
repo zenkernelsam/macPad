@@ -27,7 +27,14 @@ SRC="${1:-ciscohe@192.168.64.2}"
 ROOTFS=/var/mnt/rootfs
 NEW=/var/mnt/rootfs-15.new
 BAK=/var/mnt/rootfs-13.4.bak
-GUIDE=/var/jb/var/mobile/MacWSBootingGuide
+# Helper scripts (arm64ify/exec_to_dylib) may live either next to this script
+# (e.g. downloaded together into a Filza-visible folder) or in the repo clone.
+SELF_DIR=$(cd "$(dirname "$0")" 2>/dev/null && pwd)
+if [ -f "$SELF_DIR/arm64ify_macho.py" ]; then
+    MISC_DIR="$SELF_DIR"
+else
+    MISC_DIR="/var/jb/var/mobile/MacWSBootingGuide/misc"
+fi
 PY=/var/jb/usr/bin/python3
 
 echo "=== [1/7] preflight ==="
@@ -52,7 +59,7 @@ else
 fi
 [ -x /var/jb/usr/local/bin/mount_bindfs ] || { echo "FAIL: mount_bindfs missing"; exit 1; }
 [ -f "$PY" ] || { echo "FAIL: $PY missing"; exit 1; }
-[ -f "$GUIDE/misc/arm64ify_macho.py" ] || { echo "FAIL: sync macPad repo first (git reset --hard origin/main)"; exit 1; }
+[ -f "$MISC_DIR/arm64ify_macho.py" ] || { echo "FAIL: arm64ify_macho.py not found next to this script or in the repo clone"; exit 1; }
 mount | grep -E "on $ROOTFS( |/)" && echo "WARN: mounts inside old rootfs (will be unmounted at swap)" || true
 
 rm -rf "$NEW"; mkdir -p "$NEW"
@@ -96,8 +103,8 @@ WS="$NEW/System/Library/PrivateFrameworks/SkyLight.framework/Resources/WindowSer
 IP="$NEW/System/Library/CoreServices/Installer Progress.app/Contents/MacOS/Installer Progress"
 for b in "$WS" "$IP"; do
     [ -f "$b" ] || { echo "FAIL: $b missing"; exit 1; }
-    if ! "$PY" "$GUIDE/misc/arm64ify_macho.py" --check "$b" | grep -qw arm64; then
-        "$PY" "$GUIDE/misc/arm64ify_macho.py" "$b"
+    if ! "$PY" "$MISC_DIR/arm64ify_macho.py" --check "$b" | grep -qw arm64; then
+        "$PY" "$MISC_DIR/arm64ify_macho.py" "$b"
         /var/jb/usr/bin/ldid -S "$b"
         /var/jb/usr/bin/ldid -S "$b"   # second pass: settled __LINKEDIT
     else
@@ -105,8 +112,8 @@ for b in "$WS" "$IP"; do
     fi
 done
 # bash is the chroot smoke-test exec; convert too — proven harmless pattern.
-"$PY" "$GUIDE/misc/arm64ify_macho.py" --check "$NEW/bin/bash" | grep -qw arm64 || {
-    "$PY" "$GUIDE/misc/arm64ify_macho.py" "$NEW/bin/bash"
+"$PY" "$MISC_DIR/arm64ify_macho.py" --check "$NEW/bin/bash" | grep -qw arm64 || {
+    "$PY" "$MISC_DIR/arm64ify_macho.py" "$NEW/bin/bash"
     /var/jb/usr/bin/ldid -S "$NEW/bin/bash"
 }
 
@@ -115,7 +122,7 @@ done
 # binary so postinst's [ ! -e ] guard keeps the 15.6.1 build.
 LSD="$NEW/System/Library/CoreServices"
 if [ ! -e "$LSD/launchservicesd.dylib" ]; then
-    "$PY" "$GUIDE/misc/exec_to_dylib.py" "$LSD/launchservicesd" \
+    "$PY" "$MISC_DIR/exec_to_dylib.py" "$LSD/launchservicesd" \
         "$LSD/launchservicesd.dylib"
     /var/jb/usr/bin/ldid -S "$LSD/launchservicesd.dylib"
 fi
