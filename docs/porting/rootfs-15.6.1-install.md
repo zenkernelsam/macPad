@@ -28,16 +28,25 @@ ls -lh
 （路径如果不同，用 Filza 长按文件夹 → 属性 复制真实路径。）
 确认能看到 `macos-15.6.1-rootfs.tar` 和 `.deb`。
 
-## Step 1 — 装依赖（一次装齐，别再打地鼠）
+## Step 1 — 装依赖 + 清理半装状态（懒人脚本）
+
+用 `ipad_fix_deps.sh`（同步文件夹里有）。它做两件事：
 
 ```bash
-sudo apt update
-sudo apt install -y python3 ldid coreutils grep gawk findutils tar file binutils uikittools file-cmds
-ls -l /var/jb/usr/bin/python3 /var/jb/usr/bin/ldid
+# 情况 A：dpkg -i 曾失败、Sileo 提示"没安装好"挡着别的软件 —— 先卸载干净：
+sudo bash ipad_fix_deps.sh --uninstall
+
+# 情况 B：dpkg 正常，只补依赖：
+sudo bash ipad_fix_deps.sh
 ```
 
-若 apt 报某个包名不存在（比如 `file-cmds`），把那个名字删掉重跑即可。
-必须存在的只有 `python3` 和 `ldid`，其余是常用 Unix 工具的补齐。
+脚本内容：卸 deb（清掉 dpkg 半配置状态 + `dpkg --configure -a` +
+`apt -f install` 解锁队列）→ 逐包装依赖（某个包名在源里没有会跳过，
+不会整体失败）→ 给缺的工具造兜底（`strings` 用 python3 现场造一个，
+`chflags`/`lipo`/`plutil` 从 `/usr/bin` 系统路径软链）→ 最后打印
+验证清单，关键工具齐了会告诉你直接跑 Step 2。
+
+如果坚持手动装：`sudo apt install -y python3 ldid coreutils grep gawk findutils tar binutils uikittools file-cmds`（`binutils`/`file-cmds` 名字在你的源里可能不存在，删了重跑，shim 会兜底）。
 
 ## Step 2 — 装 deb
 
