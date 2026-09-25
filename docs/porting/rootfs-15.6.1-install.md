@@ -25,7 +25,7 @@ ls -lh /var/mobile/Documents/macos-15.6.1-rootfs.tar \
 
 ## Step 1 — 前置依赖 + 同步代码
 
-**装 python3**（工具链硬依赖，postinst 里大量 .py 脚本）：
+**装 python3 + 确认 ElleKit**（工具链硬依赖，postinst 里大量 .py 脚本）：
 Sileo 里搜 `python3` 安装（procursus 源），或终端：
 
 ```bash
@@ -45,6 +45,14 @@ git fetch origin && git reset --hard origin/main
 ```
 
 预期：HEAD 落在 `af4974c` 或更新。验证：`ls misc/arm64ify_macho.py` 存在。
+
+> **全新安装（本设备没装过 13.4 macPad）**：脚本会自动检测——`/var/mnt`
+> 不存在就创建、无旧 rootfs 可备份、iOS 注入组件（TweakLoader/
+> systemhook/CydiaSubstrate）改从 `/var/jb` 的 ElleKit 收割。
+> 已知缺口：`OSXvnc-server`（chroot 内 VNC）只存在于作者的旧 rootfs 包，
+> 新装没有它——但主显示路径是 **MacWSHost.app**（deb 装到
+> `/var/jb/Applications/`，DisplayStream 直取合成好的 surface），
+> VNC 只是诊断 fallback。要 VNC 的话以后可从旧 rootfs 包补。
 
 ## Step 2 — 装 deb（先装包，再装 rootfs，顺序别反）
 
