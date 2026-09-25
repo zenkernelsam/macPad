@@ -23,7 +23,21 @@ ls -lh /var/mobile/Documents/macos-15.6.1-rootfs.tar \
        /var/mobile/Documents/com.kdt.macosbooter_0.3.4_iphoneos-arm64.deb
 ```
 
-## Step 1 — 同步代码（拿 misc/ 新脚本）
+## Step 1 — 前置依赖 + 同步代码
+
+**装 python3**（工具链硬依赖，postinst 里大量 .py 脚本）：
+Sileo 里搜 `python3` 安装（procursus 源），或终端：
+
+```bash
+sudo apt update && sudo apt install -y python3
+ls -l /var/jb/usr/bin/python3   # 确认存在
+```
+
+> 2026-09-25 踩坑记录：`dpkg -i` 报 `python3: not found` + `Unresolved legacy
+> MacWS boot launch configuration` = python3 未装，包处于半配置状态。
+> 装完 python3 后**重跑一次 `dpkg -i`** 即可续上（不是重新来过）。
+
+**同步代码**（拿 misc/ 新脚本）：
 
 ```bash
 cd /var/jb/var/mobile/MacWSBootingGuide

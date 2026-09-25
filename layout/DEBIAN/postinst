@@ -1,6 +1,10 @@
 # No shebang: this jailbreak's AMFI blocks execve of shebang scripts. dpkg
 # invokes maintainer scripts through its shell.
 
+# Filza/dpkg environments may export a minimal PATH missing the jb bootstrap
+# dirs — make it explicit so every tool below resolves.
+export PATH="/var/jb/usr/bin:/var/jb/usr/sbin:/var/jb/usr/local/bin:/usr/bin:/usr/sbin:/bin:/sbin:$PATH"
+
 HOSTD=/var/jb/usr/macOS/bin/macwshostd
 HOSTD_PLIST=/var/jb/Library/LaunchDaemons/com.macwsguide.hostd.plist
 KEYCHAIND=/var/jb/usr/macOS/bin/macwskeychaind

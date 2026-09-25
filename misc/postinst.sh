@@ -1,3 +1,7 @@
+# Filza/SSH terminals may export a minimal PATH missing the jb bootstrap
+# dirs — make it explicit so every tool below (incl. realpath) resolves.
+export PATH="/var/jb/usr/bin:/var/jb/usr/sbin:/var/jb/usr/local/bin:/usr/bin:/usr/sbin:/bin:/sbin:$PATH"
+
 cd $(realpath $HOME/../..)/usr/macOS
 
 # Several provisioning steps below create paths in the mounted macOS volume

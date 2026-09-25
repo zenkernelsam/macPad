@@ -18,6 +18,11 @@
 #   7. smoke test: run_bash.sh -c "echo hi"
 set -euo pipefail
 
+# Filza/SSH terminals may export a minimal PATH missing /usr/sbin (sysctl)
+# and the jb bootstrap dirs (tar/ssh) — make it explicit so every tool below
+# resolves regardless of the calling environment.
+export PATH="/var/jb/usr/bin:/var/jb/usr/sbin:/var/jb/usr/local/bin:/var/jb/bin:/var/jb/sbin:/usr/bin:/usr/sbin:/bin:/sbin:$PATH"
+
 SRC="${1:-ciscohe@192.168.64.2}"
 ROOTFS=/var/mnt/rootfs
 NEW=/var/mnt/rootfs-15.new
