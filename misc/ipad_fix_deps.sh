@@ -73,6 +73,59 @@ PYEOF
     echo "  shimmed: /var/jb/usr/local/bin/strings (python3)"
 fi
 
+# plutil(1): procursus ships no plutil package on some repos and stock iOS
+# dropped it. The scripts need four forms: -key K FILE (read), -key K -value V
+# FILE (write), -show FILE, and bare FILE (both print an OpenStep-style dump
+# that callers grep for `key = "value";` lines).
+if ! command -v plutil >/dev/null 2>&1; then
+    mkdir -p /var/jb/usr/bin
+    cat > /var/jb/usr/bin/plutil <<'PYEOF'
+#!/var/jb/usr/bin/python3
+import sys, plistlib
+
+def dump(v, indent=""):
+    out = []
+    if isinstance(v, dict):
+        for k, val in v.items():
+            if isinstance(val, (dict, list)):
+                out.append(f"{indent}{k} = ")
+                out.extend(dump(val, indent + "    "))
+            elif isinstance(val, str):
+                out.append(f'{indent}{k} = "{val}";')
+            elif isinstance(val, bool):
+                out.append(f"{indent}{k} = {'true' if val else 'false'};")
+            else:
+                out.append(f"{indent}{k} = {val};")
+    elif isinstance(v, list):
+        out.append(f"{indent}(")
+        for item in v:
+            if isinstance(item, str):
+                out.append(f'{indent}    "{item}",')
+            elif isinstance(item, (dict, list)):
+                out.extend(dump(item, indent + "    "))
+            else:
+                out.append(f"{indent}    {item},")
+        out.append(f"{indent})")
+    return out
+
+args = sys.argv[1:]
+path = args[-1]
+data = plistlib.load(open(path, "rb"))
+if "-key" in args:
+    i = args.index("-key")
+    key = args[i + 1]
+    if "-value" in args:
+        data[key] = args[args.index("-value") + 1]
+        plistlib.dump(data, open(path, "wb"), fmt=plistlib.FMT_XML)
+    else:
+        print(data.get(key, ""))
+else:
+    print("\n".join(dump(data)))
+PYEOF
+    chmod 755 /var/jb/usr/bin/plutil
+    echo "  shimmed: /var/jb/usr/bin/plutil (python3)"
+fi
+
 # chflags(1): only used to set the `restricted` flag on two QuickLook appex.
 # Stock iOS ships /usr/bin/chflags — link it into the jb prefix if the
 # procursus copy is absent.

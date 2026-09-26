@@ -102,7 +102,52 @@ caught:
 See `[[cross-image-objc-class-register-and-ioconnect-heap-blocker]]` for
 the corrected attribution (the "LATE UPDATE" section at the top).
 
-## Current Goal & Progress (AGX-Native, NO Sim Path)
+## Project-Knowledge-First & IDA Pro RE Workflow (load-bearing rule — read third)
+
+**Hard rule A — search this project BEFORE inventing solutions.** When a
+problem appears, FIRST grep `CLAUDE.md`, `AGENTS.md`, `docs/` (especially
+`docs/evidence/` and `docs/porting/`), and source-file comments for the
+error string / syscall name / subsystem. The original author walked this
+same path: version numbers differ (13.4 vs 15.6.1) but the architecture
+and failure modes are the same. Most blockers encountered during a port
+have already been documented, worked around, or explicitly ruled out —
+re-deriving them from scratch burns sessions on already-solved problems.
+
+**Hard rule B — all reverse engineering goes through IDA Pro via the
+ida-pro-mcp MCP server.** Do NOT scrape binaries with ad-hoc
+`otool | grep | awk` pipelines, `strings`, or Python byte-hunting when a
+genuine question exists ("which function calls X", "what does this branch
+check", "where does this string get referenced") — that approach is slow,
+token-heavy, and produces disconnected fragments. Instead:
+
+1. Identify the exact binary that owns the behavior (e.g.
+   `analysis/dyld_15.6.1_arm64e_thin`, a framework from the rootfs, a
+   kernel extension).
+2. **Tell the user the absolute file path to load** into IDA Pro, and wait
+   for them to load it + start the ida-pro-mcp server (default
+   `http://127.0.0.1:13337/mcp`, server name `ida-pro-mcp-Instance1`).
+3. Then analyze through the MCP tools — `find_regex`/`search_text` for
+   strings, `xrefs_to` for references, `decompile` for Hex-Rays output,
+   `func_query`/`list_funcs` for navigation, `py_eval` for anything the
+   canned tools don't cover. IDA keeps names, xrefs, types and call
+   graphs logically connected — use it.
+4. For thin slices needed on-device work, pre-extract with
+   `lipo -thin arm64e` into `analysis/` so the user gets one file path.
+
+**Hard rule B2 — use IDA Pro MCP (`py_eval`) whenever IDA can answer it;
+do not substitute Python.** If the question is about binary contents —
+offsets, instruction encodings, xrefs, bytes at an address, struct field
+provenance — drive IDA (`py_eval` for `idc`/`ida_*` APIs, `get_bytes`,
+`disasm`, `decompile`), not local Python parsing. Hand-rolled Python byte
+math has repeatedly produced wrong encodings (e.g. the `udiv`/branch-off
+trampoline bugs) and burns tokens on re-verification. Legitimate Python
+use is limited to what IDA cannot reach: device-side file I/O over SSH
+(copy/pwrite/re-sign a remote binary), rootfs packaging, and byte-level
+verification of a deployed device file. Even then, derive the patch
+bytes/locations from IDA first.
+
+Rule A applies before Rule B: if the doc tables already answer it, do not
+open IDA at all.
 
 **Goal:** Run macOS WindowServer in chroot on jailbroken iPad13,6 (iOS
 16.3 arm64) using **real iOS AGX kernel driver only**
@@ -209,6 +254,46 @@ kills WindowServer / launchservicesd / OSXvnc-server / macwsallocd /
 autosignd / launchdchrootexec / orphan oslog / tail / find_crash from
 debug sessions, then prints the final state. Bounds damage from a
 runaway loop to ~10 seconds of high CPU.
+
+## Session-State Recovery (do this FIRST after context loss)
+
+If the conversation was summarized/interrupted, **read
+`docs/porting/dyld-15.6.1-state.md` before doing anything else.** It holds
+the live patch ledger, fat-offset rules, confirmed root causes, bisect
+results, and next steps for the macOS 15.6.1 dyld shared-cache bring-up.
+Keep that file updated as ground truth; do not re-derive state from
+scratch.
+
+Also read `docs/porting/TOOLS-AND-PORTING.md` — the inventory of the
+project's built-in tools (what `sprobe`, `launchdchrootexec`, `libmachook`,
+the `lldb_*` scripts, `loadtc`, `extract_dyld_cache.py` etc. are FOR) and
+the proven procedure for porting a new macOS version rootfs onto the iPad.
+The toolchain already exists — reuse it, don't reinvent it.
+
+## Hard rules for reverse engineering
+
+**Use IDA Pro whenever possible — prefer the ida-pro-mcp server
+(`py_eval`) for ALL binary analysis. Python-based byte-poking is wrong,
+wastes tokens, and has repeatedly produced bad encodings.** Only use
+shell/python for what IDA can't reach (device-side file I/O over SSH,
+deploying/signing/verifying a patched file, running tests). Derive every
+patch's bytes/offsets from IDA first.
+
+## Device Access (hardcoded — do not re-derive)
+
+- **SSH**: `root@192.168.64.1 -p 2222`, password `cisco`
+  (use `sshpass -p cisco`; no SSH keys on this Mac — `~/.ssh` is empty).
+  The device IP has changed before (`192.168.5.8`, `172.20.10.3`); if
+  `.64.1` is unreachable, scan reachable subnets for an open `2222`.
+- **File staging area on device** — upload ALL scripts/debs/patched
+  binaries here (old files may be overwritten freely):
+
+  `/var/mobile/Containers/Shared/AppGroup/1B2AD29A-2C34-4770-86EC-E11CD02312FF/File Provider Storage/macPad_iOS`
+
+- The on-device repo `/var/jb/var/mobile/MacWSBootingGuide` and
+  `/var/jb/var/mobile/theos` may not exist — the device was re-jailbroken;
+  work from the staging dir + `/var/mnt/rootfs` (macOS 15.6.1 mount) and
+  `/var/jb/usr/macOS` (installed package).
 
 ## Build
 

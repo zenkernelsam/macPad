@@ -323,12 +323,26 @@ prepare_extension() {
     fi
 
     changed=0
-    for dependency in \
-        '@executable_path/../Frameworks/libmachook.dylib' \
-        '@executable_path/../Frameworks/libobjc-trampolines.dylib'; do
-        output=$(/var/jb/usr/bin/python3 "$LOAD_PATCHER" \
-            "$executable" "$dependency")
-        case "$output" in *'modified=1'*) changed=1 ;; esac
+    # macOS 15.6.1 linkers leave less load-command padding: a 72-byte header
+    # region cannot hold the 88-byte command for the trampolines dep. On a
+    # padding failure, inject a short @executable_path alias backed by a
+    # same-dir symlink to the real dylib.
+    for dep_pair in \
+        '@executable_path/../Frameworks/libmachook.dylib:mh.dylib' \
+        '@executable_path/../Frameworks/libobjc-trampolines.dylib:lt.dylib'; do
+        dependency="${dep_pair%%:*}"
+        dep_alias="${dep_pair##*:}"
+        if output=$(/var/jb/usr/bin/python3 "$LOAD_PATCHER" \
+            "$executable" "$dependency" 2>/dev/null); then
+            case "$output" in *'modified=1'*) changed=1 ;; esac
+        else
+            ln -sfn "$(basename "$dependency")" \
+                "$frameworks/$dep_alias" || return 1
+            output=$(/var/jb/usr/bin/python3 "$LOAD_PATCHER" \
+                "$executable" \
+                "@executable_path/../Frameworks/$dep_alias") || return 1
+            case "$output" in *'modified=1'*) changed=1 ;; esac
+        fi
     done
 
     entitlements=$($LDID -e "$executable" 2>/dev/null || true)
@@ -576,7 +590,8 @@ elif [ "$#" -gt 0 ]; then
 else
     for bundle in "$EXTENSIONS_ROOT"/*.appex "$SETTINGS_PLUGINS_ROOT"/*.appex; do
         [ -d "$bundle" ] || continue
-        prepare_extension "$bundle"
+        prepare_extension "$bundle" || \
+            echo "[WARN] skipping unpreparable extension: $bundle" >&2
     done
 fi
 if [ "$prepared_count" -eq 0 ]; then

@@ -19,6 +19,22 @@ ROOTFS=/var/mnt/rootfs
     exit 1
 }
 
+# The sealed-system-volume tar ships no /usr/local or /Users/Shared skeleton —
+# every publish step below cp's into these dirs, and cp does not create
+# parents. Create the full set once so first installs don't silently drop the
+# chroot-side libmachook/framework copies.
+mkdir -p \
+    "$ROOTFS/usr/local/lib" \
+    "$ROOTFS/usr/local/bin" \
+    "$ROOTFS/usr/local/libexec" \
+    "$ROOTFS/usr/local/ssl" \
+    "$ROOTFS/usr/local/Frameworks/MetalSerializer.framework" \
+    "$ROOTFS/Users/Shared" \
+    "$ROOTFS/Users/Shared/MacWS" \
+    "$ROOTFS/Users/Shared/MacWS Imports" \
+    "$ROOTFS/System/Tweaks" \
+    "$ROOTFS/tmp" 2>/dev/null || true
+
 # Invalidate the same-bootsession Settings ExtensionKit verification cache
 # before an installation can replace any of its signed runtime dependencies.
 rm -f /tmp/macws-settings-runtime.boot-ready \
@@ -529,11 +545,17 @@ ensure_audio_component_image() {
 ensure_coreaudiod_runtime() {
     local path="$ROOTFS/usr/sbin/coreaudiod"
     local dylib='/usr/local/lib/libmachook.dylib'
+    # macOS 15.6.1's coreaudiod leaves only 40 bytes of zero load-command
+    # padding — the 56-byte LC_LOAD_DYLIB for the canonical path cannot fit.
+    # Fallback: inject a 14-char rootfs-root alias (cmdsize exactly 40) backed
+    # by a symlink that resolves to the real libmachook inside the chroot.
+    local dylib_fallback='/machook.dylib'
     local temporary="" entitlements="" valid=1
     [ -f "$path" ] || return 1
     [ -f "$COREAUDIOD_AUDIO_ENT" ] || return 1
     [ -f "$LOAD_DYLIB_PATCHER" ] || return 1
-    strings "$path" 2>/dev/null | grep -Fqx "$dylib" || valid=0
+    strings "$path" 2>/dev/null |
+        grep -Eq "^${dylib}$|^${dylib_fallback}$" || valid=0
     entitlements=$(ldid -e "$path" 2>/dev/null || true)
     printf '%s\n' "$entitlements" |
         grep -Fq '<key>com.apple.private.graphics-restart-no-kill</key>' ||
@@ -547,10 +569,17 @@ ensure_coreaudiod_runtime() {
         temporary="${path}.macws-new.$$"
         rm -f "$temporary"
         cp -p "$path" "$temporary" || return 1
-        /var/jb/usr/bin/python3 "$LOAD_DYLIB_PATCHER" \
-            "$temporary" "$dylib" || {
-                rm -f "$temporary"; return 1;
-            }
+        if ! /var/jb/usr/bin/python3 "$LOAD_DYLIB_PATCHER" \
+            "$temporary" "$dylib"; then
+            ln -sfn usr/local/lib/libmachook.dylib \
+                "$ROOTFS/machook.dylib" || {
+                    rm -f "$temporary"; return 1;
+                }
+            /var/jb/usr/bin/python3 "$LOAD_DYLIB_PATCHER" \
+                "$temporary" "$dylib_fallback" || {
+                    rm -f "$temporary"; return 1;
+                }
+        fi
         # Start from the copied native entitlement set, add the common MacWS
         # launch policy, then the exact IOAudio2 permissions observed on the
         # target. Two final passes settle the grown __LINKEDIT page hashes.
