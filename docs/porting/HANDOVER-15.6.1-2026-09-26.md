@@ -6,6 +6,36 @@
 
 ---
 
+## ⛔ 2026-09-26 18:2x 更新（先读——这一条会改变你的第一步）
+
+设备当前**任何 chroot 内 macOS 二进制 exec 都失败（SIGKILL/137，零输出，无 .ips）**，
+包括 `true`/`/bin/ls` 与全部项目探针，纯 chroot / launcher / 项目自身 launchd 作业
+（`com.macwsguide.smoketest`）都一样，60/60 重试无一例外。已排除：trustcache
+（已在）、单二进制重签（`platform-application` 已在）、amfid 有无、预读 vnode、
+完整重跑 `postinst.sh`（重签 1156 镜像）、boot-args（空）。
+
+**两个已确证的关键事实：**
+1. **陷阱**：若把 Apple 原版 `dyld.orig` 部署为 `/usr/lib/dyld` 而没先入 trustcache，
+   会让**所有** macOS exec 被内核杀（137）。部署任何 dyld 后必须确认它已受信。
+2. **一次成功**（rc=134）：杀 amfid + 换受信 dyld 后 `true` 跑起来了，dyld 打印
+   `syscall to map cache into shared region failed` → 说明 exec 一旦放行，回到预期的
+   **syscall 536 失败层**。此后无法复现。
+
+**结论：内核 exec/CS 态损坏（panic 时代遗留，见下），userspace 不可修 → 需内核重启
++Dopamine 重越狱。** 重启后跑 `analysis/dyldwork/post_reboot_experiment.sh` 一键恢复+取证。
+
+**旁证（内核 RE，Instance2）**：`amfi_enforce_launch_constraints` /
+`amfi_allow_3p_launch_constraints` 是 boot-arg（空）；设备实测
+`security.mac.amfi.developer_mode_status=1`、`launch_constraints_enforced=1`、
+`3rd_party_allowed=0`，但 kill 时不落任何 AMFI 日志。
+
+**另：`dyld_pi` 注入 blob 的真实用途已解码** —— 它只为绕开 `preflightCacheFile`
+在 chroot 里必然 EPERM 的 `fcntl(fd,97/F_ADDFILESIGS_RETURN)`。现用 2 条小补丁
+（thin `0x35d70`→nop、`0x35d80`→`b 0x35d9c`）替代整块 blob，且**重新启用 `.01` 子缓存**。
+构建器 `analysis/dyldwork/build_dyld.py`（编码全经汇编器验证）。
+
+---
+
 ## 0. 一句话现状
 
 macOS 15.6.1 dyld 能在 iPadOS 16.3 chroot 里执行到 `start()` 深处的应用入口调用点
@@ -152,6 +182,17 @@ blob 做的事：open `/System/Library/dyld/dyld_shared_cache_arm64e` → F_ADDF
 
 ## 9. 未决问题（按优先级）
 
+0. **exec admission vs dylib admission 是两个门（关键判别证据）**：
+   `misc/sprobe_dylib.c` 编译的注入 dylib（raw svc、零依赖）经
+   `DYLD_INSERT_LIBRARIES` 进 chroot 进程，**ctor 真实跑通并写了文件**——
+   我们 ldid 签名的自制代码可以在 chroot 里执行。但**新 exec 的自制 exe
+   （proof2）被 137**。→ proof2 死在内核 exec/AMFI exec-hook/launch-constraint
+   层，不是 dyld、不是 vnode cs_blob、不是 trustcache 缺失。变招备选：
+   若 exec 放行无解，用已信任系统二进制做宿主 + dylib 注入跑自制代码。
+   （上游 README 明示：Apple 签名自身不够——platform-binary/library-validation
+   flag 会招致 SIGKILL，须 ad-hoc 重签+trustcache；autosignd+libmachook
+   exec-hook 是项目的自动签名链。）
+
 1. **proof2 的 137**：本地构建的 arm64e/platform=1 测试 exe（`/tmp/dyldwork/proof2`，
    ctor 写 `/tmp/ctor_ran`、main 写 `/tmp/main_ran`+stdout+ret7），cdhash 已在
    trustcache 仍被 SIGKILL；而重签+注册的 `date2` 曾 rc=0。**假设**：自制二进制缺
@@ -184,6 +225,19 @@ blob 做的事：open `/System/Library/dyld/dyld_shared_cache_arm64e` → F_ADDF
 | RC=103 | 本次证明是 blob 内探针 exit(0x67)，**不是** glue 到达证据 |
 | 探针写到 /tmp/glueptrr | movk 立即数错位（path byte12 写成 'r'）——手写字符串每字节核对 |
 | `check_np`=12 vs 170 | 12=region 存在但空（真实）；170 是 copyin 失败读栈垃圾的假阳性 |
+
+## 10.5 重启/安装问答（隔壁 AI 问过，已核实）
+
+- **上游 "Setting up macOS full installation" 步骤**（README 链接 DCMMC/MacWSBootingGuide）：
+  一次性工作，重启后**无需重做**——rootfs 是数据卷上的目录树，持久。
+- **每次重启必做**（易失态）：Dopamine 重激活 → `postinst.sh`（全量 ldid+jbctl trustcache）
+  → `cachereg` holder（F_ADDFILESIGS，保活 vnode blob）。`com.macwsguide.*`
+  LaunchDaemons 在越狱恢复时自动拉起部分服务（实测旧 cachereg 自动复活）。
+- **没有用 KRW 写内核**：全仓只有 `kread64/kread32` 只读探针（`misc/agx_iogpu_probe.c`
+  dlsym 自越狱库）；exec 放行 = `jbctl trustcache` + ldid，纯用户态。
+- 上游自述重要事实（README "Debug kill: 9"）：**Apple 签名本身也不够**——
+  platform-binary / library-validation flag 会让进程被 SIGKILL，即使 cdhash 进了
+  trustcache；必须 ad-hoc 重签。这很可能就是 proof2 137 的同质问题。
 
 ## 11. 复现最短路径（从头到一个能跑的测试）
 
