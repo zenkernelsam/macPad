@@ -323,6 +323,31 @@ blob 做的事：open `/System/Library/dyld/dyld_shared_cache_arm64e` → F_ADDF
   platform-binary / library-validation flag 会让进程被 SIGKILL，即使 cdhash 进了
   trustcache；必须 ad-hoc 重签。这很可能就是 proof2 137 的同质问题。
 
+## 10.9 官方源码（已落盘 analysis/，给隔壁 AI）
+
+| 源码 | 路径 | 对应关系 |
+|---|---|---|
+| **XNU** | `analysis/xnu-xnu-8792.81.2/` | 设备内核 8792.82.2 差一个 patchlevel；`bsd/vm/vm_unix.c:2189` = `shared_region_map_and_slide_setup`（536 门禁链已逐条对过 IDA），`bsd/kern/kern_cs.c` = F_ADDFILESIGS/`ubc_cs_blob_*` |
+| **dyld** | `analysis/dyld-dyld-1286.10/` | **精确匹配** 15.6.1（二进制自报 `PROJECT:dyld-1286.10`）。`dyld/DyldMain.cpp` = 完整 start()/prepare()/handleDyldInCache() 源码 |
+
+**源码级确认的关键事实（直接解了三个悬案）**：
+
+- `DyldMain.cpp:start()` 尾部（~L1400）：`appMain = prepare(state, dyldMA)` →
+  `result = appMain(argc, argv, envp, apple)` → `libSystemHelpers.exit(result)`。
+  **`0x6b94 blraaz x8` 的 x8 = appMain**，x9 对象 = `state->config.process`
+  （`+0x98` argc、`+0xa0` argv、`+0xb0` apple）。
+- `prepare()` @ `DyldMain.cpp:536`；`getEntry` @ ~L1043：无 LC_MAIN 且
+  非 LC_UNIXTHREAD → `halt("main executable is missing LC_MAIN")`；
+  LC_UNIXTHREAD → `gotoAppStart`（旧式）。
+- `handleDyldInCache` @ L1084：每次 start 必跑；L1095 先调
+  `hasExistingDyldCache`（→ check_np → dynamicRegion deref——**139 死点在这**），
+  再 `dyldMH->inDyldCache()` 判定；命中缓存内 dyld → `restartWithDyldInCache`。
+- `getDyldPath` @ L1062：`dyld_file` apple 参数 = dyld 自己的 fsID/objID，
+  缺省 `/usr/lib/dyld`——**与"可执行文件是谁"无关**，之前的猜想作废。
+- `libSystemHelpers.exit`（`LibSystemHelpersWrapper`）依赖 libSystem 初始化——
+  **若 libSystem 根本没加载（缓存不完整），exit 链本身可能就是
+  "静默-0/异常退出"的来源之一**，排查 silent-0 时先查这条。
+
 ## 10.8 资源与源码索引
 
 - **15.6.1 缓存完整副本（host）**：`/Users/ciscohe/Desktop/dyld-cache-15.6.1/`
