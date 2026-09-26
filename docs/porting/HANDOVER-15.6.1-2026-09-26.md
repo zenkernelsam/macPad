@@ -127,6 +127,37 @@ fcntl(fd, F_ADDFILESIGS=61, &user_fsignatures{fs_file_start:0,
 task+0x3E8 shared_region getter；`sub_8063720`=vm_shared_region_enter（exec 无条件建）。
 详见 `kernel-syscall536-re-handover.md` / `kernel-syscall536-finding.md`。
 
+**errno-40 的精确来源（隔壁 AI RE 确认）**：Sandbox `mpo_file_check_mmap`
+@ `0xfffffe000a659664` → `cred_sb_evaluate(op=16, file-map-executable)` →
+对外来缓存 vnode（无 VSHARED_DYLD flag）deny 40。AMFI hook 只能返 {0,1}。
+
+**AMFI MACF 已知点（隔壁 Instance2 反编译）**：`_vnode_check_signature`
+@ `0xfffffe00092a45e4`；`AMFIIsCodeDirectoryInTrustCache`→
+`pmap_lookup_in_static_trust_cache`；`codeDirectoryHashIsInLoadedTrustCache`
+→`pmap_lookup_in_loaded_trust_caches`。L1124：`!(cs_flags & CS_PLATFORM_BINARY
+/*0x4000000*/)` 才查 devMode；设备 `developer_mode_resolved=1` 不触发。
+cdhash∈(static∪loaded)tc → 'trust-cache' 类别放行——理论该过但 exec 仍被杀，
+说明触发点在更下游（exec 页映射/CS_KILL/或更早检查）——**这正是
+proof2-137 待定位的点**。
+
+## 4.5 关键运行语义（易踩坑）
+
+- **syscall 294 `check_np`**：`check_np(&base)` → region 存在但未填充返 **12**，
+  已填充返 0 且 copyout base；`task->shared_region==NULL` 返 22；
+  **`check_np(NULL)` = detach/unmap 该 task 的 shared region——永远不要调**，
+  它杀调用者（137）并污染后续 exec 的 pmap 状态。
+- **kernel 对每条 mapping 施加 slide**（`slide = read_random % files[0].sf_slide`）——
+  dyld 提交的是**未滑动**的 header 地址；我们 slide=0 原样用。
+- **fd=-1 dynregion 伪条目**：`sms_file_offset` 不是文件偏移，而是**指向 dyld
+  用户态 DynamicRegion 缓冲区的指针——内核 copyin 内容**填充该映射。prots=R/R。
+  ⇒ dynregion 内容完全由提交进程内存提供，天然 per-mapper。
+- **错误路径吞错**：`0x356dc cbz w23→ok` / `tbnz w0,#0→reuse ok` / 否则
+  `errorMessage` 非 NULL 时**原生错误路径被跳过、函数返回 0**——
+  "dyld cache not loaded" 走这里，可能导致静默-0 而非 halt。
+- **probe 放置铁律**：在 syscall 536 **之前** exit（0x352bc 入口/0x3533c/0x35680）
+  必被 137 杀掉——内核杀死"shared-region attach 半途退出"的进程。
+  只有 ≥0x35698（syscall 返回后）的探针有效。早期大量"137"其实是这条。
+
 ## 5. Shared region 结构墙（runtime+源码双确认）
 
 - iOS 16.3: base `0x180000000`，size `0x100000000` = **4GB**（`[0x180000000,0x280000000)`）
@@ -156,6 +187,11 @@ task+0x3E8 shared_region getter；`sub_8063720`=vm_shared_region_enter（exec �
 **立即数陷阱**：`movz` 只有 16 位立即数——`0x27c00` 会被静默截断成 `0x7c00`
 （曾经因此提交到 0x7c000000 越界失败而 accessor 指 0x27c000000 → SEGV）。
 编码前永远用汇编器验证。
+
+**dynregion 偏移演进**（防串）：最早 `0xfc00`→VA 0x27c000000（m1/m2 gap）→
+中间档 `0x7a00`→VA 0x1fa000000（state.md 旧表里还留着，**过时**）→
+**当前定稿 `0x7800`→VA 0x1f8000000**（主缓存 m5/m6 天然 gap，16K 映射表
+`[0x1f7070000,0x1f9070000)` 空缺，永不冲突）。
 
 ## 7. dyld_pi 构建里有什么（重要——别再把死区当空地）
 
@@ -199,6 +235,9 @@ blob 做的事：open `/System/Library/dyld/dyld_shared_cache_arm64e` → F_ADDF
    某个 AMFI launch constraint 要素（platform、CODE_DIRECTORY 形态、或
    `CS_KILL`/`CS_HARD` flag）。验证法：逐步二分（最小 Mach-O→加 LC_BUILD_VERSION→
    加 ctor），或对每次 kill 抓 amfid `log show --predicate 'process=="amfid"'`。
+   **数据点**：纯静态 arm64e 无-dyld 二进制（`hw`，raw svc）也 137——exec 门
+   与 dyld 无关；`dsctest`（weak_import 链 libSystem stub）却是静默-0——
+   "admission 过了但 main 没跑"的第三类症状，与 glue 之谜同源嫌疑。
 2. **dynregion 持久化**：536 成功后 fd=-1 条目随 mapper 进程退出消失（runtime
    confirmed），文件映射存活。待测：在已填 region 上重交 536 是否重建 dynregion；
    或常驻 keeper（有先有蛋：keeper 自己 exec 时就撞上 §8 的 deref——除非 keeper
@@ -226,6 +265,51 @@ blob 做的事：open `/System/Library/dyld/dyld_shared_cache_arm64e` → F_ADDF
 | 探针写到 /tmp/glueptrr | movk 立即数错位（path byte12 写成 'r'）——手写字符串每字节核对 |
 | `check_np`=12 vs 170 | 12=region 存在但空（真实）；170 是 copyin 失败读栈垃圾的假阳性 |
 
+## 10.6 部署/运维陷阱（每条都是血泪换来的）
+
+1. **`rm` 再 `cp`，绝不覆盖写**：cp 覆盖同 inode → CS vnode 缓存陈旧 →
+   静默 SIGKILL(137)。换 inode 才生效。
+2. **`ldid -S` 会重排 fat slice**：签名后 arm64e slice 偏移会变（曾挪到
+   `0xfc000`）。patch 偏移是 **thin-slice** 偏移；改 fat 前先读 fat header
+   （`d[8+i*20+8..12]` BE=slice offset，arm64e: cputype 0x100000c subtype
+   0x80000002）定位 slice。
+3. **`jbctl trustcache add` 会静默失败**——必须 `jbctl trustcache info` 回查，
+   且输出是**大写 hex**，grep 记得 `-i`。`for h in $(ldid -h)` 循环可能产出
+   空变量——逐个验证。
+4. **探针 svc 编码**：`svc #0x80` 本身不是 exit——必须 `movz x16,#1`。
+   `movz w0,#N` 的 imm 在 bits[20:5]：`exit(N)` byte0=(N&7)<<5, byte1=N>>3。
+   位置无关探针别用 `adr`（fixup 报错），用栈上构造字符串；路径每字节核对
+   （曾因 movk 错位把 `/tmp/glue` 写成 `/tmp/glueptrr`）。
+5. **间歇性 137 是环境噪音**（iOS-cache prebind/amfid 时序），同文件会
+   137/0 交替——先连测几次再下结论。
+6. **panic 签名**：`pmap_trim_internal: grand addr wraps around … vstart=
+   0xffffffffffffffff` —— malformed 536 提交或 check_np(NULL) 的后遗症，
+   panic 后 trustcache/cs_blob/jailbreak 全丢。
+7. **IDB 污染警告**：`dyld_15.6.1_arm64e_thin.i64` 里 0x35754 显示的是我旧
+   patch（`B 0x38d08`）而非原生字节（`MOV W0,#0`）。**字节真值以设备
+   pristine 副本为准**（`/var/mnt/rootfs/usr/lib/dyld.orig` = fat 2289328B）。
+8. **真死代码洞**：thin `0x38d08-0x38d3c`（56B，0x38d40 起是真函数）——
+   放探针用这里，别再用 0x3576c blob 区。
+9. **有用地址**：errno 全局 `0xa9b10`（cerror_nocancel @0x2d64 写）；
+   `dyld4::console` @ `0xa2f4`（printf，可从 tramp 调，保存/恢复 LR+pacibsp）。
+
+## 10.7 设备/仓库工具清单
+
+| 工具 | 位置 | 作用 |
+|---|---|---|
+| `jbctl` | `/var/jb/basebin/jbctl` | `trustcache info/add <cdhash>` |
+| `launchdchrootexec` | `/var/jb/usr/macOS/bin/` | `usage: launchdchrootexec uid gid <rootfs> <exec> args`；chroot+exec，**会注入 `DYLD_INSERT_LIBRARIES=/usr/local/lib/libmachook.dylib`**（stderr 打 `[launchdchrootexec] target=…`）——用它测 ≠ 纯 chroot |
+| `libmachook.dylib` | `/var/mnt/rootfs/usr/local/lib/` | 注入 dylib：exec 钩子→autosignd 自动签名；曾有 137 嫌疑 |
+| `autosignd` | iOS 侧 daemon（postinst 起） | 收 `/tmp/autosignd.sock` 路径→ldid+jbctl 自动签名 |
+| `cachereg` | `/var/mobile/cachereg`（源码 `/tmp/dyldwork/cachereg.c`） | F_ADDFILESIGS+pause 保活 vnode cs_blob |
+| `mountdevfs` | `/var/jb/usr/macOS/bin/` | chroot 内挂 devfs |
+| `mount_bindfs` | `/var/jb/usr/local/bin/` | bindfs 挂载 |
+| `loadtc` | repo `misc/loadtc/main.m`（**设备上未装**） | 经 `jbclient_root_trustcache_add_cdhash` 整文件加载 macOS .trustcache（v1/v2 格式已解析）。15.6.1 rootfs 里还没找到 .trustcache 文件（可能在 OS cryptex dmg 内） |
+| `sprobe*.c` | repo `misc/` | raw-svc 探针源码，`shared_file_np`(12B)/`sfm_slide`(48B) ABI 结构在里面 |
+| 上游 debug 137 | `sudo oslog \| grep "AMFI\|launchd\|WindowSer"` | 抓 AMFI kill 原因 |
+| 设备备份 | `/var/mnt/rootfs/usr/lib/dyld.orig`（fat pristine 2289328B）、`dyld.func*` | dyld 回滚用 |
+| 仓库设备路径 | `/var/jb/var/mobile/MacWSBootingGuide` 等 | **已不存在**（换过越狱）；staging 用 File Provider 目录 |
+
 ## 10.5 重启/安装问答（隔壁 AI 问过，已核实）
 
 - **上游 "Setting up macOS full installation" 步骤**（README 链接 DCMMC/MacWSBootingGuide）：
@@ -238,6 +322,26 @@ blob 做的事：open `/System/Library/dyld/dyld_shared_cache_arm64e` → F_ADDF
 - 上游自述重要事实（README "Debug kill: 9"）：**Apple 签名本身也不够**——
   platform-binary / library-validation flag 会让进程被 SIGKILL，即使 cdhash 进了
   trustcache；必须 ad-hoc 重签。这很可能就是 proof2 137 的同质问题。
+
+## 10.8 资源与源码索引
+
+- **15.6.1 缓存完整副本（host）**：`/Users/ciscohe/Desktop/dyld-cache-15.6.1/`
+  ——主 2712764416B + `.01` 2203500544B，与设备上文件逐字节一致。
+  分析 header/mapping 表用它，不用碰设备。`dsc_extractor`/`misc/extract_dyld_cache.py` 可用。
+- **rootfs staging**：`/Users/ciscohe/Desktop/macos-15.6.1-rootfs` +
+  `/Users/ciscohe/Desktop/build-rootfs-15.6.1.sh`（产出）→
+  `misc/install_rootfs_15.sh`（设备安装）。
+- **xnu 源码**：`/tmp/dyldwork/xnu-xnu-8792.81.2/`（被清则需重下：
+  `apple-oss-distributions/xnu` tag `xnu-8792.81.2`；设备是 8792.82.2，
+  差一个 patchlevel，536 的 setup 逻辑已逐一与 IDA 反编译对过）。
+- **chroot 交互 shell**：`/var/jb/usr/macOS/bin/run_bash.sh`。
+- **已知死路（勿再试）**：`check_np(NULL)`/`deallocateExistingSharedCache`
+  detach——杀调用者 137 + 污染 pmap 致 panic；detach 后 region **无法重建**
+  （只在 exec 时建一次）→ 536 永远 EINVAL。`hw` 纯静态 arm64e 137 →
+  exec 门与 dyld 无关已证。
+- **dyld 磁盘 fallback 行为**：536 失败 → dyld 回退逐文件 mmap →
+  `libdyld.dylib not found` → abort(134)；errorMessage 非 NULL 时原生
+  错误路径被跳过直接返回 0（0x356dc/0x35710）——**静默-0 的可能来源**。
 
 ## 11. 复现最短路径（从头到一个能跑的测试）
 

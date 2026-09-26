@@ -5,6 +5,103 @@ macOS 15.6.1 shared cache on iPadOS 16.3 (xnu-8792.82.2) so macOS binaries
 run in chroot. This file is the single source of truth — update it whenever
 a fact/offset/result changes, BEFORE context is lost.
 
+## 2026-09-26 18:2x — ★★ EXEC 137 ROOT-CAUSE FOUND + BLOB PURPOSE DECODED + CLEAN DYLD ★★
+
+**A) The whole device can no longer exec ANY macOS binary (all → SIGKILL/137).**
+This is the immediate blocker for every dyld experiment. Evidence (runtime, this session):
+- `true`, `/bin/ls`, and EVERY project probe (`minexit_arm64[ e]`, `srprobe`,
+  `maptest`, `dsctest[2]`, `hw`, `misc/sprobe`) → `rc=137`, zero output, no `.ips`.
+- SAME result via: plain procursus `/var/jb/usr/bin/chroot`, `launchdchrootexec`,
+  and the project's OWN launchd job `com.macwsguide.smoketest`
+  (`LastExitStatus=9`, `smoke.out` empty). 60/60 retries = 137 → NOT intermittent.
+- Apple-pristine `dyld.orig` → 137; trusted `dyld_pm`/`cleanB` → 137.
+
+**One exceptional GOOD run observed**: right after `killall -9 amfid` +
+restoring a *trusted* `/usr/lib/dyld`, `true` ran (rc=134) and macOS dyld printed:
+```
+dyld: dyld cache '(null)' not loaded: syscall to map cache into shared region failed
+dyld: Library not loaded: /usr/lib/libSystem.B.dylib (code signature invalid …)
+```
+This proves: (1) exec CAN work; (2) once it does, we are back at the expected
+**syscall 536 fails** layer (dyld falls back to disk → CS-invalid dylib → abort 134).
+It could not be reproduced afterwards (60/60 = 137).
+
+**TRAP discovered**: deploying Apple-pristine `dyld.orig` as `/usr/lib/dyld`
+WITHOUT adding its cdhash to trustcache makes EVERY macOS exec SIGKILL (137),
+because the kernel kills the process when the dyld it must load is untrusted.
+Always trust a deployed dyld before running.
+
+**Ruled out as causes** (all tried this session, none fixed it):
+- trustcache membership (hashes present + `jbctl add` + `macws_boot_trust.py --readd`);
+- per-binary re-sign with project entitlements (`platform-application` present);
+- amfid dead vs alive; pre-reading the dyld to populate the vnode CS blob;
+- **autosignd** (the per-exec trustcache daemon): started it (`restart_autosignd.sh
+  --force`, socket `/var/mnt/rootfs/tmp/autosignd.sock` live, pid running) + re-added
+  autosignd/true/ls/dyld cdhashes → still 137;
+- full `postinst.sh` re-run (re-signed 1156 images, rebuilt platform tags);
+- `nvram boot-args` empty; no `amfi_*`/`cs_*` sysctl exposed.
+Kernel strings present: `amfi_enforce_launch_constraints`,
+`amfi_allow_3p_launch_constraints`, `"AMFI: Launch Constraint Violation …"`
+(@ `0xfffffe000735197c`), but NO AMFI log line is emitted on our kills.
+**Conclusion: kernel userspace-irreparable exec/CS state (panic-era pmap/shared-region
+corruption suspected — the `pmap_trim_internal` panic *was* on an exec teardown of `true`).
+A kernel reboot (+Dopamine re-jailbreak) is required to continue.**
+
+**B) The `dyld_pi` injected blob's TRUE purpose is decoded.**
+`preflightCacheFile` (thin `0x35a98`) calls `fcntl(fd, 97 /*F_ADDFILESIGS_RETURN*/,
+fs)` at `0x35d68` to self-attach the cache's cs_blob, then fails in-chroot
+(EPERM from `mac_vnode_check_signature` → AMFI). The blob existed ONLY to bypass
+that. Since host-side `cachereg` already attaches the blob, dyld's redundant
+attach is skippable with TWO tiny patches instead of a `0x3576c-0x35afe` rewrite:
+| off | orig | new | meaning |
+|---|---|---|---|
+| `0x35d70` | `00 01 00 54` (B.EQ) | `1f 20 03 d5` (nop) | ignore `fcntl==-1` |
+| `0x35d80` | `e2 00 00 54` (B.CS) | `07 00 00 14` (b 0x35d9c) | skip coverage check |
+This CLEAN build keeps the ORIGINAL preflight AND re-enables `.01` subcaches
+(the blob had forced main-cache-only). Builder: `analysis/dyldwork/build_dyld.py`.
+
+**C) Clean dyld builds produced this session** (`analysis/dyldwork/`, signed, thin arm64e):
+- `dyld_cleanB.signed` (cdhash sha256 `fe9947cd…`): crossarch + hasexisting(0x30140→0)
+  + prereuse(0x34298→0) + filescount1 + dynoff(0x35fc8→0x78000000) + accessor(0x50dfc)
+  + fcntl_nop(0x35d70) + cover_b(0x35d80). NO blob.
+- `dyld_cleanB_err.signed` (cdhash `48218610…`): cleanB + errno probe at `0x35698`
+  = `and w0,w0,#0xff; mov x16,#1; svc #0x80` (`12001c00 d2800030 d4001001`) →
+  exits with `syscall536_ret & 0xff`. Ready to run the moment exec is restored.
+- `dyld_cleanB_glue.signed` (cdhash `f1bbb79b…`): cleanB + §9.3 glue-call probe.
+  **REAL dead cave found (IDA, zero xrefs)**: `__text` NOP padding `0x38d08-0x38d3b`
+  (52B; real function `dyld_program_minos_at_least` starts `0x38d40`).
+  `0x6b94 blraaz x8` → `b 0x38d08` (`5dc80014`); cave = `write(1,{x8,x9},16); exit(0)`.
+  This replaces the old *contaminated* glueprobe (which sat inside the live blob at
+  `0x3588c` and produced the bogus "103").
+Every patch encoding is assembler-verified; all offsets byte-match pristine.
+
+**Next after reboot**: redo §2 restore, then run `dyld_cleanB_err` → read the
+536 errno (expect 0 if always-map self-heals dynregion, else EINVAL/EPERM).
+
+### 2026-09-26 19:0x — exec 137 深挖（重启后仍复现）+ 内核 RE 判定链
+
+**重启 + 重越狱 + 完整 postinst 后，exec 137 依旧。** 又排除：
+- Mach-O `platform` macOS(1)→iOS(2)：仍 137；
+- 非 chroot（root=`/`）、任意路径、`misc/sprobe`（最小 freestanding）、
+  裸签（无 entitlements）、`macws_boot_trust.py --readd`（经 libjailbreak 真注册 3 个 hash）：**全部仍 137**。
+- 重启后项目 macws 作业原本不在（未 bootstrap）；`postinst.sh` 已重载，无效。
+
+**内核 RE（Instance2，符号齐全）定位到的判定链：**
+- AMFI MACF 钩子 `_vnode_check_signature` @ `0xfffffe00092a45e4`
+  （`AMFIIsCodeDirectoryInTrustCache`→`pmap_lookup_in_static_trust_cache`；
+  `codeDirectoryHashIsInLoadedTrustCache`→`pmap_lookup_in_loaded_trust_caches`）。
+- `_vnode_check_signature` 关键分支：
+  - L359：cdhash 不在（static ∪ loaded）trustcache → 走 `StaticPlatformPolicy::check_signature`（callout amfid）。
+  - L1124：`if ((cs_flags & CS_PLATFORM_BINARY/*0x4000000*/) == 0)` 才检查
+    `devModeStatusResolved()`；否则 fatal "only allows platform binaries until
+    developer mode status has been resolved"。
+  - 设备实测 `developer_mode_status=1`、`developer_mode_resolved=1` → 此分支不触发。
+- 所以：**“cdhash 在（static∪loaded）trustcache → category 'trust-cache' → 放行”**
+  这条链在 RE 上应该通过，但 exec 仍被杀 → 触发点在更下游（疑似 exec 页映射/CS_KILL，
+  或一个尚未定位的更早检查）。
+
+**待用户输入**：当初设备上“让 macOS 二进制可 exec”的完整/重启后必做步骤。
+
 ## 2026-09-26 17:50 — ★ POST-REBOOT RESTORE + BLOB-ARTIFACT CORRECTION + HANDOVER ★
 
 **NEW comprehensive handover doc**: `docs/porting/HANDOVER-15.6.1-2026-09-26.md`
