@@ -2306,3 +2306,23 @@ shim 在场 + macOS 缓存 + env：cat 曾出现 notloaded=0（缓存映射成�
 1. 用**宿主机**（本 Mac，arm64 且自带 dsc_extractor）从 macOS 缓存抽取 `libSystem.B.dylib`/`libncurses.5.4.dylib` 等落盘 + `sign_installed.sh` TC ⇒ 直接解 CLI，且不影响"缓存映射"成果；
 2. 或继续 RE dyld **镜像级**接受判据（`0x2b4d8/0x7e970`，注意**不可 stub**，需改判定逻辑）；
 3. 或定位 536 间歇性（怀疑与 region 残留状态/被杀的进行中映射有关，需内核侧取证）。
+
+### 2026-09-28 03:2x【负面结论】从缓存抽 dylib 落盘「不可行」+ 可复用技法
+**① 宿主机抽取技法（可复用）**
+本机 macOS 15.6.1 **24G90**，其缓存的 uuid 与设备 rootfs 缓存**逐位一致**（主 `4c1223e5cace3982a0036110a7a8a25c`、
+`.01` `2b390646b4b5302b841aefaa5283640d`）⇒ 从本机抽取 == 设备抽取。
+`/usr/lib/dsc_extractor.bundle`（272496B，与设备上同一个文件）：
+- **第三参传 NULL 会 segfault**；必须构造**真 block**（`isa=_NSConcreteGlobalBlock`, `invoke=CFUNCTYPE` 指针）✓
+  → `analysis/dyldwork/extract_host.py`（会崩）/ **`extract_host2.py`（可用，rc=0，抽出 3257 个文件）**。
+**② 抽出的 arm64e 镜像 dyld 拒收**
+把抽出的 `usr/lib/*.dylib`（387 个，含真 `libSystem.B.dylib` 13504B、`libncurses.5.4.dylib` 299968B）装进 rootfs 后：
+```
+dyld[7124]: Library not loaded: /usr/lib/libncurses.5.4.dylib
+  Reason: tried: '/usr/lib/libncurses.5.4.dylib' (segment '__AUTH' vm address out of order) …
+```
+⇒ dsc_extractor 输出的 arm64e 镜像**段顺序不是独立可加载的**（`__AUTH` 段 vmaddr 非递增）⇒ **"抽 dylib 落盘"这条捷径不成立**。
+（已回滚：387 个文件全部删除、两个 shim 由 `/var/mobile/BAK_*.dylib` 还原，设备自检 `RESTORED_OK2` ✓）
+**③ 因此 item#5 的正解只剩**：
+- (a) 让 **dyld 镜像级判据**接受缓存里的镜像（`0x2b4d8`→`0x7e970`，不可 stub），或
+- (b) 修 **536 的间歇性**（同 boot 同配置两种结果都出现过；疑 region 残留状态），或
+- (c) 把 shim 补成"全符号"（体积/工作量都大，且必须提供真实实现 ⇒ 又回到缓存）。
