@@ -160,8 +160,16 @@ faulting 0x100bbe9f8 ∈ mapped file 0x100b48000-0x100be4000 (624K, r-x/r-x, SM=
 - 注：崩溃地址在**普通 mmap 文件区**（非 shared region 0x180000000），且 dyld 日志显示最后加载的是 `/usr/lib/libMatch.1.dylib`（**iOS UUID 83CA476B**，无法在 chroot /usr/lib 找到）与 procursus 注入库 ⇒ 怀疑 **chroot 下 /usr/lib 被 iOS 的 bindfs `.fakelib` 命中** 或缓存 image 列表混入 iOS 路径。
 - 探针局限：dyld 日志未打印 0x100b48xxx 段的 image 名；`.ips` 的 usedImages 为 0 ⇒ 需另建“地址→image”映射（如逐个 image mmap 跟踪）。
 
-## 🌈🌈🌈 2026-09-29 凌晨【收敛】两种缓存都能映射了；配方与剩余堵点明确
+## 🧨🧨🧨 2026-09-29 01:1x【根因确定】chroot 进程【没有 shared region】⇒ 536 恒 EINVAL(22)
+**证据（组合探针 + 项目自带 sprobe）**：
+- 自建组合探针（hook 0x35690 dump 536 入参 + 调 check_np(294)，hook 0x76e00 dump 返回值）：`check_np` = **22**、files_count=3、mappings=16 ✓（macOS 缓存两片齐全）。
+- 用带 `reuseExistingCache→ret0` 的 dyld（即**没有任何东西会销毁 region**）再测：`check_np` **仍 = 22** ⇒ **不是 reuse 弄丢的，是进程根本没有 region**。
+- 项目自带 freestanding 探针 `/var/mnt/rootfs/tmp/sprobe`（无 dyld 依赖）直接 chroot 运行：输出第 5 字段 = **22** ⇒ 与 `misc/sprobe.c` errno 表一致（“22 = no shared region”）。
+- ❗ 对照：之前的 iOS 缓存成功时 `cknp2` 曾测到 `check_np ret=0 base=0x180000000` ⇒ **那时区是存在的**。⇒ **“为什么同一个 chroot 进程有时有 region（以至于能映射 iOS 缓存）、现在却 22”是剩余唯一问题**。
 
+**推论方向**：需查 exec 时 `vm_map_exec → vm_shared_region_enter(rdir)` 是否为我们这种“iOS 进程 chroot 到 macOS rootfs、exec macOS 二进制”的情形建区；必要时用 `launchdchrootexec` 的 spawn 属性/或先调一次会建区的接口。
+
+## 🌈🌈🌈 2026-09-29 凌晨【收敛】两种缓存都能映射了；配方与剩余堵点明确
 ### ✅ 已打通（重启后干净态，均 echo rc=0 HELLO）
 | 缓存 | 正确 dyld | 关键条件 |
 |---|---|---|
