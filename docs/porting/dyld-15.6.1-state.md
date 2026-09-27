@@ -2243,3 +2243,22 @@ map_and_slide = -22
 **3. 自建 `region_reset`（清 region 用）被 exec veto（rc=137）**，未启用；脚本内标注"禁止跑任何会调 check_np(0) 的探针"。
 **4. 新增 `analysis/dyldwork/post_reboot_cli3.sh`（开机首跑，零探针）**：移走 shim → cachereg → plain dyld → echo/cat/ls/sh ×2 + `DYLD_PRINT_LIBRARIES` 取证 → 收尾还原。本地/设备 `bash -n` OK、md5 `ef91ac1d…` 一致；`wait_cli2.sh` 已改指向 cli3。
 **结论**：#1~#4 已达成；#5 只差「**干净 boot 后第一个进程映射 macOS 缓存**」这一步（脚本自动完成）。
+
+### 2026-09-28 02:3x【可复现配方 + item#5 的两个真实障碍】
+**① 可复现成功配方（同一 boot 内重复成功，≥3 次）**
+```
+killall cachereg; ( nohup cachereg <cache> <cache>.01 & ); sleep 4      # 天然覆盖
+deploy <对应 dyld>                                                     # iOS: dyld_sf0 / macOS: dyld_plat
+env -i PATH=/usr/bin:/bin DYLD_SHARED_CACHE_DIR=<cache 目录> chroot /var/mnt/rootfs /bin/echo HELLO
+  → iOS  : rc=0 notloaded=0 HELLO   ×多次
+  → macOS: rc=0 notloaded=0 HELLO   ×多次
+```
+**② 结论修正**：region 并**不**需要重启复位 —— dyld 在"缓存不匹配"时会自己 `check_np(NULL)` 重置再映射，
+所以同 boot 里先 iOS 后 macOS 都能成功（本回合实测：iOS ✓ 紧接 macOS ✓✓）。
+**③ item#5 的两个真实障碍**
+1. **shim 抢先**：shim（`<B90391D8>`）在场时，`/bin/cat` 的 libSystem 绑定到 **shim** → `Symbol not found: ___error`
+   （此时 `notloaded=0`，即缓存其实已映射成功；只是绑定被 shim 抢走）。
+2. **移走 shim 后 `notloaded=1`**：map 变成失败（可复现）；且**同一批里 `cat` 与 `ls` 结果不一致**（cat notloaded=0 / ls notloaded=1）
+   ⇒ 存在**间歇性**（同一 boot、同一配置）。
+   ⇒ 下一步应做：把**缓存里的 libSystem 抽成磁盘文件**当作 shim（`misc/extract_dyld_cache.py`），
+   既满足按路径加载、又不缺符号；而不是简单移走 shim。
