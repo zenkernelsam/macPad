@@ -107,8 +107,16 @@ env -i PATH=/usr/bin:/bin DYLD_SHARED_CACHE_DIR=/iosdsc \
 
 ---
 
-## 7. 交付物清单
+## 6b. 【新增】macOS 缓存也能灌入（536=0），但消费时命中已知 CS 击杀
+- 重启后干净 region + 脚本 `post_reboot_mac.sh`：映射 **macOS 缓存**也成功：
+  `Using mapping in dyld cache ×91`、`not loaded ×0`、`libSystem` 来自缓存（UUID `D161E41A`，非 shim）、`re-using existing shared cache`。
+- 随后进程被杀。崩溃报告定性：**内核 CS "Invalid Page"**（`SIGKILL - CODESIGNING` / `EXC_BAD_ACCESS 0x32`），
+  faulting 地址在 **普通 mmap 的 r-x mapped file**（`0x100b48000-0x100be4000`, 624K），**不在** shared region。
+  对照：`CACHE_DIR` 指向不存在目录（不映射）时 rc=0 不被杀。
+- 解读：属 `CLAUDE.md` 已知阻塞类 —“**CS-enforced 页 + 普通 mmap → CS kill**”（不是 dyld 野指针）。
+- 下次可试：① 定位那个 624K r-x 镜像（需 chroot lldb：先给 `bash`/`lldb` 签名+TC）；② 看是否 ellekit/`launchdchrootexec` 注入的 iOS dylib 被载入 macOS 进程（日志里出现 `libMatch.1.dylib` 的 iOS UUID、procursus 路径）；③ 考虑内核 CS 策略层或避免对 DSC 的普通 mmap。
 
+## 7. 交付物清单
 - 代码/脚本（均已 commit+push，见 `git log`）：
   - `misc/cdhash_slices.py`、`misc/restore_env.sh`、`misc/run_nocskill.c`（修 kernel slide 扫描）
   - 设备侧：`/var/mobile/nm/cdhash_slices.py`、`/var/mobile/blob_read.py`、`/var/mobile/set_blob_cov.py`、
