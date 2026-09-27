@@ -131,6 +131,27 @@ a fact/offset/result changes, BEFORE context is lost.
 - `jbctl trustcache info` 输出是**大写 hex**，grep 必须 `-i`。
 - **admission 不依赖 jailbreak trustcache**（活基线 cdhash 不在 TC 里也能跑）；TC 只是历史习惯。
 
+### 🎉🏆 2026-09-28 【新里程碑】 **macOS 自有缓存也成功灌进 region**（536=0），随后命中已知 post-reuse SEGV
+**实测（重启后的干净 region，脚本 `post_reboot_mac.sh`）**：
+```
+CACHE_DIR=/System/Volumes/Preboot/Cryptexes/OS/System/Library/dyld
+rk=0? → 实为 rc=139(SIGSEGV)；但：
+  Using mapping in dyld cache ×91\n  not loaded ×0
+  Using mapping in dyld cache for /usr/lib/libSystem.B.dylib  → UUID D161E41A（非 shim B90391D8）
+  re-using existing shared cache (/private/preboot/.../Caches/com.apple.dyld/dyld_shared_cache_arm64e)
+  最后一行：Mapping the shared cache system wide → 随后 SIGSEGV
+```
+⇒ **536 对 macOS 缓存也成功（0）且已复用**；libSystem 来自缓存。**新的（已知）堆 = post-reuse SEGV**。
+
+**源码关键事实（dyld 1286.10 `SharedCacheRuntime.cpp`）**：
+- `files[i].sf_slide = (i==0) ? infoArray[0].maxSlide : 0;` ⇒ **我们的 zero-slide 修复与上游一致**（iOS maxSlide 非对齐才 EINVAL）。
+- `console("Mapping the shared cache system wide")` 在构 files[]/mappings[] 之前 ⇒ 崩在构数组/536/其后。
+
+**下半目标（post-reuse SEGV）取证待办**：
+- 已有工具 `analysis/dyldwork/catch_segv.sh`（chroot lldb 拓 PC/far/backtrace）。
+- 阻塞：chroot 里的 `bash`/`lldb` 未签名→TC → AMFI `Killed: 9`；**需先 `ldid -Hsha256 -S<ent>` + `cdhash_slices.py`+TC 后再跑 catch_segv**（下一轮）。
+- 其他观察：重启后若映射进程崩溃（139），**region 会自动释放**（`check_np` 又回 12）⇒ **不用每次重启就能重试**。
+
 ### ✅ 本轮已达成：`crossarch+plataccept` 的修改版 dyld **通过 exec 准入并跑通 HELLO**（§2 iOS 缓存实验的前置全部就绪）
 
 ### 🎯 2026-09-28 环境已复原 + 536 实测结论（重跑 subagent 任务）
