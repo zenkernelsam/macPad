@@ -167,7 +167,13 @@ faulting 0x100bbe9f8 ∈ mapped file 0x100b48000-0x100be4000 (624K, r-x/r-x, SM=
 - 项目自带 freestanding 探针 `/var/mnt/rootfs/tmp/sprobe`（无 dyld 依赖）直接 chroot 运行：输出第 5 字段 = **22** ⇒ 与 `misc/sprobe.c` errno 表一致（“22 = no shared region”）。
 - ❗ 对照：之前的 iOS 缓存成功时 `cknp2` 曾测到 `check_np ret=0 base=0x180000000` ⇒ **那时区是存在的**。⇒ **“为什么同一个 chroot 进程有时有 region（以至于能映射 iOS 缓存）、现在却 22”是剩余唯一问题**。
 
-**推论方向**：需查 exec 时 `vm_map_exec → vm_shared_region_enter(rdir)` 是否为我们这种“iOS 进程 chroot 到 macOS rootfs、exec macOS 二进制”的情形建区；必要时用 `launchdchrootexec` 的 spawn 属性/或先调一次会建区的接口。
+**源码追踪（xnu-8792.81.2）**：
+- `vm_map.c:13397` —— `vm_map_exec()` **无条件**调 `vm_shared_region_enter(new_map, task, is64bit, **fsroot**, cpu, cpu_subtype, ...)`；
+- `vm_shared_region_enter()` → `vm_shared_region_lookup(fsroot,cpu,subtype,is64bit,pgshift,reslide,driverkit,rsr)`（**create if needed**）→ 若返回 NULL 则 `return KERN_FAILURE`，而调用方 `(void)` **忽略错误** ⇒ **进程就没有 region**；
+- `vm_shared_region_create()` 对 64-bit 只在 `cputype!=CPU_TYPE_ARM64` 或 `sub_map==VM_MAP_NULL` 时才返回 NULL（arm64/arm64e 的 cputype 都是 0x0100000c ✓ 不在排除范围）。
+- **实测排除“dyld 把空区删了”**：把 dyld 的 check_np stub（`0x76dcc`）改成 `mov w0,#12; ret`（假返回、绝不触发内核 `vm_shared_region_remove`）后，536 **仍失败** ⇒ 区不是被 dyld 删的。
+⇒ **剩余唯一疑点**：exec 时 `vm_shared_region_lookup/create` 以 **fsroot(chroot 根 vnode)** 为 key 建区**未成功**（或建到了不同 key 上）。
+**下一步（内核侧）**：用 KRW 读 `vm_shared_region_queue` / `vm_shared_region_count` 看是否有任何 region；再对 spawn 路径（`exec_mach_imgact → vm_map_exec` 传入的 fsroot 与 cpu/subtype/reslide）取样核对。
 
 ## 🌈🌈🌈 2026-09-29 凌晨【收敛】两种缓存都能映射了；配方与剩余堵点明确
 ### ✅ 已打通（重启后干净态，均 echo rc=0 HELLO）
