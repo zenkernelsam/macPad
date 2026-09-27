@@ -2326,3 +2326,15 @@ dyld[7124]: Library not loaded: /usr/lib/libncurses.5.4.dylib
 - (a) 让 **dyld 镜像级判据**接受缓存里的镜像（`0x2b4d8`→`0x7e970`，不可 stub），或
 - (b) 修 **536 的间歇性**（同 boot 同配置两种结果都出现过；疑 region 残留状态），或
 - (c) 把 shim 补成"全符号"（体积/工作量都大，且必须提供真实实现 ⇒ 又回到缓存）。
+
+### 2026-09-28 03:5x【新线索】dyld 自带 `DYLD_FORCE_PLATFORM`（零补丁强制平台）
+`strings dyld_15.6.1_arm64e_thin` 相关 env：`DYLD_SHARED_REGION` / `DYLD_SHARED_CACHE_DIR` / **`DYLD_FORCE_PLATFORM`** /
+`DYLD_PRINT_LOADERS` / `DYLD_PRINT_SEARCHING` / `DYLD_PRINT_ENV` / `DYLD_USE_CLOSURES` / `DYLD_AMFI_FAKE`（后两者值得后续试）。
+**实测**（macOS 缓存 + env + `DYLD_FORCE_PLATFORM=macOS`，`DYLD_PRINT_LIBRARIES=1`）：
+```
+dyld: <D161E41A-…> /usr/lib/libSystem.B.dylib     ← 缓存版被加载（强制平台后）
+dyld: <B90391D8-…> /usr/lib/libSystem.B.dylib     ← 同一个进程里 shim 也出现了
+```
+⇒ `DYLD_FORCE_PLATFORM` **确实改变了镜像接受结果**（缓存版 libSystem 被纳入）⇒ **这是 option(a) 的零补丁入口**，
+下一步应：用 `DYLD_PRINT_LOADERS=1`/`DYLD_PRINT_SEARCHING=1` 看清"为何 shim 仍被加载/绑定"，并试 `DYLD_FORCE_PLATFORM=1`
+（数值形式）、`DYLD_AMFI_FAKE=1`、`DYLD_USE_CLOSURES=0` 等组合；期间**必须用正确拆分参数的调用**（本轮我又有一次 `set --` 引号 bug 导致 rc=127 假象）。
