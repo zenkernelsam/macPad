@@ -160,7 +160,27 @@ faulting 0x100bbe9f8 ∈ mapped file 0x100b48000-0x100be4000 (624K, r-x/r-x, SM=
 - 注：崩溃地址在**普通 mmap 文件区**（非 shared region 0x180000000），且 dyld 日志显示最后加载的是 `/usr/lib/libMatch.1.dylib`（**iOS UUID 83CA476B**，无法在 chroot /usr/lib 找到）与 procursus 注入库 ⇒ 怀疑 **chroot 下 /usr/lib 被 iOS 的 bindfs `.fakelib` 命中** 或缓存 image 列表混入 iOS 路径。
 - 探针局限：dyld 日志未打印 0x100b48xxx 段的 image 名；`.ips` 的 usedImages 为 0 ⇒ 需另建“地址→image”映射（如逐个 image mmap 跟踪）。
 
+## 🌈🌈🌈 2026-09-29 凌晨【收敛】两种缓存都能映射了；配方与剩余堵点明确
+
+### ✅ 已打通（重启后干净态，均 echo rc=0 HELLO）
+| 缓存 | 正确 dyld | 关键条件 |
+|---|---|---|
+| **iOS** | `dyld_sf0`（crossarch+plataccept + 清 `sf_slide`） | `maxSlide=0x539b0000` **非法**→必须清零；cachereg_ios 46 片 |
+| **macOS** | **`dyld_plat`（plain：crossarch+plataccept，不动 `sf_slide`）** | `maxSlide=0x20000000` **合法**→必须保留；cachereg(mac) |
+
+**★ 发现 `maxSlide` 在缓存头偏移 `0xf0`**：iOS=`0x539b0000`（非16K对齐→内核 EINVAL），macOS=`0x20000000`（对齐）。
+⇒ `files[0].sf_slide = maxSlide`；**清零只对 iOS 必要且对 macOS 有害**。
+
+**★ `set_blob_cov.py`(csb_end_offset→filesize) 是 macOS 缓存 536 失败的原因**：恢复天然覆盖（只跑 cachereg）后 **macOS 两片 536 成功（notloaded=0）**。**以后不要对缓存做扩覆盖**。
+
+### ⛔ 剩余堵点：dyld 不从缓存“绑定” libSystem
+- `cat/ls/sh` 仍 `rc=134`：`___error` / `libutil` 缺失。
+- 日志同时出现 `<D161E41A…> /usr/lib/libSystem.B.dylib` 与 `<B90391D8…>(shim)`；**符号解析走了 shim**。
+- **移走 shim** 后反而 `Library not loaded: /usr/lib/libSystem.B.dylib`（仅尝试磁盘路径）⇒ dyld 没有把缓存中的 libSystem 当作可用镜像。
+- 下一步候选：①核实映射进去的到底是哪个缓存（读缓存头 uuid）；②`DYLD_SHARED_CACHE_DIR` 指向非标准目录是否导致“不作为系统缓存”；③libSystem 是否位于 `.01` 分片而子缓存未被纳入依赖查找。
+
 ### 🌟🌟 2026-09-28 深夜【颠覆性】重启后干净态梯度：**CS 击杀是“自伤” —— mapping-slide 清零补丁才是元凶**
+
 **脚本**：`post_reboot_ladder.sh`（重启后自动跑完）。**结果**：
 | 步骤 | rc | using | notloaded |
 |---|---|---|---|
