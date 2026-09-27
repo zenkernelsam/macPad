@@ -178,7 +178,7 @@ faulting 0x100bbe9f8 ∈ mapped file 0x100b48000-0x100be4000 (624K, r-x/r-x, SM=
 - **移走 shim** 后反而 `Library not loaded: /usr/lib/libSystem.B.dylib`（仅尝试磁盘路径）⇒ dyld 没有把缓存中的 libSystem 当作可用镜像。
 - 下一步候选：①核实映射进去的到底是哪个缓存（读缓存头 uuid）；②`DYLD_SHARED_CACHE_DIR` 指向非标准目录是否导致“不作为系统缓存”；③libSystem 是否位于 `.01` 分片而子缓存未被纳入依赖查找。
 
-### 🔍 2026-09-29 凌晨【最后定位】region 里装的其实是 **iOS 缓存**（不是 macOS）
+### 🔍 2026-09-29 凌晨【最后定位】region 里装的其实是 **iOS 缓存**（不是 macOS）（⚠️ 见下方勘误）
 **证据**：日志中被加载的 image 全是 **iOS 专属**（`/usr/lib/libMatch.1.dylib`、`AppleMobileFileIntegrity.framework`、`libmis.dylib`、`libsandbox.1.dylib`、`MobileSystemServices`）；
 且 `re-using existing shared cache (/private/preboot/…/System/Library/Caches/com.apple.dyld/dyld_shared_cache_arm64e)` = **设备 iOS 缓存**的默认路径。
 ⇒ 因此 `ls` 报 `libutil.dylib (no such file, **no dyld cache**)`（iOS 缓存里没有 macOS 的 libutil）。
@@ -187,6 +187,13 @@ faulting 0x100bbe9f8 ∈ mapped file 0x100b48000-0x100be4000 (624K, r-x/r-x, SM=
 1. 让 chroot 在 dyld **默认缓存目录**处看到 **macOS 两片**（例：把 macOS `dyld_shared_cache_arm64e{,.01}` 放到或 mount 到 chroot 的 `/System/Library/Caches/com.apple.dyld/`），并**屏蔽 iOS 泄漏路径**（`/private/preboot/.../Caches/com.apple.dyld`），再跑 `post_reboot_final.sh` 的 CLI 验收；
 2. 若不行，则核实 `CacheFinder` 的选择逻辑（分析源码 `DyldProcessConfig.cpp`），必要时用 `dyld_patch` 强制 cache dir。
 **验收判据**：`cat/ls/sh` 的 `rc=0`，且 libSystem 只出现 `D161E41A`（不带 shim `B90391D8`）。
+
+#### ⚠️ 勘误（2026-09-29 更晚）：上段“占用者=iOS 缓存”的证据不足
+- `/usr/lib/libutil.dylib` 在 **iOS 缓存里也有**（grep 命中）⇒ 不能用它判定占用者；
+- 日志里的 4 个“iOS 专属”镜像实际来自**越狱注入库闭包**（`procursus/ellekit/libinjector` 命中 11 处）；
+- 标准路径 `/System/Library/dyld/dyld_shared_cache_arm64e` 在 rootfs 里是 **79B symlink → cryptex 的 macOS 缓存**（uuid `4c1223e5…`，maxSlide `0x20000000`）；`/private/tmp/dsc/` 还有一份完整 macOS 缓存副本。
+⇒ **占用者更可能是 macOS 缓存**。真正的失败模式有两种：(1) 某些运行 `536` 失败→`notloaded=1`→`libutil (no such file, **no dyld cache**)`（dyld 当时根本没缓存）；(2) 缓存已映射时，`libSystem` 却被解析到**磁盘 shim**（`Expected in B90391D8`）——疑似**注入的 iOS 库先把磁盘 shim 拉成 libSystem**，后续 macOS 二进制的同名依赖命中了它。
+⇒ 下步两选：**(a)** 在“`notloaded=0`”的那次里再试**移走 shim**（彻底让缓存提供 libSystem）；**(b)** 给 shim 补上缺失符号（务实解锁 CLI）。
 
 ### 🚨 重要操作规则（否则永远在测错对象）
 **只要在“目标缓存映射”之前跑过任何不带 `DYLD_SHARED_CACHE_DIR` 的 chroot 命令**（如 `restore_env.sh` 的内部验证、基线 `chroot .../echo`），
