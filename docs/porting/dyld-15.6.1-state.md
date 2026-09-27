@@ -178,6 +178,9 @@ faulting 0x100bbe9f8 ∈ mapped file 0x100b48000-0x100be4000 (624K, r-x/r-x, SM=
 
 **遗留（下次重启后再测）**：region 会被首次映射“占住”且**持久**，于是后跑的 macOS 缓存测试实际复用了先前的 iOS 缓存（证据：cat 报 `Expected in <B90391D8…>` = **shim UUID**；`check_np=0`）。
 ⇒ **正确测法**：重启后 **第一个**就映射 **macOS 缓存**（`DYLD_SHARED_CACHE_DIR=/System/Volumes/Preboot/Cryptexes/OS/System/Library/dyld` + `dyld_sf0`），再测 `cat/ls/sh`。
+- 补充实测（免重启不可行）：`check_np base=0x180000000` = **iOS 缓存基址**（macOS 缓存映射在 `0x1CE430000`）⇒ 当前 region 装的确实是 iOS 缓存。
+- **在映射中途 SIGKILL 无法释放 region**（试两次仍 `0/0x180000000`）⇒ **只能靠重启复位**。
+- 用 `dyld_sf0` 向“iOS 已占”的 region 里映射 macOS 缓存 → **rc=139**（与 region 已有映射冲突相关）。
 
 ### 🧪 2026-09-28 IDA(Instance2=kernel) 取证：cs_validate_page / 无条件击杀 printf
 - **`osfmk/vm/vm_fault.c:2863`**：`printf("CODE SIGNING: process %d[%s]: rejecting invalid page at address 0x%llx from offset 0x%llx in file \"%s%s%s\" ...")` —— **无条件打印（带文件名）**；本机**无法抓内核日志**（无真实 `log` 二进制；`log show` 空；无 dmesg/sysctl）⇒ 该线索暂时用不上。
