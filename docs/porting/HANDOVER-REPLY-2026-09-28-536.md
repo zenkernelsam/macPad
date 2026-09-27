@@ -121,6 +121,32 @@ env -i PATH=/usr/bin:/bin DYLD_SHARED_CACHE_DIR=/iosdsc \
   - **lldb 取证结构性受阻**：chroot 的 `libSystem.B.dylib` 是 10 符号 shim ⇒ `bash`/`lldb` 无法链接（需真实缓存 libSystem = 崩点本身，鸡生蛋）。
   - 待办：定位 624K r-x 镜像归属；或换策略避免对缓存/DSC 的 plain mmap。
 
+## 6c. 【晚间最终结论】CS 击杀 = 自伤；正确配方 = `dyld_sf0`；region 首次映射后持久
+
+**1) 颠覆性结论（已复现）**
+| 变量 | 结果 |
+|---|---|
+| `dyld_nsl2`（清零 mapping slide） | **rc=124 挂死 / 之前 rc=137 击杀** ← 元凶 |
+| **`dyld_sf0`（仅清 `files[].sf_slide`）** | **echo ×3 全 rc=0 + HELLO**（iOS 与 macOS 缓存均可） |
+
+干净态梯度（`post_reboot_ladder.sh`）：除前两次挂起外，**6/6 步骤 `using=91 / notloaded=0`，后四步 rc=0 HELLO**。
+⇒ **不要再清 mapping slide**；`vm_shared_region_map_file()` 会给缓存文件打 `object_is_shared_cache`，其页本不会被 CS 逐页校验。
+
+**2) region 关键行为**
+- **首次映射后持久**（`check_np ret=0 base=0x180000000`），后续进程直接 reuse；**基准地址能反推占用者**：iOS=0x180000000、macOS≈0x1CE430000。
+- 在映射中途 SIGKILL **不能**释放 region ⇒ **换缓存只能重启**。
+- 向“iOS 已占”的 region 再映射 macOS 缓存 → rc=139。
+
+**3) 未完成（需重启后的“macOS-first”）**
+`cat/ls/sh` 仍失败（`___error`/`libutil`），因为当次实际消费的是**被污染的 iOS 缓存**（证据：`Expected in <B90391D8…>`=shim UUID）。
+**晨间一键**（已部署/已校验）：
+```
+bash /var/mobile/post_reboot_macfirst.sh
+```
+先映射 macOS 缓存（`dyld_sf0` + `CACHE_DIR=/System/Volumes/Preboot/Cryptexes/OS/System/Library/dyld`），
+验 `echo×3 / cat / ls / sh`，并打印 libSystem 用的是 `B90391D8`(shim) 还是 `D161E41A`(macOS 缓存)。
+**成功判据**：libSystem = `D161E41A` 且 `cat/ls/sh` 能跑。
+
 ## 7. 交付物清单
 - 代码/脚本（均已 commit+push，见 `git log`）：
   - `misc/cdhash_slices.py`、`misc/restore_env.sh`、`misc/run_nocskill.c`（修 kernel slide 扫描）
