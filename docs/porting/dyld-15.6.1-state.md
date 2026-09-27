@@ -168,6 +168,9 @@ faulting 0x100bbe9f8 ∈ mapped file 0x100b48000-0x100be4000 (624K, r-x/r-x, SM=
 - 崩溃模式稳定：fault 总在某个 **624K r-x mapped file** 的 `region_start+0x769F8`；且该区域**不在 dyld 的 segment 日志中** ⇒ 由**非 dyld 途径**映射（内核共享区/越狱注入器/plain mmap）。
 - **稳定性复现（本轮）**：同一环境连跑 `cat→echo→cat`，**3/3 均 `rc=137` + `using=91` + `notloaded=0` + `re-using existing shared cache`** ⇒ 击杀是**确定性**的，之前偶发的 rc=0 不可靠。
 - ❗ 结论：**536 与缓存复用均已成功**，唯一未通 = **消费缓存页时的内核 CS 击杀**。
+- 崩溃报告 `ktriageinfo` 明确定性：**“VM - A memory corruption was found in executable text”**（=可执行文本页 CS 校验失败）。
+- ❗ **lldb 取证在结构上受阻**：chroot 的 `libSystem.B.dylib` 是只有 10 个符号的 shim ⇒ `bash`/`lldb` 无法链接加载（`Killed: 9`/Symbol not found）。要跑 lldb 需真实缓存 libSystem，而它正是崩点 ⇒ **鸡生蛋**。
+- 下一步建议（需你/明早）：① 用能读内核日志的手段拿到 `vm_fault.c:2863` 那条带**文件名**的 print（含 serial/kdp/sysdiagnose）；② 或从“**越狱注入的 iOS 库**”入手（本次扫到 `libbrotlienc` TEXT=0xa0000 接近 624K，但未命中；待查 624K r-x 的真正归属）；③ 或换策略避免对缓存/DSC 的 plain mmap。
 
 **下半目标（post-reuse SEGV）取证工具与阻塞**：
 - 工具：`analysis/dyldwork/catch_segv.sh`（chroot lldb 拓 PC/far/backtrace）。

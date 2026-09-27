@@ -115,6 +115,11 @@ env -i PATH=/usr/bin:/bin DYLD_SHARED_CACHE_DIR=/iosdsc \
   对照：`CACHE_DIR` 指向不存在目录（不映射）时 rc=0 不被杀。
 - 解读：属 `CLAUDE.md` 已知阻塞类 —“**CS-enforced 页 + 普通 mmap → CS kill**”（不是 dyld 野指针）。
 - 下次可试：① 定位那个 624K r-x 镜像（需 chroot lldb：先给 `bash`/`lldb` 签名+TC）；② 看是否 ellekit/`launchdchrootexec` 注入的 iOS dylib 被载入 macOS 进程（日志里出现 `libMatch.1.dylib` 的 iOS UUID、procursus 路径）；③ 考虑内核 CS 策略层或避免对 DSC 的普通 mmap。
+- **2026-09-28 晚补充（确定性复现）**：同环境连跑 `cat→echo→cat` → **3/3 `rc=137` + `using=91` + `notloaded=0` + `re-using existing shared cache`** ⇒ 536/复用均已成功，唯一未通 = 消费缓存页时被内核 **CS “Invalid Page”** 杀。
+  - 崩溃报告 `ktriageinfo`：“**VM - A memory corruption was found in executable text**”。
+  - 内核侧：`vm_fault.c:2863` 有**无条件** printf（**带文件名**）——但本机抓不到内核日志（无真实 `log` 二进制/无 dmesg）：需 serial/kdp/sysdiagnose。
+  - **lldb 取证结构性受阻**：chroot 的 `libSystem.B.dylib` 是 10 符号 shim ⇒ `bash`/`lldb` 无法链接（需真实缓存 libSystem = 崩点本身，鸡生蛋）。
+  - 待办：定位 624K r-x 镜像归属；或换策略避免对缓存/DSC 的 plain mmap。
 
 ## 7. 交付物清单
 - 代码/脚本（均已 commit+push，见 `git log`）：
