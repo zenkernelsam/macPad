@@ -195,8 +195,21 @@ faulting 0x100bbe9f8 ∈ mapped file 0x100b48000-0x100be4000 (624K, r-x/r-x, SM=
 ⇒ **占用者更可能是 macOS 缓存**。真正的失败模式有两种：(1) 某些运行 `536` 失败→`notloaded=1`→`libutil (no such file, **no dyld cache**)`（dyld 当时根本没缓存）；(2) 缓存已映射时，`libSystem` 却被解析到**磁盘 shim**（`Expected in B90391D8`）——疑似**注入的 iOS 库先把磁盘 shim 拉成 libSystem**，后续 macOS 二进制的同名依赖命中了它。
 ⇒ 下步两选：**(a)** 在“`notloaded=0`”的那次里再试**移走 shim**（彻底让缓存提供 libSystem）；**(b)** 给 shim 补上缺失符号（务实解锁 CLI）。
 
-### 🚨 重要操作规则（否则永远在测错对象）
-**只要在“目标缓存映射”之前跑过任何不带 `DYLD_SHARED_CACHE_DIR` 的 chroot 命令**（如 `restore_env.sh` 的内部验证、基线 `chroot .../echo`），
+### 🌫️ 2026-09-29 00:55+【当前状态】macOS 缓存 536 非确定性；iOS 缓存稳定
+| 对象 | 结果（同一 boot 内反复测） |
+|---|---|
+| iOS 缓存（`/iosdsc`，46 片） | **稳定**：`notloaded=0`、`using=91`、echo `rc=0 HELLO` |
+| macOS 缓存（2 片） | **不稳定**：`dyld_errno`(plat+cave) → `notloaded=0` 然后 **rc=139 崩**；`dyld_plat`/`dyld_sf0` → `notloaded=1`（`syscall to map cache into shared region failed`） |
+
+**推论**：macOS 缓存首次映射成功后进程崩溃 139，留下**残留 region** ⇒ 后续 536 失败；直到 region 被释放/重启。
+**`cat/ls/sh` 的 libSystem 三种去向**：①磁盘 shim → 缺 `___error`；②iOS 缓存 libSystem → `wrong platform to load into process`；③`platstub` 强载 iOS 库 → **SIGILL(132)**。
+⇒ macOS CLI 要跑通，必须让**macOS 缓存可靠映射且不崩**（当前最大路障）。
+
+### 🧪 新探针：`dyld_errno.bin`（在 `cerror` 之后 dump 真实 errno，保持原错误路径）
+- 做法：hook `0x76e14`（536 stub 错误路径的 `mov sp,x29`）→ cave：`mrs x1,TPIDRRO_EL0; ldr w1,[x1]; write(2,&errno,4)` → 回放 `mov sp,x29` → `b 0x76e18`。
+- 产物：`analysis/dyldwork/dyld_errno.bin`（已部署 `/var/mobile/`）。
+
+### 🚨 重要操作规则（否则永远在测错对象）**只要在“目标缓存映射”之前跑过任何不带 `DYLD_SHARED_CACHE_DIR` 的 chroot 命令**（如 `restore_env.sh` 的内部验证、基线 `chroot .../echo`），
 region 就会被 **设备 iOS 缓存**先占（首次映射持久）⇒ 后续全部在**复用 iOS 缓存**。
 ⇒ **正确脚本**：`analysis/dyldwork/post_reboot_cli.sh`（已部署 `/var/mobile/`，双端 `bash -n` OK，md5 `7571a720…`）
   要点：TC **手工补**（不跑 chroot）、**不做基线**、探针用不存在目录、**第一个真映射 = macOS 缓存**（plain dyld）、cachereg 天然覆盖。
