@@ -173,11 +173,26 @@ faulting 0x100bbe9f8 ∈ mapped file 0x100b48000-0x100be4000 (624K, r-x/r-x, SM=
 
 **★ `set_blob_cov.py`(csb_end_offset→filesize) 是 macOS 缓存 536 失败的原因**：恢复天然覆盖（只跑 cachereg）后 **macOS 两片 536 成功（notloaded=0）**。**以后不要对缓存做扩覆盖**。
 
-### ⛔ 剩余堵点：dyld 不从缓存“绑定” libSystem
-- `cat/ls/sh` 仍 `rc=134`：`___error` / `libutil` 缺失。
+### ⛔ 剩余堵点：dyld 不从缓存“绑定” libSystem- `cat/ls/sh` 仍 `rc=134`：`___error` / `libutil` 缺失。
 - 日志同时出现 `<D161E41A…> /usr/lib/libSystem.B.dylib` 与 `<B90391D8…>(shim)`；**符号解析走了 shim**。
 - **移走 shim** 后反而 `Library not loaded: /usr/lib/libSystem.B.dylib`（仅尝试磁盘路径）⇒ dyld 没有把缓存中的 libSystem 当作可用镜像。
 - 下一步候选：①核实映射进去的到底是哪个缓存（读缓存头 uuid）；②`DYLD_SHARED_CACHE_DIR` 指向非标准目录是否导致“不作为系统缓存”；③libSystem 是否位于 `.01` 分片而子缓存未被纳入依赖查找。
+
+### 🔍 2026-09-29 凌晨【最后定位】region 里装的其实是 **iOS 缓存**（不是 macOS）
+**证据**：日志中被加载的 image 全是 **iOS 专属**（`/usr/lib/libMatch.1.dylib`、`AppleMobileFileIntegrity.framework`、`libmis.dylib`、`libsandbox.1.dylib`、`MobileSystemServices`）；
+且 `re-using existing shared cache (/private/preboot/…/System/Library/Caches/com.apple.dyld/dyld_shared_cache_arm64e)` = **设备 iOS 缓存**的默认路径。
+⇒ 因此 `ls` 报 `libutil.dylib (no such file, **no dyld cache**)`（iOS 缓存里没有 macOS 的 libutil）。
+
+**明早解法（推荐顺序）**：
+1. 让 chroot 在 dyld **默认缓存目录**处看到 **macOS 两片**（例：把 macOS `dyld_shared_cache_arm64e{,.01}` 放到或 mount 到 chroot 的 `/System/Library/Caches/com.apple.dyld/`），并**屏蔽 iOS 泄漏路径**（`/private/preboot/.../Caches/com.apple.dyld`），再跑 `post_reboot_final.sh` 的 CLI 验收；
+2. 若不行，则核实 `CacheFinder` 的选择逻辑（分析源码 `DyldProcessConfig.cpp`），必要时用 `dyld_patch` 强制 cache dir。
+**验收判据**：`cat/ls/sh` 的 `rc=0`，且 libSystem 只出现 `D161E41A`（不带 shim `B90391D8`）。
+
+### 🚨 重要操作规则（否则永远在测错对象）
+**只要在“目标缓存映射”之前跑过任何不带 `DYLD_SHARED_CACHE_DIR` 的 chroot 命令**（如 `restore_env.sh` 的内部验证、基线 `chroot .../echo`），
+region 就会被 **设备 iOS 缓存**先占（首次映射持久）⇒ 后续全部在**复用 iOS 缓存**。
+⇒ **正确脚本**：`analysis/dyldwork/post_reboot_cli.sh`（已部署 `/var/mobile/`，双端 `bash -n` OK，md5 `7571a720…`）
+  要点：TC **手工补**（不跑 chroot）、**不做基线**、探针用不存在目录、**第一个真映射 = macOS 缓存**（plain dyld）、cachereg 天然覆盖。
 
 ### 🌟🌟 2026-09-28 深夜【颠覆性】重启后干净态梯度：**CS 击杀是“自伤” —— mapping-slide 清零补丁才是元凶**
 
