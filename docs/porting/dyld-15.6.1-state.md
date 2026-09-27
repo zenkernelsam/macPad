@@ -8,6 +8,42 @@ a fact/offset/result changes, BEFORE context is lost.
 **▶ 完整移交文档（给下一位 agent 的自包含复现+继续指南）：
 `docs/porting/HANDOVER-HELLO-2026-09-27.md` + `HANDOVER-DYLD-ADMIT-2026-09-27.md`**
 
+---
+## 📌 顶部摘要（2026-09-28 最新；下方旧段落如与之冲突，以本节为准）
+
+### 1) 签名/准入（已定论，不再推导）
+- 内核 exec 准入查的 cdhash = **`sha256(CodeDirectory[0:CD.length])[:20]`**（只哈希 CD 本体；工具：`misc/cdhash_slices.py`，对每个 slice 都算）。
+- 配方：`ldid -Hsha256 -S/var/jb/usr/macOS/bin/entitlements.plist F`（**不加 `-Cadhoc`/`-M`**）→ `jbctl trustcache add <40hex>` → `rm -f` 后 `cp`（新 inode）+ `chmod 755`。
+- 判据：`re-clears=2` ⇒ 准入过；`re-clears=1` ⇒ 被杀（确定性 8/8）。`SIGNALED 9` 先查 cdhash 是否按 `CD[0:cdlen]` 算对并进 TC。
+
+### 2) 【已达成】536 把 iOS dyld 缓存映射进 chroot shared region
+- **真因 = `files[].sf_slide` 非 16K 对齐**（`shared_file_np` = 12B `{fd,count,sf_slide}`；iOS 主分片 `sf_slide=0x539b0000`）⇒ 清零后 **536 成功**。
+- 产物 `analysis/dyldwork/dyld_sf0.bin`（`crossarch+plataccept` + cave@0x35690→0x9b578 清零 `sf_slide`）。
+- 验收 3×：`rc=0 HELLO`、`Using mapping in dyld cache ×91`、`re-using existing shared cache ×2`、`cache not loaded ×0`、`check_np base=0x180000000`。
+- 前置：① `misc/restore_env.sh` 补 TC；② `cachereg_ios /iosdsc/*`（46 片）附 CS blob；③ `set_blob_cov.py` 把 46 片 `csb_end_offset`=文件大小。
+
+### 3) 当前卡点：libSystem 的平台/兼容
+- `/bin/echo` 过（只需 `_err`）；`/bin/cat`/`/bin/sh` 失败于 `___error` Expected in **shim 的 UUID(B90391D8)** ⇒ **libSystem 实际仍取磁盘 shim**。
+- 移走 shim → `wrong platform to load into process`；`platstub`（`loadableIntoProcess→1`）强载 iOS 库 → **SIGILL(132)**。
+- ⇒ “库全走（iOS）缓存”受限于 **iOS 库 ≠ macOS 进程**；**结论：真正需要的是 macOS 自己的缓存**。
+
+### 4) 下一步（需重启拿干净 region）
+- **实测：shared region 跨进程持久**（`check_np` 连续两次 = `0 / base=0x180000000`）；所以要换缓存必须**重启**（bindfs 新建 root 尝试失败：`mount_bindfs: No such file or directory`）。
+- **实测：macOS 缓存 `slideInfoVersion=0 / slideInfoOffset=0`（根本没有 slide-info）** ⇒ 旧“slide-info v5”障碍**对本缓存不适用**。
+- 重启后跑设备上 `/var/mobile/post_reboot_mac.sh`（自动：校验干净 region → 复原 TC → cachereg macOS 缓存 → blob 覆盖 → 部署 `dyld_noslide.bin` → 验收 HELLO/using/notloaded + cat/ls/sh）。
+
+### 5) 重启后必重建（易失）
+- **jailbreak trustcache（内存）** → 用 `misc/restore_env.sh`；**cachereg 的 cs_blob（vnode 级）** → 重跑 `cachereg*`；rootfs 本身不丢。
+- ⚠️ 旧 `run_nocskill` 硬编码 kernel slide → 重启后 `proc not found`；**实测 TC 复原后直接 `chroot` 即可**（不需要 run_nocskill）。
+
+### 6) 已作废/易误解的旧说法
+- ❌“签名配方不对导致 SIGNALED 9” → 真变量是 cdhash 算法（§1）。
+- ❌“22 = CS 覆盖门（0x8459cbc）是首因” → 对 iOS 缓存，**首因是 `sf_slide`**；CS 覆盖门只在特定配置下暴露（覆盖面需 ⊇ mapping 区间）。
+- ❌“macOS 缓存卡在 slide-info v5” → 本缓存无 slide-info（§4）。
+- ❌ marker 站点（mk*/m2*）不可靠（`SIGNALED 11`、零 marker）→ 改用 `cknp2`/自建 cave 探针。
+
+---
+
 ## ★★★★★ 2026-09-28 ⭐⭐⭐⭐⭐ MILESTONE：**cdhash 算法搞错 = 之前所有 `SIGNALED 9` 的真因**（runtime-confirmed）
 
 **结论（不要再推导）**：内核 exec 准入查的 cdhash 是
@@ -59,7 +95,7 @@ a fact/offset/result changes, BEFORE context is lost.
 
 ### 🔜 2026-09-28 下一步计划（待重启测试）：改映射 **macOS 自己的缓存**
 - 动机：macOS 缓存里的 libSystem **兼容 macOS 进程**，可绕过“iOS 库不兼容”的墙。
-- 已知障碍：state doc 旧结论“**macOS 缓存 slide-info version=5，内核只支持 1..4**”。
+- 已知障碍：state doc 旧结论“**macOS 缓存 slide-info version=5，内核只支持 1..4**” —— ⚠️ **已证伪：本 macOS 缓存 `slideInfoVersion=0/slideInfoOffset=0`（无 slide-info）**。
 - 对策：dyld 侧把每条 mapping 的 `sms_slide_size(+0x18)/sms_slide_start(+0x20)` 清零（不触发内核读 slide-info） + `files[].sf_slide` 清零。
 - 产物：`analysis/dyldwork/dyld_noslide.bin`（= crossarch+plataccept + sf0 + mapping-slide 清零）。
 - 实测：现 region 已被 iOS 缓存占；强制不复用后映射 macOS 缓存 **仍 EINVAL(22)**（因 region 非空）。
