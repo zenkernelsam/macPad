@@ -160,6 +160,13 @@ faulting 0x100bbe9f8 ∈ mapped file 0x100b48000-0x100be4000 (624K, r-x/r-x, SM=
 - 注：崩溃地址在**普通 mmap 文件区**（非 shared region 0x180000000），且 dyld 日志显示最后加载的是 `/usr/lib/libMatch.1.dylib`（**iOS UUID 83CA476B**，无法在 chroot /usr/lib 找到）与 procursus 注入库 ⇒ 怀疑 **chroot 下 /usr/lib 被 iOS 的 bindfs `.fakelib` 命中** 或缓存 image 列表混入 iOS 路径。
 - 探针局限：dyld 日志未打印 0x100b48xxx 段的 image 名；`.ips` 的 usedImages 为 0 ⇒ 需另建“地址→image”映射（如逐个 image mmap 跟踪）。
 
+### 🧪 2026-09-28 IDA(Instance2=kernel) 取证：cs_validate_page / 无条件击杀 printf
+- **`osfmk/vm/vm_fault.c:2863`**：`printf("CODE SIGNING: process %d[%s]: rejecting invalid page at address 0x%llx from offset 0x%llx in file \"%s%s%s\" ...")` —— **无条件打印（带文件名）**；本机**无法抓内核日志**（无真实 `log` 二进制；`log show` 空；无 dmesg/sysctl）⇒ 该线索暂时用不上。
+- **`bsd/kern/ubc_subr.c:5226-5300`**（`cs_validate_page`）：页必须在某 blob 覆盖窗内（否则 `continue`），然后在 **CD 哈希表**查哈希；查不到 → `found_hash=FALSE` → `validated=FALSE` → 由 `vm_fault_enter` 决定击杀。
+  ⇒ 我们对 dsc 的 `csb_end_offset` 扩到整文件后，超出原签名范围的页“被覆盖但无哈希”→ 仍 `validated=FALSE`。
+- 实测补充：macOS 缓存 vnode **`v_flag=0x184a00` 已含 VSHARED_DYLD(0x200)**（`already set`）⇒ 设 VSHARED_DYLD 不解决问题。
+- 崩溃模式稳定：fault 总在某个 **624K r-x mapped file** 的 `region_start+0x769F8`；且该区域**不在 dyld 的 segment 日志中** ⇒ 由**非 dyld 途径**映射（内核共享区/越狱注入器/plain mmap）。
+
 **下半目标（post-reuse SEGV）取证工具与阻塞**：
 - 工具：`analysis/dyldwork/catch_segv.sh`（chroot lldb 拓 PC/far/backtrace）。
 - 阻塞：chroot 里的 `bash`/`lldb` 未签名→TC → AMFI `Killed: 9`；**需先 `ldid -Hsha256 -S<ent>` + `cdhash_slices.py`+TC 后再跑 catch_segv**（下一轮）。
