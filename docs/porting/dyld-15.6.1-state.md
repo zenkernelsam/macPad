@@ -171,6 +171,10 @@ faulting 0x100bbe9f8 ∈ mapped file 0x100b48000-0x100be4000 (624K, r-x/r-x, SM=
 - 崩溃报告 `ktriageinfo` 明确定性：**“VM - A memory corruption was found in executable text”**（=可执行文本页 CS 校验失败）。
 - ❗ **lldb 取证在结构上受阻**：chroot 的 `libSystem.B.dylib` 是只有 10 个符号的 shim ⇒ `bash`/`lldb` 无法链接加载（`Killed: 9`/Symbol not found）。要跑 lldb 需真实缓存 libSystem，而它正是崩点 ⇒ **鸡生蛋**。
 - 下一步建议（需你/明早）：① 用能读内核日志的手段拿到 `vm_fault.c:2863` 那条带**文件名**的 print（含 serial/kdp/sysdiagnose）；② 或从“**越狱注入的 iOS 库**”入手（本次扫到 `libbrotlienc` TEXT=0xa0000 接近 624K，但未命中；待查 624K r-x 的真正归属）；③ 或换策略避免对缓存/DSC 的 plain mmap。
+- **击杀与 cs_blob 无关（实测）**：把 `cachereg` 全关（`pgrep` 无进程）后，iOS/macOS 缓存仍然 `using=91 / notloaded=0 / re-using` → **rc=137**。
+- **只有“刚重启”才值得做的实验梯度**（脚本 `analysis/dyldwork/post_reboot_ladder.sh`，已部署到设备 `/var/mobile/`）：
+  基线 → (iOS) **无blob** → **有blob不扩覆盖** → **扩覆盖** → (macOS) 同三步 → 收尾；每步记录 `rc / 536原始errno / notloaded / Using mapping`，stderr 存 `/var/mobile/L_*.err`。
+  （目的：验证①无 blob 时 536 是否还能过；②**我们的 `csb_end_offset` 扩覆盖是否正是 CS 击杀诱因**；③vnode 标志/cs_blob 脏态是否贡献。）
 
 **下半目标（post-reuse SEGV）取证工具与阻塞**：
 - 工具：`analysis/dyldwork/catch_segv.sh`（chroot lldb 拓 PC/far/backtrace）。
