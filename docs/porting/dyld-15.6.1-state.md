@@ -2338,3 +2338,29 @@ dyld: <B90391D8-…> /usr/lib/libSystem.B.dylib     ← 同一个进程里 shim 
 ⇒ `DYLD_FORCE_PLATFORM` **确实改变了镜像接受结果**（缓存版 libSystem 被纳入）⇒ **这是 option(a) 的零补丁入口**，
 下一步应：用 `DYLD_PRINT_LOADERS=1`/`DYLD_PRINT_SEARCHING=1` 看清"为何 shim 仍被加载/绑定"，并试 `DYLD_FORCE_PLATFORM=1`
 （数值形式）、`DYLD_AMFI_FAKE=1`、`DYLD_USE_CLOSURES=0` 等组合；期间**必须用正确拆分参数的调用**（本轮我又有一次 `set --` 引号 bug 导致 rc=127 假象）。
+
+## ✅ 2026-09-28 07:5x【全新 boot 上的判决性结果】"iOS 先 → macOS 后"配方成立
+**两轮一致性脚本**（`post_reboot_cli4.sh`，boot 后第一个 chroot 命令即被测）：
+```
+第一轮/第二轮完全一致：
+  ctl-echo rc=0 | ctl-cat rc=134 | fp-echo1 rc=0 | fp-echo2 rc=0 | fp-cat/ls/sh rc=134
+  每次均 "dyld cache '(null)' not loaded"（536 失败），cacheimg=0
+```
+⇒ **全新 boot 上"直接上 macOS 缓存"必失败**（与旧 boot 里第一次成功的情形不同）。
+
+**但紧接着按序执行即成功（同 boot、两次独立复现）**：
+```
+1) cachereg(iOS) + dyld_sf0 → echo  : rc=0 nl=0   ← iOS 缓存映射成功
+2) cachereg(macOS) + dyld_plat → echo: rc=0 nl=0   ← 紧接着 macOS 缓存也映射成功 ✓✓
+```
+⇒ **配方（消除歧义版）**：
+1. 每次**只**跑一条 `cachereg <cache> <cache>.01`（天然覆盖，别扩覆盖），`sleep 4-5`；
+2. 先跑 **iOS 缓存**（`DYLD_SHARED_CACHE_DIR=/iosdsc`, `dyld_sf0`）让 region 先落地一次；
+3. 再切 **macOS 缓存**（`DYLD_SHARED_CACHE_DIR=<cryptex dyld 目录>`, `dyld_plat`）→ **即可 `nl=0` 成功**；
+4. 期间**不要**再去 mv/rm 文件（触碰 FS 会让 CS blob 失效，见下）。
+**#5 的两个"真障碍"（本轮反复确认）**：
+- **shim 在场**：缓存映射成功（nl=0）但 `/bin/cat` 的 libSystem **绑定到 shim**（`<B90391D8>`）→ `Symbol not found: ___error`；
+- **shim 移走**：536 **立刻变失败**（nl=1，≥4 次复现；移走后**重挂 cachereg 也无效**）⇒ 这一"shim 在场↔映射成功"的因果**用户态无法解释**。
+- 另外：`mv/rm` 触碰 FS 后 CS blob 可能失效（本轮已测：移走后重挂 cachereg 仍失败）。
+**结论**：#1~#4 在全新 boot 上**已判决性达成并可复现**；#5 只剩"**让缓存 libSystem 压过 shim 绑定**"这一件事
+（方向：`DYLD_FORCE_PLATFORM=macOS` 已能使缓存版 libSystem 被加载；下一步用 `DYLD_PRINT_LOADERS/SEARCHING` 定位 shim 为何仍胜出）。
