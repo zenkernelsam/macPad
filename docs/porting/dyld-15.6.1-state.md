@@ -2188,3 +2188,33 @@ rm /var/mnt/rootfs/usr/lib/dyld && cp /tmp/dyld_x /var/mnt/rootfs/usr/lib/dyld
 # run:
 /var/jb/usr/macOS/bin/launchdchrootexec 0 0 /var/mnt/rootfs /usr/bin/true
 ```
+
+## ✅✅ 2026-09-28 01:5x【重大】两种缓存均成功映射（notloaded=0）；此前失败=探针自伤
+### ⚠️ 致命踩坑（必须先读）
+`shared_region_check_np(294)` 的**入参为 0** 时内核会执行 `vm_shared_region_remove(task, sr)`（"unmap"语义，见
+`bsd/vm/vm_unix.c: shared_region_check_np()`：`if (uap->start_address == 0) { vm_shared_region_remove(...) }`）。
+⇒ **任何把 start_address 置 0（或传未初始化栈垃圾=0）的探针都会把空 region 删掉**，之后 536 恒 EINVAL(22)。
+本轮此前所有 "check_np=22 / 536 失败" **全部是探针自伤**，不是真实阻塞。
+**正确探针**：slot 必须先写**非零**值（如 0x1000）再调用；此时返回 **12 = 有 region 且未映射**（实测）。
+
+### 结论：region 一直存在，536 本来就能通
+同一 boot 实测（`cachereg <主缓存> <.01>` 后台运行 + 对应 dyld）：
+| 缓存 | dyld | env | 结果 |
+|---|---|---|---|
+| iOS `/iosdsc` | `dyld_sf0.bin`(清 sf_slide) | `DYLD_SHARED_CACHE_DIR=/iosdsc` | **rc=0 notloaded=0 HELLO** ×2 |
+| macOS cryptex | `dyld_plat.bin`(crossarch+plataccept, 保留 maxSlide=0x20000000) | `DYLD_SHARED_CACHE_DIR=<cryptex dyld 目录>` | **rc=0 notloaded=0 HELLO** ×2 |
+
+`DYLD_PRINT_LIBRARIES=1` 证据：`<D161E41A-3030-339F-B135-E244271F54C6> /usr/lib/libSystem.B.dylib`
+⇒ 库确实来自 **macOS 缓存**（uuid 与缓存头 0x58 一致）。
+
+### 剩余堵点：去掉磁盘 shim 后 libSystem 被判 “wrong platform to load into process”
+移走 `/usr/lib/libSystem.B.dylib` + `/usr/lib/system/libdyld.dylib` 后（缓存已成功映射！）：
+```
+dyld: <D161E41A…> /usr/lib/libSystem.B.dylib
+dyld: Library not loaded: /usr/lib/libSystem.B.dylib
+  Reason: tried: … (no such file) … '/usr/lib/libSystem.B.dylib' (wrong platform to load into process)
+```
+⇒ 缓存已载入，但**镜像级 platform 校验**仍拒绝（`plataccept@0x35c24` 只覆盖 preflight 那一处）。
+**下一步**：定位 dyld 镜像级的 platform 检查（对照 “wrong platform to load into process” 字符串 xref），
+把进程中 macOS 镜像的 platform 接受逻辑一并放开（不要用 `platstub` 那种强制 loadableIntoProcess 的暴力 stub）。
+`/System/Library/dyld/` 的 symlink（主/.01/atlas/map → cryptex）齐全，**默认路径失败另有原因**（env 路径成功），待查。
