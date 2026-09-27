@@ -160,6 +160,25 @@ faulting 0x100bbe9f8 ∈ mapped file 0x100b48000-0x100be4000 (624K, r-x/r-x, SM=
 - 注：崩溃地址在**普通 mmap 文件区**（非 shared region 0x180000000），且 dyld 日志显示最后加载的是 `/usr/lib/libMatch.1.dylib`（**iOS UUID 83CA476B**，无法在 chroot /usr/lib 找到）与 procursus 注入库 ⇒ 怀疑 **chroot 下 /usr/lib 被 iOS 的 bindfs `.fakelib` 命中** 或缓存 image 列表混入 iOS 路径。
 - 探针局限：dyld 日志未打印 0x100b48xxx 段的 image 名；`.ips` 的 usedImages 为 0 ⇒ 需另建“地址→image”映射（如逐个 image mmap 跟踪）。
 
+### 🌟🌟 2026-09-28 深夜【颠覆性】重启后干净态梯度：**CS 击杀是“自伤” —— mapping-slide 清零补丁才是元凶**
+**脚本**：`post_reboot_ladder.sh`（重启后自动跑完）。**结果**：
+| 步骤 | rc | using | notloaded |
+|---|---|---|---|
+| 4 iOS 无blob | 124(挂) | 91 | 0 |
+| 5 iOS blob 不扩覆盖 | 124(挂) | 91 | 0 |
+| 6 iOS blob+扩覆盖 | **0 HELLO** | 91 | 0 |
+| 7 macOS 无blob | **0 HELLO** | 91 | 0 |
+| 8 macOS blob 不扩覆盖 | **0 HELLO** | 91 | 0 |
+| 9 macOS blob+扩覆盖 | **0 HELLO** | 91 | 0 |
+
+**随后手测（决定性）**：
+- `dyld_nsl2`（**清零 mapping slide**）→ **rc=124 挂死/之前 rc=137 击杀**
+- 换回 **`dyld_sf0`（仅清 `files[].sf_slide`）** → **echo ×3 均 rc=0 + HELLO**（iOS 与 macOS 缓存都行，`IOSOK`/`MACOK`）
+⇒ **之前的“CS Invalid Page 击杀”是 `dyld_nsl2` 那个补丁自伤**（清 mapping slide 破坏了 rebase），**非本质阻塞**。**今后只用 `dyld_sf0`**。
+
+**遗留（下次重启后再测）**：region 会被首次映射“占住”且**持久**，于是后跑的 macOS 缓存测试实际复用了先前的 iOS 缓存（证据：cat 报 `Expected in <B90391D8…>` = **shim UUID**；`check_np=0`）。
+⇒ **正确测法**：重启后 **第一个**就映射 **macOS 缓存**（`DYLD_SHARED_CACHE_DIR=/System/Volumes/Preboot/Cryptexes/OS/System/Library/dyld` + `dyld_sf0`），再测 `cat/ls/sh`。
+
 ### 🧪 2026-09-28 IDA(Instance2=kernel) 取证：cs_validate_page / 无条件击杀 printf
 - **`osfmk/vm/vm_fault.c:2863`**：`printf("CODE SIGNING: process %d[%s]: rejecting invalid page at address 0x%llx from offset 0x%llx in file \"%s%s%s\" ...")` —— **无条件打印（带文件名）**；本机**无法抓内核日志**（无真实 `log` 二进制；`log show` 空；无 dmesg/sysctl）⇒ 该线索暂时用不上。
 - **`bsd/kern/ubc_subr.c:5226-5300`**（`cs_validate_page`）：页必须在某 blob 覆盖窗内（否则 `continue`），然后在 **CD 哈希表**查哈希；查不到 → `found_hash=FALSE` → `validated=FALSE` → 由 `vm_fault_enter` 决定击杀。
@@ -172,12 +191,14 @@ faulting 0x100bbe9f8 ∈ mapped file 0x100b48000-0x100be4000 (624K, r-x/r-x, SM=
 - ❗ **lldb 取证在结构上受阻**：chroot 的 `libSystem.B.dylib` 是只有 10 个符号的 shim ⇒ `bash`/`lldb` 无法链接加载（`Killed: 9`/Symbol not found）。要跑 lldb 需真实缓存 libSystem，而它正是崩点 ⇒ **鸡生蛋**。
 - 下一步建议（需你/明早）：① 用能读内核日志的手段拿到 `vm_fault.c:2863` 那条带**文件名**的 print（含 serial/kdp/sysdiagnose）；② 或从“**越狱注入的 iOS 库**”入手（本次扫到 `libbrotlienc` TEXT=0xa0000 接近 624K，但未命中；待查 624K r-x 的真正归属）；③ 或换策略避免对缓存/DSC 的 plain mmap。
 - **击杀与 cs_blob 无关（实测）**：把 `cachereg` 全关（`pgrep` 无进程）后，iOS/macOS 缓存仍然 `using=91 / notloaded=0 / re-using` → **rc=137**。
+- ❗ **关键机制（源码）**：`vm_shared_region_map_file()`（536 引擎，`vm_shared_region.c:1676-1680`）对每个被映射文件设 **`file_object->object_is_shared_cache = true`**
+  ⇒ **经 536 映射的缓存页不会被 CS 逐页校验**。因此击杀页**必来自“非 536 途径”映射的文件**（与“fault 区域不在 dyld segment 日志/不在 region”一致）。
+  ⇒ 嫌疑收敛：**越狱注入的 iOS dylib** 或某个磁盘库（其 ubc 对象被 CS 强制）。
 - **只有“刚重启”才值得做的实验梯度**（脚本 `analysis/dyldwork/post_reboot_ladder.sh`，已部署到设备 `/var/mobile/`）：
   基线 → (iOS) **无blob** → **有blob不扩覆盖** → **扩覆盖** → (macOS) 同三步 → 收尾；每步记录 `rc / 536原始errno / notloaded / Using mapping`，stderr 存 `/var/mobile/L_*.err`。
   （目的：验证①无 blob 时 536 是否还能过；②**我们的 `csb_end_offset` 扩覆盖是否正是 CS 击杀诱因**；③vnode 标志/cs_blob 脏态是否贡献。）
 
-**下半目标（post-reuse SEGV）取证工具与阻塞**：
-- 工具：`analysis/dyldwork/catch_segv.sh`（chroot lldb 拓 PC/far/backtrace）。
+**下半目标（post-reuse SEGV）取证工具与阻塞**：- 工具：`analysis/dyldwork/catch_segv.sh`（chroot lldb 拓 PC/far/backtrace）。
 - 阻塞：chroot 里的 `bash`/`lldb` 未签名→TC → AMFI `Killed: 9`；**需先 `ldid -Hsha256 -S<ent>` + `cdhash_slices.py`+TC 后再跑 catch_segv**（下一轮）。
 - 其他观察：重启后若映射进程崩溃（139），**region 会自动释放**（`check_np` 又回 12）⇒ **不用每次重启就能重试**。
 
