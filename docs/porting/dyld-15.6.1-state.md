@@ -6,7 +6,57 @@ run in chroot. This file is the single source of truth — update it whenever
 a fact/offset/result changes, BEFORE context is lost.
 
 **▶ 完整移交文档（给下一位 agent 的自包含复现+继续指南）：
-`docs/porting/HANDOVER-HELLO-2026-09-27.md`**
+`docs/porting/HANDOVER-HELLO-2026-09-27.md` + `HANDOVER-DYLD-ADMIT-2026-09-27.md`**
+
+## ★★★★★ 2026-09-27（晚）⭐⭐⭐⭐⭐ MILESTONE：**修改过的 dyld 准入规则破解** —— `ldid` 裸签（无 `-Cadhoc`）是唯一存活配方
+
+**runtime-confirmed，3 次复测全过。**
+
+### 结论（不要再推导）
+
+修改 dyld `__TEXT` 任意字节（含死区 NOP）后，能否过 exec 准入**只取决于签名配方**，与改动内容无关：
+
+| 签名方式 | superblob | CD flags | 结果 |
+|---|---|---|---|
+| `ldid -Hsha256 -S<ent.plist>`（**无 `-Cadhoc`**） | 4 项（CD+req+XMLent+DERent） | **0x0** | ✅ HELLO ×3 |
+| `ldid -Hsha256 -Cadhoc -S<ent.plist>` | 4 项同上 | **0x2(adhoc)** | ❌ SIGKILL(exec veto,dyld 零输出） |
+| `resign_dyld.py`（保 superblob 只重算页哈希） | 4 项原样保留 | 0x0 | ❌ SIGKILL |
+| `ldid -Hsha256 -S<ent>` 于**未改内容**的备份 | 4 项 | 0x2（带-Cadhoc时也work) | ✅ HELLO（见备注） |
+
+**备注**：`dyld_bk_resign`（未改内容 + `-Cadhoc` → flags=0x2）反而能跑——
+说明 flags=0x2 只在"内容被改"时才致命。别问为什么，经验规则就是：
+**改 dyld → 用 `ldid -Hsha256 -S<ent>`（绝不加 -Cadhoc）→ flags 必须 0x0。**
+
+### 反例澄清（旧记录要修正）
+
+- 之前写"`resign_dyld.py` 保 superblob + 重算哈希仍 SIGKILL"——属实，但
+  现在知道正确配方是 ldid 裸签，不是保 blob。保 blob 路径不要再走。
+- `jbctl trustcache add` 需要 **40 hex 的 sha256(cd)[:20]**——不是全 64 hex，
+  也不是 cdhash.py 的全量输出。截前 40 字符。
+- trustcache info 输出是**大写 hex**——grep 必须 `-i`（之前误判"备份不在 TC"是
+  因为小写 grep 大写列表）。备份 cdhash `b219dae7…` 实于 TC entry 290。
+
+### dyld 准入完整配方（一条命令链）
+
+```bash
+# on device, file at /var/mobile/dyld_X.bin:
+/var/jb/usr/bin/ldid -Hsha256 -S/var/jb/usr/macOS/bin/entitlements.plist /var/mobile/dyld_X.bin
+# cdhash = sha256(CD blob)[:20] (40 hex):
+/var/jb/basebin/jbctl trustcache add <cdhash40>
+rm -f /var/mnt/rootfs/usr/lib/dyld && cp /var/mobile/dyld_X.bin /var/mnt/rootfs/usr/lib/dyld && chmod 755 /var/mnt/rootfs/usr/lib/dyld
+# test:
+/var/mobile/run_nocskill /var/jb/usr/bin/env -i PATH=/usr/bin:/bin \
+  /var/jb/usr/bin/chroot /var/mnt/rootfs /bin/echo HELLO
+```
+
+### 本路径解锁的下一步（交接给隔壁 AI)
+
+死区字节能改 = **可以打 `plataccept` 补丁**(dyld thin `0x35c24`
+`B.NE → NOP`)，让 dyld 接受 iOS 缓存 platform → `DYLD_SHARED_CACHE_DIR=/iosdsc`
++ iOS 缓存拷贝灌进 chroot region 的路可以测了。详见
+`HANDOVER-DYLD-ADMIT-2026-09-27.md`。
+
+---
 
 ## ★★★★★ 2026-09-27（续·傍晚）⭐⭐⭐⭐⭐ MILESTONE：发现 iOS 缓存采纳路径 —— 可能根本不需要 536
 
