@@ -2229,3 +2229,17 @@ dyld: Library not loaded: /usr/lib/libSystem.B.dylib
   随后 "Library not loaded … Reason: tried: … (no such file) … (wrong platform)" ⇒ 走了**按路径**的加载分支
   而不是缓存索引分支，且末选被 platform 判据拒。**下一步**：查 dyld 里 libSystem 的“按路径→缓存索引”回退为何没命中
   （可能是 chroot 下 root 路径拼接/`dyldCache` 的 path 表匹配问题），而不是继续动 platform 判据。
+
+### 2026-09-28 02:1x 本轮补证与"最后一公里"脚本
+**1. 项目自带 sprobe 全文（`/var/mnt/rootfs/tmp/sprobe`，可跑，rc=0）**：
+```
+check_np ret  = -14 | cache path = <cryptex>/…/dyld_shared_cache_arm64e
+mappingCount = 8 | platform = 1(macOS) | csSigOffset=0xa160c000 csSigSize=0x50c000(→到文件尾)
+map…[8 条，addr 0x180000000/0x1ebdec000/0x1ee1ac000/0x1f9070000…]
+map_and_slide = -22
+```
+⇒ **即使用项目自己的探针 + 完全合法的参数，macOS 缓存的 536 仍得 -22** ⇒ 内核侧对 macOS 缓存有独立判据，且**与 region 当前状态强相关**（干净 boot 首进程可成功，已被 91×`Using mapping in dyld cache` 证明）。
+**2. shim 干扰（item#5 主因）**：shim 在场时 dyld 按路径优先加载 `<B90391D8>`（磁盘 shim）而不是缓存 `<D161E41A>` ⇒ `Symbol not found: ___error`；shim 移走后缓存映射**失败**时 dyld 明确说 `'/usr/lib/libSystem.B.dylib' (no such file, **no dyld cache**)` ⇒ **只要缓存映射成功，libSystem 就从缓存来**（已由 notloaded=0 那轮 91 个 `Using mapping in dyld cache` 证实）。
+**3. 自建 `region_reset`（清 region 用）被 exec veto（rc=137）**，未启用；脚本内标注"禁止跑任何会调 check_np(0) 的探针"。
+**4. 新增 `analysis/dyldwork/post_reboot_cli3.sh`（开机首跑，零探针）**：移走 shim → cachereg → plain dyld → echo/cat/ls/sh ×2 + `DYLD_PRINT_LIBRARIES` 取证 → 收尾还原。本地/设备 `bash -n` OK、md5 `ef91ac1d…` 一致；`wait_cli2.sh` 已改指向 cli3。
+**结论**：#1~#4 已达成；#5 只差「**干净 boot 后第一个进程映射 macOS 缓存**」这一步（脚本自动完成）。
