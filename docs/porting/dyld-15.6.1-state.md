@@ -2262,3 +2262,25 @@ env -i PATH=/usr/bin:/bin DYLD_SHARED_CACHE_DIR=<cache 目录> chroot /var/mnt/r
    ⇒ 存在**间歇性**（同一 boot、同一配置）。
    ⇒ 下一步应做：把**缓存里的 libSystem 抽成磁盘文件**当作 shim（`misc/extract_dyld_cache.py`），
    既满足按路径加载、又不缺符号；而不是简单移走 shim。
+
+### 2026-09-28 02:5x【item#5 深挖：真正的 CLI 阻塞点】
+**① `run_bash.sh` 自己就起不来**（与缓存/region 无关）：
+```
+/var/jb/usr/macOS/bin/run_bash.sh -c "..."   →
+dyld: Library not loaded: /usr/lib/libncurses.5.4.dylib
+  Referenced from: /bin/bash
+  Reason: tried: '/usr/lib/libncurses.5.4.dylib' (no such file) … (wrong platform to load into process)
+```
+⇒ **磁盘上缺系统 dylib**（bash 依赖的 libncurses 等）；只有缓存映射成功时才能从缓存补上。
+⇒ 这解释了"库全走缓存"为何是 CLI 的前置条件：**rootfs 只装了部分 dylib，其余全靠 dyld 缓存**。
+**② `wrong platform to load into process` 不只对 shim/cache 出现过**：连**磁盘缺失文件的兜底候选**也会带上这条 ⇒
+它是 dyld **镜像级**接受判据（`JustInTimeLoader::makeJustInTimeLoaderDyldCache@0x2b4d8` → `mach_o::Header::loadableIntoProcess@0x7e970`）。
+**③ 抽取器路线（把缓存里的 dylib 落盘）**：
+- 项目自带 `misc/extract_dyld_cache.py`（`ctypes.CDLL("/usr/lib/dsc_extractor.bundle")` 调 `dyld_shared_cache_extract_dylibs_progress`），
+  bundle 在 rootfs 里是 **file 形态（272496B, Mach-O，脚本设计如此，用 isfile 校验）** ✓。
+- 但执行需要 python3/bash，而二者又被 ① 卡住（bash 缺 libncurses；直接 `chroot … /usr/bin/python3` 跑抽取得 **rc=137**）
+  ⇒ **鸡生蛋**：抽取器修不了缺 dylib，缺 dylib 又让抽取器跑不起来。
+**④ 结论/下一步（给接棒者）**：
+- 最低成本路线：**让 dyld 在缓存命中时优先用缓存 libSystem**（而不是被同名磁盘 shim 抢走）→ 缓存映射成功时 cat/ls/sh 应即通；
+  或**给 shim 补缺失符号**（至少 `___error`：`mrs x0,TPIDRRO_EL0; ret`）。
+- 次路线：用**其它宿主机**（macOS/另一台越狱机）跑 `dsc_extractor` 把整套 dylib 落盘，再 `sign_installed.sh` TC。
