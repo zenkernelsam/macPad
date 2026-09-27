@@ -147,8 +147,21 @@ rk=0? → 实为 rc=139(SIGSEGV)；但：
 - `files[i].sf_slide = (i==0) ? infoArray[0].maxSlide : 0;` ⇒ **我们的 zero-slide 修复与上游一致**（iOS maxSlide 非对齐才 EINVAL）。
 - `console("Mapping the shared cache system wide")` 在构 files[]/mappings[] 之前 ⇒ 崩在构数组/536/其后。
 
-**下半目标（post-reuse SEGV）取证待办**：
-- 已有工具 `analysis/dyldwork/catch_segv.sh`（chroot lldb 拓 PC/far/backtrace）。
+### 🔬 2026-09-28 冒死取证：post-reuse 不是普通 SEGV，而是**内核 CS "Invalid Page" 击杀**
+**实测（崩溃报告 `echo-2026-09-27-235846.ips`）**：
+```
+exception.type = EXC_BAD_ACCESS, signal = SIGKILL - CODESIGNING (subtype UNKNOWN_0x32)
+termination.indicator = "Invalid Page" (namespace=CODESIGNING)
+faulting 0x100bbe9f8 ∈ mapped file 0x100b48000-0x100be4000 (624K, r-x/r-x, SM=COW)
+邻居：0x100ae4000-0x100aec000 (32K r--, gap 0x5c000) / 0x100be4000-0x100bec000 (32K rw-)
+```
+⇒ **不是 dyld 的普通野指针 SEGV，而是内核 page-CS 校验失败后的 SIGKILL**（CLAUDE.md 点名的同类阻塞：“CS-enforced 页 + 普通 mmap → CS kill”）。
+- 对照实验：**不映射缓存（CACHE_DIR 指向不存在目录）时不会被杀**（echo rc=0）⇒ 击杀由“映射后从的库”引入。
+- 注：崩溃地址在**普通 mmap 文件区**（非 shared region 0x180000000），且 dyld 日志显示最后加载的是 `/usr/lib/libMatch.1.dylib`（**iOS UUID 83CA476B**，无法在 chroot /usr/lib 找到）与 procursus 注入库 ⇒ 怀疑 **chroot 下 /usr/lib 被 iOS 的 bindfs `.fakelib` 命中** 或缓存 image 列表混入 iOS 路径。
+- 探针局限：dyld 日志未打印 0x100b48xxx 段的 image 名；`.ips` 的 usedImages 为 0 ⇒ 需另建“地址→image”映射（如逐个 image mmap 跟踪）。
+
+**下半目标（post-reuse SEGV）取证工具与阻塞**：
+- 工具：`analysis/dyldwork/catch_segv.sh`（chroot lldb 拓 PC/far/backtrace）。
 - 阻塞：chroot 里的 `bash`/`lldb` 未签名→TC → AMFI `Killed: 9`；**需先 `ldid -Hsha256 -S<ent>` + `cdhash_slices.py`+TC 后再跑 catch_segv**（下一轮）。
 - 其他观察：重启后若映射进程崩溃（139），**region 会自动释放**（`check_np` 又回 12）⇒ **不用每次重启就能重试**。
 
