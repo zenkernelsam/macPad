@@ -166,6 +166,8 @@ faulting 0x100bbe9f8 ∈ mapped file 0x100b48000-0x100be4000 (624K, r-x/r-x, SM=
   ⇒ 我们对 dsc 的 `csb_end_offset` 扩到整文件后，超出原签名范围的页“被覆盖但无哈希”→ 仍 `validated=FALSE`。
 - 实测补充：macOS 缓存 vnode **`v_flag=0x184a00` 已含 VSHARED_DYLD(0x200)**（`already set`）⇒ 设 VSHARED_DYLD 不解决问题。
 - 崩溃模式稳定：fault 总在某个 **624K r-x mapped file** 的 `region_start+0x769F8`；且该区域**不在 dyld 的 segment 日志中** ⇒ 由**非 dyld 途径**映射（内核共享区/越狱注入器/plain mmap）。
+- **稳定性复现（本轮）**：同一环境连跑 `cat→echo→cat`，**3/3 均 `rc=137` + `using=91` + `notloaded=0` + `re-using existing shared cache`** ⇒ 击杀是**确定性**的，之前偶发的 rc=0 不可靠。
+- ❗ 结论：**536 与缓存复用均已成功**，唯一未通 = **消费缓存页时的内核 CS 击杀**。
 
 **下半目标（post-reuse SEGV）取证工具与阻塞**：
 - 工具：`analysis/dyldwork/catch_segv.sh`（chroot lldb 拓 PC/far/backtrace）。
