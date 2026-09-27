@@ -149,6 +149,33 @@ bytes/locations from IDA first.
 Rule A applies before Rule B: if the doc tables already answer it, do not
 open IDA at all.
 
+### IDA Pro MCP instance map (3 servers — use the right one)
+
+| MCP server name | Port | IDB contents | Use for |
+|---|---|---|---|
+| `ida-pro-mcp-Instance1` | 13337 | `analysis/dyld_15.6.1_arm64e_thin` | macOS 15.6.1 dyld RE |
+| `ida-pro-mcp-Instance2` | 13338 | `analysis/kc_raw_16.3_T8112.bin` — **filename is misnamed; actually the T8103 (M1/iPad13,11) kernel**, xnu-8792.82.2 | kernel RE (AMFI/cs/vm) |
+| `ida-pro-mcp-Instance3` | 13339 | `analysis/dyldwork/amfid_bin` | amfid RE |
+
+### Kernel write safety (load-bearing — device has panicked once already)
+
+- **NEVER write kernel memory until the runtime address is proven** —
+  IDB offsets do NOT map to runtime via a fixed slide (kernelcache
+  runtime layout differs from static; slide varies). Locate functions at
+  runtime by code signatures, then verify byte-for-byte against the IDB
+  before any `kwrite`.
+- Dopamine `libjailbreak.dylib` KRW = `kread32/64` `kwrite32/64` + kcall
+  (ctypes-driveable from device python3; scripts at
+  `/var/mobile/{kscan_sig.py,kpatch_c2.py,kc2check.py,kptr.py}`).
+- **PAC-signed pointer fields panic on raw writes** (v_mount write →
+  `Ptrauth failure with DA key` panic, 2026-09-26). Only write
+  non-pointer fields; pointers need valid signatures.
+- Kernel text writes (AMFI/`cs_invalid_page` C2 patch etc.) require the
+  exact runtime instruction verified first — `kpatch_c2.py` dry-run
+  mode already blocked one misidentified address.
+- arm64e PAC'd data pointers are **47-bit VA**:
+  strip = `0xffff800000000000 | (v & 0x7FFFFFFFFFFF)`.
+
 **Goal:** Run macOS WindowServer in chroot on jailbroken iPad13,6 (iOS
 16.3 arm64) using **real iOS AGX kernel driver only**
 (`MACWS_AGX_NATIVE=1`). Verify via VNC screen capture that **GlassDemo
@@ -263,6 +290,32 @@ the live patch ledger, fat-offset rules, confirmed root causes, bisect
 results, and next steps for the macOS 15.6.1 dyld shared-cache bring-up.
 Keep that file updated as ground truth; do not re-derive state from
 scratch.
+
+## Milestone Documentation (load-bearing rule — write docs at EVERY milestone)
+
+**Hard rule: every milestone, hard-coded value, or proven test result gets
+written to `docs/porting/dyld-15.6.1-state.md` IMMEDIATELY — before
+continuing to the next experiment.** Context gets compressed; undocumented
+work gets re-derived from scratch and burns sessions. A future agent must
+be able to reproduce the full pipeline from docs alone.
+
+Record, verbatim:
+
+- **Exact patch combos**: which `build_dyld.py` keys were applied, the
+  output filename, the deployed file's size/md5/CDHash on device.
+- **Exact repro commands**: the full SSH/launcher invocation that produced
+  the result (launcher = `launchdchrootexec` vs `run_nocskill chroot` —
+  they behave differently).
+- **Verbatim output**: the log lines that prove the result (dyld prints,
+  exit codes, crash-report fields) — copied, not paraphrased.
+- **Verdicts**: what the result PROVES and what it does NOT prove; whether
+  a patch is diagnostic-only or a candidate fix.
+- **Hard-coded addresses/offsets/syscall numbers** the moment they're
+  confirmed from IDA — with the IDB instance they came from.
+- **Negative results**: dead ends and ruled-out approaches go in the
+  failure-history table so they are never re-tried.
+
+If an experiment isn't worth documenting, it wasn't worth running.
 
 Also read `docs/porting/TOOLS-AND-PORTING.md` — the inventory of the
 project's built-in tools (what `sprobe`, `launchdchrootexec`, `libmachook`,

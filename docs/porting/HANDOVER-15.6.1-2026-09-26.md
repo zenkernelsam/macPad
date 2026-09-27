@@ -6,33 +6,111 @@
 
 ---
 
-## ⛔ 2026-09-26 18:2x 更新（先读——这一条会改变你的第一步）
+## ⭐⭐⭐ 2026-09-27 00:1x 更新（最新，先读）：exec 门已通 + 536 真因锁定 + 536=0 已验证
 
-设备当前**任何 chroot 内 macOS 二进制 exec 都失败（SIGKILL/137，零输出，无 .ips）**，
-包括 `true`/`/bin/ls` 与全部项目探针，纯 chroot / launcher / 项目自身 launchd 作业
-（`com.macwsguide.smoketest`）都一样，60/60 重试无一例外。已排除：trustcache
+### A) exec EACCES 真根因 = 部署文件**缺可执行位**（整场最大坑，已解决）
+`kern_exec.c:6242`：非 authopaque 挂载（/private/var）+ 文件无执行位（0644）→ 直接 EACCES（静默）。部署脚本 `rm;cp` 把目标建成 0644。**修复：部署后 `chmod 755`**。之后 `true/ls/echo` 均 exec 成功，macOS dyld 真正运行。
+（附：launcher `0x46FC` 曾被写成非法指令 `0x001c0012` → 任意 posix_spawn 失败即 SIGILL(132)，已修；`perror("posix_spawn")` 是残留 errno，真实码用 `analysis/dyldwork/exec_probe.py`。）
+
+### B) dyld 内探针 SIGILL(132) 根因 = `build_dyld.py` 的 cave hex **字节序写反**（已修，新增 `_le()`）
+
+### C) ★★★★★ syscall 536 = EINVAL(22) 的真因：**缓存 slide-info version=5，内核只支持 1–4**
+- IDA `sub_8062CA8` @ `0xfffffe0008063024`：`if ((version-1)>3) → KERN_FAILURE(5)`（源码 `osfmk/vm/vm_shared_region.c:2934` switch default）→ `bsd/vm/vm_unix.c:2725` 映射为 **EINVAL(22)**。
+- 物证：`xxd -s 0x7ad4c000 /Users/ciscohe/Desktop/dyld-cache-15.6.1/dyld_shared_cache_arm64e` = `05 00 00 00 00 40 00 00`（version=5, page_size=16K）。
+- 触发：`sms_max_prot & VM_PROT_SLIDE(0x20)`（与 slide 数值无关）；次生障碍 page_size=16K≠内核 4K。
+- 已排除：region 占用（实测空 12）、setup 门6/10/11（KRW 实测 ubc+blob 存在、覆盖 [0,0xa160c000]）、dynregion、slide。
+
+### D) ★★★★★ 验证：掩掉 `VM_PROT_SLIDE` → **536 返回 0，缓存真正映射**
+空 region 上探针掩 9 条 mapping 的 `0x20` → `ret536=0`（try2=22 = region 已填）。
+**用户态修复**：`analysis/dyldwork/dyld_noslide`（在 dyld `0x35690` 注入 cave 掩 0x20）。已部署 `/var/mobile/dyld_noslide.bin` + 测脚本 `/var/mobile/post_reboot_noslide.sh`。
+
+### E) 待解（下一步）
+1. **[需冷启动]** 空 region 上用 `dyld_noslide` 首交，验证 536=0 + 进程真跑（libSystem 从缓存加载）。
+2. **region 持久性**：一旦映射就持续到重启 → 需「首交成功 + 其余进程 reuse」或常驻 keeper。
+3. **跳过 slide 的 rebase**：__DATA 的 rebase 指针可能留错（待验）。
+
+---
+
+## ⛔ 2026-09-26 20:1x 更新（**先读，推翻下面旧结论**）
+
+### exec 137 的真根因 = 非 `ARM64/ALL`（已解决）
+
+以前“全 exec 137、疑内核态损坏→需重启”的结论**已被推翻**。真根因：
+**iPadOS 内核只 exec `cpusubtype=ARM64/ALL` 的 macOS 主可执行体**；macOS 15.x 系统二进制
+只有 `x86_64+arm64e` → 直接 137。证据：`misc/arm64ify_macho.py` 注释 +
+把 rootfs 的 dyld/true/ls/bash/... 用 `python3 arm64ify_macho.py <file>` relabel 成 ARM64/ALL
+（代码字节不动）+ `ldid` 重签 + `jbctl trustcache add` 后，**137 全部消失**；
+未 arm64ify 的 `echo` 仍 137（完美对照）。
+
+### ✅ exec 准入**已打通**（2026-09-26 20:2x）——macOS dyld 已能真正运行
+
+**两个门的解法（纯用户态，无需 patch 内核/amfid）：**
+
+```
+# 对每个要跑的 macOS 二进制（含 /usr/lib/dyld）：
+python3 misc/arm64ify_macho.py <file>                 # 门①: relabel 成 ARM64/ALL（否则 137）
+ldid -Hsha256 -Cadhoc -S<entitlements.plist> <file>   # 门②: sha256 cdhash + CS_ADHOC
+jbctl trustcache add <sha256 cdhash>                  # 入越狱 trustcache
+rm <dest>; cp <file> <dest>                           # fresh inode
+```
+
+**关键：`-Hsha256` 必需**——trustcache 条目带 `hash_type` 字段（`osfmk/kern/trustcache.h`）；
+只有 **sha256 cdhash** 才匹配 → AMFI 认 → 置 `CS_SIGNED` → 跳过 taskgated upcall（MIG-27001）。
+之前所有 `-Cadhoc`（sha1）仍 EACCES 就是因为 hash_type 对不上。
+
+**实测**：部署后 `true`/`echo`/`ls`/`bash` **不再 137/13**，macOS dyld 真正执行：
+```
+dyld: dyld cache '(null)' not loaded: syscall to map cache into shared region failed
+dyld: Library not loaded: /usr/lib/libutil.dylib ...
+```
+⇒ **工作重心回到原任务核心：syscall 536 映射缓存**（对应下面 §4 门禁链 + `dyld_cleanB_err`）。
+复现脚本：`analysis/dyldwork/remote_apply_form.sh` / `remote_deploy_dyld.sh`。
+
+### 越过 137 后的下一道门 = `EACCES(13)`（**已于 20:2x 解决，见上**）
+
+设备端探针（`posix_spawn` 直调，拿真实返回码）：
+- `analysis/dyldwork/ceprobe.py` → `/usr/bin/true` **rc=13**（所有 arm64 macOS 动态二进制皆 13）
+- ⚠ `launchdchrootexec` 会丢弃 `posix_spawn` 返回值、无条件 `perror` → 它打印的
+  “No such file or directory” 是**残留 errno（假象）**，不是真实码。
+
+**内核 + 官方源码双重确证（`analysis/xnu-xnu-8792.81.2/` + `analysis/dyld-dyld-1286.10/`）：**
+- EACCES = `kern_exec.c` 的 `process_signature` → **taskgated/amfid upcall（MIG 27001 = `find_code_signature`）**
+  返回非 0（subsystem 27000@`osfmk/mach/task_access.defs:55`；参数 `proc_getpid(p)`）。
+- `kern_exec.c:7430`：**有 `CS_SIGNED` 就跳过 upcall**；`7506`：`CS_SIGNED` 是 upcall 成功后才置。
+- spawn 场景（`imgp` flags bit 0x10）同一拒绝改走 `SIGKILL` → **137 与 13 同源**。
+- `analysis/dyldwork/csops_probe.py`（`csops(CS_OPS_STATUS)`）实测：**能跑的进程
+  （cachereg/jbctl/python3）全是 `CS_PLATFORM_BINARY(0x04000000)+CS_SIGNED`**；
+  我们的二进制非 platform → 走 upcall 被拒。⇒ **`CS_PLATFORM_BINARY` 是判别因子**。
+
+已排除（均仍 13）：CD flags=0x2/CS_ADHOC、CS_HARD|KILL|RUNTIME、CD platform 字节 1/2/5、
+identifier 重签、loader 闭包入 tc、launchd 作业 launch type、非 chroot、任意路径、最小静态二进制。
+
+**下一步（未做）**：让 arm64ified macOS 二进制被 AMFI 认定为**有效签名/platform**
+（纯用户态途径候选：以“platform”形态入 jailbreak trustcache；或复现 cachereg 的签名形态）。
+工具就绪：`ceprobe.py` / `csops_probe.py` / `arm64ify_macho.py` / `build_dyld.py`。
+
+---
+
+## ⛔ 2026-09-26 18:2x（**旧结论，部分已被上面推翻**）
+
+设备当时**任何 chroot 内 macOS 二进制 exec 都失败（SIGKILL/137）**。已排除：trustcache
 （已在）、单二进制重签（`platform-application` 已在）、amfid 有无、预读 vnode、
 完整重跑 `postinst.sh`（重签 1156 镜像）、boot-args（空）。
 
-**两个已确证的关键事实：**
+**两个已确证的关键事实（仍有效）：**
 1. **陷阱**：若把 Apple 原版 `dyld.orig` 部署为 `/usr/lib/dyld` 而没先入 trustcache，
    会让**所有** macOS exec 被内核杀（137）。部署任何 dyld 后必须确认它已受信。
 2. **一次成功**（rc=134）：杀 amfid + 换受信 dyld 后 `true` 跑起来了，dyld 打印
    `syscall to map cache into shared region failed` → 说明 exec 一旦放行，回到预期的
-   **syscall 536 失败层**。此后无法复现。
+   **syscall 536 失败层**。
 
-**结论：内核 exec/CS 态损坏（panic 时代遗留，见下），userspace 不可修 → 需内核重启
-+Dopamine 重越狱。** 重启后跑 `analysis/dyldwork/post_reboot_experiment.sh` 一键恢复+取证。
-
-**旁证（内核 RE，Instance2）**：`amfi_enforce_launch_constraints` /
-`amfi_allow_3p_launch_constraints` 是 boot-arg（空）；设备实测
-`security.mac.amfi.developer_mode_status=1`、`launch_constraints_enforced=1`、
-`3rd_party_allowed=0`，但 kill 时不落任何 AMFI 日志。
+> 注：当时“内核 exec/CS 态损坏 → 需重启”的结论**已被推翻**——真因是 arm64e 分支门（见上）。
 
 **另：`dyld_pi` 注入 blob 的真实用途已解码** —— 它只为绕开 `preflightCacheFile`
 在 chroot 里必然 EPERM 的 `fcntl(fd,97/F_ADDFILESIGS_RETURN)`。现用 2 条小补丁
 （thin `0x35d70`→nop、`0x35d80`→`b 0x35d9c`）替代整块 blob，且**重新启用 `.01` 子缓存**。
 构建器 `analysis/dyldwork/build_dyld.py`（编码全经汇编器验证）。
+
 
 ---
 

@@ -5,6 +5,645 @@ macOS 15.6.1 shared cache on iPadOS 16.3 (xnu-8792.82.2) so macOS binaries
 run in chroot. This file is the single source of truth — update it whenever
 a fact/offset/result changes, BEFORE context is lost.
 
+**▶ 完整移交文档（给下一位 agent 的自包含复现+继续指南）：
+`docs/porting/HANDOVER-HELLO-2026-09-27.md`**
+
+## ★★★★★ 2026-09-27（续·傍晚）⭐⭐⭐⭐⭐ MILESTONE：发现 iOS 缓存采纳路径 —— 可能根本不需要 536
+
+**本轮改写整条技术路线的认知**（runtime-confirmed）：
+
+1. **chroot 任务 exec 时被内核挂上的是 iOS 自己的 shared region**。
+   `__shared_region_check_np`(syscall 294) 在 chroot 的 macOS dyld 进程里
+   返回 **iOS 缓存基址 `0x1A4AE8000`**（与原生 iOS 进程同一 region）。
+2. **`reuseExistingCache` 直接采纳 iOS 缓存**：magic `dyld_v1  arm64e`
+   匹配 → `re-using existing shared cache` 打印 → **89 个 iOS dylib 全部
+   从缓存成功加载**（libSystem、libnetwork、Security.framework… +
+   jb 的 forkfix/libinjector 从磁盘）。证据：`/tmp/priv.log`（部署
+   `dyld_noslide.bin` + `DYLD_PRINT_LIBRARIES=1`）。
+3. **上游原项目（MacWSBootingGuide, macOS 13.4+iPadOS 16.x）从未打过
+   共享缓存补丁** —— README 的 dyld 补丁清单只有 GradedArchs
+   arm64e→arm64 一项 ⇒ **原厂设计就是采纳 iOS 缓存**，macOS-only 库
+   （AppKit 等）从 rootfs 磁盘加载。536/keeper/cachereg 这条线为
+   HELLO 世界不是必需；它只对"用 macOS 原生缓存内容"有必要（后期
+   再评估 macOS 独有 dylib 是否必须走 macOS 缓存）。
+4. **syscall 536 在 region 已被 iOS 缓存填充的进程上返回 EINVAL(22)**
+   —— 与新发现自洽（不能覆盖已占 region）。536 只在"首交者"
+   路径上有意义（keeper 设计保留）。
+
+**当前唯一 blocker（Hello World 距离 = 这一个崩溃）**：
+库全部载入后、到达 app 入口前 **SIGSEGV(139)**。
+`dyld_emark.bin`（`crossarch`+`entrymark`@0x6b94 BLRAAZ→`bl 0x970`+
+`entrycave`@0x970 write 'E'+x8→blraaz）实测 **'E' 未出现** ⇒
+崩在 **dyld 内部 post-cache 代码**（initializers/notify/bind 阶段），
+不是 app/libSystem 初始化器。下一步 = segvcap handler 移植到
+emark 构建（`dyld_segvcap.bin` 的 cave 在 `0x9b578`，
+`segvcap_cave.s` 现成）→ 抓崩溃 PC+FAR。
+
+**复现命令（已验证）**：
+```bash
+# 纯 chroot 路径（无 libmachook 注入）
+/var/mobile/run_nocskill /var/jb/usr/bin/env -i PATH=/usr/bin:/bin \
+    /var/jb/usr/bin/chroot /var/mnt/rootfs /bin/echo HELLO
+# launchdchrootexec 路径（注入 libmachook_arm64.dylib）
+/var/jb/usr/macOS/bin/launchdchrootexec 0 0 /var/mnt/rootfs /bin/echo HELLO
+```
+
+**新事实表**：
+| 事实 | 值 |
+|---|---|
+| chroot 进程的 task region | iOS region，基址 `0x1A4AE8000`（exec 时挂载） |
+| check_np(294) 在 macOS dyld 里 | 返回 iOS base + magic `dyld_v1  arm64e` ⇒ reuse 采纳 |
+| reuse 采纳后行为 | iOS 库从缓存加载成功；崩于 post-cache（139，PC 未取） |
+| `launchdchrootexec` | chroot+setenv(DYLD_INSERT_LIBRARIES=libmachook_$ARCH)+posix_spawn\|SETEXEC；`arch=arm64` 时注入 arm64 变体 |
+| `run_nocskill MACWS_EXC=1` | **会让父进程被 AMFI SIGKILL**（task_set_exception_ports 门）——勿用 |
+| `dyld_segvcap.bin` | 已有 SIGSEGV-handler dyld（start@0x540c→cave 0x9b578）；但其补丁组合走 536-map→烧循环，须移植 handler 到 emark 基线 |
+| chroot 崩溃 | **不写 .ips**（CrashReporter 路径外） |
+| rootfs 布局（README 实证） | OS cryptex→`$R/System/Volumes/Preboot/Cryptexes/OS`；`$R/System/Volumes/Data`→`../..` 链接；`$R/var/folders/zz`→`/var/folders/zz`；bind `$R/var/jb`→`/var/jb`；每 exe `ldid -S ent.plist -M`+逐 cdhash `jbctl trustcache add`+`loadtc` |
+| 构建器新 patch key | `entrymark`/`entrycave`（@0x6b94/@0x970，见 build_dyld.py） |
+
+**非确定性警示**：同一二进制连跑会在 {139 快崩, 45s 烧循环, 137}
+之间漂移——与 region/时序状态相关；结论前必须连测 ≥3 次。
+
+### 补充记录（散点但重要，勿再推导）
+
+- **check_np 返回值的语义**：返回的是**当前任务 region 里已映射缓存的基址**——
+  iOS 缓存映射时 = `0x1A4AE8000`；早前 macOS 缓存被某次 536 成功填入时
+  = `0x180000000`。出现过的"僵尸态" = base 有值（`0x180000000`）但读
+  magic 立刻 SEGV（region 对象在、页未映射进本任务）。iOS 采纳路径则
+  页全映射好（verboseSharedCacheMappings 实打印过全部段）。
+- **烧循环也在采纳路径上出现**：dyld_es（crossarch+entrymark+segvcap）
+  两次运行都是 93% CPU 烧 ≥14s、零 fd2 输出——post-cache 失败不止
+  SEGV 一种形态，也会以死循环出现。
+- **run_nocskill 的 task port 在 ~2s 变 INVALID_DEST(kr=268435459)**：
+  `vm_region_64`/`task_threads` 全挂——spawn 后 2s 端口就失效（
+  env→chroot→echo 连续 execve 后端口语义问题），外部采样 PC 不可靠。
+- **stderr pipe 填满假象**：marker 往 fd2 写约 ~190KB 后会阻塞（父进程
+  pipe 没人读）→ 看起来像内核卡死。用文件重定向而非继承 pipe。
+- **内核侧 536 errno 真值表**（Instance2 RE，`sub_8062254` 包装）：
+  内部码 {0→成功，1→EFAULT(14)，2→EPERM(1)，3→ENOMEM(12)，>3→EINVAL(22)}；
+  返回 -1 的是 `sub_8459570`（vnode/文件设置段）。任务门：`task+0x18`
+  的 region-root vnode 须 == 进程根目录 vnode 或 rootvnode，否则 EPERM；
+  chroot 内 `task+0x18`==chroot 根 ⇒ 可过（536 ret=0 曾在 chroot 实证）。
+  `task+0x3e8` = 任务持有的 shared_region 对象；`sr+0x71`=in_progress，
+  另有 stale 位。
+- **`mov w1,wsp`/`mov x1,sp` 等一切以 SP 为源的操作数在 SP 未对齐时全部
+  SIGILL**(0xe1030091/0xe1030111 崩溃签名）——既是坑也是探针。
+- **AMFI 拒绝 macOS 磁盘 dylib**：加 trustcache 后仍 `errno=1`——
+  libSystem 不可能走磁盘 shim，必须走缓存（坐实采纳路径必要性）。
+- **libmachook 为 13.4 dyld 内部结构所写**——launchdchrootexec 注入它
+  进 15.6.1 dyld 进程时其 ctor/hook 可能不兼容；纯 chroot（run_nocskill
+  路径）可排除它，二分崩溃时先排掉注入变量。
+- **forkfix+libinjector 来源**：不是 libmachook——是 Dopamine ElleKit
+  经继承的 `DYLD_INSERT_LIBRARIES` 注入；`env -i` 可清。
+- **`DYLD_SHARED_REGION=private` 未定论**：设过 env 但进程仍采纳共享
+  region（可能 launchdchrootexec/env 传递问题或该选项不适用此场景）——
+  值得重试验证（私有 mmap 路径绕开共享区概念）。
+- **cave 间距规则**：相邻 marker cave 必须 ≥ cave 实际长度（mkD@0xb00
+  与 mkE@0xb40 间距 0x40 < 0x4c cave 长 → 尾部互踩、输出污染）。
+- **echo 的 Mach-O**:fat、platform=1(macOS);`ldid -S ent.plist -M`
+  重签 + 每 slice cdhash 注册（`add_all_trustcache` 流程）。
+- **re-clear csflags 模式**:run_nocskill 打 `re-clears=2` = 每次
+  execve(chroot→echo）内核重设 0x300,watchdog 以 ~20µs 粒度重清。
+- **iOS 缓存文件**:`/private/preboot/Cryptexes/OS/System/Library/Caches/
+  com.apple.dyld/dyld_shared_cache_arm64e[.01-.44]+.symbols`（本机实测
+  ls 输出）；chroot 内同名路径是 rootfs 里的 macOS 文件，勿混。
+- **chroot 工具真实路径**:`/var/jb/usr/bin/chroot`（不是 /usr/sbin)。
+- **run_nocskill 是 posix_spawn 包装，本身不 chroot**——不 chroot 直接
+  喂 `$R/bin/echo` = iOS dyld 加载 macOS 二进制 → "wrong platform" 报错
+  （报错来自 iOS dyld，不是我们 dyld)。
+
+---
+
+## 2026-09-27 — ⭐ 交接 Executive Summary（重启后先读这段）
+
+### 🎉🎉🎉 MILESTONE 2026-09-27 晚：macOS `/bin/echo HELLO` 在 chroot 里首次跑通（独立复现）
+- **实测（我亲自跑，非仅 subagent）**：`/bin/echo HELLO` ×5 → 全部打印 `HELLO` + `child exited rc=0`；`/usr/bin/true` ×2 → rc=0；`/bin/echo one two THREE` → `one two THREE`（参数透传 OK）。
+- **达成路径（subagent 实现 + 我验证）**：**磁盘回退 + 两个自包含替身 dylib**（不需改 dyld、不需内核 patch）：
+  - `/var/mnt/rootfs/usr/lib/libSystem.B.dylib`（shim，导出 echo 依赖的 10 个符号：`_err,_exit,_fflush,_getenv,_mbtowc,_putchar,_putwchar,_strlen,___stdoutp,___mb_cur_max`，并 LC_LOAD_DYLIB→libdyld）。
+  - `/var/mnt/rootfs/usr/lib/system/libdyld.dylib`（shim，满足 dyld 硬门槛：install-name 精确匹配 + `__TPRO_CONST,__dyld_apis` + `__DATA_CONST,__helper` 的 **ptrauth 签名 `dyld4::LibSystemHelpers` vtable**，`version()>=7`）。
+  - 两者均 `ldid -Hsha256 -S<ent>` + `trustcache add` + `rm+cp` 新 inode + `chmod 755`。
+- **与 private 路径的关系**：`DYLD_SHARED_REGION=private` 能成功 mmap 两个子缓存（`mapped dyld cache file private to process (...main.../01...)`）但随后 **SIGKILL(9)**（DSC 页 CS-enforced exec 页被击杀）⇒ private 路死；转磁盘回退+替身才成。
+- **诚实定性**：这是让 **echo/true** 跑通的**桥接方案**（非“完整缓存映射”的根治路）；要看任意 macOS 二进制需继续补齐 libSystem 桩（malloc/getenv/…）与依赖 dylib。但**对本 goal 已达标且可重复**。
+- **产物**：`analysis/dyldwork/tmp/shim/{libSystem_shim.c,libdyld_shim.cpp,build_shim.sh,deploy_shim.sh,run_repeat.sh}`（gitignored）。
+
+### ★★★ 2026-09-27 晚 M-HW6（非侵入探针锤实）：reuse 入口 `check_np=12`，root cause 彻底闭合
+- 工具：自建 `dyld_reuse_dump.bin`（在 `reuseExistingCache`@0x351a8 入口装 cave@0x38d08：**保存 x0-x3/x30 → call check_np → dump 64B → 恢复 → 重放 PACIBSP → b 0x351ac**，**完全不改变原流程**）。
+- 实测（`/tmp/rd.bin`）：**`check_np ret=0x0c(12)`、base=0**。⇒ **macOS dyld 的 reuse 必失败**（源码 `:1254`）。
+- 结合 `getDyldCache` 仅被 `ProcessConfig::DyldCache` 构造一次（`loadDyldCache` 每进程一次）⇒ 日志 line1 “re-using”= iOS dyld（launcher），91 × “Using mapping in dyld cache”= `Loader::logSegmentsFromSharedCache` 的**文件级元数据**（实际未映射）；856-857 “Mapping system wide / not loaded” = macOS dyld 那唯一次 `loadDyldCache`。
+- **圆整后的根因（最终版）**：**chroot 进程的 shared region 为空（root_dir 键控）→ macOS dyld reuse 失败 → 536 映 macOS 缓存失败（门/冲突）→ 无真实缓存 → 主执行的依赖（libSystem/libutil/libdyld…）无法解析 → abort。**
+- **可行修法（已收敛到两条）**：**① 内核**：让 `vm_shared_region_lookup` 忽略 `sr_root_dir`（slide=0x158B4000）→ chroot 复用 iOS region（已映射的 iOS 缓存，magic 就是 `dyld_v1  arm64e`）→ reuse 成功。**③ 用户态**：提供缺失符号/库，或让 `DYLD_SHARED_REGION=private` 生效（需开 `security.allowEnvVarsSharedCache`）——均需另找插入点。
+
+### ★★★ 2026-09-27 晚 M-HW5（完整失败链已锤实，含源码）：Hello-World 进不去 main 的机制
+- **870 行完整 trace**（`analysis/dyldwork/ft.log`，本地）关键：
+  1. 行 **1** `re-using existing shared cache (/private/preboot/.../dyld_shared_cache_arm64e)` + 行 2-13 dump **`0x1A4AE8000` 起的映射**（=`check_np` 的 base！）；
+  2. **91** × `Using mapping in dyld cache for /usr/lib/system/...`；
+  3. 行 **856** `Mapping the shared cache system wide` → 行 **857** `dyld cache '(null)' not loaded: syscall to map cache into shared region failed`；
+  4. 然后 `/bin/echo` + **磁盘** `/usr/lib/libSystem.B.dylib`(34KB) → **`Symbol not found: _err` → abort**。
+- **源码定论**（`analysis/dyld-dyld-1286.10/dyld/SharedCacheRuntime.cpp`）：
+  - `loadDyldCache`(`:1476`)：`forcePrivate ? mapSplitCachePrivate : (reuseExistingCache(:1490) ? ok : mapSplitCacheSystemWide)`。
+  - `mapSplitCacheSystemWide`(`:1367-1387`)：536 失败后**再试一次 reuse**（“另一个进程抢先”），仍失败才置 `errorMessage="syscall to map cache into shared region failed"`。
+  - `reuseExistingCache`(`:1251`)：`check_np==0 && validMagic(magic=="dyld_v1  arm64e")`。
+- **机制推断**：macOS dyld 的 `reuse`（:1490）**失败**（chroot 的 region 为空：root_dir 不同→空 region→check_np=12）⇒ 走 536（macOS 缓存）⇒ 失败（**与已在 `0x1A4AE8000` 的 iOS 缓存地址冲突 → KERN_NO_SPACE/EINVAL**）⇒ 再无 cache ⇒ echo 的 libSystem 退磁盘 ⇒ `_err` 缺失 ⇒ abort。
+- **⇒ 真正可行的两大方向（用户决断）**：
+  - **① 让 chroot 看见 iOS region**（内核 `vm_shared_region_lookup` 忽略 `sr_root_dir`；运行时地址可由 slide `0x158B4000` 求得）→ macOS dyld reuse **iOS 缓存**（其 magic 已是 `dyld_v1  arm64e`）→ 91 库全从缓存 → 可能直达 main。风险：跨 iOS 进程污染（需评估）。
+  - **② dyld 侧“无 region 时体面回退”**：hmm——源码已证不可强改（会把 loadAddress 指空）。
+  - **③ （治标、但直击目标）让 `_err` 可得**：给磁盘 `libSystem.B.dylib` 补/拦截 `_err` 符号（甚至一个导出 `_err` 的小 dylib）——因为 echo 只在错误路径用 `err()`，**提供 `_err` 就可能让它直接打印 HELLO**。注意：此为诊断/桥接，不是根因修复。
+
+### ★★★ 2026-09-27 晚 M-HW4：536 原始 kernel errno = **22(EINVAL)**；populate 未成功
+- 工具与脚本（已就绪，官方 key）：`build_dyld.py dyld_pope.bin crossarch hasexisting prereuse filescount1 dynoff accessor fcntl_nop cover_b slidentry slidecave e5centry e5ccave`。
+- 实测：populate 的 536 返回 **-1**；`e5c` 探针（挂在 536 stub 失败处）拿到 **raw kernel errno = 22**。
+- 对照门表（subagent 输出，`shared_region_map_and_slide_setup` IDA `0xfffffe0008459570`）——EINVAL(22) 组候选：`mapping not code-signed`(`0x8459CBC` `ubc_cs_is_range_codesigned`)、`no memory object`(`0x8459CE0`)、`fp_get_ftype/非VREG/映射溢出`。
+- **下一步 = 内核 KRW 短路该门让 536 成功一次**（→ region populate → check_np 返真实 base → dyld reuse 成功 → `_err` 从缓存解析 → echo 应能进 main）。**前置：kernel slide（已定位内核代码段运行时在 `0xfffffe001d7e…`）。**
+
+### ★★★ 2026-09-27 晚 M-HW3（subagent 源码+IDA 双证，推翻“没挂 region”假说）
+- **exec 总是挂 shared region**（`kern_exec.c:1558 __mac_execve → vm_map_exec → vm_shared_region_enter`，**无条件**）；**唯一判别键 = `p_fd.fd_rdir`(root_dir)**（`vm_shared_region.c:386-398`）。**chroot 子进程因 root_dir 不同 → 拿到该 root_dir 下的【全新空 region】**。
+- **check_np=12 语义**：任务**有** region 但**空**（`sr_first_mapping==-1` → start_address 返 KERN_INVALID_ADDRESS → ENOMEM(12)）；错误时 **copyout 未执行** → 用户态 base 保持 0（故 magic 全 0）。源码 `osfmk/vm/vm_unix.c:2046-2134`。
+- **⇒ 正确修法（不是“让内核挂 region”）两选一**：
+  - **① 用户态**：`DYLD_SHARED_REGION=private` → `mapSplitCachePrivate`(`SharedCacheRuntime.cpp:865/984`) 普通 `mmap(MAP_PRIVATE)`，**绕开 294/536**。**实测失败**：本 boot `security.allowEnvVarsSharedCache` 未开 → env 被 AMFI 剥掉；且加该 env 后变 **`SIGNALED 9`(SIGKILL)**（疑 `:1519` “指定 private 但找不到 cache 文件→halt”或 AMFI 剥 env）。
+  - **② 内核 KRW**：短路 `shared_region_map_and_slide_setup`(IDA `0xfffffe0008459570`) 的某道门，让 **536 成功一次** populate region → 之后 check_np 返真实 base → reuse 走快路径。门的地址表见 subagent 输出（code-sign 门 `0x8459CBC` / root_dir 门 `0x8459764` / 等）。**需解决 kernel slide（旧问题）。**
+- **③ dyld 强改 reuse=恒 true = 有害**（subagent 与源码均证实：会把 loadAddress 指向空 region，更早崩）——**不推荐**。
+- **原仓库（MacWSBootingGuide）无 shared-region 结论**（目标 macOS 13.4，未遇此问题）；其 rootfs/签名设计见 README.md:15-30/123-129/182-205。
+
+### ★★★ 2026-09-27 晚 M-HW2（根因链第一环已锤实）：chroot 里 macOS 进程 **没有 shared region** → check_np=12
+- 工具：`build_dyld.py dyld_cknp2.bin crossarch cknp2entry cknp2cave`（**官方 key，非手改**）；在 `loadDyldCache:BL reuseExistingCache`(0x34298) 处先 call `check_np` 并 dump `{ret,base,magic}` 40B 到 fd2。
+- **实测（`/tmp/c2.bin`）**：**`ret=0x0c(12)`，`base=0x0`，magic 全 0**。
+- **源码定论**（`analysis/dyld-dyld-1286.10/dyld/SharedCacheRuntime.cpp:1251-1281`）：`reuseExistingCache` 首句 `if(__shared_region_check_np(&base)==0)`；**返回 12≠0 ⇒ 直接 `return false`** ⇒ `mapSplitCacheSystemWide`(536) ⇒ EINVAL(22) ⇒ “cache not loaded” ⇒ 磁盘 `libSystem.B.dylib`(34KB dsh 缺 `_err`) ⇒ `abort()` **SIGABRT(6)**。
+- **⇒ 真正的根因**：**内核没有给 chroot 的 macOS（非 platform）进程挂上 shared region** ⇒ macOS dyld 永远看不到可 reuse 的缓存。
+- **修正旧记录**：handover §1 fact#1 “chroot 进程 check_np 返 base=0x1A4AE8000” 与本次不符（本次=12/0）——需复测分清探针差异。
+- **下一步（排序）**：① 查为何 exec 未挂 region（对照 `analysis/xnu-*/osfmk/vm/vm_shared_region.c` 的 `vm_shared_region_enter/attach` 条件 + `kern_exec.c`）；② 很可能与 “非 CS_PLATFORM_BINARY” 相关（早前已证 `CS_PLATFORM_BINARY` 是 exec 判别因子）⇒ 让二进制被认作 platform / 或内核侧挂 region；③ 或 patch dyld 让 “无 region” 时优雅回退（非首选）。
+
+### ✅ 2026-09-27 晚 M-HW1：Hello-World 崩溃真因 = macOS dyld `reuseExistingCache` 失败 → 536 → 磁盘 libSystem 缺 `_err` → SIGABRT(6)
+- **复现**（3/3 一致，非 SEGV）：`run_nocskill ... chroot $R /bin/echo HELLO` → `child SIGNALED 6`；dump(279B)：
+  `dyld: dyld cache '(null)' not loaded: syscall to map cache into shared region failed` + `Symbol not found: _err ... Expected in /usr/lib/libSystem.B.dylib`。
+- **完整链**（`DYLD_PRINT_*`，870 行）：
+  1. 行1 `re-using existing shared cache (...)` = **iOS dyld**（env/chroot 这些 iOS 二进制）；
+  2. ~90 × `Using mapping in dyld cache for /usr/lib/...`（macOS 库从缓存解析）；
+  3. 行856 macOS dyld `Mapping the shared cache system wide`（=`mapSplitCacheSystemWide` @IDA **0x355ec**）→ 536 失败；
+  4. 行857 `dyld cache '(null)' not loaded` → **丢弃缓存** → 退回磁盘 `libSystem.B.dylib`(34KB dsh) → **缺 `_err`** → `abort()` SIGABRT(6)。
+- **RE 定位**：`loadDyldCache`@**0x34240**：`0x34298 BL reuseExistingCache` → **`0x3429c CBZ W0, →0x342b8`（reuse 返 0 则 `0x342d8 B mapSplitCacheSystemWide`）**。`reuseExistingCache`@**0x351a8**：`0x351d0 BL __shared_region_check_np`→`CBZ`；`0x351f0 platform_strcmp(base,"dyld_v1  arm64e")`→`0x351f4 CBZ`；**不匹配 → `0x351f8 MOV W0,#0` + 存诊断串 `"existing shared cache in memory is not compatible"`(@0x90b12) → ret0**；匹配 → `0x352a4 MOV W0,#1`。
+- **⇒ 根因候选**：macOS dyld 的 reuse 判定（magic 不匹配 / check_np）失败 → 走 536，而 536 在本环境 EINVAL(22) → 缓存被丢弃。**下一步**：① 查为何 reuse 判失败（reuse 内的 check_np 值与 magic）；② 或 patch `0x3429c CBZ` 分支使 reuse 成功时不回退；③ 或给磁盘 `libSystem` 补 `_err`（治标）。
+
+### ★★★★★★★★ 2026-09-27（Devin 续·深夜）⭐⭐⭐⭐ MILESTONE：macOS dyld 越过 shared-cache 阶段，进入库加载
+
+**当前 blocker 已迁移**：不再是 syscall 536 / mapSplitCacheSystemWide，
+而是 **`libSystem.B.dylib` 在 chroot 内加载失败**（code signature
+invalid）。dyld 的库加载管线已经真实运行到逐路径重试 + fatal(SIGABRT)。
+
+**m7 运行实证（dyld_m7.bin, CDHash 2ba08622…）**：
+`run_nocskill chroot /var/mnt/rootfs /bin/echo HELLO` → 探针 dump 第一趟
+全正常（x23=15=映射数、lr=dyld+0x35668、savedLR=dyld+0x2fe94=getDyldCache
+返回址），随后 dyld 自身输出：
+
+```
+dyld[6174]: Library not loaded: /usr/lib/libSystem.B.dylib
+  tried: '/usr/lib/libSystem.B.dylib' (code signature invalid in
+    <4DB5C3A0-…> /usr/lib/libSystem.B.dylib, sliceOffset=0x0,
+    codeBlobOffset=0x00040080, codeBlobSize=0x00040540)
+  tried: '/System/Volumes/Preboot/Cryptexes/OS/usr/lib/libSystem.B.dylib' (errno=2)
+  tried: '/usr/local/lib/libSystem.B.dylib' (code signature invalid …)
+[+] child SIGNALED 6   ← dyld 正常 fatal 路径
+```
+
+**为什么这次通了**：共享区已被早前某次成功 536 填充
+（`sr_uuid=4c1223e5…`，`slide=0xd7b0000`）。本进程里 536 返回非 0
+（x3=mappings 指针被探针弄坏→EFAULT），但 `reuseExistingCache`
+（0x351a8）走 `__shared_region_check_np` 发现已填充 region → 返回 1
+→ dyld 继续。**即：reuse 路径本身工作正常**。
+
+**m5/m6 寄存器实证（此前"用户态死循环"机制）**：
+
+- m6 dump 在 pack 外循环头（0x3561c）：`CacheInfo[0]+0x180=8`、
+  `CacheInfo[1]+0x180=7`、合计 15 = w23 ——**计数字段全部正常，
+  pack 循环无辜**。
+- m5 dump 在 0x35690 抓到 `x23=0x1024d8000`（另一趟 0x1044a0000）
+  = **dyld 基址形态** → 该 dump 是**第二趟**经过 0x35690
+  （第一趟 `MOV X23,X0`@0x35698 后 x23 被复用）。→ **post-536
+  返回路径存在重入边**落回 ~0x35660-0x35668（append 块）；第二趟
+  append 用 w23=基址低 32 位（0x24d8000≈38.8M）把映射记录写到
+  x26+1.16GB ≈ 0x1b39271d0 ——**落进已映射共享区（0x180000000-…）
+  不触发 fault**，之前观察到的"45s 用户态烧"即此类重入循环
+  （每次重入 = append+536+post 一趟）。
+- 重入边静态仍不可见（无 backedge 覆盖 0x3565c-0x35698）；候选机制：
+  epilogue `0x35718 MOV SP,X8`（`[x19+0x18]` 恢复的 SP）/ RETAB 落到
+  被踩的 x30。**但当 region 已填充时无关紧要——536 失败也走 reuse 成功。**
+
+**教训（写探针的正确姿势）**：
+- 有效：`write(2,regs,N)` 在 mapfn 深处（0x355fc+）安全；`x15`/`sp±0x50`
+  做暂存；用 `b`（非 `bl`）跳 cave，尾部分支人工算 `target-(cave+len-4)`。
+- 会崩：`__dyld_start`/`start()` 早期上下文里 svc write → SIGBUS。
+- `_mkmark` 的 movz/movk 单字母标记有编码坑（`0x528a4a09`='P\x52'≠'PE'）。
+- stp/madd 手编易错——**一律 python 现算**（见 build_dyld.py 底部注释）。
+
+**新 blocker（下一步）**：`libSystem.B.dylib` 签名校验失败。
+dyld4 报 `code signature invalid` —— 候选原因：(a) rootfs 里的
+libSystem 是 thin slice/被重签坏（对照 dyld_shared_cache 内嵌的
+libSystem 版本）；(b) dyld 的 `validateDyldCache`-style 自检要求 cdhash
+匹配共享区映射的版本；(c) 正常路径本应**从共享区直接取**libSystem
+（不需要落盘读），cache 未完全可用才 fallback 到磁盘文件 → 检查
+`hasValidCache`/loadInfo 的标志位（`[X20,#0x19]` reuse 里写）是否置位。
+**先用 IDA 找 `code signature invalid` 串的调用点，看校验条件。**
+
+---
+
+### ★★★★★★★ 2026-09-27（Devin 续）⭐⭐ 536 实证成功；卡点=映射后用户态循环（已解明机制）
+
+**一句话**：syscall 536 `__shared_region_map_and_slide_2_np` **在 macOS
+15.6.1 dyld 里能跑通且返回 0**——证据双保险：retcave 抓到 ~590 万次
+`x0=0` 返回（47MB 零字节洪流）+ KRW 读 task map 显示共享区子映射已填
+~30 个映射（`sr_uuid=4c1223e5…`=macOS cache，`slide=0xd7b0000`，
+`first_map=0`，`in_prog=0`）。**之前所有"536 阻塞/EINVAL"方向全部作废**。
+
+**当前卡点（未决）**：536 成功后 dyld 在 `mapSplitCacheSystemWide`
+返回路径附近进入**用户态死循环**（fs_usage 静默=纯计算，看门狗 45s
+才杀）。`spindump` 采样得到两个确凿 PC：
+
+- pid 3394（遗留）：`dyld+0x38d28` = **NOP sled 内部**（0x38d08-0x38d3c
+  padding，其后 0x38d40=`dyld_program_minos_at_least`）——PC 如何进
+  padding 未解（无静态 xref；必为 BR/RET/computed 跳入）。
+- pid 5430：`dyld+0xcb0` = **mkG cave 的 `svc #0x80` 内部**——write(2)
+  阻塞在内核（stderr/pty 缓冲被前面 ~190K 次 'D' 标记写满）→ 证明流程
+  真实走到了 0x35668（G 点，mappings 循环之后）。
+
+**marker-breadcrumb 结论链**（写探针：B@0x35380/C@0x35434/D@0x355fc/
+E@0x3561c/F@0x3562c/G@0x35668，全部 `write(2)+replay+b`）：
+
+| 运行 | B | C | D | E | F | G | 结果 |
+|---|---|---|---|---|---|---|---|
+| mEFG2（含 mkD） | 1 | 1 | **~95K 次** | 0 | 0 | 0 | D 洪泛→pipe 满→G-cave svc 卡 |
+| noD（去 mkD） | 1 | 1 | — | 0 | 0 | 0 | **47MB `00` 洪流**=retcave x0=0 |
+
+- 'D' 在 0x355fc 重复 ~95K 次但**该点函数内无回边**（backedge 表：
+  353a8/353e4/35538/3562c/3561c/356b4/35714）→ 要么 mapfn 被反复调
+  用（但 B@入口只触发 1 次！）要么 `44 0a 00 00` 不是 D 标记——
+  **未解之谜**。mkDlr 证实 x30=base+0x355d8 只是 chkstk BLRAA 残值。
+- noD 的 47MB 零字节 = **每 8 字节一次 `x0=0` 的 retcave 写 ~590 万次**
+  = **536 被调用了 ~590 万次且全部返回 0** → 确实存在一个
+  `[…→0x35690 536→0x35698 ret→…→回绕]` 的巨型重试环，但环结构未
+  定位（post-536 代码无到 0x35690 的回边；reuseExistingCache 内无递归）。
+
+**新铁律（hard-coded，血换来的）**：
+
+1. **`write(2)`/svc 探针在 dyld 早期上下文必死**：`__dyld_start`(0x47c0)
+   和 `start` 入口(0x53dc) 的 write-cave → 秒 SIGBUS/SIGILL 零输出；
+   同 cave 只 replay 不写 → 正常跑。write 只在 dyld 自身 init 完成后
+   （mapfn 区域 0x35380+ 起）才安全。**早期打点别用 syscall 探针**。
+2. **cave 间距必须 ≥ cave 长度**：mkE(0xb40) 与 mkF(0xb80) 曾重叠
+   0x40 间距 < 0x4c 长度 → E 尾部被 F 覆盖。死区 `0x970-0xfff`
+   （thin slice 全零已验证）+ `0x3b394`(60B) + `0x47290`(56B) 可用。
+3. **`_le()` 输入必须是指令字序 hex**（如 `1400d32c`），不是文件序——
+   曾把 `36d30014` 当字序喂进去 → 落地成 TBZ 乱指令 = v2/v3 怪异死法。
+4. **每次重签后才部署**：`scp` 原地覆盖同 inode 会让 vnode 缓存旧 blob
+   → 秒 SIGBUS；先 `rm` 再 `cp`。`ldid -Hsha256 -Cadhoc -S` →
+   `jbctl trustcache add $(ldid -h|grep CDHash=|cut -c8-)`。
+5. **spindump 可用且给真 PC/栈**：`/usr/sbin/spindump`（采样全系统，
+   忽略 pid 参数）→ `/tmp/spindump*.txt` 里按 Process 名找段。kernel
+   帧带 `*`。chroot 进程也采得到——**第一仪器，别再瞎猜 PC**。
+6. `task_threads`/`mach_vm_region*` 经 task_for_pid 端口=INVALID_DEST
+   （iOS vm_map_read_t 门）；KRW 直读 `task+0x590`=threads 队列，
+   `task+0x28`(PAC)→map，`ro+0x8`(PAC)→task，`proc+0x18`=ro。
+
+**函数地图（thin slice 基线 `analysis/dyld_15.6.1_arm64e_thin`，IDB=Instance1）**：
+
+- `mapSplitCacheSystemWide` = `0x352bc-0x3576c`（不是 0x35380！）
+  - `0x3537c BL preflightMainCacheFile`；`0x353e4-0x35430` subcache
+    preflight 循环（每 CacheInfo 0x1C0，调 `preflightSubCacheFile`）
+  - `0x35438 BL DynamicRegion::make`；`0x35510/0x355d4 BLRAA chkstk`
+    （files[] 12B×w28 / mappings[] 0x30×w25 两个 alloca）
+  - `0x35538-0x35564` files[] 打包循环（`files[i]={fd,slide(i==0?slide:0),
+    count}`——**dyld 本来就只给 files[0] 写 slide，"subcache slide 未
+    清零"假说已被 IDA 反汇编证伪**）
+  - `0x355f8 CBZ W28→0x35660`；`0x3561c-0x3565c` mappings 打包
+    （外 x8<x27，内 w14=CacheInfo[i]+0x180 映射数，0x30 拷贝）
+  - `0x35664 BL DynamicRegion::size`；`0x35690 slidentry→slidecave2`；
+    `0x35694 BL __shared_region_map_and_slide_2_np`；
+    `0x35698 retentry→retcave`
+  - `0x356a0 BL DynamicRegion::free`；`0x356b4-0x356cc` close(fd) 循环；
+    `0x356d8 BL reuseExistingCache`→成功返 1，失败 w0=0+errstr
+- `loadDyldCache`=`0x34240`：options+4==1→`mapSplitCachePrivate` 尾调；
+  else `0x34298 BL reuseExistingCache`（**被 prereuse patch 改 movz 0**
+  →强制 map 路径）→ `0x342d8 B mapfn` 尾调。
+- `getDyldCache`=`0x2fe34`（BL loadDyldCache@0x2fe90）；caller=DyldCache
+  ctor `0xbed4`。`reuseExistingCache`=`0x351a8`（`check_np`→uuid strcmp
+  →`dynamicRegion()`(0x50dfc=accessor patch)→fileID 比对）。
+
+**下一步二分**（恢复后继续）：①post-536 重试环结构未定——把
+marker 放到 0x356dc/0x356f4/0x35710/0x35754 各分支点 + `free`/`close`/
+`reuse` 各 callee 入口，看循环覆盖哪段；②0x38d28 NOP-sled PC 来源
+未解（找 `off_9C038` GOT 被写坏 / BR x16 落点）；③47MB 零写本身也
+可能是单次 `write(2,zerobuf,huge_count)`——需分辨。
+
+### ★★★★★★ 2026-09-27（原 AI 续 2）⭐ 墙 B 已解——纯用户态 `run_nocskill`，零内核写
+
+**决定性实验结果**（全在设备实测）：
+
+| 用例 | 结果 |
+|---|---|
+| `hellocs`（sha256 签+TC）直接跑 | `r=33333326` rc=0 ✅ |
+| `hellocs_bad`（**签名后翻 __text 字节**，cdhash 不变）直接跑 | **rc=137 SIGKILL-CODESIGNING**（Invalid Page）✅ 复现墙 B |
+| `hellocs_bad` 经 `run_nocskill` | **`r=f041b330`（篡改指令真实执行）+ rc=0** ✅ 墙 B 攻破 |
+
+**机制（repo:`misc/run_nocskill.c` + `run_nocskill.entitlements.plist`，设备 `/var/mobile/run_nocskill`）**：
+
+```c
+posix_spawn(pid, target, NULL, attr=POSIX_SPAWN_START_SUSPENDED, ...)  // exec 完、旗已置、用户代码未跑
+proc = find_proc(pid)                      // pidhash: TBL@0x...1D22B4D0 / MSK@0x...1D22B4D8, chain proc+0xA0, pid@+0x60
+ro   = kread64(proc + 0x18)                // p_proc_ro
+kwrite32(ro + 0x1C, kread32(ro+0x1C) & ~0x300)   // p_csflags &= ~(CS_HARD|CS_KILL)
+task_for_pid(mach_task_self(), pid, &tp);        // 需 task_for_pid-allow entitlement
+task_resume(tp);                               // LEGACY release 也减 user_stop_count → NORMAL hold 亦可解
+waitpid(pid, &st, 0);
+```
+
+**结构事实（xnu-8792.81.2 `bsd/sys/proc_ro.h`）**：`proc_ro{pr_proc@0, pr_task@8, p_uniqueid@0x10, p_idversion@0x18, p_csflags@0x1C}`——`p_csflags` 在 proc_ro 里，之前叫的"cs_blob"其实是 proc_ro。
+
+**关键事实**：
+- spawn 挂起 = `task_suspend_internal`（`place_task_hold NORMAL`）；`task_resume`（MIG impl）`release_task_hold LEGACY` 对非-PIDSUSPEND 模式**无条件减 `user_stop_count`** → 可解 NORMAL hold（源证 `osfmk/kern/task.c:3659-3760`）。
+- `task_for_pid` root 也会被 MACF 拒；**`task_for_pid-allow`（或 `com.apple.system-task-ports`）entitlement 在 ldid-sha256 签的二进制上被 AMFI 兑现**（实测 kr=0）。
+- `pid_suspend`/`pid_resume` 是 PIDSUSPEND hold——**解不了** spawn 的 NORMAL hold，别走那条路。
+- `ptrace` PT_TRACE_ME/PT_ATTACH 在 iOS 全 EPERM。
+- kcall 需要 `com.apple.security.exception.iokit-user-client-class`+`IOSurfaceRootUserClient` entitlement（python3.9 无 → kcall 不可用；launcher 已签上备用）。
+- kernel `__TEXT` 写入会挂死（KTRR）——**别写内核 text**；本方案只写数据字段 `p_csflags`（非 PAC）。
+- 真死代码洞 `0x38d08-0x38d3c`(56B)（探针可用）；`0x3576c-0x35afe` 是活代码（注入 blob），IDB 里 0x35754 字节被旧 patch 污染，真值看 `dyld.orig`。
+
+**签名公式**：`ldid -Hsha256 -Srun_nocskill.entitlements.plist`（不加 `-M`）→ `jbctl trustcache add $(ldid -h x|grep -o 'CDHash=[0-9a-f]*'|cut -d= -f2)` → `chmod 755`。entitlements 必备 `task_for_pid-allow`+`get-task-allow`+`platform-application`+`no-sandbox`+iokit-user-client。
+
+**剩唯一墙 = 墙 A（dynregion 0x1f8000000 随首 mapper 退出消失 → 后续 exec 的 `hasExistingDyldCache`/`reuseExistingCache` 在 `check_np(NULL)`/dynamicRegion() 处 SEGV 139）**。两个候选解：① 每 exec 自愈（把两个早 deref 点改返 0 强制走 map 路径，验证 536 在已填充 region 上可重提交）② keeper 常驻进程持有 region。
+
+### ★★★★★ 2026-09-27（原 AI 续）双补丁点运行时地址已铁证 + slide 统一更正
+
+**前提更正（推翻隔壁"slide 不匀"结论）**：`runtime_text = IDB_addr + 0x158B4000` 对 **kernel `__text` 和 `__TEXT_EXEC` kext 文本全部成立**。隔壁的 slide 矛盾是把 `proc+0x180`（数据/堆指针）混入推算所致。现在**任何内核 text 地址可直接换算**（本 boot）。
+
+| 靶点 | IDB | 运行时（已逐字节验证） | 指令 | 补丁 |
+|---|---|---|---|---|
+| C1 | `0x92a69fc` | **`0xfffffe001eb5a9fc`** | `ORR W8,W8,#0x300` | `0xD503201F` NOP |
+| C2a | `0x8373868` | **`0xfffffe001dc27868`** | `TBNZ W27,#9` | `0xD503201F` NOP |
+| C2b | `0x8373874` | **`0xfffffe001dc27874`** | `TBZ W1,#8` | `0x1400000A` B +0x28 |
+
+- **验证方法**：IDB 全库签名唯一性（`py_eval find_bytes`）+ 设备端 `kread32` 逐字节复核——C2 20/20 字、C1 11/11 字全匹配（含函数头 PACIBSP）。
+- **签名**：C2=`b278010a 7100013f 9a8a011b 374800db 52800016 aa1b03e1 36400141`（IDB 唯一命中 0x837385c）；C1=`e80040b9 08051832 e80000b9`（IDB 唯一命中 0x92a69f8）。
+- **扫描器**：`/var/mobile/{kscan_c1c2.py,kscan_c1.py,kverify_c1.py,kverify_c2.py}`（重启后地址会随 KASLR 变——**必须重扫重验再写**）。
+- **语义**：C1 NOP 后 `_vnode_check_exec` 不再置 CS_HARD|CS_KILL → `cs_invalid_page` 的 KILL/HARD 分支全不触发 → 全局不再因 "Invalid Page" SIGKILL（诊断级、全局弱化，已获用户授权试写）。
+- **未写**：KTRR 风险仍在——写 kernel text 可能 panic（用户已授权冒险）。
+
+### ★★★ 2026-09-27 深夜 3×subagent 大包围：两墙定性 + 具体补丁地址（最高优先）
+
+### ❗❗ 2026-09-27 晨 重大更正："echo 活/sleep 死" 是【测量假象】
+- 【事实】（subagent 控变量实验）**"703–792 行 vs 2 行" 100% 由是否设 `DYLD_PRINT_*` 决定**：开了就喷~700行，关了就只有 launcher 2 行。同环境下 `echo ≡ sleep`（逐字节，仅 target 名不同）。**我那句“暖机 echo(703) 后 sleep(2行)”是错：echo 开了 PRINT、sleep 没开。**
+- 【事实】`next_boot.sh` 的 `try_keeper` 原先**没开 PRINT → 误判 keeper 死亡**（已修：try_keeper 现带 PRINT）。
+- 【事实】真实二档 = 签名：① 项目 ent+arm64+TC 的二进制（echo/true/ls/sleep/bash/cat）→ **全到缓存映射(703–792) → 再死在 dynregion(139)**；② Apple 原版 ent（如 `mobileassetd`）→ exec 就被 AMFI 杀(137)。**修②：`ldid -Hsha256 -S<项目ent>`（不加 `-M`！）-M 会合并保留 Apple ent → 仍死；去 -M 实测 782/0→792/1。**
+- ⇒ 历史上“sleep 死”真身 = 当时它还是 arm64e（已被 arm64ify 修）。**⇒ 剩下唯一 CLI 墙 = dynregion(139)，连 mapper 自己也崩。**
+- ❗ 实验失败记录：`dyld_nodyn.bin`（dynamicRegion→NULL + 中和 3 个 ExternallyViewableState）→ **反把 dyld 弄坏**（693 行、无 cachemap、死；且 ldid 报 “Are you sure that is a Mach-O?”）⇒ **NULL 不容忍，此路不通**。下一步改走：让 dynregion **真实存在**（keeper 或 m8 改文件映射），而不是强制 NULL。
+**墙(b) `SIGKILL-CODESIGNING/Invalid Page`（rc137、“2 行静默死”）= 内核 AMFI 无条件置 CS_KILL**
+- **★ 更正（2026-09-27）**：`kc_raw_16.3_T8112.bin` **文件名误名**——它含 `_apciecT8103` 等 T8103 特征，**就是本机内核**（设备=`iPad13,11`/`J523tAP`/`RELEASE_ARM64_T8103`，xnu-8792.82.2）⇒ **IDB 偏移有效**。
+- **KRW 可用**：`kread32/64`、`proc_self`；`proc_self=0xfffffe1217…`（堆）。**`proc+0x180=0xfffffe002033cb10`、`proc+0x18=0xfffffe1133682080`（内核镜像区指针）可作 slide 锚点。**
+- **❌ 仍缺：kernel 运行时 slide**。假阳性教训：`_memset_s+0x17000000` 看似序言，但 IDB `_memset_s[0]=0xd503237f` 而那里是 `0xa9017bfd` ⇒ **dry-run（`kpatch_c2.py`）挡住了误写**。用 `cs_invalid_page` 指纹在 `[0x19000000,0x1a200000)` step4K **未命中**。
+- **下一步**：用 `proc+0x180` 的 IDB 字段语义（或读 IDB `struct proc`）一步定 slide → 再用 C2/C3 指纹校验 → 才写。**未确认前绝不写内核**。
+- 【事实】`_vnode_check_exec`@`0xfffffe00092a69e8`，指令 **`0xfffffe00092a69fc  ORR W8,W8,#0x300`（CS_HARD|CS_KILL）在每次 exec 无条件置位** → 任一 taint/未验证可执行页 → `vm_fault_validate_cs`→`cs_invalid_page`(0xfffffe0008373778)→`threadsignal(SIGKILL)` → “Invalid Page”。
+- 【事实】dyld **无自校验**（导入无 `csops`/`cs_*`）⇒ 墙(b) **不能靠改 dyld 代码修**（只能签名侧或内核侧）。
+- **内核侧修法**：C1（最直接）`0xfffffe00092a69fc` 的 `ORR #0x300`→`NOP`（全局去 CS_KILL）；C2 `cs_invalid_page` 的 `0xfffffe0008373868 TBNZ`→NOP + `0xfffffe0008373874 TBZ` 恒跳软路径；C3 `cs_validate_hash`(0xfffffe00084035ac) no-hash 路径改 validated。风险：全局削弱签名。
+- **用户态修法**：`ldid -Hsha256` 重签（默认 SHA1→SHA256）实测已使首交 782→792（越过 `__dyld_start` 击杀）。cave **无 CS 优势**（在 `__TEXT` 内、落在 codeLimit≈0x128210/297 页覆盖内）。
+
+**墙(a) `SIGSEGV@0x1f8000000`（dynregion 消失）精确补丁**
+- 【事实】崩在 `dynamicRegion()`@`0x50dfc` 第 3 条 `LDR X9,[X8]`（读 `0x1f8000000` magic）。10 调用点中 **4 组容忍 NULL**（`start`@0x6380、`evaluateFunctionVariantFlags`@0x95c0、`hasExistingDyldCache`@0x30178、`reuseExistingCache`@0x35254）；**3 个 `ExternallyViewableState` 不容忍**（`0x4a964/0x4b9a8/0x4c17c` 直接 `cachePath(dynamicRegion())`，`cachePath`@0x51358 也不判空）。
+- **补丁 1**：`0x50dfc`→`mov x0,#0`(`00 00 80 D2`) + `0x50e00`→`ret`(`C0 03 5F D6`)；**需搭配补丁 2**：`0x4a95c/0x4b99c/0x4c170` 的 `CBZ`→`B`（无条件跳过，目标 `0x4a9ec/0x4ba54/0x4c264`）。更稳替代=keeper 保活。
+
+**amfid（Instance3）** 【事实】`amfid_bin` 只注册 MIG base=1000；**内核 exec upcall 27001 的 server 不是 amfid_bin**（修正旧推断）；exec 放行 = ①ARM64/ALL ②执行位 ③cdhash∈trustcache → 内核直置 `CS_SIGNED`（`kern_exec.c:7430` 跳过 upcall）。
+
+### 当前 TODO（下个对话先看这里）
+1. ✅ exec 门/字节序/launcher 毒丸 — 已修。
+2. ✅ 536=EINVAL 真因=缓存 slide-info v5；`cachereg`+掩0x20+slide=0 → ret536=0。
+3. ✅ 候选 dyld（`dyld_noslide`/`dyld_noslide_reuse`）+ `post_reboot_noslide.sh`/`catch_segv.sh`。
+4. ✅ reuse 设计（`dyld_noslide_reuse`）。
+5. ✅ 冷启动首交：**536 映射成功 + dyld 从缓存加载 libSystem/libobjc 等**（`analysis/dyldwork/t1_final_trace.log`）。
+6. ⏳ **免重启**：每测必重启很痛。**实验结论（2026-09-27）**：① “坏 fd 的 536”在映射前就失败→不触发 undo；② “m8.size=-1 的 536”（想先映 8 条再在第 9 条失败）在 **populated region 上被早期拒绝（22）** → 也无 undo。⇒ **536 无法复位已填 region**。可行替代：① 每 boot 一测（`/var/mobile/run_all_cold.sh`）；② KRW 直清 region（高风险，未做）。`vm_shared_region_undo_mappings`(`vm_shared_region.c:1295-1310`) 仅用于内核内部回滚。
+   - ✅ 附带确认：populated 后子进程 `check_np` 返回 **`base=0x180000000`** = 缓存真映在此。（探针：`dyld_reset536.bin`/`dyld_reset536_v2.bin`）
+10. ⏳ **【重启批处理计划】一次冷启动跑 `/var/mobile/run_all_cold.sh`，一次拿全：**
+   - A `A_first`：空 region 首交全量 DYLD_PRINT(含 SEGMENTS) trace。
+   - ✅ **免重启已全部做完（2026-09-27）**：全部变体重签为 **SHA256**；`run_all_cold.sh` 加固（8s 硬超时 + SEGMENTS）并 **dry-run 完整跑通（不挂死）**；当前 boot 上复用路径实测：trace 止于**缓存 8 段打印之后**（`re-using existing shared cache` 后）→ **SIGKILL(137)**（非 SEGV，handler 捕不到）。
+   - B `base/noverb/noreuse/reusemin`：复用路径四个隔离变体（`dyld_v_*.bin`）。
+   - C `C_segvcap`：`dyld_segvcap.bin`（SIGSEGV-handler cave，真 139 时 dump pc/far）。
+   - D `sha1/sha256/ent256`：**验证 CS 击杀假说**（`dyld_segvcap.bin`=SHA1 vs `dyld_segvcap_s256.bin`=SHA256 vs `dyld_segvcap_ent.bin`=SHA256+entitlements，均含 segvcap）。若 SHA256 版不再被 CS 击杀 → 根因确定。
+   - ⚠️ 2026-09-27 实测：**本 boot 上三签名表现一致**（均 2 行即挂住/早崩、无 macOS dyld 输出、无新 .ips）⇒ **哈希差异需干净冷启动才能观测**（本 boot 已退化：早前 92 行崩→现直接挂住）。
+   - **✅ 2026-09-27 DRY-RUN（完整跑通 `run_all_cold.sh`，无挂死）：** 结果 **`D_sha256`/`D_ent256` = 792 行且到达 `Mapping the shared cache system wide` + reuse；`C_segvcap_sha1`/`B_*` = 782 行**。⇒ **SHA256 签名让 macOS dyld 越过了早期 `__dyld_start` 的 CS 击杀、走得更远**——方向坐实；后续 137 是**更后面另一处**。脚本已验证（本地=设备、依赖全齐、8s 硬超时、开 SEGMENTS）。
+7. ⏳ **定位/修复复用路径 SEGV**（候选 `reuseExistingCache` 0x351a8 / `verboseSharedCacheMappings` 0x3598c；需 PC——chroot lldb 自崩、无 debugserver）。
+   - **2026-09-27 发现**：**已填 region 的 boot** 上跑任何 dyld（含变体）都**停在 91 行 / ellekit `libinjector.dylib`**（launcher 的 iOS dyld 阶段，rc139/137）——**≠ 冷启动的崩溃**（后者才走到 macOS dyld 深处）。
+   - ⇒ 复用路径隔离变体（`dyld_v_noverbose.bin`：`verboseSharedCacheMappings`→RETAB；`dyld_v_noreuse_tail.bin`：`reuseExistingCache` 0x3525c→0x352a4）**必须在冷启动首交后立即测**（用 `run_all_cold.sh` 的 B 段）。
+   - 调用链：`loadDyldCache`(0x34240) → `reuseExistingCache`(0x34298) → 若返 0 → `mapSplitCacheSystemWide`(0x342d8)。上层：`SyscallDelegate::getDyldCache`(0x2fe34，reuse 成功后调 `DyldSharedCache::getUUID`+`kdebug_trace`) → `loadDyldCache`。
+   - **2026-09-27 trace 细读（关键）**：`t1_final_trace.log` 792 行里，**1-782 行是 launcher 的 iOS dyld**；**783-792 行才是 macOS dyld**：`Mapping the shared cache system wide`(783) → `re-using existing shared cache ((null))`(784) → **`verboseSharedCacheMappings` 打印出缓存完整 8 段（785-792）**：`0x180000000->0x1E7F5BFFF __TEXT`、`__DATA_CONST`、`__DATA`、`__TPRO_CONST`、`__AUTH`、`__AUTH_CONST`、`0x1F9070000 __READ_ONLY`、`0x1FED4C000->0x22560BFFF __LINKEDIT`。⇒ **reuse 成功、缓存段布局与 prot 均正确**；**崩溃在 reuse/getUUID 返回之后**（dyld 的 post-cache 流程：cache-restart 或首个 dylib 启动）。
+8. ⏳ 跳过 slide 的 **rebase 验证**（slide=0 下指针是否真正确）。
+9. ⏳ 推进 **WindowServer/VNC**（AGX 桥接为后续大工程，见 AGENTS.md）。
+
+### 测试环境（每次冷启动重复）
+- SSH `root@192.168.64.1 -p 2222`（密码 cisco）；region 一旦填满 → **必须重启**。
+- 冷启动恢复：trustcache add cache cdhashes + `chmod 755` 所有要用二进制 + `nohup /var/mobile/cachereg <cache> <cache>.01 &`。
+- 一键：`sh /var/mobile/post_reboot_noslide.sh`（首交+reuse）；`sh /var/mobile/catch_segv.sh`（lldb 抓崩，目前 chroot lldb 自崩）。
+
+### 2026-09-27 00:4x — ★★★★★ 里程碑：首交成功映射缓存（536=0），进程在下游 SEGV
+- 冷启动空 region + `cachereg` + `dyld_noslide` → 跑 `/bin/echo`：**无 `syscall to map cache into shared region failed`**（= mapSplitCacheSystemWide 未报错），但**随后 `Segmentation fault: 11`（rc=139）**，无 .ips。
+- 随后同 boot 用 `sf_ns`（掩码捕获探针）测得 **`ret536=22`**（region 已被首交填满）⇒ **首交的 536 确实返回了 0 并映射成功**（区域被填充）。
+- ⇒ **536 映射这面墙已被跨过**；新的卡点是**下游 SEGV**（候选：跳过 slide 导致缓存 __DATA 的 rebase 指针未处理；或 dynregion deref；或注入的 libmachook ctor）。
+
+**2026-09-27 00:4x 更新 — 冷启动 DYLD_PRINT trace（`analysis/dyldwork/t1_final_trace.log`，792 行）彻底改写了结论：**
+- **macOS dyld 成功用了缓存！** 日志中大量 `Using mapping in dyld cache for /usr/lib/libSystem.B.dylib`、`/usr/lib/libobjc.A.dylib`、`libdispatch/libdyld/libc++/libcache/...`，还有 `Kernel mapped .../launchdchrootexec`、`__SHARED_CACHE (rw.)`。
+- 末尾两行：**`Mapping the shared cache system wide`**（= `mapSplitCacheSystemWide` 0x35704 成功路径！）+ **`re-using existing shared cache ((null)):`**（= `reuseExistingCache` 0x35280 的打印，参数是 `DynamicRegion::osCryptexPath()`）→ **然后 SEGV(139)**。
+- ⇒ **536 映射成功 + 缓存内 dylib 加载成功**；崩溃在 **macOS dyld 第二次 `reuseExistingCache` 的后续**（日志止于 0x35280 的 print；下一句即 `verboseSharedCacheMappings` 0x35290）。
+- `reuseExistingCache`(0x351a8) 反汇编：`X19=base` → `strcmp(base,"dyld_v1  arm64e")` → 匹配则 `loadAddress=base; slide(); dynamicRegion(); getDyldCacheFileID(); osCryptexPath()` 打印；`(%s)=(null)` 是 `osCryptexPath` 返回 null（打印本身无害）。**下一步靶子：第二次 reuse 的 base/`verboseSharedCacheMappings` 为何 SEGV**（需冷启动 lldb `catch_segv.sh` 取 PC，或比对第二次 reuse 的 base 是否 null）。
+- 下一步：① 用 lldb（`MACWS_SUSPEND_AT_EXEC=1` + `misc/lldb_*`）在冷启动首交时抓 SEGV 的 PC/far；② 判断是否 rebase（若 PC 落在缓存 __DATA 上）——若是，则需真正处理 v5 slide（内核 backport 或重生成 v4/4K 缓存），而非仅跳过。
+- **源码分析（`dyld/SharedCacheRuntime.cpp:382-388`）**：dyld **仅在某 mapping 的 `slideInfoFileSize != 0` 时**才给它 `sms_{init,max}_prot |= (VM_PROT_SLIDE(0x20) | authProt)`。⇒ `0x20` 源于缓存的 `mappingWithSlide` 表（`dyld_cache_mapping_and_slide_info`）逐 mapping 的 `slideInfoFileSize`；掩 `0x20` 等价于让 dyld 不提交 slide。
+- **rebase 推理（倾向“跳过 slide 不破坏指针”）**：slide-info 语义 = 内核给 slide 页的指针 += `slide`；`slide=0` 时增量 0，指针保持其 preferred VA，而缓存正好映射在 preferred `0x180000000` ⇒ 指针本就正确，理论上无需 rebase。故 SEGV 更可能是 **dynregion(m8) / 注入 libmachook ctor / 某条 mapping**，而非纯 rebase。**需 SEGV PC 定论**（冷启动首交跑带 DYLD_PRINT 的 trace）。
+- **post-536 流程（IDA 反汇编）**：`0x356d8` 调 **post-syscall `reuseExistingCache`**（填 loadAddress）；成功 → `0x35704` 打印 **“mapped dyld cache file system wide”** → `ret 1`。**该函数内无 dynregion deref** ⇒ 首交 SEGV **不在 536 后立即处**，在**更下游**（cache 内 dylib 加载 / objc 初始化 / cache-finder）。静态分析无法定论，**必须冷启动跑 DYLD_PRINT trace**。
+- ⚠️ 测试纪律：region 一旦映射就**持续到重启** → 每次端到端必须冷启动。本次首交已把本 boot 的区域填满。
+- **★★★ 2026-09-27 01:0x 重大发现：崩溃实为 `SIGKILL - CODESIGNING`（CS 击杀），非普通 SEGV！**
+  - crash 报告：`echo-2026-09-27-010008/010022/010105.ips` → `exception.type=EXC_BAD_ACCESS`、`signal=SIGKILL - CODESIGNING`、`subtype="UNKNOWN_0x32 at 0x<PC>"`（PC 三次：`0x100dd87c0`/`0x1027107c0`/`0x104b7c7c0`，随 ASLR 变）。
+  - ⇒ 进程因**执行了未通过 CS 校验的代码页**被 AMFI/内核击杀（不是野指针 SEGV）。与文档旧结论“errno-40 / `VSHARED_DYLD` / 需项目 entitlements”属同一 **CS/AMFI 家族**。
+  - ⚠️ **SIGKILL 无法被信号处理器捕获** ⇒ `dyld_segvcap`（SIGSEGV/SIGBUS handler）对 137 无效，只对真正的 139 有效。
+  - **★★★★★ 决定性！报告全字段定位：击杀页 = 我们改过的 dyld 的 __TEXT。** 证据：`termination={code:2, namespace:"CODESIGNING", indicator:"Invalid Page"}`；`ktriageinfo="VM - A memory corruption was found in executable text"`；`vmRegionInfo` 的 PC `0x104b7c7c0` 落在 `0x104b78000-0x104c14000`【**0x9c000=624K** r-x】= thin dyld 的 __TEXT 大小；且 **PC-region = 0x47c0 = `__dyld_start`**。
+  - ⇒ **根因假设（强）：修改 dyld 的 __TEXT 代码页后，CS 的页面哈希不匹配 → 内核在执行时判 "Invalid Page" → CODESIGNING 击杀**。与文档旧结论“MUST 带项目 entitlements 签名”同一方向（可能是 ldid 重签未正确覆盖页哈希 / 或需用 entitlements）。
+  - 下一步（不需冷启动）：① 核查 ldid 重签是否重建了 CodeDirectory 的 page hashes（对比修改前后的 CD slot hashes / 用 `ldid -S<ent>` 重签）；② 优先**不改 __TEXT 代码页**的方案：只在**可执行 cave**（如未用 padding）写，或改用 **`DYLD_INSERT_LIBRARIES` 注入一个自写 dylib**（它自己合法签名）来装钩，避免改 dyld 代码页。
+  - **追加实验（2026-09-27）：原始未修改 dyld.orig 也 rc=137**（其 cdhash 因 fat 头报 "wrong length" 未进 TC）；补丁版已 TC 但也 137。⇒ **CS「Invalid Page」击杀不只是“我改了代码页”——连未修改的 macOS dyld 也遭杀**。⇒ 根因升为：**chroot 里的 macOS dyld 的 `__TEXT` 过不了 iOS 内核的 CS 页校验（`__dyld_start` 处被杀）**，属**跨平台签名 × AMFI** 问题。下一步：内核 RE（Instance2/kc_raw 13339）定位执行时的 CS 页校验/击杀路径，看是否有 boot-arg/entitlement 可豁免。
+  - **内核链已理清**：`vm_fault.c:2775` → `cs_invalid_page`（`kern_cs.c:248`）；**击杀条件 = `proc_getcsflags & CS_KILL`**（`kern_cs.c:274` → `threadsignal(SIGKILL, EXC_BAD_ACCESS)`）；页校验器 `cs_validate_page`（`ubc_subr.c:5422`）算页哈希 vs CS blob 期望哈希，不匹配 → `bad_hash`（Invalid Page）。
+  - **★ CS blob 参数差异（无重启核查）**：原始 thin dyld → `hashType=2(SHA256)`；`ldid` 重签后 → **`hashType=1(SHA1)`**（pageSize=4096/nCode=297/flags=0x0 均同）。⇒ **ldid 把哈希降级为 SHA1**；若 iOS 内核对该 vnode 期望 SHA256 → `bad_hash` → Invalid Page。**修复候选：用匹配原版（SHA256/正确 CD 形态）的方式重签**（或用 entitlements 重签）。
+  - 下一步：① 查被击杀的代码页归属（PC 落在哪个镜像/是否缓存内代码；.ips 无 usedImages，需冷启动复现时用 `MACWS_AGX_CRASH_DIAG` 或内核 RE：AMFI `mpo_file_check_mmap`/执行时的 CS 校验）；② 核对项目 entitlements 是否覆盖该 CS 检查（对比 `entitlements.plist` 与 macOS 缓存内的库需求）。
+  - **★★★★★ 2026-09-27 冷启动决定结果（全变体 SHA256）：** `A_first`（**空 region 首交**）= **792 行 + `Mapping the shared cache system wide` + 完整 8 段** ⇒ **首交越过早期 CS 击杀、直接到缓存映射**。`B_noverb/B_noreuse/B_reusemin` = **rc139（真 SEGV）** 且到缓存映射；`B_base/D_sha256/D_ent256`=792；`C_segvcap_sha1`=782。
+  - **❗ 合成变体 `dyld_segvcap_reusemin.bin`（segvcap + reuse_min）反而 137 早崩（130B）——说明 `sigaction` 本身扰动了时序** ⇒ 抓 139 需换策略（在不改时序处装 handler，或对其他能到 139 的补丁集加 handler）。
+  - **★★★★★ 2026-09-27 拿到崩溃地址（无需 handler，SEGV 自落 .ips）：`true-2026-09-26-165443.ips` → `SIGSEGV` / `KERN_INVALID_ADDRESS at 0x00000001f8000000`。**
+    - **`0x1f8000000` = 536 提交里的 m8（dyld dynamic region）**！结合旧结论（本文 §319：*`fd=-1` 的 dynregion 条目随 mapper 进程退出消失，文件映射存活*）⇒ **后续进程 deref `0x1f8000000` → SIGSEGV**。**这就是“缓存映射后立刻崩”的真因。**
+    - **修复方向**：① **常驻 keeper 进程**持住 536 映射（使 dynregion 存活）；② **把 dynregion 改成文件映射**（持久）；③ 让 dyld 在 deref 前重建/重新 536 提交 dynregion。
+    - ⇒ 同时解释为何 **A_first(首交)=792** 而 **后续=崩**：首交进程自映射（dynregion 对其存活），进程退出后 dynregion 消失。
+    - **铁证（.ips 的 vmregioninfo）**：`0x1f8000000 is not in any region`；同表显 `180000000-1e7f5c000 …ed lib __TEXT`（缓存 __TEXT 在）⇒ **m0-m7（文件映射）存活、m8（fd=-1 dynregion）已消失**。诊断 100% 坐实。
+    - **✅ 已备 keeper 方案（`/var/mobile/keeper_test.sh`，待冷启动）**：让**首个 536 提交者是一个长驻 macOS 进程**（`/bin/sleep 100000`，已确认存在），它自映射后不退出 → dynregion 存活 → 第 2 个进程（`true`）走 reuse 就不会 deref `0x1f8000000`。判据：keeper alive=yes + reuse 不再 SIGNAL 11@0x1f8000000。**注：keeper 测试必须冷启动**（首交）。
+    - **✅ 免重启收尾已完成（2026-09-27）**：① 定论脚本 **`/var/mobile/next_boot.sh`**（一次冷启动：keeper(`/bin/sleep`) 首交 → 验证 alive/缓存映射 → 多进程 reuse（true/ls/echo）→ 区域状态）；② **常驻 keeper 守护**：`com.macwsguide.keeper.plist`（launchd，RunAtLoad+KeepAlive）+ `keeper_start.sh`（等 rootfs→注册 tc→启 cachereg→exec sleep）；③ 全部冷启动/keeper 脚本已过 **POSIX sh 语法**（修掉 `${@:3}` 等 bash 写法）。
+    - **⚠️ 2026-09-27 冷启动 next_boot 结果**：`keeperalive=NO`（/bin/sleep 2 行即死）→ **根因 = launcher 给 /bin/sleep 选了 `arch=arm64e` + `libmachook.dylib`**（arm64e 路径坏）；而 true/ls/echo 选 arm64 能到缓存映射。**部署的 launcher（68880B, 9-26 22:45）与仓库源码逻辑（`include/macws_macho_arch.h` 已正确判 arm64）不符 ⇒ 设备上跑的是旧版 launcher；需重编+部署 launcher**。`R_true/R_ls/R_echo` 仍 `SIGSEGV @0x1f8000000`（缓存映射后）。
+    - **✅ subagent 大包围（2026-09-27）关键结论 + 已执行修复：**
+      - **【更正】`bash/cat` 早死是伪象**：同一 boot 内**后期一切二进制都退化成 2 行**（态退化）；`true/echo/ls` 与 `bash/cat` **无本质区别**。判据：`echo rc=0（非137）`、`sleep rc=137`。
+      - **【已修】`/bin/sleep` 是 arm64e（sub=`0x80000002`）→ 已用 `misc/arm64ify_macho.py` 就地 relabel 为 arm64/ALL（sub=0）+ SHA256+adhoc 重签 + trustcache（已验 tc=1）+ chmod755**。这就是 keeper 失败的根因。（备份 `/var/mobile/sleep.orig.bak`）
+      - **【确认】launcher arch 判定正确**（旧“部署版与源码不符”被证伪）；**arm64e 路径坏的真因 = `libmachook.dylib` 无 arm64e slice（实为 FAT 两条 arm64）≠ 设计（thin arm64e）** → 需重建（D-3）。影响低（arm64e 目标在 exec 门就 137）。
+      - **【瓶颈=dyld 侧】**：`hasExistingDyldCache`→`dynamicRegion()` deref `0x1f8000000`（`dyld/DyldMain.cpp:1084-1095`）；libmachook ctor 晚于它，**排除**；CS/AMFI 是**已越过**的独立模式。
+      - **【keeper 可行】**：doc 的“先有蛋”只针对“用 sleep 当第 2 个进程测”，不否决 keeper 思路——keeper 必须是 region 创建后的**第一个**进程（next_boot 顺序天然满足）。
+      - **✅ 已备 keeper 二进制清单**（arm64/sub=0）：`bash,cat,echo,ls,pwd,printf,true,uname,update_dyld_shared_cache` + **`/usr/libexec/mobileassetd`**（唯一守护）；或 **arm64ify 后的 `/bin/sleep`**（已做）。
+    - **⚠️ 2026-09-27 深夜核查（重要更正 + 不遗漏清单）：**
+      - **❗ “true 活/sleep 死”是伪象**：同 boot 后段**连 echo/true 也变 2 行** ⇒ **是 boot 内“态退化”**（随时间劣化，与二进制无关）。**真伪判据**：同一时刻跑 sleep+echo 对比。
+      - **“态退化”有健康窗口**：刚 boot 时 echo 能到缓存映射（703–792 行）；跑多轮 536/exec/SEGV 后**一切退化为 2 行**。（这与 §“region 会回空(12)/ret536=22”同源。）
+      - **已逐项排除的真实因素**（均已对齐但仍退化→均非根因）：① arch（已 arm64ify，live 行 `arch=arm64` ✓）；② **minos**（`set_macos_version.py` 把 `/bin/sleep` 从 macOS **15.6.0→13.0.0** 已成功，仍 2 行）；③ **entitlements**（用 `ldid -Hsha256 -S<项目 ent> -M` 已把 true 的同一 plist 打给 sleep，同一份十六进制，仍 2 行）；④ trustcache（各二进制 tc 在 clean boot 后均为 0，非差异）；⑤ 热机（echo 预热 4 次后 sleep 仍死）。
+      - **仍然成立的真实区分**：健康窗口内 `true/echo/ls` 能到 `Mapping the shared cache system wide`（cachemap=1）；退化后全 2 行。⇒ **真正靶子 = “为何 boot 内态会退化”（而非某二进制）**。
+      - **工具产物**：`/var/mobile/{archchk.py,platformchk.py,cschk.py}`；`/bin/sleep` 已 arm64ify+重签（备份 `/var/mobile/sleep.orig.bak`）。未发现 sleep/bash/cat 的新 `.ips`（退化是静默 2 行/rc）。
+- **subagent 大包围取证（2026-09-27）：**
+  - 崩溃窗口 = `reuseExistingCache` **成功返回之后**（日志止于 8 段打印 `t1_final_trace.log:792`）；源码 `SharedCacheRuntime.cpp:1373-1378` 证成功路径**不**打印 `mapped dyld cache file system wide`（勿误判）。
+  - **拿 PC 首选**：给 dyld `start()`(thin 0x53dc) 最前注入早期 SIGSEGV-handler cave（handler 从 ucontext 取 pc/far → 写 /tmp/dyldsegv.txt → _exit），复用 `build_dyld.py`/`cave_noslide.s` 工具链；libmachook 的 `MACWS_AGX_CRASH_DIAG`（`mac_hooks.m:7324-7502`）**装在 ctor，太晚**，抓不到 dyld 启动崩溃。
+  - **ellekit 不是子进程崩溃源**：`launchdchrootexec/main.m:71` 的 `setenv(...,1)` **覆盖**掉 ellekit 注入项 ⇒ chroot 子进程只带 libmachook（`forkfix/libinjector` 仅在 banner 之前的 launcher iOS dyld）。
+  - **post-cache 高风险 deref（优先级）**：`DyldDelegates.cpp:158-161`（getUUID+kdebug）、`dyldMain.cpp:1086-1095`（handleDyldInCache→dynamicRegion）、`dyldMain.cpp:1215-1219`（restartWithDyldInCache）、`DyldProcessConfig.cpp:1416-1431`（dylibsExpectedOnDisk + objc/swift 表位）。
+  - 备用拿 PC：`catch_segv.sh`（+`MACWS_SUSPEND_AT_EXEC=1`）。注：日志若缺 `mapped dyld cache file system wide` 属正常。
+  - **✅ 已造成工具 `dyld_segvcap.bin`**（2026-09-27）：在 dyld `start`(0x540c) 挂钩 → 跳 `__TEXT` 尾段可执行零填充 cave `0x9b578`（0xa88B 可用）→ 内部以裸 `svc` 装 SIGSEGV/SIGBUS handler，handler 把 **siginfo(0x20)+ucontext(0x140) 原样 write 到 stderr** 再 `_exit(139)`（免猜偏移，离线解 pc/far）。构建方式：`analysis/dyldwork/segvcap_cave.s`（clang 汇编体）+ 手算 adr/b 重定位（已验：hook→0x9b578, adr→handler@0x9b5c8, b→0x5410）。**待冷启动验证**（已入 `run_all_cold.sh` 的 `C_segvcap`）。
+
+### （旧）三条真根因
+1. **exec EACCES(13) = 部署文件缺 `+x`**（`kern_exec.c:6242`：非 authopaque 挂载 + 无执行位 → EACCES）。**修复：部署后 `chmod 755`**。→ exec 全通，macOS dyld 真运行。
+2. **dyld 内探针 SIGILL(132) = 补丁 hex 字节序写反**（`build_dyld.py` cave 用了反汇编字序）。**修复：`_le()` 每 4 字节转真小端**。
+3. **syscall 536=EINVAL(22) = 缓存 slide-info version=5，iOS 16.3 内核只支持 1–4**（`sub_8062CA8@0xfffffe0008063024`；源码 `vm_shared_region.c:2934` default→KERN_FAILURE→`vm_unix.c:2725`→EINVAL）。触发位 = `sms_max_prot & VM_PROT_SLIDE(0x20)`。
+
+### 已验证的可行性（关键里程碑）
+- **空 region 上，`cachereg`（挂 cache cs_blob）+ 掩掉 9 条 mapping 的 `0x20` + `files[0].sf_slide=0` → `ret536=0`（缓存真映射）**。
+  - **两个条件缺一不可**：缺 `cachereg` → gate11（CS 覆盖）失败 → 22（本 session 首次重启测试就因脚本漏启 cachereg 而失败）；缺掩码 → v5 slide pass → 22。
+  - 实测：2026-09-27 00:3x boot（已启 cachereg）用掩码探针 `sf_ns` → **try1 ret536=0**，try2/3=22（region 已填）。
+  - 说明：`check_np` 从 iOS 侧读 `ret=0 base=0` 不可信（无法区分空/满）；以**子进程内** `check_np`（✅ 12=空）为准。
+- 已把该绕法做成两个真 dyld 补丁（见下），字节已经 IDA/clang 校验。
+
+### 候选 dyld（已部署 `/var/mobile/`，重启后用）
+| 文件 | 内容 | 用途 |
+|---|---|---|
+| `dyld_noslide.bin` | cleanB 全补丁 + 在 `0x35690` 注入 cave（`files[0].slide=0` + 掩 9 条 mapping 的 `0x20`） | 强制 map 路径 |
+| `dyld_noslide_reuse.bin` | 同上但**不 patch `hasexisting/prereuse`** | 首交 map + 其余进程 reuse |
+（cave 源码 `analysis/dyldwork/cave_mask20b.s`；构建见本文件对应段）
+
+### 当前状态 / 恢复步骤
+- **当前 region 已被填满**（本 boot 任何 536 都 22/139）→ **只能在冷启动空 region 上测**。已写 `analysis/dyldwork/post_reboot_noslide.sh` 并部署 `/var/mobile/`。
+- **重启 + Dopamine 重越狱后**：`sh /var/mobile/post_reboot_noslide.sh`。成功判据：第1步 `echo NOSLIDE-OK` 且**无** `syscall to map cache into shared region failed`。
+- 设备恢复清单（重启后必做）：trustcache 重加（`jbctl trustcache add <cdhash>`）+ `chmod 755` 所有要用二进制 + `nohup /var/mobile/cachereg <cache> <cache>.01 &`。
+
+### 工具/坑速查（血泪）
+- `analysis/dyldwork/exec_probe.py`：chroot+posix_spawn 真返码（launcher 的 `perror` 是残留 errno，不可信）。
+- 探针 cave 字节必须 clang 汇编后取真字节（手写/字序必错 → SIGILL 132）。
+- 描述符级探针：pre-svc 重入 svc 后写 stderr 会在 attach 窗口被杀（137）；用“pre-svc 改参 + `b` 回原 svc + post-svc 在 `0x76e00` 写 ret”双 cave 才稳。
+- KRW（`/var/jb/basebin/libjailbreak.dylib` kread/kwrite）：臂64e 数据指针 PAC 是 47-bit VA（`0xffff800000000000|(v&0x7FFFFFFFFFFF)`）；**裸写 vnode/mount 等 PAC 指针会 ptrauth panic**。
+- 部署 dyld 用 `cp` 从 `/var/mobile` 源（scp 直写会丢元数据）+ `chmod 755`；解释器(dyld) 必须 **CD flags=0x0**（`ldid -Cadhoc` 会使其被内核拒收）。
+
+## 2026-09-26 23:0x — ★★★★ exec EACCES 真根因 = 缺可执行位；exec 门彻底打通 ★★★★
+
+**整场 session 卡住的“exec EACCES(13)”根因是文件 mode 缺 +x，与 CS/trustcache 无关。**
+
+- **决定性证据（源码 `analysis/xnu-xnu-8792.81.2/bsd/kern/kern_exec.c:6242`）**：
+  ```c
+  if (!vfs_authopaque(vnode_mount(vp)) &&
+      ((vap->va_mode & (S_IXUSR|S_IXGRP|S_IXOTH)) == 0))
+      return EACCES;   // 挂载点非 authopaque 且文件无执行位 → EACCES
+  ```
+  `/private/var`（rootfs 所在）**不是 authopaque**。部署脚本的 `rm -f; cp` 把目标建成 `rw-r--r--`（0644）→ kernel 直接 EACCES，**静默、无 AMFI 日志**。
+- **实测对照（本回合）**：`ls -la $R/usr/bin/true` = `-rw-r--r--`；`ls -la $R/tmp/cachereg_test` = `-rwxr-xr-x`。**只有缺 +x 的失败**。
+- **修复**：部署后 `chmod 755 <file>`。chmod 后 `true`/`ls`/`echo`/`printf` exec **全部成功**，macOS dyld 真正运行：
+  ```
+  dyld '<null>' not loaded: syscall to map cache into shared region failed
+  => 应用层回到原任务核心：syscall 536
+  ```
+- **含义**：`exec admission`（arm64ify / -Hsha256 / trustcache / platform / load 命令）以前的所有冲突结论，很多是被这个 +x 门污染的。**现在 exec 已稳定可用**（本回合多次复现 rc=0 落地到 536 层）。
+
+**次要点（仍成立且有用）**：
+- 解释器(dyld) 需 **非 ad-hoc（CD flags=0x0）**：`ldid -Cadhoc`（0x2）会让内核拒收解释器（`ldid -S` 裸签=0x0 可过）。部署 dyld 用 `cp`（从 /var/mobile 源）比 scp 直写更稳。
+- launcher(launchdchrootexec) 曾在 `0x46FC` 被写坏成非法指令 `0x001c0012`（posix_spawn 错误路径）→ 任意 posix_spawn 失败即 SIGILL(132)，掩盖真实码；已修复（正确 12B：`00000090 00042a91 25000094` = `adrp x0,#0; add x0,x0,#0xa81; bl _perror`）。且 `perror("posix_spawn")` 打的是残留 errno（posix_spawn 不写 errno）——真实码用 `analysis/dyldwork/exec_probe.py`（ctypes 直调，rc=真实 errno）。
+- 工具固定新增：`analysis/dyldwork/exec_probe.py`（chroot+posix_spawn 真返码，`python3 -u exec_probe.py <rootfs> 0x0 <target...>`）。
+- **下一步**：syscall 536 真实 errno（errprobe dyld 目前经 launcher 得 rc=132，待用 stderr-write 探针或重新核位取得——见文件末尾 22:x 段相关构建键 `fwentry2`/`fwcave2`）。
+
+## 2026-09-26 23:5x — ★★ 536 真 errno = EINVAL(22)；region 实为空；探针 SIGILL 根因 = 字节序 ★★
+
+（详见 `docs/porting/syscall536-errno-and-probe-sigill.md`；本段补最新实测）
+
+**A) 探针 SIGILL(132) 根因 = 字节序。** `build_dyld.py` 的 `P` 表把**多指令 cave** 的 hex 按“反汇编器字序”（如 `d10043ff`）直接 `bytes.fromhex` → 落盘成小端逆序 → 非法指令。**已修**：新增 `_le()` 把每 4 字节字转为真小端（单指令条目本就正确，仅 cave/errprobe 错）。修正后 cave `0x38d08` = 合法微小端 `ff0301d1 e01300f9 …`。
+
+**B) 536 真实返回 = 22 (EINVAL)**（可靠探针：拦截 `__shared_region_map_and_slide_2_np` 的 post-svc `B.CC`(0x76e00) → cave 写 raw x0 到 stderr）。
+
+**C) ★ region 实测为空（非“已填充”）。** 同一 cave 额外调 `shared_region_check_np`(294)：得到 `checknp_ret=12`（= 存在但空）+ `ret536=22`。⇒ **推翻 `syscall536-errno-and-probe-sigill.md` 的 #1「region 已填充」假说**，也推翻旧文档的“40=SESandbox”。
+
+**D) 已挂 cs_blob（cachereg 运行中、`fcntl=0`）仍为 22。** ⇒ 536 的 22 来自 **setup 门**（不是引擎的 region-populated）：内核 `sub_8459570` 中 EINVAL=22 的来源为：门6 `v_type!=VREG`、门10 `ubc==0`(vnode+120)、**门11 per-mapping `ubc_cs_blob_get` 覆盖不足**（`sub_8459570` 末尾的 `v66[6]+v67 > v64 || v66[7]+v67 < v65` 分支）或 engine 返回。
+
+**E) 工具**：`analysis/dyldwork/_bx3.py`（读 checknp+536ret 的探针构建器，带与 clang 字节的自校验）；`cave_checknp.s`。设备现役 dyld = `/var/mobile/stub_checknp.bin`。
+
+**下一步（重要）**：定位 536 到底是 setup 哪一门。建议：① 在 `_bx3` cave 里额外写 `files_count`/`mappings_count`/首条 mapping 的 `file_offset+size`，与 vnode blob 的覆盖字段（KRW 读）对算，看是否命中门11；② 重建“只交 mapping0”的 16:00 式探针，确认单条 mapping 能否返 0（分离“首条 vs 后续/dynregion”）。
+
+**F) 实测提交参数（`_bx4.py` / `stub_argdump.bin`，拦截 536 pre-svc 0x76df8 dump x0..x3）= `files_count=2, mappings_count=9`。** 即：**2 个 file 条目（主缓存 + 尾部 `fd=-1` dynregion 伪条目）+ 9 条 mapping**（主缓存 8 条 + dynregion 1 条）；**`.01` 子缓存未提交**（=无 4GB 溢出）。
+  - 更正：`filescount1`(0x3538c) 按本文 17:50 段是 **mapSplit flag，不是 files_count**；真正决定 files 数的是 dyld 内部逻辑。
+  - 因此 536=EINVAL 的候选锁窄到：**门6 v_type**（主缓存是普通文件，应过）、**门10 ubc==0**、**门11 per-mapping CS 覆盖**、或 **门4 dynregion fd=-1 伪条目**、或 **engine**。
+  - 现役诊断 dyld = `/var/mobile/stub_argdump.bin`（dump 参数）；重建器 = `analysis/dyldwork/_bx4.py` / `cave_argdump.s`（clang 汇编 + 重算 branch）。
+
+**G) 实测 9 条 mapping 字段（`_bx5.py` / `stub_mapdump.bin`，cave 把 x3 指向的 9×48B 写 stderr）**：
+```
+m0 addr=0x180000000 size=0x67f5c000 foff=0x0          ip=5
+m1 addr=0x1e7f5c000 size=0x1e90000  foff=0x67f5c000   ip=97
+m2 addr=0x1ebdec000 size=0x239c000  foff=0x69dec000   ip=99
+m3 addr=0x1ee188000 size=0x24000    foff=0x6c188000   ip=99
+m4 addr=0x1ee1ac000 size=0x1200000  foff=0x6c1ac000   ip=35
+m5 addr=0x1ef3ac000 size=0x7cc4000  foff=0x6d3ac000   ip=33
+m6 addr=0x1f9070000 size=0x5cdc000  foff=0x75070000   ip=1
+m7 addr=0x1fed4c000 size=0x268c0000 foff=0x7ad4c000   ip=1
+m8 addr=0x1f8000000 size=0x4000     foff=0x10285c000  ip=1  (dynregion 伪条目, foff=用户指针)
+```
+- m0..m7 = 主缓存 8 条，**全在 4GB 界内**（end=0x22560c000）；文件偏移覆盖 `[0, 0xa160c000]`（恰等于缓存 CS blob 的 `cso`）。m8 = 重定位后的 dynregion（`dynoff` 生效）。
+- **强制参数实验（`cave_force2.s`：pre-svc 改 x0/x2 后自己发 svc 再写 stderr）遇到 137**（在 attach 窗口写→被杀），无法可靠取 ret；但**暗示「减量提交可能真的映射成功」**（attach in-flight→137），待用更稳手法确认。
+- 下一步：⑧ 用 stubprobe 手法（从 0x76e00 入口，避开 pre-svc 重入）在 **dynregion 被移除**的变体上取 ret；⑨ 或直接 KRW 读缓存 vnode 的 cs_blob 覆盖字段（`v66[5..7]`）与 m0..m7 对算，坐实/排除门11。
+
+**H) ★★ 双 cave 强制参数实验（已跑通）：错误码分层。** 手法：`cave_seting2`（0x76df8 → 改 x0/x2 → `b 0x76dfc` 跑原 svc）+ `cave_capture`（0x76e00 → 写 x0 → exit），修复了 pre-svc 重入导致的 137，ret 稳定可读。结果：
+| 强制参数 | ret536 |
+|---|---|
+| fc=1, mc=9（丢 dynregion，但沿用自然 mappings_count=9） | **22** |
+| fc=1, mc=1（仅 m0） | **5** |
+| fc=1, mc=8（主缓存全部 8 条） | **5** |
+| 自然 fc=2, mc=9（含 dynregion） | **22** |
+- ⇒ **两种失败分层**：**dynregion（fd=-1 伪条目）导致 22**；**主缓存自身（即使单条 m0）导致 5（KERN_FAILURE）**。自然提交先撞 dynregion 的 22。
+- 这与旧文档“空 region 时 536 返 0”不符——当今缓存/vnode 状态下，即使良构/单条也返 5，说明 **5 来自主缓存映射的引擎层失败（候选：`ubc_cs_blob_get` 覆盖 / ubc / vm_map_enter）**，非 region 占用。
+- 构建器：`analysis/dyldwork/` 下 `cave_seting2.s` + `cave_capture.s`；禁用 dyld = `/var/mobile/sf_mc1.bin` 等。
+- 下一步：⑩ 用 **KRW 读缓存 vnode 的 cs_blob 覆盖字段**（`v66[5..7]`）与 m0 的 `[0,0x67f5c000]` 对算，判定 5 是否来自门11；⑪ 或在内核 IDB 反编译引擎 `sub_8061EF0`/包装 `sub_8459134` 定位 5 的返回点。
+
+**I) 更正 H)：强制实验的 5 是「计数不匹配」伪码，不是真实失败。** 内核 wrapper `sub_8459134` 的 `5` 只来自：① `files_count>0x100`；② `mappings_count>0x800`；③ **slide 计算循环 line 191（files[].sf_mappings_count 与 mappings_count 不一致）**。我改了 x2（mappings_count）却没同步 files[] 声明计数 ⇒ 计数不匹配 ⇒ 5。**自然提交（fc=2,mc=9，8+1 自洽）→ 22 才是真实失败**（来自 setup `sub_8459570` 或其调用的 engine `sub_8061EF0`；wrapper 仅当 engine 返 >3 才转 22）。故正确靶子仍是 setup 门6/10/11 或 engine——需 KRW 直接读写 vnode/blob 来判定。
+
+**J) KRW 实测：setup 门 6/10/11 全部通过。** `blob_read.py` 走 fd→vnode→(vnode+0x78)=ubc→(ubc+0x50)=cs_blob 读到：`v_name='dyld_shared_cache_arm64e'`；`ubc` 非空；`blob` 非空；覆盖字段 `blob+0x38=0xa160c000`、`blob+0x40=0x50c000`（= 缓存 CD 的 cso/css）。门6 `v_type`(word@vnode+0x70=1 VREG)✓、门10 `ubc!=0`✓、门11 覆盖 `[0,0xa160c000] ⊇ m0..m7`✓。⇒ **22 来自 engine `sub_8061EF0`（返回 KERN_FAILURE>3 被 wrapper 转 22）**，不是 setup 门。
+
+**K) 提交参数：`files[] = [{fd=3,count=8,slide=0x20000000}, {fd=-1,count=1,slide=0}]`，`mappings_count=9`**（`_bx4`+`cave_argdump2`）。强制 `files[0].slide=0` **无效**（仍 22）⇒ 不是 slide。
+
+**L) 当前结论**：536 的 22 是 **engine 层 map 失败**（region 空、setup 全绿、非 slide）。下一步靶子在 engine `sub_8061EF0`/`sub_80623D4` 的 KERN_FAILURE 返回点（需内核单步或对参数再 dump）；先例：文档 16:00 “单条 mapping → 536=0” 待重现（需自洽且 slide 字段合适的提交）。
+
+**M) ★★★★★ 536=EINVAL 的真因锁定：缓存 slide-info version=5 不被 iOS 16.3 内核支持。**
+- 链路：engine `sub_8061EF0`(自身无硬编码>3) → 其 slide-pass callee **`sub_8062CA8`** @ **`0xfffffe0008063024`**：`if ((unsigned)(slide_info->version - 1) > 3) → KERN_FAILURE(5)`（源码 `osfmk/vm/vm_shared_region.c:2934` switch(version) 的 default；非 1/2/3/4 全落此）→ 经 `bsd/vm/vm_unix.c:2725` `case KERN_FAILURE: EINVAL` → **22**。
+- **物证**：`xxd -s 0x7ad4c000 -l 32 /Users/ciscohe/Desktop/dyld-cache-15.6.1/dyld_shared_cache_arm64e` = `0500 0000 0040 0000 e708 0000 …` → **version=5、page_size=0x4000(16K)**。5 条 slid mapping 的 `sms_slide_start` 指向处均如此。
+- **触发条件**：`sms_max_prot & VM_PROT_SLIDE(0x20)`（engine 用 `(prot>>5)&1` 计数 → 与 slide *数值* 无关）⇒ 解释了「强 `files[0].slide=0` 仍 22」；**m0 无 0x20 → 不进 slide pass → 历史单条 mapping 能 536=0**。
+- **次生障碍**：即使把 version 改 4 也仍失败——`page_size=16384 ≠ 内核 `PAGE_SIZE_FOR_SR_SLIDE=4096`（`vm_shared_region.h:98`）。**双重格式不兼容**。
+- **修复方向**（未实现）：① 从新版 xnu(11215+) backport `case 5:` + `vm_shared_region_slide_page_v5` 并把 `PAGE_SIZE_FOR_SR_SLIDE` 放宽为 16K（需内核补丁）；② 用户态重生成缓存 slide-info 为 v4/4K（工作量大，但不碰内核）；③ 应急验证：提交前清掉映射的 `VM_PROT_SLIDE(0x20)` + slide=0 以跳过 slide pass（但 __DATA 的 rebase 指针可能留错，仅确认分支）；④ 换用 slide-info 为 v4/4K 的旧缓存。
+- 辅助脚本：`/Users/ciscohe/Desktop/macPad/analysis/dyldwork/parse_dsc_slideinfo.py`（subagent 新增，解析 slide-info 头）。
+
+**N) ★★★★★ 验证成功：清掉 `VM_PROT_SLIDE(0x20)` → 536 返 0，缓存真正映射。**
+- 探针（`cave_noslide.s`：pre-svc 把 9 条 mapping 的 `max_prot/init_prot` 都 `bic #0x20`，并 `files[0].sf_slide=0`）→ **try1 ret536=0（成功！）、try2 ret536=22**（region 已被 try1 填满 → 再交 EINVAL）。
+- ⇒ **slide-info version 5 的墙被证实且找到**用户态可行**绕法**：不让 dyld 提交 `VM_PROT_SLIDE`，内核就不跑 v5 slide pass。
+- ⚠️ **两个后续问题**：① **region 一旦被填就持续到重启**（try1 后 try2=22）⇒ 需「冷启动首交成功 + 其余进程 reuse」或常驻 keeper；② 跳过 slide 后 __DATA 的 rebase 指针可能留错（待验 dyld 自处理能力；若 slide=0 使 rebase 为恒等则 OK）。
+- **正确的用户态修复**：在 dyld 构建 mappings 处不带 `0x20`（而不是运行时 cave）。下一步：IDA Instance1 定位 dyld 给 mapping 加 `VM_PROT_SLIDE` 的点（submission construction 区 0x35600-0x356c0），做成常量补丁。",
+
+**O) 候选 dyld 构建配方 + 双 cave 测试法（可复现）**
+- **hook 点**：dyld thin `0x35690`（原 `MOV X3,X26`，紧接 0x35694 `BL __shared_region_map_and_slide_2_np`）。此时 `x1=files ptr, x25=mappings_count, x26=mappings ptr`。
+- **cave（`cave_mask20b.s`，clang 汇编取真字节）**：
+  ```
+  str wzr,[x1,#8]        // files[0].sf_slide = 0
+  mov x9,x26; mov x10,x25
+  loop: ldr w11,[x9,#40]; bic w11,w11,#0x20; str w11,[x9,#40]
+        ldr w11,[x9,#44]; bic w11,w11,#0x20; str w11,[x9,#44]
+        add x9,x9,#48; subs x10,x10,#1; b.ne loop
+  mov x3,x26; b 0x35694
+  ```
+  cave @ `0x38d08`（`__text` NOP 填充死区）；`0x35690 <- b 0x38d08`（`9e0d0014`）。
+- **两个变体**：`dyld_noslide.bin` = DEFAULT 全补丁 + cave；`dyld_noslide_reuse.bin` = DEFAULT 去掉 `hasexisting/prereuse` + cave。构建用内联 python（导入 `build_dyld` 取 P 表 + `_le` + 重算 branch）。
+- **双 cave 取 ret 测试法**：`0x76df8 -> cave_seting`（改 x0/x2 后 `b 0x76dfc` 跑原 svc）+ `0x76e00 -> cave_capture`（写 x0 到 stderr + exit）。这样避开 pre-svc 重入 svc 导致的 137。
+- **单次成功已由 `cave_noslide.s` 实证**（pre-svc 掩 0x20+slide=0 → ret536=0）；但端到端（dyld 继续加载 libSystem）只能在**空 region（冷启动）**验证。
+
+**P) 复用(reuse) 设计（dyld IDA 反编译）**
+- **`hasExistingDyldCache`(0x30140)**：`check_np` → `W0!=0` 返回 0（**空 region check_np=12 → 返回 0 → 走 map**）；`W0==0`（已填）→ `dynamicRegion()` → `getDyldCacheFileID` → **返回 1（已有缓存 → reuse）**。
+- **`reuseExistingCache`(0x351a8)**：`check_np` → `W0!=0` 返回 0；否则 `strcmp(base,"dyld_v1  arm64e")` → 匹配则 **reuse**；不匹配→“existing shared cache … is not …”→0。
+- ⇒ **`dyld_noslide_reuse`（不 patch `hasexisting/prereuse`）是多进程正解**：首进程（空 region）check_np=12 → map；后续进程（region 已填**我们的**缓存）→ magic 匹配 → reuse。cleanB 的 `hasexisting/prereuse→0` 反而破坏 reuse。
+- ⇒ 印证旧文档的两个假设都可去：① `hasexisting` 的 dynamicRegion deref 崩溃只发生在 region 被**其他**缓存填满时；region 填的是我们的缓存时 deref 正常。② 旧文档“pre-reuse 会误收 iOS 缓存”也仅在 region 真有 iOS 缓存时成立。
+
 ## 2026-09-26 18:2x — ★★ EXEC 137 ROOT-CAUSE FOUND + BLOB PURPOSE DECODED + CLEAN DYLD ★★
 
 **A) The whole device can no longer exec ANY macOS binary (all → SIGKILL/137).**
@@ -101,6 +740,356 @@ Every patch encoding is assembler-verified; all offsets byte-match pristine.
   或一个尚未定位的更早检查）。
 
 **待用户输入**：当初设备上“让 macOS 二进制可 exec”的完整/重启后必做步骤。
+
+### 2026-09-26 19:3x — ★★★ 重大突破：exec 137 根因 = arm64ify！★★★
+
+**根因锁定（subagent 通读仓库文档 + `misc/arm64ify_macho.py` 注释双证）：**
+> “the iPadOS kernel will only exec the chroot's macOS binaries as **ARM64/ALL**”
+
+iPadOS 内核**只接受 `cpusubtype=ARM64/ALL`(0) 的 macOS 主可执行体**；macOS 15.x 系统二进制
+只有 `x86_64+arm64e`（无 arm64 切片）→ 直接被 exec 门 SIGKILL(137)。
+
+**实测（本回合）**：用 `misc/arm64ify_macho.py` 把 `dyld`/`true`/`ls`/`bash`/... 就地 relabel 成
+ARM64/ALL（代码字节不动）+ `ldid` 重签 + trustcache 后：
+- **137 消失！** `true`/`ls`/`bash`/`echo`/`printf`/`pwd`/`uname` 不再被杀。
+- `echo`（未 arm64ify，仍 arm64e）仍 137 → 完全印证“arm64e → 杀”。
+- `misc/sprobe`（arm64e）→ 137；证实。
+
+**越过 137 后暴露下一道门：`EACCES`(13)。** 用设备端 ctypes 探针
+`analysis/dyldwork/ceprobe.py`（`posix_spawn` 直调，拿**真实返回码**）查到：
+
+```
+/usr/bin/true  -> rc=13   (EACCES)    ← 所有 arm64 macOS 二进制均是 13
+/var/mnt/rootfs/tmp/creg  (iOS 二进制) -> 能跑  ← rootfs 卷可 exec
+```
+
+**⚠ 重要侦错陷阱（subagent 发现）**：`launchdchrootexec` **丢弃 `posix_spawn` 返回值、
+无条件 `perror("posix_spawn")`**，而 `posix_spawn` 不写 errno——所以它打印的
+”No such file or directory” 只是**残留 errno（多为 chdir 的 ENOENT）**，**不是真实失败码**。
+以后测真正的 exec 错误一律用 `analysis/dyldwork/ceprobe.py`。
+
+**EACCES 已排除（本回合逐一实测）**：
+- rootfs 卷 `noexec` → 排（/private/var 无 noexec；iOS 二进制放 rootfs 内 chroot 能跑）
+- entitlements：`no-sandbox`/`no-container`/`get-task-allow` 均在；去 `platform-application` 无效
+- Mach-O `platform` macOS→iOS → 仍 13
+- dyld arch = arm64 vs arm64e → 都 13
+- CS flags `CS_HARD|CS_KILL|CS_RUNTIME` → 仍 13
+- `rm`+`cp` 换新 inode / 两遍 ldid 签名 / `-Hsha256` → 仍 13
+
+**下一道门待查**：EACCES 的触发点（疑似内核 exec 的 CS/sandbox 判定；
+也可能与“首次 exec 前必须先把 loader 闭包入 trustcache”那条纪律有关，
+见 `layout/DEBIAN/postinst:291-304`）。工具已就绪：`ceprobe.py` + 设备端 `arm64ify_macho.py`。
+
+### 2026-09-26 19:4x — EACCES(13) 内核触发点已定位（Instance2 RE）
+
+**exec 拒绝在核心里只有一处返回 13**，在 exec 核心 helper `sub_FFFFFE000839B748`
+（被 `posix_spawn`/`__mac_execve` 调用）：
+
+```c
+v35 = sub_FFFFFE000839BF5C();      // → sub_FFFFFE0007FE51E8
+if (v35 != 5) {
+    if (!v35) { …ubc_cs_blob_get/csblob_find_blob_bytes(CSMAGIC_BLOBWRAPPER=0xFADE0B01) 检查… → LABEL_35(成功) }
+    else { os_reason_create(OS_REASON_EXEC,9); v17 = 13; }   // ← EACCES
+} else { os_reason_create(OS_REASON_EXEC,8); v17 = 13; }
+```
+
+`sub_FFFFFE0007FE51E8` = **向用户态策略服务发 MIG `msgh_id=27001`**，等回复 `27101`
+里的结果字节 `v6`：**`v6 != 0` 就返回非零 → EACCES**。即：**exec 会同步 RPC 一个
+用户态策略服务；它返回非 0 就判 EACCES**。
+
+**旁证**：同一拒绝在 `imgp` flags bit 0x10 置位时改走 `terminate_with_reason` → SIGKILL；
+所以 **EACCES 与 137 是同一内核 exec 拒绝的两种上报形态**。AMFI 钩子
+`_vnode_check_exec @0xfffffe00092a69e8` 无条件置 `CS_HARD|CS_KILL(0x300)`。
+
+**实测（本回合）**：amfid 一直在线（launchd 守护重生，杀不掉），EACCES 不随 amfid 状态变化；
+`oslog` 在失败 exec 时**无任何 AMFI/exec 日志**（静默拒绝）。
+
+**下一步**：确认 MIG-27001 到底是哪个用户态服务，以及**它为什么对 arm64ified 的
+macOS 动态二进制返回非 0**（候选：CMS/签名形态、platform 身份、或“首次 exec 前 loader 闭包”。），
+可用 Instance2 回溯 27001 子系统的注册/处理函数。
+
+### 2026-09-26 19:5x — MIG-27001 是“按发起进程”判定（Instance2 反汇编）
+
+exec helper 调用 MIG 前的参数构造（`0xfffffe000839bb90`）：
+```
+ADRP X26, _kernproc ; LDR X8,[X26,_kernproc] ; CMP X8,X19
+B.EQ LBBAA8          ; 若 x19==kernproc → W1=0
+LDR  W1, [X19,#0x60] ; 否则 W1 = 调用进程 (*x19) 的 field 0x60
+... BL sub_FFFFFE000839BF5C   ; W1 作为 MIG 请求体发给 27001
+```
+
+⇒ **这个用户态策略服务是根据“发起 exec 的进程”的身份/策略来判定放不放行的**
+（很可能是 launch-constraint / responsible-process 类检查）。
+所以 EACCES 可能与**调用者（launcher / 测试脚本）的上下文、launch type、
+responsible process** 有关，而不只是目标二进制本身。
+（注：`launchdchrootexec` 只在 `getppid()==1 && XPC_SERVICE_NAME` 时才设
+`CS_LAUNCH_TYPE_SYSTEM_SERVICE`；从 SSH 直接跑则是普通 launch type。）
+
+### 2026-09-26 20:0x — 用 XNU/dyld 官方源码把 EACCES 闭环彻底解开
+
+**源码位置（原 AI 已落盘，不再靠 /tmp）：**
+`analysis/xnu-xnu-8792.81.2/`（内核 8792.82.2 的最近公开 tag）与
+`analysis/dyld-dyld-1286.10/`（与设备 dyld 精确同版本：`dyldMain.cpp`）。
+
+**EACCES 确切来源 = `kern_exec.c` 的 `process_signature`：**
+- `kern_exec.c:7430`：`if (imgp->ip_csflags & CS_SIGNED) { error=0; goto done; }` ——**有 `CS_SIGNED` 就跳过后续 upcall**。
+- `kern_exec.c:7459`：否则调 `find_code_signature(port, new_pid)` = **MIG 27001**
+  （`osfmk/mach/task_access.defs:55-57`：subsystem 27000 的第 2 个例程，回复 27101），
+  参数 `new_pid = proc_getpid(p)` ——**所以 `p->0x60` 就是 `p_pid`**（kernproc 返回 0）。
+- 返回 `KERN_FAILURE(5)` → `os_reason(EXEC,8)`；其他非 0 → `os_reason(EXEC,9)`；**均 EACCES**。
+- spawn 场景（`imgp` flags bit 0x10 = IMGPF_SPAWN）同一拒绝改走 `psignal_vfork_with_reason(SIGKILL)`
+  （`kern_exec.c:7558-7573`）——**这就是 137 与 13 同源的确切位置**。
+- `kern_exec.c:7506`：`CS_SIGNED` 是 **upcall 成功后**才 `proc_csflags_set(p, CS_SIGNED|CS_VALID)`。
+- upcall 成功后仅接受“最朴素 ad-hoc”（`kern_exec.c:7490-7507`）：
+  `(csb_flags & CS_ALLOWED_MACHO)==CS_ADHOC` 且 **无 CMS blob、非 platform、无 entitlements**。
+
+**27001 服务 = 用户态 taskgated/amfid**（XNU 只有 .defs + 客户端桩 + `task_access_port`；
+server 实现属闭源 AMFI 生态；`amfid` 一直在设备上在线）。
+
+**当前状态**：设备上 arm64ified+重签+`jbctl trustcache add` 后**仍 EACCES**
+（试过 CD flags=0x2/CS_ADHOC、CS_HARD|KILL|RUNTIME、platform 字节 1/2/5、identifier 重签、
+loader 闭包入 tc、launchd 作业 launch type——均 13）。
+⇒ **推断：AMFI 没把我们的 cdhash 当作有效信任 → 不置 `CS_SIGNED` → 走 upcall 被拒**。
+下一步：验证“jbctl/libjailbreak 加的 root trustcache”是否就是 AMFI 看的 loaded trust cache
+（对比 `mac_vnode_check_signature`/`pmap_lookup_in_loaded_trust_caches` 与 `CS_TRUST_CACHE_AMFID`）；
+或用 `csops(CS_OPS_STATUS)` 在运行进程上直接读 `CS_SIGNED` 位确认。
+
+### 2026-09-26 20:1x — csops 实证：**能跑的都是 CS_PLATFORM_BINARY**
+
+用 `analysis/dyldwork/csops_probe.py`（`csops(CS_OPS_STATUS/CDHASH)`）读**运行中进程**的真实 cs_flags：
+```
+cachereg : flags=0x26803b0d  SIGNED=Y PLATFORM=Y HARD=Y KILL=Y
+python3  : flags=0x26803b09  SIGNED=Y PLATFORM=Y
+jbctl    : CD flags=0x2(adhoc)  entitlements 含 platform-application
+launchdchrootexec: CD flags=0x0  (能跑)
+/usr/bin/true    : CD flags=0x0  (EACCES)
+```
+
+⇒ **`CS_PLATFORM_BINARY(0x04000000)` 是 exec 准入的判别因子**：
+能跑的进程都带它；我们的 macOS 二进制不带 → 走 taskgated upcall → EACCES。
+
+**XNU 源码佐证**：`csb_platform_binary` = `!!(csb_flags & CS_PLATFORM_BINARY)`
+（`ubc_subr.c:4313-4321`）；而 `csb_flags` 由 **AMFI 的 `mac_vnode_check_signature`** 决定
+（`ubc_subr.c:4264`）；AMFI 内部在验证通过后 `*a5 = v43 | 0x20000000`（置 CS_SIGNED）
+并对带 entitlements 的 `CS_PLATFORM_BINARY` 调 `OSEntitlements::markAsCSPlatform`。
+
+**综合结论（本 session 定论）**：
+- **137 根因**：非 `ARM64/ALL`（用 `arm64ify_macho.py` relabel 解决）。
+- **EACCES 根因**：内核 `process_signature` 的 taskgated/amfid upcall（MIG 27001）拒绝——
+  因为目标二进制**未被 AMFI 认定为有效签名（无 `CS_SIGNED`/非 `CS_PLATFORM_BINARY`）**。
+- 纯用户态使二进制成为 platform 的可行途径：**把它以“platform”形态入 trustcache / 或带
+  platform-application 同时满足 AMFI 验证**（具体形态待验证；CD platform 字节 1/2/5 无效）。
+
+### 2026-09-26 20:2x — ★★★ 重大突破：exec 准入打通，macOS dyld 已能真正运行 ★★★
+
+**EACCES(13) 的解法（纯用户态，无需 patch 内核/amfid）——精确复刻能跑的 `cachereg` 的签名形态：**
+
+```
+python3 misc/arm64ify_macho.py <file>                     # 1) ARM64/ALL（否则 137）
+ldid -Hsha256 -Cadhoc -S<entitlements.plist> <file>       # 2) sha256 cdhash + CS_ADHOC
+jbctl trustcache add <sha256 cdhash>                      # 3) 入越狱 trustcache
+rm <dest>; cp <file> <dest>                               # 4) fresh inode
+```
+
+**关键：`-Hsha256` 是必需的。** trustcache 条目带 `hash_type` 字段（`osfmk/kern/trustcache.h` 的
+`trust_cache_entry1{cdhash,hash_type,flags}`；`CS_TRUST_CACHE_AMFID=0x1`）；**只有 sha256 的 cdhash
+（20B sha256(CD)）才与条目类型匹配 → AMFI 认 → 置 `CS_SIGNED` → 跳过 taskgated upcall**。
+之前的 `-Cadhoc`（hashType=1 sha1）都仍 EACCES，就是因为 hash_type 对不上。
+
+**实测结果（部署脚本 `analysis/dyldwork/remote_apply_form.sh` / `remote_deploy_dyld.sh`）：**
+```
+true / echo  -> 不再 137/13，macOS dyld 真正执行：
+  dyld: dyld cache '(null)' not loaded: syscall to map cache into shared region failed
+  dyld: Library not loaded: /usr/lib/libutil.dylib ...
+ls / bash    -> 同样dyld运行、fallback 到磁盘
+```
+
+⇒ **工作重心已从“exec 门”回到原任务核心：syscall 536 映射缓存**
+（与 HANDOVER §4 的门禁链、与 `dyld_cleanB_err` 探针完全对应）。
+
+**可复现的部署命令**（逐文件，需对 dyld + 要跑的二进制都做；设备端脚本见 `analysis/dyldwork/`）：
+```sh
+A64=/var/mobile/arm64ify_macho.py; ENT=/var/jb/usr/macOS/bin/entitlements.plist
+LD=/var/jb/usr/bin/ldid; JB=/var/jb/usr/bin/jbctl
+python3 $A64 <file>; cp <file> /tmp/w.bin
+$LD -Hsha256 -Cadhoc -S"$ENT" /tmp/w.bin
+for a in arm64 arm64e; do $JB trustcache add $($LD -arch $a -h /tmp/w.bin|grep CDHash=|cut -c8-); done
+rm <dest>; cp /tmp/w.bin <dest>
+```
+
+**顺带的其它确认**：设备 `/usr/libexec/amfid` 是**原版**（未 patch，不在越狱 tc）；
+exec 准入靠的确实是 `jbctl trustcache`（凭 sha256 cdhash 让 AMFI 直给 `CS_SIGNED`）。
+
+### 2026-09-26 20:4x — 回到 syscall 536：源码级根因分析（subagent + 逐个源文件）
+
+部署带补丁的 `dyld_cleanB` 后，macOS dyld 执行、但 536 失败、退磁盘 fallback：
+```
+dyld: dyld cache '(null)' not loaded: syscall to map cache into shared region failed
+dyld: Library not loaded: /usr/lib/libSystem.B.dylib
+  ... '/usr/lib/libSystem.B.dylib' (code signature invalid ... errno=1)
+```
+
+**536 的内核侧全路径（`analysis/xnu-xnu-8792.81.2/bsd/vm/vm_unix.c` + `osfmk/vm/vm_shared_region.c`）：**
+- 包装层 `shared_region_map_and_slide_2_np` `vm_unix.c:2842-2964`（files_count==0 → **成功**；mappings>2048 → EINVAL）。
+- `_shared_region_map_and_slide` `vm_unix.c:2664-2748`：errno 映射 L2712-2730
+  （INVALID_ADDRESS→**EFAULT(14)**、PROTECTION_FAILURE→**EPERM(1)**、NO_SPACE→ENOMEM、其余→**EINVAL(22)**）。
+- `shared_region_map_and_slide_setup` `vm_unix.c:2189-2652`：卷不符→**EPERM**（L2264/2514）；
+  非 VREG→EINVAL；uid!=0→EPERM；**gate11 `!ubc_cs_is_range_codesigned`→EINVAL（L2620-2642）**。
+- 引擎层 `vm_shared_region.c`：**`sr_first_mapping != -1`（region 已填充）→ KERN_FAILURE→EINVAL（L1464-1470）**；
+  FIXED 越界→KERN_INVALID_ADDRESS→**EFAULT(14)**（`vm_map.c:2714-2718`）。
+- 区域尺寸 `shared_region.h:90-91`：ARM64 base `0x180000000`、size **4GB**。
+
+**gate11 `ubc_cs_is_range_codesigned`（`ubc_subr.c:5545-5589`）**：要求单个 blob 整段覆盖
+`[file_offset, file_offset+size]`。`cachereg`（host `fcntl(fd,F_ADDFILESIGS=61)`，`kern_descrip.c:3957-3990`）
+挂的 blob 满足：主缓存 `csb_base_offset=0/csb_start_offset=0/csb_end_offset=0xa160c000` ⊇ 8 条 mapping。
+**但必须常驻**（vnode 回收→blob 释放 `ubc_subr.c:4906-4943`），**且 `.01` 子缓存需各自 blob**。
+
+**dynregion（fd=-1）（`vm_unix.c:2286-2320` + `vm_shared_region.c:1534-1669`）**：
+`mappings_count==1`、`sms_address/sms_size` 页对齐、`sms_file_offset` 是**用户态指针**（`copyin` L1600）；
+内容来自 mapper 私有内存 → **per-mapper，mapper 退出即消失**（`vm_shared_region.c:538-625`）。
+
+**dyld 失败分支**：`SharedCacheRuntime.cpp:1367`(syscall) / **1379-1387**(失败) / 1384-1385（该错误串）；
+打印在 `DyldProcessConfig.cpp:1516`。fallback：`reuseExistingCache`(L1490)→`mapSplitCacheSystemWide`(L1495)
+都失败 → 无缓存 → 逐文件从磁盘加载 → libSystem 仅存于缓存 → 报 `Library not loaded`。
+
+**⇒ 当前 536 失败的最可能原因（源级，排序）：**
+1. **region 已填充** → `vm_shared_region.c:1464` → **EINVAL(22)**；
+   （`check_np` syscall 294 实测 ret=0 → 区域确实已存在）。`dyld_cleanB` 强走 map 路径（`0x30140/0x34298`）→ 撞此。
+2. gate11 blob 失效/ `.01` 缺 blob → EINVAL。
+3. FIXED 越界（`.01` 尾）→ EFAULT。
+4. 卷不符/uid → EPERM。
+
+**修复路线（源级可行，未实现）：**
+- **常驻 keeper**（=mapper 本体长驻）持 region 引用不销毁 → 其余进程走 `reuseExistingCache`（勿再强走 map）；
+- **冷启动后首交**（region 空，绕开 L1464）；
+- cachereg 双缓存（主+.01）blob 常驻；
+- `.01` 越 `0x280000000` 的尾映射改私有 `mmap`（`mapSplitCachePrivate`）。
+
+**errno 读取未完成（未决）**：在 0x35698/0x356d8/0x35714 插 syscall 探针（写 8B 到 fd2）→
+要么被内核当“attach 半途”杀（137），要么未产出字节；改用真死洞 `0x38d08` 的 cave 也未产出。
+下一步用 **kernel RE（Instance2）** 直接跟 `vm_unix.c:2620/1464` 对应的内核函数，或冷启动后首交验证。
+
+**errno 为何取不到（已证的结构性原因）**：chroot 里**任何动态 macOS 二进制都要缓存里的 `libdyld`**
+（`dyld: libdyld.dylib not found`），静态二进制却撞**静态门→137**（已实测：静态 arm64 探针 rc=137；
+sprobe rc=134=dyld 报错）。→ **userland 探针路已断**，只能靠内核 RE 或冷启动首交。
+把 sprobe 的 `LC_LOAD_DYLIB(libSystem)` 改成 `LC_LOAD_WEAK_DYLIB` 又暴露注入的 `libmachook` 需 `libobjc`（同样在缓存里）。
+即前位 AI 的 sprobe “能跑”是陈旧结论（`TOOLS-AND-PORTING.md:585` 实际只得到 rc=134）。
+
+**当前设备状态**：cachereg(pid 751) 已同时持有主缓存+`.01`（gate11 blob 已满足）；dyld = `dyld_cleanB`（已用新形态部署）。
+**一键冷启动验证脚本**：`analysis/dyldwork/coldboot_firstsubmit.sh`（重启+重越狱后跑：以 cleanB 作**首个 536 提交者** → 若 region 空则可能返 0 并真映射，再看 `sw_vers`）。
+
+### 2026-09-26 20:5x — ★ 又通一道门：**LC_BUILD_VERSION platform 必须 = macOS(1)**
+
+用 `DYLD_PRINT_CACHES=1` 发现**新错误**：`shared cache file is for a different platform`。
+根因（源码 `dyld/SharedCacheRuntime.cpp:143-154` `validPlatform()`）：`cache->header.platform != options.platform` 即拒；
+而 `options.platform = process.platform`（`DyldProcessConfig.cpp:1365`）= **主二进制的 LC platform**。
+- 实查：`cache` 头 `platform` @**0xD8** = **1 (macOS)**；而设备上的 `true`/`ls`/`echo`/`bash` 的
+  `LC_BUILD_VERSION platform` = **2 (iOS)**（之前不知何处被设成 iOS）→ **被 dyld 拒**。
+- **修复**：跑 `misc/set_macos_version.py`（iOS→macOS）对这四个二进制重设 → **platform=1** → 重签+trustcache。
+- **效果**：错误从 “different platform” **变回** `syscall to map cache into shared region failed`（即 536），
+  **且 exec 仍通**（不再 137/13）★ **exec 准入与 platform=macOS 兼容，无需 iOS tag**。
+
+**⇒ 现在只剩 536 一道门**（见下节的内核门表：最可能门 B `ubc_cs_blob_get` CS 覆盖 / 门 C uid&volume）。
+
+### 2026-09-26 21:0x — ★ 536 的**真正墙**已钉死：Sandbox 要 `VSHAREDCACHE`
+
+前位 AI 已在 `docs/porting/kernel-syscall536-finding.md` 实测（exit-probe 6/6）：**536 返回 40（EMSGSIZE）**，
+来源唯一：**Sandbox `mpo_file_check_mmap` = `hook_file_check_mmap` @ `0xa659664`**（`mac_policy_ops`+0x120）：
+```
+TBZ W3,#2,.ret0                 // (prot & 4)==0 → 返回 0
+vnode_isdyldsharedcache(vp)      // =(vp->v_flag>>9)&1  i.e. VSHAREDCACHE
+CBZ W0,.evaluate                // 非 shared-cache → 评估
+.evaluate: return cred_sb_evaluate(cred, 16 /*file-map-executable*/, …)
+```
+- 门外：AMFI `_file_check_mmap` @ `0x92a1a90` 只返 {0,1}；AppleImage4 无该 hook；无任何 40 字面量。
+- 调用点：源 `vm_unix.c:2372` `mac_file_check_mmap(cred, fg, **VM_PROT_ALL=7**, MAP_FILE|MAP_PRIVATE|MAP_FIXED, 0, …)` —— flags/prot 是**常量**。
+- **我校验**：`true` 已带 `com.apple.private.security.no-sandbox` + `platform-application`，**仍返 40**。
+- **我校验**：内核里 `vnode_isdyldsharedcache` 的调用者仅 Sandbox hook + **APFS**（`_apfs_vnop_inactive`/`_apfs_vnop_pagein`）
+  → 即 `VSHAREDCACHE` 由 **APFS 驱动在内核态**置位；全仓无既有绕法。
+
+**结论**：外来 macOS 缓存挂在 rootfs DMG 上，vnode 永不带 `VSHAREDCACHE` → sandbox 必拒 → **536 永返 40**。
+这是**纯用户态不可绕**的墙（除非：① 有内核写原语去设该 vnode 标志/ nop 该 hook；② 让 APFS 把该缓存当作已识别的 dyld 缓存）。
+（对照：原作者 iOS 16.5 项目能跑——16.3 与 16.5 在此 hook 上的差异值得下一步比对。）
+
+### 2026-09-26 21:1x — ★★ 墙可解：项目其实有完整**内核写 + kcall**
+
+复核 `/var/jb/basebin/libjailbreak.dylib`（Dopamine）的导出符号（`nm -gU`，共 397 个）：
+```
+__kwritebuf_phys        # 内核写（physical）
+__physwritebuf_virt     # 内核写（virt→phys）
+__kreadbuf_phys / __physreadbuf_virt   # 内核读
+_kalloc / _kalloc_with_options         # 内核 malloc
+_arm64_kcall / _is_kcall_available / _arm64_kcall_prepare_state  # kcall
+__boomerang_get_physrw / _jbclient_root_get_physrw               # phys r/w
+```
+⇒ **"只有 kread"是旧结论；实际有 kwrite + kcall。** 因此 sandbox 墙（`VSHAREDCACHE`）有两条可行解：
+1. **设 vnode 标志（推荐，数据写、不碰内核 text/KTRR）**：用 kread 从 mount/vnode 链找到
+   该缓存的 vnode，把 `v_flags@vp+0x54` 的 **bit9（VSHAREDCACHE）置 1** → sandbox hook 短路返回 0。
+2. **patсh sandbox hook**（`hook_file_check_mmap` @ `0xa659664` → `mov w0,#0; ret`）——需写内核 text，A12+ 有 KTRR，风险高，不推荐。
+（注：这不是“lazy bypass”——`VSHAREDCACHE` 本就是内核给 dyld 缓存 vnode 打的标记，此处只是把它补上；待验证。）
+
+### 2026-09-26 21:2x — ★★ KRW 打通内核 walk；**纠正：目标 vnode 已带 VSHARED_DYLD**
+
+**用设备端 python3 + ctypes 驱动 Dopamine KRW（免编译）已全线打通：**
+- `kread64/kread32/kwrite64/kwrite32` 均可用（`proc_self` 返回真内核指针）。
+- 打通结构链：`proc+0xF8 → fd_ofiles → [fd] → +0x10 → fileglob → +0x38 → vnode`。
+- **两个坑已解**：① arm64e **PAC 是 47-bit VA**，剥位=`0xffff800000000000|(v&0x7FFFFFFFFFFF)`（非 48bit）；
+  ② python 里 `open(...).fileno()` 会因文件对象被 GC 而**立即 close(2)**，必须保持对象存活。
+- 工具：`analysis/dyldwork/set_vshared.py`（定位任意 fd 对应文件的 vnode）+ `kwalk*.py`。
+
+**实测目标 vnode**（`v_name = 'dyld_shared_cache_arm64e'`，`ubc` 存在）：
+```
+vnode+0x50/0x54: v_flag = 0x84a00   → bit9(VSHARED_DYLD) = 1  ★已置位★
+```
+⇒ **sandbox `hook_file_check_mmap` 的 `!VSHAREDCACHE` 分支不会走** —— 即 **doc 里实测的 errno 40（sandbox）
+对当前这个 vnode 不成立**（很可能 40 来自另一条/另一 vnode 的路径）。由于该 vnode 已置位、536 仍失败，
+**真正的失败点回到门 B（`ubc_cs_blob_get` CS 覆盖）或门 C（uid/volume）**。
+
+**下一步**：用 KRW ① 读 `ubc_cs_blob_get` 看 blob 对 8 条 mapping 的覆盖；② 读 vnode 的 v_mount 与 root 卷/`/private/preboot/Cryptexes` 比对；
+③ 读 shared_region 的 `sr_first_mapping`（门 A “已填充”）。三选一钉死后对症修复。
+
+### 2026-09-26 21:3x — ⛔ 内核裸写 v_mount → PAC panic（已回滚/重启）；门 C 坐实
+
+尝试用 KRW 直接改缓存 vnode 的 `v_mount`（@vp+0xD8）→ 写完后内核报：
+```
+panic(cpu 5): Break 0xC472 instruction exception from kernel.
+  Ptrauth failure with DA key, at pc 0xfffffe002376651c, lr 0xfffffe00205c1c
+  x0 = 0xfffffe13055e6c38   ← = 缓存 vnode(0xfffffe13055e6b60) + 0xD8 (=v_mount)
+```
+**根因**：`vnode->v_mount` 是 **PAC 签名指针（DA key）**；`kwrite64` 写入了**未签名裸指针** → 后续任何访问该字段的路径 → 指针认证失败 → panic → iPad 重启。
+**确认**：panic 现场正好落在 `vp+0xD8` → 证明该偏移就是 `v_mount`（门 C 判定成立）。
+**教训**（已写入 memory）：改内核结构**指针字段**必须重新 PAC 签名；只有**非指针字段**（如 `v_flag`）可安全写入。
+
+**重启后**：iPad 已重新越狱、SSH 恢复；重建 trustcache + 重部 dyld 后，`true/echo` → 137、`ls/bash` 无输出，**缓存仍未映射**。
+
+**当前状态与结论**：
+- 两道 exec 门 + platform 门 ✅；macOS dyld 能运行。
+- **536 仍未过**，且与 `kernel-syscall536-finding.md` 的“外来缓存结构性不可满足”一致：
+  挂在 rootfs DMG 上的 macOS 缓存，其 mount≠root卷/`/private/preboot/Cryptexes`（门 C，EPERM），
+  且改 v_mount 属 PAC 指针写 → panic。**纯用户态在该设备上无解**。
+- **待你决定的方向**：A) 把缓存改挂到与 root卷/`/private/preboot/Cryptexes` 匹配的位置（零内核风险，但需改 rootfs 布局）；
+  B) 找到内核自带的“已签名 v_mount”来源做受控替换（需先取证 ptrauth 判别子是否地址相关）；
+  C) 明确授权内核补丁路线（KTRR 风险，A12+ 设备不保证可行）。
+
+### 2026-09-26 21:4x — ★ 原版 macOS 13 做法考古（subagent）+ 方向修正
+
+**用户提示“看原版 macOS 13 怎么实现” → subagent 精读仓库文档 + 上游安装法，结论：**
+1. **原版把 OS cryptex（含 `dyld_shared_cache_arm64e` + `.01`）解包进 chroot rootdir 卷
+   （= 数据卷 `/var/mnt/rootfs` 树）内的 `System/Volumes/Preboot/Cryptexes/OS/…`**
+   （上游 MacWSBootingGuide 安装步骤25-27）。这**同时命中门8“同一 mount”**（rootfs=数据卷）
+   与门9 `scdir_enforce` 的父目录名。
+2. **原版 macOS 13 缓存 ≈1.6G < 4GB** shared region → **天然放得下，无需裁剪/混合映射**。
+3. **原版对 cachereg / F_ADDFILESIGS / VSHAREDCACHE / sandbox 零处理** —— 只把缓存 CDHash 入 trustcache
+   （`layout/usr/macOS/bin/postinst.sh:1010-1034`，13.4 分支两枚 cdhash）。⇒ 这些墙是**把方案搬到 15.6.1 才撞上的新墙**。
+4. **原版文档从未提及 syscall 536 或“缓存必须放 X 卷”**；该卷规则是 15.6.1 移植会话用 IDA 反编译 `sub_8459570` 才发现的。
+
+**【重要修正】** 我先前推的“把缓存改挂到 `/private/preboot`”是**误读**（已撤销）：门 C 要的是 **rootdir 卷（数据卷）**，
+而当前缓存就在数据卷上，**门 C 应已满足**。真正剩下的更可能是 **门 B（CS 覆盖）** 或 **sandbox**——
+重启后已重跑 `cachereg`（输出 `fcntl=0` 成功，blob `cso=0xa160c000` 已挂），但 `true`/`sw_vers` 仍 rc=1、无输出（exec 软状态待重建）。
+
+**下一步（未定）**：重启后重跑测试前，需先重建 exec 软状态（trustcache/arm64ify）并确认 `true` 能过 exec；
+若 536 仍失败，则重点回到**门 B 的 blob 覆盖**与 **sandbox 的 `file-map-executable`**（后者可查 vnode 的 `VSHARED_DYLD` 实际生效性）。
+
 
 ## 2026-09-26 17:50 — ★ POST-REBOOT RESTORE + BLOB-ARTIFACT CORRECTION + HANDOVER ★
 
@@ -287,7 +1276,88 @@ mappings are submitted, this specific panic path should not recur; still,
 avoid fd=-1 mappings whose copyin source is invalid (EFAULT→ INVALID_ADDRESS,
 not the panic path). If panic recurs, suspect map-engine undo path.
 
----
+-## 2026-09-26 21:5x — ★★★ exec 137 真正闭环 + 与原版 macOS13 方法对比 ★★★
+
+### 1) exec 137 的真因（本轮新定）：**launcher 注入的 dylib 未受信**
+
+沿调用链后发现：
+```
+launchdchrootexec 以 posix_spawn(SETEXEC) 启动 child，并注入
+  DYLD_INSERT_LIBRARIES=/usr/local/lib/libmachook_arm64.dylib
+```
+而该 dylib 当时 **不在 trustcache**（cdhash `21f69e8c…`，`flags=0x0`）。
+⇒ 子进程 exec 因“**注入的库未受信**”被内核 SIGKILL（137）。
+
+**修复（“用 trustcache 绕 gate”）——对注入 dylib 同样做四步：**
+```
+arm64ify_macho.py <libmachook_arm64.dylib>
+ldid -Hsha256 -Cadhoc -S<entitlements.plist> <libmachook_arm64.dylib>
+jbctl trustcache add <sha256 cdhash>
+（同时把 libmachook.dylib 的 arm64/arm64e 两个 cdhash 也 add）
+```
+**效果：`true` 连续 3/3 `rc=0`（不再 137）**。⇒ **exec 准入彻底打通**（主二进制 + 注入库都要）：
+主二进制用 `arm64ify + -Hsha256 -Cadhoc + trustcache`，**注入的 libmachook 也要同样处理**。`echo` 也 rc=0。
+
+### 2) 重要排雷：日志归属
+`DYLD_PRINT_*` 下看到的 “re-using existing shared cache (/private/preboot/Cryptexes/OS/System/Library/Caches/com.apple.dyld/…)”
+与整段 782 行缓存映射，**首映射是 `…/dopamine…/launchdchrootexec` ⇒ 那是 iOS 侧 launcher 的 dyld**，
+**不是 chroot 内 child 的 macOS dyld**（launcher 未透传 `DYLD_PRINT_*` 给 child，`ceprobe2` 直连 child 时为 0 字节）。
+⇒ 判断 child 行为时**不要误把 launcher 日志当成 child 的**。
+
+### 3) 原版 macOS 13 vs 我们 15.6.1（回答：“13 的方法能否用到 15.6？”）
+**能部分延用（缓存放置），但 15.6.1 多了三类新墙：**
+| 维度 | 原版 macOS13（iPad13,1） | 我们 15.6.1（iPad13,11） |
+|---|---|---|
+| 缓存放置 | OS cryptex 解包进 rootfs 的 `System/Volumes/Preboot/Cryptexes/OS/…` | **同样已做好，路径解析正确** |
+| 体积/4GB | ~1.6G，天然放入 | 2.7G(+.01 2.2G)，**越界→需裁剪/dynregion** |
+| exec 准入 | 未撞上 | 需 arm64ify+trustcache+LC platform+**注入库受信**（刚破） |
+| CS/sandbox 门 | 未撞上 | `VSHARED_DYLD`/`file-map-executable` 等（15.6.1 特有） |
+⇒ **原版方法必要但不充分**；15.6.1 还需解决 4GB 越界 + 更严的 exec/CS 门。
+
+### 4) 本轮其它既定结论（已有专节）
+- exec 137 根因 = 非 ARM64/ALL；EACCES = trustcache hash_type（需 sha256）；
+- dyld “different platform” = LC_BUILD_VERSION 需 macOS(1)；
+- 536 内核门 A/B/C + sandbox `VSHARED_DYLD`；KRW 打通内核 walk；PAC 裸写会 panic。
+
+**下一步**：exec 已稳定（rc=0），重点回到 **child 的 macOS dyld 是否真映射 macOS 缓存**（需把 child 的 dyld 输出单独取到：因其 env 未被 launcher 透传，需改用能透传 env 的启动方式，如自建最小 launcher）。
+
+### 2026-09-26 22:0x — 状态盘点 + 两处更正
+
+1. **launcher `POSIX_SPAWN_SETEXEC` 事实**（`launchdchrootexec/main.m:119/141`）：
+   SETEXEC 成功→launcher 进程被替换成 child；其返回码 = **child 的退出码**。
+   ⇒ `true` 的 `rc=0` 是**真跑了且 exit 0**（true 本静默）；`echo` 无输出才是“main 未跑”的信号。
+2. **文档归属规则已证实**：`DYLD_PRINT_*` 输出中 **`[launchdchrootexec] target=` 横幅之前 = launcher(iOS)dyld，之后 = child(macOS)dyld**。
+   实测 child 段**为空** → child 的 macOS dyld 未输出任何内容。
+3. **exec 137 = “逐二进制且会抖”**：对 `true/echo/ls/bash/printf` 逐个 `arm64ify+-Hsha256 -Cadhoc+trustcache` 后**时而 rc=0、时而 137**，
+   与 HANDOVER §10 “137 不是单一原因…每二进制单独归因”一致。**推断：运行 `postinst.sh` 等批量重签会改写 cdhash，令 trustcache 瞬时不一致 → 137**。
+
+**当前卡点（与 HANDOVER §9 对应）**：
+- child 的 macOS dyld → **silent-0**（§9/§10 记为“admission 过了但 main 没跑”的第三类症状）——即 **dyld 未真正加载 libSystem/macOS 缓存**；
+- 未决仍为：§9.2 dynregion 持久化、§9.3 glue-call 取证、§9.4 `.01` 尾部混合映射。
+**前置（必须先做）**：让设备 exec 进入**稳定态**
+（重跑 `postinst.sh` 收官 → 对我需要的每个二进制重做 `arm64ify+-Hsha256 -Cadhoc+trustcache` → 连测 `echo HI` 稳定打印）再做后续打点；否则测量不可复现。
+
+### 2026-09-26 22:3x — ★ 新工具 `dearm64e`：arm64ify 后必须消掉 arm64e 专属分支指令
+
+**发现**：`arm64ify`（只改 cputype/subtype）后，二进制代码仍是 **arm64e**，其中 **arm64e 专属的
+指针认证分支/调用指令在 arm64 路径上非法 → SIGILL(132)**：
+- `brab* = 0xd61f0800|Rn`、`braa* = 0xd61f0c00|Rn`（branch）
+- `blrab* = 0xd63f0800|Rn`、`blraa* = 0xd63f0c00|Rn`（call，含 doc 点名的 `0x6b94 blraaz x8`）
+- `retab = 0xd65f0bff`（return）
+（注：`pacibsp=0xd503237f`/`autibsp` 是 HINT，在 arm64 上无碍，不必改。）
+
+**工具**（`analysis/dyldwork/build_dyld.py` 里的 `_dearm64e()`，作为构建键 `dearm64e`）：
+把所有以上族 → `br Xn`/`blr Xn`/`ret`（保留 Rn）。构建例：
+`python3 build_dyld.py dyld_cleanB_ae2 crossarch hasexisting prereuse filescount1 dynoff accessor fcntl_nop cover_b dearm64e`
+该 thin dyld 上共转 167 处；验证后 `brab/braa/blrab/blraa/retab` 全为 0。
+
+**但**：即使 dyld 内全清零，`true` 仍 **rc=132(SIGILL)**（`echo` 也无输出）→ **SIGILL 还有第二个源，不在 dyld**
+（候选：被 exec 的主二进制自身的 arm64e 残留、注入的 libmachook、或更深层）。当前设备 exec 状态不可复现（137/0/silent-0/132 轮番），
+且 132 未落 crash 报告（最新 `true-*.ips` 仅为旧的 16:54 SIGSEGV）。
+
+**下一步（需干净 boot）**：重启+重越狱后，对**主二进制与 libmachook** 也跑 `dearm64e`（同理存在 arm64e 指针分支），
+再测 `echo`；若不消，用设备 `find_crash` 取 132 的 crash 报告（PC/指令）定位第二个源。
+
 
 ## 2026-09-26 16:00 — ★★★ BREAKTHROUGH: CACHE MAPPED SUCCESSFULLY ★★★
 
