@@ -57,6 +57,14 @@ a fact/offset/result changes, BEFORE context is lost.
 
 **下一步**：移除磁盘 shim 后，dyld 已能用缓存解析 91 库，但 `/usr/lib/libSystem.B.dylib` 会被平台检查拒（`wrong platform to load into process`）；用 `platstub`（`loadableIntoProcess→1`，诊断性）强行加载 iOS 库则 **SIGILL(132)** ⇒ 下一道墙 = **iOS 库在 macOS 进程里的平台/兼容兼容性**（需评估是否需真正的 macOS 缓存而非 iOS 缓存）。
 
+### 🔜 2026-09-28 下一步计划（待重启测试）：改映射 **macOS 自己的缓存**
+- 动机：macOS 缓存里的 libSystem **兼容 macOS 进程**，可绕过“iOS 库不兼容”的墙。
+- 已知障碍：state doc 旧结论“**macOS 缓存 slide-info version=5，内核只支持 1..4**”。
+- 对策：dyld 侧把每条 mapping 的 `sms_slide_size(+0x18)/sms_slide_start(+0x20)` 清零（不触发内核读 slide-info） + `files[].sf_slide` 清零。
+- 产物：`analysis/dyldwork/dyld_noslide.bin`（= crossarch+plataccept + sf0 + mapping-slide 清零）。
+- 实测：现 region 已被 iOS 缓存占；强制不复用后映射 macOS 缓存 **仍 EINVAL(22)**（因 region 非空）。
+- **待办**：**重启取得干净 region** → 跑设备上 `/var/mobile/post_reboot_mac.sh`（自动：复原 TC → cachereg macOS 缓存 → blob 覆盖 → 部署 dyld_noslide → 验收 HELLO/using/notloaded + cat/ls/sh）。
+
 ### ⚠️ 2026-09-28 重启后环境退化（必须知道，否则会误判）
 **设备发生过一次 panic 重启**（`ptd ... does not belong to iommu @pmap.c:15786` + `initproc exited`；现场 VirtualMachine.xpc 512% CPU/load 27+，与 dyld 实验无直接因果）。**重启后下列状态丢失，需重建**：
 1. **jailbreak trustcache 清空** → 修改版 dyld 立即 `SIGNALED 9`（exec veto）。**修复：重新 `jbctl trustcache add` 后才能过准入**（本次实测：补 TC 后 9→6/0）。
