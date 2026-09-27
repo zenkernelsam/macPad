@@ -2284,3 +2284,25 @@ dyld: Library not loaded: /usr/lib/libncurses.5.4.dylib
 - 最低成本路线：**让 dyld 在缓存命中时优先用缓存 libSystem**（而不是被同名磁盘 shim 抢走）→ 缓存映射成功时 cat/ls/sh 应即通；
   或**给 shim 补缺失符号**（至少 `___error`：`mrs x0,TPIDRRO_EL0; ret`）。
 - 次路线：用**其它宿主机**（macOS/另一台越狱机）跑 `dsc_extractor` 把整套 dylib 落盘，再 `sign_installed.sh` TC。
+
+### 2026-09-28 03:0x【勘误 + 本轮实测边界】
+**勘误（重要，防止误读）**：本轮曾出现"移走 shim 后 20/20 次 `notloaded=0`"，那是**测试假象**：
+我的循环把 `"/bin/echo HELLO"` 整串当程序名传给 `chroot`（未拆分参数）⇒ `chroot` 报 "No such file"（rc=127）
+**根本没 exec**、dyld 未运行，所以 grep 不到 "not loaded" 字样。
+**修正后的真实结果**（参数正确拆分）：
+```
+shim 移走 + macOS 缓存 + env：e1/e2/cat/ls/sh/sh2 全部 rc=134 notloaded=1  （Library not loaded: /usr/lib/libSystem.B.dylib）
+shim 在场 + macOS 缓存 + env：cat 曾出现 notloaded=0（缓存映射成功）但绑到 shim → Symbol not found: ___error
+```
+⇒ **现状总结（诚实版）**：
+| 项 | 状态 |
+|---|---|
+| #1 plataccept | ✅ |
+| #2 HELLO（无 env） | ✅ |
+| #3 带 DYLD_SHARED_CACHE_DIR 实测 | ✅ 缓存可映射成功（可复现，见上方"配方"节；91×`Using mapping in dyld cache`） |
+| #4 库全走缓存 + libSystem 来自缓存 | ✅（`<D161E41A>`，uuid 与缓存头一致） |
+| #5 cat/ls/sh rc=0 | ❌ 未达：shim 在场→被 shim 抢绑定缺 `___error`；shim 移走→536 间歇性失败（同 boot 同配置两种结果都出现过） |
+**下一步优先级（给接棒者）**：
+1. 用**宿主机**（本 Mac，arm64 且自带 dsc_extractor）从 macOS 缓存抽取 `libSystem.B.dylib`/`libncurses.5.4.dylib` 等落盘 + `sign_installed.sh` TC ⇒ 直接解 CLI，且不影响"缓存映射"成果；
+2. 或继续 RE dyld **镜像级**接受判据（`0x2b4d8/0x7e970`，注意**不可 stub**，需改判定逻辑）；
+3. 或定位 536 间歇性（怀疑与 region 残留状态/被杀的进行中映射有关，需内核侧取证）。
