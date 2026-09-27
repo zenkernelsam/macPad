@@ -2218,3 +2218,14 @@ dyld: Library not loaded: /usr/lib/libSystem.B.dylib
 **下一步**：定位 dyld 镜像级的 platform 检查（对照 “wrong platform to load into process” 字符串 xref），
 把进程中 macOS 镜像的 platform 接受逻辑一并放开（不要用 `platstub` 那种强制 loadableIntoProcess 的暴力 stub）。
 `/System/Library/dyld/` 的 symlink（主/.01/atlas/map → cryptex）齐全，**默认路径失败另有原因**（env 路径成功），待查。
+
+### item#5 进展（cat/ls/sh）与已排错的猜测
+- **排除**：`/bin/{echo,cat,ls,sh}` 与 `libSystem.B/libdyld` 的**两切片 platform 都是 macOS(1)**（工具 `analysis/dyldwork/sliceplat.py`）⇒ "wrong platform" 不是主程序被 arm64ify 打成 iOS 造成。
+- **镜像级门定位**：`dyld4::JustInTimeLoader::makeJustInTimeLoaderDyldCache` @**0x2b4d8** 里
+  `if (mach_o::Header::loadableIntoProcess@0x7e970(...)&1) {...} else Diagnostics::error("wrong platform to load into process")`。
+- **不能 stub 0x7e970**：实测把它改成 `mov w0,#1;ret` 后**连缓存都映射失败**（该函数在缓存自身校验里也被调用）
+  ⇒ 必须改**判定逻辑**（如只放开 `Platform::macOS` 的接受分支），不可 lazy stub（违反项目纪律）。
+- 现象序列（移除 shim + env 且 cache 映射成功）：先打印 `<D161E41A> /usr/lib/libSystem.B.dylib`（缓存镜像是被加载过的），
+  随后 "Library not loaded … Reason: tried: … (no such file) … (wrong platform)" ⇒ 走了**按路径**的加载分支
+  而不是缓存索引分支，且末选被 platform 判据拒。**下一步**：查 dyld 里 libSystem 的“按路径→缓存索引”回退为何没命中
+  （可能是 chroot 下 root 路径拼接/`dyldCache` 的 path 表匹配问题），而不是继续动 platform 判据。
