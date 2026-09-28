@@ -140,6 +140,24 @@ main 尾 VA=0x22560C000、region 顶 0x280000000 ⇒ **X>0x5AA34000（≈55%）�
 ```bash
 sshpass -p cisco ssh -p 2222 root@192.168.64.1 'bash /var/mobile/run_sf0plat.sh'
 ```
+### 更新 7 — 【实测判决·新鲜 boot】§3.5 随机 slide 理论**被证伪**；真凶回到 populate/setup
+**实验（本 boot `up 0:05` 新鲜启动，脚本一键跑完；`cachereg READY ok=1`）**
+| 产物 | files[] | sf_slide | errno（stderr 前 8B） | 解读 |
+|---|---|---|---|---|
+| `dyld_sf0plat.bin`（= plataccept+slide0+e5，production 列表） | `[main,.01,dyn]` | 0 | **`0e` = 14 EFAULT** | 卡在 **dyn 条目**：其 VA `0x78000000` 不在 region `[0x180000000,0x280000000)` ⇒ 越界 ⇒ EFAULT（与任务书 §2 矩阵 `[.01,dyn]→EFAULT` 一致） |
+| **`dyld_m1_sf0.bin`**（= 上面 + `filescount1`+`nodyn`，**只提交 main**） | `[main]` | **0** | **`16` = 22 EINVAL** ×3 | ★**随机 slide 不是 main 失败的原因** ⇒ §3.5 理论**证伪** |
+
+**结论（本轮硬结论）**
+1. `sf_slide=0`（内核随机化关闭，VA 固定回优选地址）**不能**让 main 单文件通过 536 ⇒ **EINVAL 来自 setup/populate 阶段**，
+   与 slide 无关。更新 2/3 里"slide0 即最小修复"的预测**不成立**，已按实测更正。
+2. 先前 sf0plat 的 `0e/EFAULT` 只是 **dyn 条目**在作祟（production 列表里 dyn VA 越界），**掩盖**了 main 的真实 EINVAL。
+   ⇒ 后续实验**必须用 `[main]`-only**（`filescount1`+`nodyn`）才不被 dyn 干扰。
+3. 与历史对照：main 曾多次成功过（91×`Using mapping in dyld cache`），所以 main **不是结构性不可行**，而是某些条件未满足
+   ⇒ 转任务书 §4.1（setup `sub_8459570` 填的 56B rec `+16` 语义，对照 dyld 提交的 12B rec）与 §4.2（file enter `sub_8017E5C` return 站点枚举）。
+4. 负结果清单（本回合新增）：`slide0` ✗（对 main 无效）· 生产列表 `[main,.01,dyn]` ✗（dyn VA 越界 ⇒ EFAULT，须剔除 dyn）·
+   `dyld_sf0e.bin` 缺 `plataccept`（实验噪声源，已由 `dyld_sf0plat.bin` 修正）· `e5` 探针只给**syscall 返回**，看不到 populate 内部返回码（需另法）。
+
+**设备现状**：实验后已恢复 `/var/mnt/rootfs/usr/lib/dyld`（见下条命令），`cachereg` 仍在后台挂 blob。
 ## 01. 已确认的环境事实（本回合复核）
 - 三台 IDA MCP 均健康：**Instance1**=dyld(`dyld_15.6.1_arm64e_thin`，imagebase 0)、
   **Instance2**=kernel(`kc_raw_16.3_T8112`，imagebase `0xfffffe0007004000`)、**Instance3**=amfid(`amfid_bin`)。
