@@ -195,6 +195,44 @@ iokit-user-client-class dictionary of the entitlements from "/private/preboot/..
    （特别是 **代际 `rec+16` vs `region+4`** 与 **VA+size 溢出/回绕**）⇒ 需 dyld 侧 args/sms dump 探针配合。
 3. KRW 读内核（`task+0x3E8`、region 队列、engine 返回值）**仍是最高效路径**，但设备 CLI 下 iosurface 原语起不来；
    需在 **App 上下文**或换可用载体运行（项目既有脚本：`kscan_sig.py`/`kpatch_c2.py`/`kc2check.py` 等，见 `HANDOVER-REPLY-2026-09-27.md` 第 38 行）。
+## ★★ 最终结论与验收（2026-09-28 晚）—— 最小修复 = 恢复被改名的 shim
+
+### 真因（本轮定位，且与既有文档铁律一致）
+`/usr/lib/libSystem.B.dylib` **被改名成 `libSystem.B.dylib.OFF`**（Sep 28 09:22，上一 session"反 shim-hijack"实验遗留）
+⇒ 磁盘上没有 libSystem ⇒ **536 对两种缓存一律 EINVAL(22)**。
+这正是 `docs/porting/dyld-15.6.1-state.md:2496` 已记载的铁律：
+> **shim 必须存在（移走 → 连 iOS 缓存都映射不上）；shim 必须签名有效（签名坏了同样 nl=1）；FS 写必须在 cachereg 之前。**
+
+### 最小修复（3 条，全部纯用户态）
+1. **恢复 shim**：`cp $R/usr/lib/libSystem.B.dylib.OFF $R/usr/lib/libSystem.B.dylib` + `chmod 755`
+2. 签名+TC：`ldid -Hsha256 -S<entitlements>` → `cdhash_slices.py` → `jbctl trustcache add`（两片都做）
+3. （本人误操作回滚）把 `vm.shared_region_destroy_delay` 从误设的 0 **回滚为 120**
+
+### 验收输出（本 boot 实测，3/3 macOS + 1/1 iOS）
+```
+macOS 缓存（cachereg + dyld_plat + DYLD_SHARED_CACHE_DIR=<cryptex dyld>）:
+  run1 rc=0 out=[HELLO] notloaded=0
+  run2 rc=0 out=[HELLO] notloaded=0
+  run3 rc=0 out=[HELLO] notloaded=0
+  dyld: <D161E41A-3030-339F-B135-E244271F54C6> /usr/lib/libSystem.B.dylib   ← 缓存版 libSystem（非 shim B90391D8）
+iOS 缓存对照（DYLD_SHARED_CACHE_DIR=/iosdsc）:
+  rc=0 out=[IOS_HELLO] notloaded=0  同样 <D161E41A>
+```
+⇒ **不再出现 `syscall to map cache into shared region failed`**（本任务验收线）✓，且 **libSystem 来自缓存** ✓（比验收线更强）。
+
+### 完整可复现配方（patch keys + 步骤顺序）
+1. **FS 写先行**：装/恢复 shim（`libSystem.B.dylib`+`libdyld.dylib`）、部署 dyld（`crossarch` 必带；macOS 用 `dyld_plat`，iOS seed 用 `dyld_sf0plat`）、签名+TC、`chmod 755`
+2. **再挂 blob**：`cachereg <cache_dir>/dyld_shared_cache_arm64e <…>.01 &`（**fd 保持打开**；等 `READY ok=1`）
+3. **测试**：`env -i PATH=/usr/bin:/bin DYLD_SHARED_CACHE_DIR=<chroot 内缓存目录> /var/jb/usr/bin/chroot /var/mnt/rootfs /bin/echo HELLO`（期望 `rc=0` + 无 `map … failed`）
+4. **验证缓存真被用**：`DYLD_PRINT_LIBRARIES=1` 看 libSystem UUID 是否为 `<D161E41A…>`（缓存）而非 `<B90391D8…>`（shim）
+
+### 负结果清单（本轮全部，供接棒者不再重走）
+- **今日观察到的全部 22 / "两缓存同败"**：均由 **shim 被改名 `.OFF`** 造成（非 536 退化、非 region、非 slide）⇒ **所有"在 shim 缺失态"下的结论都要作废**。
+- `dyld_sf0e.bin` **缺 `plataccept`**（实验噪声源）；`[main]-only`（`filescount1`+`nodyn`）实验**未获干净结论**（须先恢复 shim 重做）。
+- 生产列表（含 `dyn`）会出现 **14 EFAULT**：`dyn` 条目 VA `0x78000000` 不在 region 内 ⇒ 只能做诊断，别当生产配方。
+- KRW Python 工具链在本 boot CLI 下起不来（iosurface 原语 + `python3.9` 需 `IOSurfaceRootUserClient`）⇒ 需 App 上下文/其它载体。
+- 本次**未**重新推导"shim 缺失 ⇒ 536 EINVAL"的内核站点（既有文档仅记载为经验铁律）——若后续要机制化，建议在 shim 缺失态跑 `0x845976c`/engine 分支对照。
+
 ## 01. 已确认的环境事实（本回合复核）
 - 三台 IDA MCP 均健康：**Instance1**=dyld(`dyld_15.6.1_arm64e_thin`，imagebase 0)、
   **Instance2**=kernel(`kc_raw_16.3_T8112`，imagebase `0xfffffe0007004000`)、**Instance3**=amfid(`amfid_bin`)。
