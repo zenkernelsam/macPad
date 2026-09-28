@@ -98,6 +98,28 @@ main 尾 VA=0x22560C000、region 顶 0x280000000 ⇒ **X>0x5AA34000（≈55%）�
 即 **write(2, &x0, 8) 后 exit** ⇒ **stderr 前 8 字节（little-endian）= 536 的原始返回值**，与任务书"errno 字节探针"一致。
 另：当前部署的 `/var/mnt/rootfs/usr/lib/dyld` md5 = `b9509df1feb5…` = **dyld_plat.bin**（未打 slide0）。
 
+### 更新 5 — 【实验设计修正 + 一键脚本】构建 `dyld_sf0plat.bin`（隔离随机 slide 这一变量）
+
+**发现的设计隐患**：任务书 §3.5 的 `dyld_sf0e.bin` 在 `0x35c24` 是**未打 `plataccept`**（`540001c1` = 原 `B.NE`），
+而 `dyld_plat.bin` 已打（`d503201f` = NOP）—— 而 `plataccept` 正是此前"平台预检"的挡路点。
+若平台预检先命中，`sf0e` 的判决会**不确定**。
+
+**→ 已构建隔离版产物 `dyld_sf0plat.bin` = crossarch + plataccept + slide0 + e5探针**（其余取自 dyld_plat）：
+
+| 偏移 | 含义 | dyld_plat | dyld_sf0e | dyld_sf0plat |
+|---|---|---|---|---|
+| 0x76270 | crossarch | aa1f03e0 | aa1f03e0 | **aa1f03e0 OK** |
+| 0x35c24 | plataccept(NOP) | d503201f | 540001c1 (缺) | **d503201f OK** |
+| 0x3552c | slide0(MOV W9,#0) | b9578269 | 52800029 | **52800029 OK** |
+| 0x76e04 | e5entry（原 pacibsp d503237f 被 b 0x38d08 取代） | d503237f | 17ff07c1 | **17ff07c1 OK** |
+| 0x38d08 | e5cave（write(2,&x0,8); exit） | d503201f | d10083ff | **d10083ff OK** |
+
+- 设备侧已上传：`/var/mobile/dyld_sf0plat.bin`（md5 `6c7769b41183…`，本地==设备 OK）。
+- **一键脚本**：`/var/mobile/run_sf0plat.sh`（本地与设备 bash -n 均 OK）：
+  健康/veto 检测(必要时 restore_env.sh) → cachereg 挂两片 blob(fd 保持) → 部署 dyld_sf0plat.bin(备份当前到 dyld_before.bin)
+  → **三连跑**并打印 err 前 8B → 结论速读（`01 00…`=过线；`16 00…`=仍 22）。
+- **重启/恢复越狱后只需一条命令**：`bash /var/mobile/run_sf0plat.sh`。
+
 ## 01. 已确认的环境事实（本回合复核）
 - 三台 IDA MCP 均健康：**Instance1**=dyld(`dyld_15.6.1_arm64e_thin`，imagebase 0)、
   **Instance2**=kernel(`kc_raw_16.3_T8112`，imagebase `0xfffffe0007004000`)、**Instance3**=amfid(`amfid_bin`)。
