@@ -72,3 +72,9 @@ table = protectedPaths @ 0x9c638（3 个 const char*）
 | `Security` ctor | 0xb1a4 |
 | 磁盘覆盖日志点（`makeDiskLoader(override=1)`） | LABEL_118 @0x200cc 起，日志串 `aFoundDylibFrom_0` |
 | 缓存日志点（`makeDyldCacheLoader`） | LABEL_72 @0x1fd98 起 |
+
+## 6. 本轮静态推进的**负结果**（别再重复扫）
+- 在 91 个名字含 `ProcessConfig`/`Security` 的函数体内逐指令搜 `#0x298`/`#664`：**0 命中** ⇒ `ProcessConfig+298` 的写入**不在这些函数**里（可能：① 内联进 `RuntimeState`/`Process` 构造；② 通过寄存器基址间接写；③ 属于某个子对象，`RuntimeState+8` 指向的其实不是 ProcessConfig 首址）。
+- 按 `internalinstall` / `allow*over*` / `protection` 关键词搜符号名：只命中 `PathOverrides` 一族，**没有**直接命名的 flag ⇒ 该布尔无独立符号名。
+- ⚠️ 也试过 Python 字节模式扫 `STRB/STR #0x298`：模式/对齐假设不可靠，**0 命中**（**结论：本类问题必须走 IDA，别用 Python 字节扫**——与项目铁律一致）。
+**下一步建议（静态）**：① 在 IDA 里对 `0x1f788` 那段引用反推：谁在 `RuntimeState` 构造后写过该字节（可对 ProcessConfig 对象做 xref 扫"写入 +0x298 的所有指令"）；② 或先找**其它读取者**（同一 block 里 +272/+304/+305/+312/+291 都是相邻布尔，其中某些已有日志/名字，可用来**反推字段语义**）。
