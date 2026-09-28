@@ -120,6 +120,26 @@ main 尾 VA=0x22560C000、region 顶 0x280000000 ⇒ **X>0x5AA34000（≈55%）�
   → **三连跑**并打印 err 前 8B → 结论速读（`01 00…`=过线；`16 00…`=仍 22）。
 - **重启/恢复越狱后只需一条命令**：`bash /var/mobile/run_sf0plat.sh`。
 
+### 更新 6 — 一键脚本 v3：三重校验通过 + 修正步骤顺序（防白跑）
+
+**发现并修正的顺序隐患**：v2 把 `cachereg` 放在**部署之前**，而此前实测过"**FS 写（cp/rm）会让 cachereg 挂上的 CS blob 失效**"
+⇒ v3 改为 **步骤 2 部署（FS 写）→ 步骤 3 挂 blob**，两种次序的约束都满足。
+
+**v3 加固点**：① 依赖自检（缺任一文件即早停）② veto 检测 + `restore_env.sh` + **复测** + 明确早停（不再空跑）
+③ cachereg `READY ok=1` 校验 ④ TC 收录校验 ⑤ 部署后 **md5 复核**（防 cp 失败）⑥ 每轮打印 stderr 前 200B 摘要 ⑦ 结论速读 + 还原提示。
+
+**三重校验证据（本轮实测）**：
+| 校验 | 结果 |
+|---|---|
+| 语法 | 本地 `bash -n` OK；设备 `bash -n` OK |
+| 完整性 | 本地 md5 == 设备 md5 = `5ec360c126d7b78039c1cc31eedae28b` |
+| **真实 dry-run**（当前 veto 状态） | 第0步依赖齐备 → 第1步 `pre rc=137` → `restore_env.sh` → 复测 `rc=137` → **精确早停**并给出"需重启+重新激活越狱"提示（流程/路径全对） |
+| 隔离校验（不依赖 exec） | `cachereg` 日志 `READY ok=1` **匹配成功**；`dyld_sf0plat.bin` 签名后 cdhash `e8eed485…` **TC 收录匹配成功**；md5 比对逻辑正确（src≠cur，部署后应相等） |
+
+**重启后（含已重新激活越狱）只需**：
+```bash
+sshpass -p cisco ssh -p 2222 root@192.168.64.1 'bash /var/mobile/run_sf0plat.sh'
+```
 ## 01. 已确认的环境事实（本回合复核）
 - 三台 IDA MCP 均健康：**Instance1**=dyld(`dyld_15.6.1_arm64e_thin`，imagebase 0)、
   **Instance2**=kernel(`kc_raw_16.3_T8112`，imagebase `0xfffffe0007004000`)、**Instance3**=amfid(`amfid_bin`)。
