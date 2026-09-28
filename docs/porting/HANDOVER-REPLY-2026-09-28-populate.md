@@ -181,6 +181,20 @@ iokit-user-client-class dictionary of the entitlements from "/private/preboot/..
 1. 给该 python（或其副本）补 `IOSurfaceRootUserClient` 的 iokit-user-client 权限后重跑 `srw5.py`；
 2. 或纯 IDA 侧推进：读 `sub_8063720`/`sub_8060A68`（bind/unbind）与 `0x845976c`、`0x84596c4` 的到达条件，
    再用一个**只 dump x0..x3 + files[].fd/count** 的 dyld 探针（`smsdump` 类）与内核条件逐项对齐。
+### 更新 9 — 【自我更正】`[main]-only` 实验无效应予作废；slide 理论**仍未证伪**；22 的归属已由项目文档指明
+**读 `docs/porting/dyld-15.6.1-state.md` 得到两条决定性既有结论（本回合才发现，此前遗漏）**
+1. **(I) 计数不自洽 ⇒ 伪码 5**：`files[].count` 之和必须**等于**提交的 `mappings_count`，否则 wrapper 走计数不匹配路径
+   （`v33=5>3 ⇒ 22`）⇒ **这是伪失败**。我的 `dyld_m1_sf0.bin`（`filescount1`+`nodyn` 却**没同步** mappings_count）**正犯此错**
+   ⇒ **更新 7 里"§3.5 slide 理论被证伪"的结论作废**；`[main]-only` 的干净实验**还没做**。
+2. **(J) KRW 实测：setup 门 6/10/11 全通过**（`blob_read.py`：ubc 非空、blob 非空、覆盖 `[0,0xa160c000] ⊇ m0..m7`、
+   `v_type=VREG`）⇒ **22 来自 engine `sub_8061EF0`**，**不是 setup** ⇒ 我"头号嫌疑 `0x845976c`/`0x84596c4`"应下调（后者正是 (I) 的计数门）。
+**修正后的下一步（按优先级）**
+1. **做自洽的 `[main]`-only 实验**：需要先读 dyld 侧 `0x35634-0x35694`（sms copy + `BL 536` 前的 **x0/x2 是如何算出来的**），
+   确认 `files_count=1` 时 `files[0].count` 与 `mappings_count` 各应取什么值（例如把 x2 也改小到 8），才能得到"只交 main"的**自洽**提交 ⇒ 再用 slide0/不 slide0 对照，才能干净判定 §3.5。
+2. engine `sub_8061EF0`/worker `sub_80623D4` 的 6 条 `return 4`（更新 2 已定位）里，逐条对照 production 提交的实际数值
+   （特别是 **代际 `rec+16` vs `region+4`** 与 **VA+size 溢出/回绕**）⇒ 需 dyld 侧 args/sms dump 探针配合。
+3. KRW 读内核（`task+0x3E8`、region 队列、engine 返回值）**仍是最高效路径**，但设备 CLI 下 iosurface 原语起不来；
+   需在 **App 上下文**或换可用载体运行（项目既有脚本：`kscan_sig.py`/`kpatch_c2.py`/`kc2check.py` 等，见 `HANDOVER-REPLY-2026-09-27.md` 第 38 行）。
 ## 01. 已确认的环境事实（本回合复核）
 - 三台 IDA MCP 均健康：**Instance1**=dyld(`dyld_15.6.1_arm64e_thin`，imagebase 0)、
   **Instance2**=kernel(`kc_raw_16.3_T8112`，imagebase `0xfffffe0007004000`)、**Instance3**=amfid(`amfid_bin`)。
