@@ -2410,3 +2410,23 @@ dyld: <B90391D8-…> /usr/lib/libSystem.B.dylib     ← 同一个进程里 shim 
 2. **给 shim 补齐符号**（至少 `___error`；`mrs x0,TPIDRRO_EL0; ret`）——工作量取决于缺多少（可先用 `dyld_info` 差集算出）。
 3. 内核侧：查"为何 shim 存在 536 才成功"（疑 dyld 在缺 libSystem 时的早期退出与 CS 状态）。
 **设备现状**：shim 复原(165744/217088)、活基线 `dyld_probe_noC.bin` 就位、`DEV_OK10` ✓。
+
+## 🎉🎉 2026-09-28 09:2x【#5 找到并验证了正解】手写 shim 是可扩展的！
+**关键发现**：`/usr/lib/libSystem.B.dylib` 的 shim **有源码**：`tmp/shim/libSystem_shim.c`（84 行，裸 `svc` 实现）
++ `tmp/shim/build_shim.sh`（clang 双架构 + `install_name_tool -id /usr/lib/libSystem.B.dylib`）
++ `tmp/shim/deploy_shim.sh`。原作者只为 **`echo` 的 10 个导入** 写了它，所以 cat/ls/sh 缺符号。
+**实测验证（决定性）**：
+```
+给 shim 加 ___error（C 名必须写 __error！否则导出成 ____error）→ 重建部署：
+  cat: "Symbol not found: ___error"  →  "Symbol not found: ___maskrune"   ✅ 前进一格
+  sh : "Symbol not found: ___error"  →  "Symbol not found: ___stack_chk_fail" ✅
+```
+**⇒ 正解 = 按需扩展该 shim**（每加一个符号错误就前进一格，已实测）。
+**待补符号清单**（本机用 `dyld_info -imports <arm64 切片>` 导出，见 `tmp/imports/*_arm64_syms.txt`）：
+- `cat` / `sh` 的完整导入列表已导出；实现手法沿用 shim 现有风格：
+  - 纯数据：`___stack_chk_guard`、`___stderrp/___stdinp/___stdoutp`、`_optind`
+  - 直接映射 syscall：`open/close/read/write/fcntl/__error/exit/...`
+  - 简单 stub：`___maskrune→0`、`_setlocale→0`、`_sysconf→0`、`_getopt`、`_realpath$DARWIN_EXTSN`
+  - 需要真实现：`malloc_type_malloc/free`（可用 mmap 版 bump 分配器）、stdio 一族（`fwrite/fprintf/getc/feof/...`）
+**注意**：本机 C 命名与 Mach-O 符号差一个下划线（`__error`→`___error`；`_exit`→`__exit`）。
+**附**：`dyld_compat.bin`（关段序 policy）**不影响映射**（可保留备用）；覆盖判定点不可改（3 次实测破坏映射）。
