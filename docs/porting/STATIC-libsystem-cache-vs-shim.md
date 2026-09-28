@@ -147,3 +147,31 @@ v32 = ProcessConfig::DyldCache::indexOfPath(cache, path, &idx)     ; → 写入 
 ### 遗留静态项
 1. `ProcessConfig+0x12A` 的**写入者**（全 `.text` 无 `STRB [Xn,#0x12A]`；疑经 `ADD Xn,…,#0x12A` 或由子对象/内联路径写入）——它是"保护分支"的第二个闸门。
 2. 若要"注入 libmachook 同时让缓存赢"：最干净的入口是 `PathOverrides` 的非空判定（`dontUsePrebuiltForApp` @0x950c，单点、可读性高），而不是去动 `isProtectedLibSystemPath`。
+
+## 9. ★ 收口：`ProcessConfig` 结构布局 + 两个闸门的**确切来源**
+
+`ProcessConfig::ProcessConfig` @0x9358 里逐个构造子对象，布局（由调用点的 `ADD X0,X19,#imm` 直接读出）：
+```
+Process      @ +0x010
+Security     @ +0x110     ← ★ 闸门 2 在此子对象内
+Logging      @ +0x130
+DyldCache    @ +0x160     ← ★ 闸门 1 在此子对象内
+PathOverrides@ +0x240     ← dontUsePrebuiltForApp() 的 this
+```
+⇒ 两个闸门换算：
+| 闸门 | 真实地址 | 子对象内偏移 | 写入者 / 来源 |
+|---|---|---|---|
+| **① 会话开关** | ProcessConfig**+0x208** | **DyldCache+0xA8** | `ProcessConfig` ctor **0x9420** ← `PathOverrides::dontUsePrebuiltForApp()`(0x950c) ← **任一 DYLD_* path-override env 存在即 true** |
+| **② 安全闸** | ProcessConfig**+0x12A** | **Security+0x1A** | `Security` ctor **0xB2BC**：`UBFX W8,W0,#9,#1` ← **AMFI 信息字的 bit9**（位域由 `Security::Security` 0xb1a4 从 `Security::getAMFI()`@0xb378 解出，同时拆出 +0x11/12/16/17/18/19 等布尔） |
+
+### 可操作性（本条的最终结论）
+- **闸门 ① 完全由用户态决定** ✓ ⇒ **这就是"让缓存赢"的最小杠杆**：不引入任何 `DYLD_LIBRARY_PATH / FRAMEWORK_PATH / FALLBACK_* / INSERT_LIBRARIES` 等 path-override env（`DYLD_SHARED_CACHE_DIR` 不算 ✓，它在 DyldCache 里解析 ✓）。
+- **闸门 ② 由 AMFI 位决定** ✗（非用户态）—— 但**今天验收已实证它为 0**（直接 `chroot` 下 libSystem 来自缓存 `<D161E41A>` ✓）⇒ 至少在 chroot 场景下不构成障碍 ✓。
+- ⇒ 两条并行线的**分界线正式确定**：
+  - 隔壁（`launchdchrootexec`，必须带 `DYLD_INSERT_LIBRARIES` 注入 libmachook）⇒ 闸门①=1 ⇒ **磁盘 shim 必被选用** ⇒ 补 shim 是唯一解 ✓
+  - 我（直接 `chroot`，仅 `DYLD_SHARED_CACHE_DIR`）⇒ 闸门①=0 ⇒ **缓存赢** ✓
+  - 若将来要"注入 libmachook **且** 用缓存 libSystem"：单点入口是 `PathOverrides`（0x950c 的判定或 0x9420 的写入），**不要**动 `isProtectedLibSystemPath` ✓
+
+### 遗留（供后续）
+- 闸门② 的 AMFI bit9 具体是哪一个策略位（可对照 `Security::getAMFI`@0xb378 的解包逻辑与 XNU 的 AMFI 返回位定义）；本设备实测为 0 ✓。
+- 若要做"注入+缓存兼得"的最小补丁：优先改 `0x9420` 处写入（或 `0x950c` 的返回），把闸门①钉成 0。
