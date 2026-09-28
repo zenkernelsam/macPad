@@ -99,3 +99,51 @@ v32 = ProcessConfig::DyldCache::indexOfPath(cache, path, &idx)     ; → 写入 
    例如扫 `STRB/STR` 的 `op_any` 不可靠（位移不参与匹配），改扫 `ADD/ADDU` 型基址计算或对 ProcessConfig 对象做数据流追踪）。
 2. 把 `+272`(isOSBinary ✓ 已由 `loadableIntoProcess` 调用点反证)、`+289`、`+291`、`+304/+305/+312`、`+520` 一起列出，
    **用相邻字段反推语义**（其中多个已被日志使用，可作锚点）。
+
+## 8. ★ 静态链条闭合：为什么"有时缓存赢、有时磁盘赢"—— 上游是 **DYLD_* path-override 环境变量**
+
+（更正 §6/§7 的偏移口径：**Hex-Rays 的常量是十进制**；本节的 0x12A/0x208 才是真实文件偏移。）
+
+### 完整因果链（全部有地址证据）
+```
+【写者】ProcessConfig::ProcessConfig @0x9358 内：
+  0x9414  BL  dyld4::ProcessConfig::PathOverrides::dontUsePrebuiltForApp()
+  0x9418  CBZ W0, loc_9428
+  0x941c  MOV W8, #1
+  0x9420  STRB W8, [X19,#0x208]        ; ★ ProcessConfig+0x208 = dontUsePrebuiltForApp()
+  0x9424  STRB W8, [X19,#0x230]
+
+【读者】Loader::getLoader @0x1f018：
+  0x1f07c  LDR X8,[X2+8]                        ; ProcessConfig*
+  0x1f080  LDR [X8+0x160]                       ; DyldCache 存在？
+  0x1f088  LDRB W9,[X8,#0x208]                  ; ← 读上面那个 flag
+  v9 = (DyldCache!=0) ? (*(+0x208) ^ 1) : 0     ; → 写入 block+80 (与 block+81/82=indexOfPath 一起)
+
+【判定】block_invoke @0x1f788：
+  0x1fd78  LDRB W8,[X8,#0x12A]                  ; 另一守卫（ProcessConfig+0x12A）
+  0x1fd84  BL  isProtectedLibSystemPath(path)   ; 0xcb88；protectedPaths@0x9c638
+  ⇒ block+80==1 且 +0x12A==0 且 路径∈保护表 ⇒ makeDyldCacheLoader    ★ 用【缓存】
+  ⇒ 否则                                     ⇒ makeDiskLoader(override=1) ★ 用【磁盘 shim】
+
+【上游】PathOverrides::dontUsePrebuiltForApp @0x950c
+  return a1[0]||a1[1]||a1[4]||a1[5]||a1[10]||a1[11]||a1[12]||a1[13]||a1[6]||a1[7]!=0
+  ⇒ 任一 PathOverrides 字段非空 = 存在 DYLD_* path-override 类环境变量
+```
+
+### 🔑 可检验的预测（用户态、零补丁）
+| 运行方式 | DYLD_* 覆盖 | 预期 libSystem 来源 |
+|---|---|---|
+| **直接 `chroot`（仅带 `DYLD_SHARED_CACHE_DIR`）** | 无 | **缓存 `<D161E41A>`** ✓（今天验收即此 ✓） |
+| `launchdchrootexec`（注入 libmachook ⇒ `DYLD_INSERT_LIBRARIES`） | 有 | **磁盘 shim `<B90391D8>`**（⇒ 需按 import 清单补符号） |
+| 直接 `chroot` + 显式 `DYLD_INSERT_LIBRARIES=...` | 有 | 应变回磁盘 shim（**A/B 判定实验**） |
+
+⇒ ① `DYLD_SHARED_CACHE_DIR` **不是** path-override（由 `DyldCache` 解析）⇒ **可保留**；
+② `DYLD_INSERT_LIBRARIES` / `DYLD_LIBRARY_PATH` / `DYLD_FRAMEWORK_PATH` / `DYLD_FALLBACK_*` 等**会**触发"磁盘覆盖"。
+
+### 与两条并行线的关系（结论）
+- **补 shim 线**（隔壁）：他们的运行方式（`launchdchrootexec`，为注入 libmachook 必须带 `DYLD_INSERT_LIBRARIES`）**天然**走磁盘覆盖 ⇒ 补 shim 是**该路径下**的正确做法 ✓
+- **走缓存线**（我）：只要**不引入** path-override env（仅 `DYLD_SHARED_CACHE_DIR`）⇒ libSystem 走缓存 ✓；若将来要"注入 + 缓存"兼得，则需处理 `dontUsePrebuiltForApp` 触发的 `+0x208`（或 `+0x12A`）——**这是下一个静态靶子** ✓
+
+### 遗留静态项
+1. `ProcessConfig+0x12A` 的**写入者**（全 `.text` 无 `STRB [Xn,#0x12A]`；疑经 `ADD Xn,…,#0x12A` 或由子对象/内联路径写入）——它是"保护分支"的第二个闸门。
+2. 若要"注入 libmachook 同时让缓存赢"：最干净的入口是 `PathOverrides` 的非空判定（`dontUsePrebuiltForApp` @0x950c，单点、可读性高），而不是去动 `isProtectedLibSystemPath`。
