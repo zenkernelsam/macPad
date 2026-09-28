@@ -158,6 +158,29 @@ sshpass -p cisco ssh -p 2222 root@192.168.64.1 'bash /var/mobile/run_sf0plat.sh'
    `dyld_sf0e.bin` 缺 `plataccept`（实验噪声源，已由 `dyld_sf0plat.bin` 修正）· `e5` 探针只给**syscall 返回**，看不到 populate 内部返回码（需另法）。
 
 **设备现状**：实验后已恢复 `/var/mnt/rootfs/usr/lib/dyld`（见下条命令），`cachereg` 仍在后台挂 blob。
+### 更新 8 — 【关键收窄】两种缓存**同样失败** ⇒ 失败在"进程/区域级"而非缓存级；KRW 工具受阻
+**实测（本 boot）**
+| 实验 | 结果 |
+|---|---|
+| iOS 缓存 seed（`dyld_sf0plat.bin` 带 plataccept + cachereg(iosdsc) + `DYLD_SHARED_CACHE_DIR=/iosdsc`） | **rc=134，`notloaded=2`，`cacheimg=0`** ⇒ **iOS 缓存也映射失败** |
+| 切 macOS + `dyld_plat`（production） | 22 EINVAL ×3（同前） |
+
+**推论（重要）**：两种**平台/尺寸完全不同**的缓存以**同样的症状**失败 ⇒ 不可能是缓存内容/CS 覆盖/slide 之类
+⇒ 失败在 **进程或 region 状态层**。按 EINVAL 表，头号嫌疑是 **`0x845976c`：`task+0x3E8 == 0`（进程未绑定 shared region）**；
+次选 **`0x84596c4`：`Σ files[i].count > mappings_count`**（即我们提交的 files[]/mappings_count 不自洽——注意 `filescount1`/`nodyn`
+是**诊断补丁，可能自带不自洽**，须用"原生 production 列表"复测来区分）。
+**旁证**：我上一个 session 里 macOS 缓存**曾成功**（91×`Using mapping in dyld cache`）——当时**先 iOS 缓存成功过**；
+本 boot iOS 缓存也失败 ⇒ 环境与当时不同（待查：shim/dyld/TC/region 状态何者变了）。
+
+**工具阻塞（新）**：KRW Python 工具链在本 boot 起不来：
+```
+Failed to initialize IOSurface primitives, add "IOSurfaceRootUserClient" to the com.apple.security.exception.
+iokit-user-client-class dictionary of the entitlements from "/private/preboot/.../procursus/usr/bin/python3.9"
+```
+⇒ 读内核 `task+0x3E8` / region 队列的路径被堵。**下一步二选一**：
+1. 给该 python（或其副本）补 `IOSurfaceRootUserClient` 的 iokit-user-client 权限后重跑 `srw5.py`；
+2. 或纯 IDA 侧推进：读 `sub_8063720`/`sub_8060A68`（bind/unbind）与 `0x845976c`、`0x84596c4` 的到达条件，
+   再用一个**只 dump x0..x3 + files[].fd/count** 的 dyld 探针（`smsdump` 类）与内核条件逐项对齐。
 ## 01. 已确认的环境事实（本回合复核）
 - 三台 IDA MCP 均健康：**Instance1**=dyld(`dyld_15.6.1_arm64e_thin`，imagebase 0)、
   **Instance2**=kernel(`kc_raw_16.3_T8112`，imagebase `0xfffffe0007004000`)、**Instance3**=amfid(`amfid_bin`)。
