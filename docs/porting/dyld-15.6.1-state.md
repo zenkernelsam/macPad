@@ -2430,3 +2430,21 @@ dyld: <B90391D8-…> /usr/lib/libSystem.B.dylib     ← 同一个进程里 shim 
   - 需要真实现：`malloc_type_malloc/free`（可用 mmap 版 bump 分配器）、stdio 一族（`fwrite/fprintf/getc/feof/...`）
 **注意**：本机 C 命名与 Mach-O 符号差一个下划线（`__error`→`___error`；`_exit`→`__exit`）。
 **附**：`dyld_compat.bin`（关段序 policy）**不影响映射**（可保留备用）；覆盖判定点不可改（3 次实测破坏映射）。
+
+## 🔧 2026-09-28 09:4x【更正 + shim 扩展路线已验证成功】
+### ⚠️ 更正（用户指出：VM/iPad 盒盖暂停会造成误判）
+之前几条"规律"要**打上"可能含 VM 暂停伪影"的标签**：
+- "536 映射时好时坏 / 同 boot 同配置两种结果" —— 部分可能是**暂停期间的时序/region 残留**，不能全归因于 region；
+- "移走 shim 后连 iOS 缓存都映射不上" —— **VM 正常运行下复核仍成立**（A/B/C 三组各 3 次：在场 rc=0 ×3、移走 rc=134 ×3、放回 rc=0 ×2）✓ **此条保留**；
+- 结论：**凡涉及"间歇性"的结论都要标注"待 VM 稳定时复测"**；确定性的（符号、地址、判定链）不受影响。
+### ✅ shim 扩展路线：已实测成功（这是 #5 的正解）
+`tmp/shim/libSystem_shim.c` + `build_shim.sh` + `deploy_shim.sh`（原作者的 shim 工程，可扩展）。
+本次给 shim 依次补了 `___error`（cat）、`___stack_chk_fail/guard`、`___stderrp`、`_execv/_fprintf/_fputc/_readlink/_strcmp`（sh）：
+```
+sh : 11 个导入【全部解析成功】→ 不再报 Symbol not found（改为 rc=137 被杀 ← 新问题，非符号）
+cat: ___error ✅ → 现在只剩 ___maskrune
+```
+**各程序导入清单（已存 `tmp/imports/*_imports.txt`）**：cat=41、ls=91、sh=11。
+### 新问题（下一棒）
+`sh` 符号齐了但 **rc=137（SIGKILL）**：可能 ①AMFI/sandbox 拦截 ②它启动时做了某个被判非法的 syscall ③需要 `__progname/environ` 之外的东西。
+`cat` 只差 `___maskrune`（+其余 40 个，多为 stdio/socket）。
