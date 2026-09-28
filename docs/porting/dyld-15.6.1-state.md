@@ -2390,3 +2390,23 @@ dyld: <B90391D8-…> /usr/lib/libSystem.B.dylib     ← 同一个进程里 shim 
 **下一步（给接棒者，已很接近）**：在 `loc_1FE08` 这条路径上把 flow 引到 **makeDyldCacheLoader**，但**必须先把 cache index 装进 W4**
 （即复用 `indexOfPath` 的返回值，而非 `[X8,#0x18]`），或改为让 `isProtectedLibSystemPath` 在该路径上也被调用。
 **当前设备状态**：shim 已复原、活基线 `dyld_probe_noC.bin` 已还原、`DEV_OK9` ✓。
+
+## 🧱 2026-09-28 09:0x【#5 收口】三条路全部堵死 + 精确交棒
+### 本轮新增实测
+1. **`dyld_compat.bin`（`Policy::enforceSegmentOrderMatchesLoadCmds@0x80ae0` → return false）**：
+   放开段序校验后 **映射不受影响**（`ios nl=0` + `mac nl=0` ✓），**但这救不了抽取路线**：
+   抽出的真 `libSystem.B.dylib` 装上后报 `mmap(addr=0x2D9ED32D8, size=0x10) failed` ⇒
+   **缓存镜像的段必须落在缓存 VA 上，无法作为独立磁盘 dylib 使用** ⇒ **"抽取落盘"彻底终结**。
+2. **覆盖决策点不可改**：`fix2/fix4`（0x1fe28→loc_1FD98）与 `fix5`（0x200d8 TBZ→B loc_1FD98，配合 fix3 的 cave 填 index）
+   **三次都使 macOS 缓存映射失败**（`mac-seed nl=1`）⇒ 该 block_invoke 在**缓存自身映射**期间就被使用，重定向会破坏映射。
+3. **改 shim 的 `LC_ID_DYLIB`（libSystem→libXYSTEM）无效**：dyld 的磁盘覆盖是**按路径**匹配（日志 `dylib-from-disk-to-override-cache`），与安装名无关。
+4. **铁律复核**：shim 必须存在（移走 → 连 iOS 缓存都映射不上）；shim 必须**签名有效**（签名坏了同样 `nl=1`）；FS 写必须在 cachereg 之前。
+### 结论（#5 的精确卡点）
+`/usr/lib/libSystem.B.dylib` 这个**同名磁盘文件**被 dyld 按设计用作 **override-cache**；而它又**必须存在且有效**（否则 536 失败）；
+改判定会破坏映射；抽出真身又无法独立加载 ⇒ **必须让该文件本身变成"可用的真 libSystem"或让 dyld 对它走 `isProtectedLibSystemPath` 分支**。
+### 交棒方向（按可行性排序）
+1. **弄清 `ProcessConfig::DyldCache::isProtectedLibSystemPath@0xcb88` 为何对本路径返回 0**（该分支 → errno 78 → 用缓存，正是我们要的）；
+   若能让它在此处返回 1（且不破坏映射），#5 即通。
+2. **给 shim 补齐符号**（至少 `___error`；`mrs x0,TPIDRRO_EL0; ret`）——工作量取决于缺多少（可先用 `dyld_info` 差集算出）。
+3. 内核侧：查"为何 shim 存在 536 才成功"（疑 dyld 在缺 libSystem 时的早期退出与 CS 状态）。
+**设备现状**：shim 复原(165744/217088)、活基线 `dyld_probe_noC.bin` 就位、`DEV_OK10` ✓。
