@@ -2364,3 +2364,29 @@ dyld: <B90391D8-…> /usr/lib/libSystem.B.dylib     ← 同一个进程里 shim 
 - 另外：`mv/rm` 触碰 FS 后 CS blob 可能失效（本轮已测：移走后重挂 cachereg 仍失败）。
 **结论**：#1~#4 在全新 boot 上**已判决性达成并可复现**；#5 只剩"**让缓存 libSystem 压过 shim 绑定**"这一件事
 （方向：`DYLD_FORCE_PLATFORM=macOS` 已能使缓存版 libSystem 被加载；下一步用 `DYLD_PRINT_LOADERS/SEARCHING` 定位 shim 为何仍胜出）。
+
+## 🔑 2026-09-28 08:2x【#5 打开缺口】磁盘覆盖缓存的判定链 + 两条铁律
+### 铁律 1（操作纪律，已多次复现）
+**先做完所有 FS 写（rm/cp/mv），再启动 cachereg，之后绝不再动文件** —— 否则 cachereg 挂上的 CS blob 失效、536 立刻变 EINVAL。
+（这解释了此前"移走 shim 后映射必失败"的一半原因：`mv` 本身就让 blob 失效。）
+### 铁律 2（关键、7+ 次复现）
+**`/usr/lib/libSystem.B.dylib` + `libdyld.dylib` 必须"存在"**：删掉/移走后**连 iOS 缓存都映射不上**（`seed-ios nl=1`）；
+放回后同一序列 `ios-seed nl=0` + `mac-seed nl=0` 立刻恢复。机制未明（疑与 dyld 在缺 libSystem 时的早期退出/CS 状态有关）。
+### dyld 的"磁盘覆盖缓存"判定链（IDA `Loader::getLoader` block_invoke @**0x1f788**）
+```
+0x1fe08: fileExists("/usr/lib/libSystem.B.dylib") == true    ← shim 在盘上
+0x1fe24: LDRB W23,[X20,#0x52]                                ← v49 = 允许覆盖
+0x1fe28: B loc_1FFE0   →  LABEL_105/118 → makeDiskLoader(override=1)
+         ⇒ 日志 "found: dylib-from-disk-to-override-cache" + <B90391D8>(shim) ⇒ Symbol not found: ___error
+另一条分支（我们的进程【不】走）：
+0x1fd84: BL isProtectedLibSystemPath → 0x1fd88 TBZ W0,#0,loc_1FFDC
+0x1fd8c: MOV W8,#0x4E(78) → LABEL_72 → makeDyldCacheLoader ⇒ 用【缓存】✓
+```
+**实测的两种补丁**：
+| 补丁 | 结果 |
+|---|---|
+| `dyld_fix.bin`：0x1fd88 TBZ→NOP | 无效（我们的路径根本不经过此处） |
+| `dyld_fix2.bin`：再加 0x1fe28 `B loc_1FFE0`→`B loc_1FD98` | **目录已改对**（报错从 shim 变成 `'/usr/lib/libSystem.B.dylib' (wrong platform to load into process)` ⇒ 已改试缓存）**但破坏了 macOS 缓存映射**（`mac-seed nl=1`）⇒ 疑因跳到 `loc_1FD98` 时 X20/X8 上下文不对、`LDR W4,[X8,#0x18]` 取到垃圾索引 |
+**下一步（给接棒者，已很接近）**：在 `loc_1FE08` 这条路径上把 flow 引到 **makeDyldCacheLoader**，但**必须先把 cache index 装进 W4**
+（即复用 `indexOfPath` 的返回值，而非 `[X8,#0x18]`），或改为让 `isProtectedLibSystemPath` 在该路径上也被调用。
+**当前设备状态**：shim 已复原、活基线 `dyld_probe_noC.bin` 已还原、`DEV_OK9` ✓。
