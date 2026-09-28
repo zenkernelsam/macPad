@@ -6,7 +6,47 @@
 
 ---
 
-## 00. 当前状态（最新在最上）
+# 00. 当前状态（最新在最上）
+
+### 更新 3 — 【根因钉死·无需设备】随机化唯一开关 = `files[0].sf_slide`；`slide0` 就是最小修复
+**包装层 `sub_FFFFFE0008459134`（Hex-Rays，实测反编译）：**
+```c
+v11 = v6[2];                        // v6 = copyin 的 files[] 12B/rec；v6[2] = files[0].sf_slide
+v34 = 0;
+if ( v11 ) {                        // ★★ 只有 sf_slide != 0 才做随机化（有 if 保护，不会除零）★★
+    <取 rand u32 到 v34>
+    v13 = (v34 % v11) & 0xFFFFC000; // = rand32() % sf_slide，再 16K 对齐
+} else {
+    v13 = 0;                        // ★ sf_slide == 0 ⇒ slide 恒为 0（无随机化）
+}
+// 随后对每条 file rec： v18[1] = v13;                  （rec+8 = slide）
+// 对每条 sms： *((_QWORD*)v22 - 4) += v13;             （sms+0 = va）
+//             if ( *((_QWORD*)v22 - 1) ) *(_QWORD*)v22 += v13;（sms+24 = slide，非零才加）
+// 末尾： v33 = sub_FFFFFE0008061EF0(populate)； if (v33 > 3) return 22;
+```
+**结论（三重证据：反汇编 + Hex-Rays + 与 §3.5 的数学预期一致）**：
+1. **随机化唯一由 `files[0].sf_slide` 控制**；`=0` ⇒ `v13=0` ⇒ 所有 VA/slide 保持原值 ⇒ §更新 2 的 C/D 溢出/回绕校验**永不命中** ⇒ `populate` 不再返回 4 ⇒ **EINVAL(22) → 0**。
+2. `dword_FFFFFE000A9FCA58`（属 `vm.shared_region_*` sysctl 表）**只是日志门**（用于 `if (!err || trace<1) && !err` 这类判空），**不是** slide 开关；`vm.shared_region_pivot` 亦无关。
+3. ⇒ **最小修复 = dyld 侧 `slide0`**：把 `files[0].sf_slide` 写 0（patch 点 `0x3552c LDR W9,[X19,#0x1780]`，即 `build_dyld.py` 的 `slide0` key）。**已备好 `dyld_sf0e.bin`（crossarch+slide0+e5entry+e5cave）**，只等设备可用即可三连跑验收。
+
+### 更新 2 — 【里程碑·无需设备】EINVAL 的确切内核站点已定位（证据完备）
+**目标问题的答案（第一半）：`sub_FFFFFE00080623D4`（per-record enter worker）有 6 条 `return 4` 路径，
+全部是「VA/size 页对齐与溢出」+「slide 代际一致性」校验；`return 4` ⇒ populate>3 ⇒ 包装层一律 EINVAL(22)。**
+
+| # | 站点（IDB VA） | 条件（反编译+反汇编双证） |
+|---|---|---|
+| A | `0xFFFFFE00080625A0-A8` | `W8=event+4`（region 已种入的 slide）与 `W9=rec+16` 比较：`CCMP W9,W8,#4,NE` ⇒ 不相等则 `B loc_2C08`；`event+4==0` 时由首条非零 `rec+16` 种入（`STR W8,[X27,#4]`） |
+| B | `0xFFFFFE00080625D0-D8` | 仅当 `event[115]` 或 `vm.shared_region_trace_level==14`：`LDRH W8,[X23,#0x10]; TST W8,#0x3FFF; B.NE loc_2C08`（rec+16 低 14 位必须为 0） |
+| C | `0xFFFFFE0008062698-9C` | `LDR X9,[X21,#8]; ADDS X9,X8,X9; B.CS loc_2C08` ⇒ **VA+size 加法溢出** |
+| D | `0xFFFFFE00080626B8-D4` | `page-1 + (VA+size)` 按 16K 向下取整（`AND X10,X11,X10`），`CMP X10,X8; B.CC loc_2C08` ⇒ **取整后 < VA（回绕）** |
+| E | `0xFFFFFE0008062C08` | `MOV W19,#4` → `BL sub_FFFFFE0008061C40` → `return v22(=4)` ⇒ **populate 返回 4** |
+
+**与任务书 §3.5（随机 slide 理论）严格吻合**：包装层 `slide = rand32() % files[0].sf_slide & ~0x3FFF`
+被加到每条 sms 的 VA(+0) 与 slide(+24)；sf_slide=0x20000000 ⇒ X∈[0,512MB) 随机，
+main 尾 VA=0x22560C000、region 顶 0x280000000 ⇒ **X>0x5AA34000（≈55%）时 C/D 直接命中 ⇒ return 4 ⇒ EINVAL**，
+且越界点在 populate 中途 ⇒ 部分条目先进去再 rollback ⇒ 解释"时好时坏"。
+**⇒ 预期最小修复（待设备验证）**：dyld 侧 `slide0`（`files[0].sf_slide=0`，内核跳过随机化）——即已备好的 `dyld_sf0e.bin`。
+> 注：sf_slide=0 时 A 走 `event+4==0` 分支（通过，无需种入）；B 仅在 trace_level==14 或 event[115] 时生效，正常不触发。
 
 ### 更新 1 — 设备处于 exec-veto cascade，实验无法开跑（阻塞点）
 **结论：本 boot 的 chroot'd macOS exec 路径被系统性 veto，需重启 + 重新越狱激活后才能继续。**
