@@ -86,6 +86,18 @@ main 尾 VA=0x22560C000、region 顶 0x280000000 ⇒ **X>0x5AA34000（≈55%）�
 
 ---
 
+### 更新 4 — 判决产物已字节级校验（文件读取，不需要 exec，可在 veto 状态下做）
+对 `/var/mobile/dyld_sf0e.bin` 逐字节核对（`dd bs=1 skip=<十进制> | od`，注意 dd 不认十六进制）：
+| 偏移 | 语义 | dyld_plat.bin | **dyld_sf0e.bin** | 现部署 dyld |
+|---|---|---|---|---|
+| 0x76270 (483952) | crossarch（svc→mov x0,xzr） | `aa1f03e0` | **`aa1f03e0` ✓** | `aa1f03e0` |
+| 0x3552c (218412) | `files[0].sf_slide=0`（MOV W9,#0） | `b9578269`（原指令） | **`52800029` ✓✓** | `b9578269` |
+| 0x38d08 (232712) | e5 cave 首词 | `d503201f` | **`d10083ff` ✓**（`sub sp,sp,#0x60`，真代码） | `d503201f` |
+| 0x76e04 区 | e5entry 分支 | 无分支 | **多出一条 `b`（失败路径跳 cave）✓** | 无 |
+结论：**`dyld_sf0e.bin` = crossarch + slide0 + errno 探针 cave，构建正确**；cave 内容 = `sub sp,sp,#0x60; str x0,[sp]; mov x1,sp; mov x2,#8; mov x0,#2; mov x16,#4; svc; ...`，
+即 **write(2, &x0, 8) 后 exit** ⇒ **stderr 前 8 字节（little-endian）= 536 的原始返回值**，与任务书"errno 字节探针"一致。
+另：当前部署的 `/var/mnt/rootfs/usr/lib/dyld` md5 = `b9509df1feb5…` = **dyld_plat.bin**（未打 slide0）。
+
 ## 01. 已确认的环境事实（本回合复核）
 - 三台 IDA MCP 均健康：**Instance1**=dyld(`dyld_15.6.1_arm64e_thin`，imagebase 0)、
   **Instance2**=kernel(`kc_raw_16.3_T8112`，imagebase `0xfffffe0007004000`)、**Instance3**=amfid(`amfid_bin`)。
