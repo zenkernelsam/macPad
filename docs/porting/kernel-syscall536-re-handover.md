@@ -424,3 +424,100 @@ cryptex file — it had been mapped before by other processes/tests).
   `/Users/ciscohe/Desktop/dyld-cache-15.6.1/`).
 - Pristine cache on Mac: `/Users/ciscohe/Desktop/dyld-cache-15.6.1/dyld_shared_cache_arm64e`
   (size 0xa1b18000, dynoff 0x12c75c000, rec0 prot 0x500000005).
+
+---
+
+## 2026-09-28 (post-panic) — 536 full syscall path mapped; region lifecycle solved
+
+### Panic attribution
+`panic: Invalid/destroyed mutex 0xfffffe20e0397e38 @lock_mtx.c:203` was caused
+by a KRW write copying `ubc+0x38` between vnodes — **ubc+0x38 is NOT cs_blobs;
+it points at an object the kernel takes as a mutex**. Do not write ubc fields.
+(cs_blobs is `ubc+0x50`.)
+
+### Definitive syscall plumbing (T8103 16.3, IDA base 0xfffffe0007004000)
+
+- sysent #536 → `sub_FFFFFE0008459134` ("wrapper", narg=2, munger
+  `sub_80B5A04`). Earlier confusion: `sub_83F1DB8` is syscall #544, NOT 536 —
+  sysent table base 0xfffffe0007999688.
+- Wrapper: copyin files[] (12B/rec: fd,count,slide) and mappings[] (48B/rec);
+  slide randomize `slide = rand32() % files[0].sf_slide & ~0x3FFF` added to
+  every sms `address` (+0) and `slide` (+24 if nonzero);
+  `rootdir = *(proc+0x288) ?: rootvnode`;
+  calls `sub_8459570` (validate/setup) then `sub_8061EF0(region, nfiles, recs)`
+  (populate); **populate return >3 → EINVAL; 1→?, 2→EPERM, 3→ENOMEM**.
+- `sub_8459024` = `shared_region_check_np` core: `*(task+0x3E8)` get/ref;
+  `*a2==0` → detach (`sub_806391C` unmaps window + `sub_8060A68(task,0)`
+  unbind); `*a2==-1` sets task flag +1194.
+
+### Shared-region object model (all RE-confirmed)
+
+- `task+0x3E8` = bound `vm_shared_region` (get: `sub_80608E8`, set:
+  `sub_8060A68`). Region bound at vm_map init via `sub_802D40C → sub_8063720`.
+- Global queue head `off_FFFFFE000A9F2300`. Dedup (`sub_8060FD0`) matches on:
+  `+0x18` (a1 = **rootdir vnode** — confirmed: chroot's a1 = vnode "rootfs"),
+  `+0x20/+0x24` kinds, bytes +112/+115/+118(stale)/+119/+120, +0x90.
+  `+118=1` → skipped by dedup (can be KRW-set to retire a poisoned region).
+- Region fields: `+0x28` = mem_entry port (→port+0x48 kobj→+0x10 submap),
+  `+0x38/+0x40` = base/size (chroot & iOS both 0x180000000/0x100000000),
+  `+0x18` rootdir vnode key, `+0x30` = -1.
+- Chroot (rootdir=vnode) regions are destroyed when last task unbinds;
+  a1=0 system regions persist.
+- Queue snapshot this boot: node0 = iOS system region (60 entries,
+  cache data at off 0x28094000+ → VA 0x1A8094000 — matches dyld's
+  "re-using existing shared cache" listing). node1 = poisoned leftovers
+  [0x70cdc000..0x7552c000] + sentinel (f119=1) — stale-marked it.
+
+### EINVAL (22) site map in `sub_8459570`
+
+| IDB addr | Condition |
+|---|---|
+| 0x84596c4 | sum(files[i].count) > mappings_count |
+| 0x845976c | **`task+0x3E8 == 0` — no bound shared region** |
+| 0x8459774 | (same site, trace twin) |
+| 0x8459814 | fd→fileglob lookup failed (errno arg=22) |
+| 0x8459d04 | anonymous/dyn mapping VA or size not page-aligned |
+| 0x8459d74 | dyn record (fd=-1) with count≥2 |
+| 0x8459d50 | `*(u16*)(vnode+0x70) != 1` (v_type != VREG) |
+| 0x8459ce0 | `vp+0x78`(ubc)==0 or `*(ubc+8)`==0 (UBC not instantiated) |
+| 0x8459cb0/b4 | per-mapping: blob coverage/range check |
+| 0x8459cbc | per-mapping: `(sms+44 & 0x10)==0` && (`sms_size==0` \|\| `foff+size` overflow \|\| `ubc_cs_blob_get`==NULL \|\| blob doesn't cover [foff,foff+size)) |
+
+EPERM(1) sites: fglob flag check, `va_uid!=0`, file's mount != rootdir's mount
+(unless on /private/preboot/Cryptexes mount), region rootdir mismatch.
+
+### sms (mappings[]) layout — confirmed by live dump at 0x35690
+
+48B stride: `+0 va, +8 size, +16 file_offset, +24 slide_size, +32 ?, +40
+{max_prot,init_prot}`. Kernel per-mapping CS check: skipped if
+`sms+44 & 0x10` (byte inside init_prot half — VM_PROT_ZF-class flag).
+
+Main cache sms[0] = `{va 0x180000000, size 0x67f5c000, foff 0, slide 0,
+prot 5/5}` — foff=0 is legal (covered by blob range check).
+
+### Blob state (verified post-cachereg, this boot)
+
+`cachereg` (fcntl F_ADDSIGS {0,cso,css}) attaches cs_blob at `ubc+0x50`;
+blob+0x38=cso (covered-range end), +0x40=css. Both main & .01 attached OK
+(main superblob first-page repair still holding after reboot — file
+content persists on the data volume).
+
+### Currently-open EINVAL (main still fails with blobs+VSHARED+VREG)
+
+Remaining un-excluded candidates:
+- `sub_8061EF0` populate returning >3 → wrapper EINVAL (NOT yet audited).
+- `sub_867A738` MAC file_check_mmap(prot=7,flags=0x12) propagating 22 from
+  some policy — AMFI skips VSHARED files, but Sandbox/other policies could
+  still veto. Needs per-policy branch trace.
+- `*(vp+216)` mount == `*(rootdir+216)` — verified same fs (both under
+  /var/mnt/rootfs on data vol) → passes; cryptex fallback exists anyway.
+- fd lookup: dyld's fds resolve (files opened successfully before syscall).
+
+### dyld_plat.bin patch inventory (measured, vs stock dyld-15.6.1)
+
+Only: crossarch + misc small sites; **NOT** hasexisting (real
+hasExistingDyldCache incl. its `__shared_region_check_np` call), NOT
+prereuse, NOT filescount1 (production files=[main,.01,dyn]), NOT dynoff
+(real dyn VA), NOT accessor/fcntl_nop/cover_b. `hasexisting`/`prereuse`
+are diagnostic-only: they skip the check_np inside hasExistingDyldCache
+which is harmless for binding (map-init binds anyway) but changes reuse.
