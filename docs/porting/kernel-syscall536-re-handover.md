@@ -189,3 +189,238 @@ Also scan kernel `__text` for the same pattern — setup's callees like
   bits[21:10]; strings often also referenced from `__const` tables (scan for
   qword == string VA).
 - Big scan loops over `__text` take a while — batch per segment.
+
+---
+
+# MILESTONE 2026-09-27 — errno matrix nailed + all setup EFAULT sites disproven
+
+## Measured errno per input shape (dyld 15.6.1, chroot /var/mnt/rootfs)
+
+| Test (dyld patch variant) | files[] sent to syscall | Result |
+|---|---|---|
+| `fc0` | 1 anonymous entry {fd=-1, cnt=1} + dynamic region mapping | **success** (536 returns 0; dyld then fails later with "cache not loaded" — expected, no real file mapped) |
+| `nodyn` | 1 real file {cryptex cache fd} + 8 macOS mappings | **EINVAL(22)** |
+| `map1` | 1 real file + only mapping[0] {VA 0x180000000, sz 0x67f5c000, foff 0, prot 5/5} | **EFAULT(14)** |
+| `map1` + slide-bit cleared (`clrslide` @ patch clears 0x20 in sms max/init prot) | same | **EFAULT(14)** — slide path eliminated |
+| `map1` + `init_prot|=VM_PROT_ZF(0x10)` → kernel takes ANON path for same address | same | **EFAULT(14)** — file object eliminated; address/entry path still fails |
+| `file@+0x40000000` (cache VA[0] edited in file) | real file, 1 mapping at submap offset 0x40000000 | **SIGKILL** (536 succeeded → first touch of modified-cache page → cs_invalid_page kill; NOT a mapping failure) |
+| `anon@offset 0` (dynoff=0 variant) | fd=-1 mapping at offset 0 | **SIGKILL** under modified binary (CS kill of dyld itself — inconclusive for syscall) |
+
+errno decode chain (RE-confirmed): worker returns kern codes; wrapper
+`sub_FFFFFE0008459134` maps 0→0, 1→EFAULT(14), 2→EPERM(1), 3→ENOMEM(12),
+≥4→EINVAL(22). `setup` (`sub_FFFFFE0008459570`) instead returns **raw errno**
+directly (22/1/12/…).
+
+## Setup `sub_FFFFFE0008459570` — complete error-site map
+
+8 args: a1=proc-ish, a2=files_count, a3=user files, a4=mappings_count,
+a5=user mappings, a6=&internal_files_out, a7=&sr_out, a8=task root dir vnode.
+
+Returns **errno** (not kern codes):
+- `!sr` (task has no shared region) → 22
+- `sr->+0x18 (sr_root_dir) != a8 && rootvnode != a8` → **1 (EFAULT)**
+- anon file (fd=-1): `mappings_count>=2` → 22; sms_address/sms_size not
+  page-aligned (shift=*(cpu+0x34), fallback 14) → 22
+- `sub_FFFFFE0008377D54` (fileproc lookup, returns raw errno) → raw
+- `*(fileproc+0x10)=fileglob; (fg+0x10)&1 == 0` → **1** (gated by
+  `dword_FFFFFE000A9FCA58` trace-level, prints if ≥1)
+- `vnode_getattr`: `va_uid != 0` → **1**
+- `*(vnode+0xD8) != *(a8+0xD8)` → falls back to
+  `vnode_lookupat("/private/preboot/Cryptexes")` then compares `+0xD8` —
+  mismatch → **1**
+- `ubc_cs_blob_get(vp,-1,-1,sms_file_offset)` → `blob==NULL` or
+  `blob[6]+blob[5] > map_end || blob[7]+blob[5] < map_start` → **22**
+  (per-mapping CS coverage check)
+- various: `v_type != VREG`, no pager/control, zero-fill bookkeeping → 22
+
+### All four setup EFAULT sites DISPROVEN by runtime measurement (KRW reads)
+
+| Site | Measured |
+|---|---|
+| sr_root_dir vs a8 | fc0 (same region+task) passed → equal |
+| `(fileglob+0x10)&1` | cryptex cache fg+0x10 = `0x100000001` → bit set ✓ |
+| `va_uid != 0` | files are root:wheel uid=0 → pass |
+| `vnode+0xD8` mismatch | mac file / rootdir / macdsc ALL `0xfffffe22a96d4340` (same mount) → first check passes, cryptex fallback NOT reached |
+
+⇒ **EFAULT(14) originates inside the mapping WORKER**
+(`sub_FFFFFE00080623D4` → `sub_FFFFFE0008017E5C`/`sub_FFFFFE0008019768`),
+not in setup. EINVAL(22) for the 8-mapping set is a *separate* failure —
+most likely the per-mapping `ubc_cs_blob_get` coverage check (last untested
+setup predicate) or the worker loop.
+
+## Enter layer — `sub_FFFFFE0008019768` (vm_map_enter)
+
+- Only DIRECT `v16=1` (INVALID_ADDRESS) = bounds check:
+  `start < *(map+0x20) || end > *(map+0x28) || start>=end`.
+  Measured live submap: **min=0x0, max=0x100000000** → offset-0 entry passes.
+- All other nonzero returns come via subcalls:
+  `sub_FFFFFE000801DF20` (when a5&0x4000),
+  `sub_FFFFFE000801CE34` (on `v49→LABEL_291` path; called with
+  (map,start,end,prot,24,1,0,0,0) when `map+181h&2` — the nested-map flag),
+  `sub_FFFFFE00080231D0`, `sub_FFFFFE0008034B2C` (alloc entry),
+  `sub_FFFFFE000801CBF4`, `sub_FFFFFE000808F3E8`, `sub_FFFFFE0008090038`.
+- `sub_FFFFFE0008017E5C` (vm_map_enter_mem_object wrapper): returns
+  4/17/29 only — never 1. ⇒ the "1" is inside 8019768 or its callees.
+- `v16=3` (ENOMEM) sites exist but we get 1.
+
+⇒ NEXT: find which callee inside 8019768 returns 1 for a file-backed
+entry in an EMPTY nested submap. Candidate: `sub_FFFFFE000801CE34`
+(the permanent/protect sync on nested-map path) or the object-branch
+checks on `v154`/`v89` (vo_size vs end, object internal bit etc.).
+
+## AMFI mmap hook — measured & RE'd
+
+- `mac_file_check_mmap` = `sub_FFFFFE000867A738` — MACF dispatch,
+  collects prioritized module errors (11>22>3>2>13>1>other).
+- AMFI impl `hook_file_check_mmap` @ `0xfffffe000a659664`:
+  `if (prot&4) { vp=fg_get_vnode(); if (!vnode_isdyldsharedcache(vp))
+      return cred_sb_evaluate(cred,16,{type=1,vp}); } return 0;`
+- `vnode_isdyldsharedcache` @ `0xfffffe000811468c` = `(vp+0x54) >> 9 & 1`.
+- Measured v_flag(+0x54):
+  - cryptex macOS cache: **0x184a00 — bit9 SET** → AMFI check skipped
+  - iosdsc copy: 0x84800 (bit9 clear) — yet iOS cache passed 536 before
+    → sb_evaluate tolerated it
+  - macdsc copy: was 0x84800 → KRW-set to 0x84a00 via set_vshared.py
+
+## Confirmed struct offsets (this session, runtime-verified)
+
+```
+proc +0xF8            fd_ofiles;  fd_ofiles + fd*8 → fileproc
+fileproc +0x10        fileglob
+fileglob +0x10        flags — bit0 must be SET (else setup EFAULT)
+fileglob +0x38        vnode
+vnode   +0x54         v_flag — bit9 (0x200) = VSHARED_DYLD
+vnode   +0x78         ubc_info
+vnode   +0xB8         v_name
+vnode   +0xD8         mount/subtree owner — files sharing fs share value
+shared_region +0x18   sr_root_dir vnode
+shared_region +0x38   base  (+0x40 size, +0x48/+0x50 nesting, +0x76 stale)
+vm_map  +0x20         min_offset   (measured 0)
+vm_map  +0x28         max_offset   (measured 0x100000000)
+vm_map  +0x18         first entry ptr ; +0x30 nentries
+cs blob               v66[5]=coverage base, v66[6]+v66[7]=covered range
+                      (vs mapping file-offset range; else setup EINVAL)
+dyld cache mapping    56-byte records @ header+0x138 (off) / +0x13C (cnt):
+  +0x00 VA  +0x08 size  +0x10 file_off  +0x18 slideInfoFileOff
+  +0x20 slideInfoFileSize  +0x28 flags  +0x30 maxProt|initProt<<32
+macOS cache rec0 = VA 0x180000000 sz 0x67f5c000 foff 0 slInfo 0/0 flg 0 prot5/5
+```
+
+## Device tooling notes (reproducible traps)
+
+- `python3 -` (stdin) and `python3 -c` segfault (rc=139, no output) under
+  Dopamine checkin — **only file-based scripts work**.
+- `sysctl` is at `/var/jb/usr/sbin/sysctl`; PATH must include /var/jb/*.
+- `sysctl vm.shared_region_pivot=1` → "Operation not permitted" from this
+  shell (write-once/denied) — region staleness was instead cleared via
+  `vm.shared_region_destroy_delay=0` + KRW marking node stale.
+- Working scripts: `/var/mobile/{set_vshared.py,fgdump.py,vnd8.py,blob_read.py,subwalk.py}`.
+- KRW write of vnode v_flag (non-pointer field) is safe — pointer fields
+  are PAC'd, writing them panics.
+
+## Open questions (ordered)
+
+1. Inside `sub_FFFFFE0008019768`: which callee returns 1 for a file-backed
+   entry? (decompile 801CE34 / 801DF20 / 80231D0 — check each return-1 site)
+2. Why EINVAL(22) with all 8 mappings — is the `ubc_cs_blob_get` coverage
+   check failing on a specific mapping? (rec3 flags=0x44 / rec5 0x5 /
+   rec6 0x20 — AUTH/CRYPTO/DIRTY flag bits may route differently)
+3. Does `vnode+0xD8` cryptex-subtree comparison actually allow the REAL
+   `/System/Volumes/Preboot/Cryptexes/...` file, or does setup expect the
+   file under a cryptex mount (`/private/preboot/Cryptexes` +0xD8 was
+   DIFFERENT = 0xfffffe22a96d4d60 — that lookup branch would EFAULT if
+   reached; it's only avoided because rootfs mount == rootdir mount).
+
+## MILESTONE 2026-09-27 (cont.) — corrected evidence: file-backed path fails at ALL offsets
+
+### Error corrections vs earlier session notes
+
+1. **ZF experiment was invalid**: the `init_prot` patch encoded `0x407`
+   (bit10=0x400), NOT `VM_PROT_ZF=0x10`. The kernel ZF check is
+   `*(sms+0x2C) & 0x10`. Anon path for file records was never actually
+   tested via that route.
+2. **"file@nonzero offset succeeded" interpretation was wrong**: retesting
+   VA[0]=0x1c0000000 (submap offset 0x40000000) gives the same 134-abort
+   as offset 0. The earlier 139-SIGSEGV was a dead-cave artifact.
+3. **dynoff restore**: original `dynamicDataOffset` (header+0x1F0) =
+   `0x12c75c000`, NOT 0. A `0` write was a modification, not a restore.
+
+### Cleanest current error matrix (all with real cryptex-path file)
+
+| files[] | mappings | result |
+|---|---|---|
+| {fd=-1} anon only | dynamic region | **success** (536=0) |
+| {fd=cache} | mapping[0] only | **EFAULT(14)** — e5 probe byte `0e` confirmed twice |
+| {fd=cache} | all 8 | **EINVAL(22)** |
+| {fd=cache} | m[0] at VA+0x4000, +0x40000000, initProt+0x10 | **EFAULT/134** (offset-independent) |
+
+⇒ **file-backed `vm_map_enter_mem_object` (`sub_FFFFFE0008017E5C`)
+fails for the macOS cache regardless of target address.**
+Setup phase fully cleared (all 4 EFAULT sites measured pass).
+EFAULT = worker code 1 = `KERN_INVALID_ADDRESS`.
+
+### Inside `sub_FFFFFE0008017E5C` / `vm_map_enter_mem_object_helper`
+
+Source path (xnu-8792.81.2 `vm_map.c:3977+`): for `IKOT_MEMORY_OBJECT`
+port → `memory_object_to_vm_object` → `pager_ready` wait →
+`memory_object_map(pager, prot)` → **`vm_object_copy_strategically`
+(because copy=TRUE)** → `vm_map_enter`.  Errors from
+copy_strategically propagate directly (`vm_map.c:4742`).
+
+The ANON path skips all of this: `vm_object_allocate` (`sub_8034B2C`)
+→ `sub_8019768` (vm_map_enter) directly. This is the ONLY structural
+difference between working and failing paths.
+
+`vm_object_copy_strategically` (`vm_object.c:3742`):
+- `COPY_DELAY` → `vm_object_copy_delayed` (cheap shadow, may fallthrough)
+- `COPY_NONE` → `vm_object_copy_slowly` (physically copies EVERY page —
+  for 1.7 GB object this is enormous; failure modes: INVALID_ARGUMENT,
+  MACH_SEND_INTERRUPTED)
+- `COPY_CALL` → `vm_object_copy_call` → pager `memory_object_copy()`
+- `COPY_SYMMETRIC` → RESTART_COPY → `vm_object_copy_quickly`
+
+### New suspect (ordered)
+
+1. **The file's vm_object `copy_strategy`**: if the vnode pager handed
+   the kernel a COPY_NONE object for this file, `copy_slowly` attempts a
+   physical 1.7 GB page-for-page copy inside the syscall — likely to
+   fail. iOS stub object may use a different strategy. UNVERIFIED —
+   need `obj+0x70` (copy_strategy) + `obj+0x7C` flags read; my
+   obj-via-`ctl+0x20` chain needs re-verification (reads were noisy).
+2. `object->pager_ready == FALSE` for this file → wait loop → could
+   propagate an error on interrupt.
+3. `sub_FFFFFE000801CE34` (the map+0xB4&2 nested-flag protect sync on
+   the v49 tail) — returns v22/v91 from callees; may return 1.
+
+### Helper arg semantics (from worker decompile)
+
+`sub_FFFFFE0008017E5C(v23=submap, v95=&target_addr)` — the "port" arg
+(a8) comes from `*(file_record+0x48)` = the file's **ui_pager**
+(vnode_pager). `pager+0x10` = ui_control (back-ptr). The helper reads
+`*(a8+16)` and treats it as the vm_object — so effectively
+`object = ui_control` in the IKOT_MEMORY_OBJECT path. Still needs a
+clean read of `moc` layout; `control+0x20` looks like the real
+vm_object ptr and `control+0x18` like a map/ref count (0x146 for the
+cryptex file — it had been mapped before by other processes/tests).
+
+### Environment notes (new traps)
+
+- **Interpreter is `/usr/lib/dyld`** (NOT `/usr/bin/dyld`) — deploy
+  probes to BOTH; usr/lib/dyld was clobbered once today by an unknown
+  writer (timestamp 12:51).
+- **Exec vetoes cascade**: after several CS-invalid execs, ALL chroot
+  execs die SIGKILL (even `true`, even TC-whitelisted dyld). zsh itself
+  starts failing to dlopen signed modules. It recovered spontaneously
+  before; `jbctl trustcache add <cdhash>` for the deployed interpreter
+  is necessary but NOT sufficient once the cascade starts.
+- `objc`/`dyld` output bytes: e5 errno probe writes 8 raw bytes to
+  stderr at the syscall stub — grepable as `^\x0e\x00{7}` or
+  `^\x16\x00{7}` at file start.
+- Device dirs: real tests use cryptex path
+  `/var/mnt/rootfs/System/Volumes/Preboot/Cryptexes/OS/System/Library/dyld/dyld_shared_cache_arm64e`;
+  `/var/mnt/rootfs/macdsc/` is a scratch copy (has been edited; its
+  embedded signature no longer matches contents — do NOT use for CS
+  experiments anymore; restore by re-copying from Mac
+  `/Users/ciscohe/Desktop/dyld-cache-15.6.1/`).
+- Pristine cache on Mac: `/Users/ciscohe/Desktop/dyld-cache-15.6.1/dyld_shared_cache_arm64e`
+  (size 0xa1b18000, dynoff 0x12c75c000, rec0 prot 0x500000005).

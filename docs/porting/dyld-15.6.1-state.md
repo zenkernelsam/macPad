@@ -44,6 +44,99 @@ a fact/offset/result changes, BEFORE context is lost.
 
 ---
 
+## ★★★★★ 2026-09-28（三·晚）⭐⭐⭐⭐⭐ MILESTONE：**setup 全部 EFAULT 站点实测排除；file-backed 在所有 offset 都挂；嫌疑收敛到 `vm_map_enter_mem_object` 的 copy_strategically 层**
+
+> ⚠️ **对上一节的两条修正**：
+> 1. `zf0` 实验 **无效**：patch 写的是 `0x407`（bit10=0x400）不是 `VM_PROT_ZF=0x10`——匿名路径从未在同址测过。"同址匿名也失败⇒地址侧问题"结论**作废**。
+> 2. "file@非零 offset 成功（139 SEGV）"是 cave 未执行假象：VA[0]=0x1c0000000 / +0x4000 / +0x40000000 三个偏移**全部 EFAULT/134**——file-backed 与地址无关。
+> 3. `dynamicDataOffset` 原值 = `0x12c75c000`（header+0x1F0），写 0 是修改不是还原。
+
+### 错误矩阵（runtime-confirmed, e5errno 读原始值）
+| files[] | 结果 |
+|---|---|
+| {fd=-1} 匿名 dynamic 区 | **536=0 成功** |
+| {fd=macOS 缓存} mapping[0] 单条 | **EFAULT(0x0e)**（e5 字节 `0e` 两次复现）|
+| {fd=macOS 缓存} 全 8 条 | **EINVAL(0x16)** |
+| m[0] 挪 offset 0x4000 / 0x40000000 / initProt+0x10 | **EFAULT/134**（与地址无关）|
+
+### setup（`sub_FFFFFE0008459570`）全部 EFAULT(1) 站点——已逐一**实测排除**
+| 站点 | 实测 |
+|---|---|
+| `sr+0x18 rootdir != a8` | fc0 同区同任务通过 ⇒ 相等 |
+| `fileglob+0x10 & 1` | 实测 `0x100000001` bit 已置 ✓ |
+| `va_uid != 0` | 文件 root:wheel uid=0 ✓ |
+| `vnode+0xD8(mount) != rootdir+0xD8` → `/private/preboot/Cryptexes` 子树比较 | mac 文件/根目录/macdsc 全部同 mount `0xfffffe22a96d4340` ⇒ 首检过 |
+⇒ **EFAULT 在 worker 层**（`sub_80623D4` → `sub_8017E5C`/`sub_8019768`），不在 setup。
+EINVAL(22) 全 8 条是**另一独立失败**：最可疑为逐映射 `ubc_cs_blob_get` 覆盖检查（rec3 flg=0x44/rec5=0x5/rec6=0x20 有 AUTH/CRYPTO 标志位）。
+
+### worker 层结构（源码 vm_shared_region.c:1726+ + IDA 对齐）
+- `init_prot & 0x10(ZF)` → `map_port=NULL` → `vm_object_allocate`+`vm_map_enter`（**匿名，成功**）
+- 否则 → `map_port=file_object->pager` → **`vm_map_enter_mem_object`**（=内核 `sub_8017E5C`，**失败**）
+- 两边都以 `vmkf_already=TRUE | VM_FLAGS_FIXED | copy=TRUE` 进入。
+- **file-only 步骤**：`memory_object_to_vm_object` → `pager_ready` wait → `memory_object_map(pager,prot)` → **`vm_object_copy_strategically`(copy=TRUE)** → `vm_map_enter`。匿名路径全跳过。
+- `sub_8017E5C` 自身只返回 4/17/29；`sub_8019768` 唯一字面 `return 1` 是 bounds（实测 min=0/max=0x100000000 通过）→ 1 来自更深的子调用（`801CE34` 尾保护同步/`801FC88`/copy 链）。
+- **旁证**：用户态 `mmap(fd, PROT_READ, MAP_PRIVATE)` 对同一文件 0x67f5c000 **成功** ⇒ 文件/object/pager 健康，问题**子映射特异**。
+
+### 新确认结构偏移（runtime-verified）
+`fileglob+0x10` 低位 bit0 必须置位；`vnode+0xD8` = mount 归属（同 fs 同值）；`vnode+0x54` v_flag bit9=0x200 = `VSHARED_DYLD`（`vnode_isdyldsharedcache`=该位；cryptex 真缓存**已自带**，iOS 副本无）；`ubc+0x20` ui_size、`+0x28` ui_flags、`+0x50` cs_blobs；`ui_control+0x18`≈map 计数（macOS 0x146 vs iOS 0x1）、`+0x20`≈vm_object。
+AMFI `hook_file_check_mmap@0xfffffe000a659664`：`prot&4 && !isdyldsharedcache → cred_sb_evaluate`（macOS 缓存被跳过）。
+
+### 下一棒（按序）
+1. 读 `moc`（ui_control）真实布局 + `vm_object+0x70 copy_strategy`/`+0x7C flags`（internal/pager_ready/true_share）——对比 iOS 文件对象差异。
+2. 若 copy_strategically 嫌疑成立：`object->copy_strategy` 取值定路径（COPY_DELAY→shadow / COPY_NONE→1.7GB 物理复制 / COPY_CALL→pager 拒）。
+3. 设备实验（等环境自愈后）：fc0 改 dynamic VA=0x180000000 测 **匿名@offset0**——若成功⇒坐实"file-path 独挂"；若 EFAULT⇒offset0 另有毒。
+4. 追 `sub_801FC88`（CE34 内的 protect/pmap 同步）return-1 站点。
+
+### 环境新陷阱（今天实测）
+- **解释器 = `/usr/lib/dyld`**（非 /usr/bin/dyld）；该文件今天被未知写入者覆盖过一次（12:51，1228848B 非 TC 版→全 chroot 137）。部署探针要**两个路径都放**。
+- **exec-veto 级联**：连续多次 CS-invalid exec 后**所有** chroot exec 全 137（连 `true`、连 TC 内 dyld），zsh 自身 dlopen 也开始报 CS invalid。此前会自愈；发生时先验证 `chroot . /usr/bin/true`。
+- **python3 stdin/`-c` 模式 segfault**(rc=139 无输出，Dopamine checkin 限制）——**只用文件脚本**：`/var/mobile/{set_vshared.py,fgdump.py,vnd8.py,objdump2.py,blob_read.py}`。
+- `sysctl` 全路径 `/var/jb/usr/sbin/sysctl`；`vm.shared_region_pivot` 从当前 shell 写会被 EPERM。
+- **scratch 缓存已污染**：`/var/mnt/rootfs/macdsc/` 被我多次原地改（内嵌签名与内容失配）⇒ 勿再用于 CS 实验；恢复源 = Mac `/Users/ciscohe/Desktop/dyld-cache-15.6.1/dyld_shared_cache_arm64e`（0xa1b18000，dynoff 0x12c75c000，prot 0x500000005）。
+
+---
+
+## ★★★★★ 2026-09-28（二）⭐⭐⭐⭐⭐ MILESTONE：**536 失败二分定位——fd=-1 路径干净；主文件双错误：EINVAL(setup) vs EFAULT(enter@offset0)**
+
+### 二分结果（runtime-confirmed，均经 e5errno 探针读原始 errno）
+
+| 变体 | 提交内容 | 结果 | 结论 |
+|---|---|---|---|
+| `fc0` (W28=0) | files=[仅 dynamic 匿名区 fd=-1] 1 mapping | **536 成功** | task 有 region、root dir 匹配、fd=-1/匿名路径全干净 |
+| `nodyn`+`filescount1` | files=[main] 8+1 mappings | **EINVAL(0x16)** | 真实文件路径挂 |
+| `map1`(+nodyn) | files=[main] count=1 → 仅 mapping[0] | **EFAULT(0x0e)** | setup 过了，enter 挂 |
+| `zf0`+map1 | mapping[0] init_prot=ZF(匿名 enter，同址 offset0) | **EFAULT** | 非文件对象问题，是地址/子映射侧 |
+| `slide0` | files[0].sf_slide=0(slide=0) | 仍 EINVAL | 随机 slide 出窗假设**否** |
+| `noslide`（旧） | NOP |=SLIDE @0x35eec | 仍 EINVAL | ⚠️ 该 patch 只去"附加 OR"；若记录本身含 0x20 位则无效——**不能排除 slide 路径，待真清位** |
+
+### 两个独立失败
+- **EINVAL(22)**：多映射时在 **setup 阶段**（enter 之前）触发——嫌疑集中在逐映射 `ubc_cs_is_range_codesigned`（macOS 文件已挂 detached blob，`F_GETSIGSINFO`(105) 实测 rc=0 platform=0；iOS 文件 vnode **无 blob 却通过** → "缺 blob"不成立；detached-blob 的类型/覆盖度可能不同）或逐映射地址/CS 校验。
+- **EFAULT(14)=KERN_INVALID_ADDRESS**：单 mapping[0](VA 0x180000000→子映射 offset 0)在 `vm_map_enter(_mem_object)` 失败；**同址匿名 enter 也失败** ⇒ 地址侧问题；**offset 0x78000000 的匿名区成功** ⇒ 子映射非全坏。候选：`sms_slide_start` copyin(slide_info)（若记录 prot 自带 SLIDE 则 noslide 无效——**当前首要验证**）、子映射 offset0 特殊处理、nested-pmap 限制。
+
+### 运行时实测 region 几何（KRW, slide=0x1eebc000）
+- chroot region：`base=0x180000000 size=0x100000000 nest=同` `cpu_subtype=0x0`(被 arm64ify 的主 exec 决定！) `first_map=-1`。
+- 子映射实测 `min=0 max=0x100000000`，残留匿名 entry `[0x78000000,0x78004000)`（dynamic 区遗留，不消）。
+- 两系统 region `cpu_subtype=0x2(arm64e)`；我方 region subtype=0 → **RE 时 sr_cpu_subtype==ARM64E 的 ptrauth/auth 分支不会走**。
+
+### 新探针（build_dyld.py）
+`fc0`@0x3538c `MOV W28,#0`；`nodyn`@0x354ec `files_count=W28`；`map1`/`map4`@0x3553c `MOV W13,#1/#4`(files[i].count)；`slide0`@0x3552c `sf_slide=0`；`zf0`@0x35ef0 `init_prot=0x407`；`noslide`@0x35eec NOP。
+**e5errno 探针是唯一可信 errno 源**（e5entry@0x76e04→e5cave@0x38d08,write(2,errno,8)）；0x38d08 作为 cave **可用**（早前 SIGILL 判错因）。
+
+### 关键内核结构偏移（xnu-8792.82.2, arm64e）
+`vm_shared_region`: +0x18 rootdir, +0x30 first_map, +0x38 base, +0x40 size, +0x48/+0x50 nest, +0x76 stale。
+`ipc_port`+0x48=ip_kobject → `vm_named_entry`+0x10=backing.map → `_vm_map`+0x20=min,+0x28=max,+0x18=first entry,+0x30=nentries。
+`shared_file_np`={fd,count,sf_slide} 12B；`shared_file_mapping_slide_np`=0x30B{sms_address,sms_size,sms_file_offset,sms_slide_size,sms_slide_start,sms_max_prot,sms_init_prot}。
+`F_GETSIGSINFO`=105 可查 vnode 附着 blob（ENOENT=无）。
+⚠️ `vm.shared_region_trace_level=7` 已开但 **kprintf 不进 dmesg**(iOS)——trace 路线不可用。
+`vm.shared_region_destroy_delay` 可写（0=即销）；`vm.shared_region_pivot` 可写=全标 stale。
+
+### 下一步
+1. 用 `slidecave2`（真清 SLIDE 位+清 sf_slide）+ map1：errno 变→slide copyin 确认；不变→direct enter offset0。
+2. mapN(2/4/8）逐加映射，定位首个触发 EINVAL 的 mapping→再查其 foff/CS/属性。
+3. 若 slide 排除：KRW 在 enter 失败前后对比子映射 entry 表，或用 cave 把 mapping[0].sms_address 挪到 0x1840000000(offset≠0)判 offset0 特异性。
+
+---
+
 ## ★★★★★ 2026-09-28 ⭐⭐⭐⭐⭐ MILESTONE：**cdhash 算法搞错 = 之前所有 `SIGNALED 9` 的真因**（runtime-confirmed）
 
 **结论（不要再推导）**：内核 exec 准入查的 cdhash 是
