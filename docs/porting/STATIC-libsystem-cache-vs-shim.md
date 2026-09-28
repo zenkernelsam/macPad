@@ -78,3 +78,24 @@ table = protectedPaths @ 0x9c638（3 个 const char*）
 - 按 `internalinstall` / `allow*over*` / `protection` 关键词搜符号名：只命中 `PathOverrides` 一族，**没有**直接命名的 flag ⇒ 该布尔无独立符号名。
 - ⚠️ 也试过 Python 字节模式扫 `STRB/STR #0x298`：模式/对齐假设不可靠，**0 命中**（**结论：本类问题必须走 IDA，别用 Python 字节扫**——与项目铁律一致）。
 **下一步建议（静态）**：① 在 IDA 里对 `0x1f788` 那段引用反推：谁在 `RuntimeState` 构造后写过该字节（可对 ProcessConfig 对象做 xref 扫"写入 +0x298 的所有指令"）；② 或先找**其它读取者**（同一 block 里 +272/+304/+305/+312/+291 都是相邻布尔，其中某些已有日志/名字，可用来**反推字段语义**）。
+
+## 7. 本轮静态推进 ①：守卫属 **ProcessConfig**（已定），并拿到 block 的捕获来源
+
+block 字面量在 `dyld4::Loader::getLoader(...)` @ **0x1f018**（字面量 @0x1f368，descriptor `__block_descriptor_tmp.43`@0x9d760），
+其 `invoke` 就是我们分析的 0x1f788。关键捕获：
+```
+v8 = *(RuntimeState + 8)                       ; = ProcessConfig*  ← 由 *(v8+352)=DyldCache、*(v8+312)=logging 反证
+v9 = (ProcessConfig+352 != 0) ? (*(ProcessConfig+520) ^ 1) : 0     ; → 写入 block+80 (v56)
+v32 = ProcessConfig::DyldCache::indexOfPath(cache, path, &idx)     ; → 写入 block+81 与 block+82 (v57/v58)
+```
+⇒ ① 守卫 `*((ProcessConfig*)+298)` 的基址**确认是 ProcessConfig** ✓
+（此前 `ADD Xn, #0x298` 的两个命中属 `RuntimeState::notifyObjCPatching` / `setObjCNotifiers`，是**另一个结构**，已排除 ✗）。
+
+⇒ ② **`ProcessConfig+520` 是个新线索**：它决定 block+80（= `v56`），而 block+80 正是 `loc_1FE08` 那条"磁盘覆盖"路径的分支条件之一。
+⇒ ③ `block+81/82 = indexOfPath(...)`（**该路径是否在缓存里**）；结合 0x1fd94 的 `TBZ W23` 可见"在缓存里"是走缓存分支的必要条件之一。
+
+**下一批静态靶子（更聚焦）**
+1. `ProcessConfig+298` 与 `+520` 的**写入者**（两者都属 ProcessConfig；建议在 IDA 里对这两个偏移做"写指令"定位，
+   例如扫 `STRB/STR` 的 `op_any` 不可靠（位移不参与匹配），改扫 `ADD/ADDU` 型基址计算或对 ProcessConfig 对象做数据流追踪）。
+2. 把 `+272`(isOSBinary ✓ 已由 `loadableIntoProcess` 调用点反证)、`+289`、`+291`、`+304/+305/+312`、`+520` 一起列出，
+   **用相邻字段反推语义**（其中多个已被日志使用，可作锚点）。
