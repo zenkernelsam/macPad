@@ -89,8 +89,29 @@ mapping，全部 VA∈[0x180000000,0x22560C000) ⊂ region）仍返回 **EINVAL(
 - VREG/ubc/VSHARED/mount/uid/可读位
 - sms[0].foff==0 合规（+44&0x10 是给"跳过 blob"的旁路，不是必需）
 
+## 3.5 新线索（handover 提交后又挖到——最优先验证！）
+
+**`sf_slide` 随机化可能就是当前 EINVAL 的根因**：
+
+- setup @0x8459684 解码确认内核 56B rec 的 `+0x10 = sf_slide`（用户
+  12B rec 第 3 字段低 u32）；populate 用它做 `event+4` 代际校验
+  （首条非零 slide 种入 region+4，后续 rec 的 slide 必须 ==它或 ==0）。
+- wrapper 里 `slide = rand32() % files[0].sf_slide & ~0x3FFF` 被加到
+  **每条** sms 的 VA(+0)和 slide(+24)。我们的 sf_slide=0x20000000
+  → X∈[0,512MB) 随机。main 尾 VA=0x22560C000，region 顶 0x280000000，
+  **X > 0x5AA34000(≈55% 概率）→ 越界 → enter EFAULT → EINVAL**。
+  且越界点永远在 populate 中途 → 部分条目先进去再被 rollback →
+  解释"有时成功有时 EINVAL"的全部随机性（今晨成功=小 slide 运气）。
+- **判别实验已构建未测**：`/var/mobile/dyld_sf0e.bin` =
+  crossarch+slide0+e5entry+e5cave（files[0].sf_slide=0 → 禁用随机化，
+  VA 固定取优选地址）。预测：errno 22→0，536 通过到 fsignatures 阶段。
+- ⚠️ 部署时设备正卡在 **exec-veto cascade**（连 dyld_plat 都 rc=137），
+  restore_env.sh 跑过了但 spawn 测试 `proc not found`——**先恢复再测**。
+
 ## 4. 建议下一步（按性价比排序）
 
+0. **跑 `dyld_sf0e.bin`**（§3.5）：部署三连跑，看 stderr 首个 8B 是否变 0
+   或进入下一阶段错误。**这是当前性价比最高的验证**。
 1. **找到 populate 的真实返回码**。`sub_80623D4` 返回 4/errno。入口顶部的
    `event+4 vs rec+16` 代际检查和 `*(u16*)(v26+16)&0x3FFF`（rec+16 疑似
    16K 对齐字段）都→4。**去读 setup(sub_8459570）里 56B rec+16 到底填什么**，
