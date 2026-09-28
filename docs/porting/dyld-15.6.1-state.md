@@ -2448,3 +2448,31 @@ cat: ___error ✅ → 现在只剩 ___maskrune
 ### 新问题（下一棒）
 `sh` 符号齐了但 **rc=137（SIGKILL）**：可能 ①AMFI/sandbox 拦截 ②它启动时做了某个被判非法的 syscall ③需要 `__progname/environ` 之外的东西。
 `cat` 只差 `___maskrune`（+其余 40 个，多为 stdio/socket）。
+
+# ✅✅✅ HANDOVER 收尾（2026-09-28 10:0x）——shim 补尾完成，cat 符号全通
+## 一句话结论
+**libSystem shim 是可扩展的，我按需补符号直到 `cat` 的 41 个导入全部解析成功**：
+```
+cat 的报错链（每补一个符号前进一格，全部实测）：
+  ___error → ___maskrune → _getopt → _malloc_type_malloc → _warn → _write → 【不再有 Symbol not found】✓
+  之后 rc=124（挂起 / 无输出）← 新类别问题，留给下一棒
+sh : 11 个导入全部解析 ✓（rc=137 SIGKILL ← 另一新类别问题）
+```
+## 方法（复刻步骤，10 分钟内可继续）
+1. 源码 `tmp/shim/libSystem_shim.c`（裸 `svc` 风格）+ `bash tmp/shim/build_shim.sh`（SDK 双架构 + `install_name_tool -id /usr/lib/libSystem.B.dylib`）
+2. 部署：`ldid -Hsha256 -S<ent>` → `cdhash_slices.py` 取每片 cdhash → `jbctl trustcache add` → **cp（勿先 rm！）** + `chmod 755`
+   ⚠️ 本次踩坑：scp 失败时我 `rm` 了旧文件导致 shim 一度缺失 ⇒ **先确认新文件到位再替换**
+3. 迭代：跑一次 → 读 `Symbol not found: X` → 在 shim 里补 X → 重建部署 → 重复
+   - **C 名与 Mach-O 符号差一个下划线**：`___error`←`__error`、`___maskrune`←`__maskrune`、`___stdinp`←`__stdinp`
+   - `$` 变体：`extern char *f(...) __asm__("_realpath$DARWIN_EXTSN");`
+   - 纯数据符号：`_DefaultRuneLocale`、`___stderrp/stdinp/stdoutp`、`_optind`、`___stack_chk_guard`
+4. 导入清单：`lipo -thin arm64 <bin>` + `dyld_info -imports`（已存 `tmp/imports/{cat,ls,sh}_imports.txt`；cat=41 / ls=91 / sh=11）
+## 当前状态与下一棒
+- **已补齐**：cat 全套符号（stdio 最小实现 fd0/fd1、open/read/write/close/fcntl、getopt 真实现、malloc bump + malloc_type 系列、
+  err/warn 家族、`__error`、`__maskrune`、stack-chk、realpath($)、socket 桩…）；sh 的 11 个符号。
+- **待解决（新类别，与符号无关）**：
+  1. `cat` 运行期**挂起（rc=124，无输出）** —— 疑点：`getopt` 循环、`fstat` 桩返回 0 导致 cat 误判、或 read/write 包装细节；建议下一棒用 lldb/`DYLD_PRINT` 或最小复现（`cat` 单文件 + `</dev/null`）定位；
+  2. `sh` **rc=137（SIGKILL）**：符号已通，疑 AMFI/sandbox 或 watchdog；
+  3. `ls` 还缺 `libutil.dylib`/`libncurses.5.4.dylib` 两个 shim + 91 符号（工程量大）。
+- **旁证保留**：`dyld_compat.bin`（关段序 policy，不影响映射）；缓存映射配方（iOS 先行 → macOS，见上文）；
+  铁律：shim 必须存在且签名有效、FS 写要在 cachereg 之前。
