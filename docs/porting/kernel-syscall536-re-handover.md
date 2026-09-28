@@ -521,3 +521,47 @@ prereuse, NOT filescount1 (production files=[main,.01,dyn]), NOT dynoff
 (real dyn VA), NOT accessor/fcntl_nop/cover_b. `hasexisting`/`prereuse`
 are diagnostic-only: they skip the check_np inside hasExistingDyldCache
 which is harmless for binding (map-init binds anyway) but changes reuse.
+
+## 2026-09-29 Panic analysis: filescount1+dynfix270 → kernel data abort
+
+Panic log: `panic-full-2026-09-29-005237.000.ips`, pid 11895 `echo` (our chroot
+dyld run), cpu6, `Kernel data abort` far=`0xfffffe161c2c0008`.
+
+Backtrace (runtime − KernelCache slide `0xb5fc000` = IDB static):
+
+| runtime | IDB | function |
+|---|---|---|
+| pc 0xfffffe001365de74 | 0x8061e74 | `sub_8061C40` = shared-region **reslide/re-enter** |
+| lr 0xfffffe001365ec24 | 0x8062c24 | `sub_80623D4` populate worker |
+| lr 0xfffffe001365e098 | 0x8062098 | `sub_8061EF0` engine |
+| lr 0xfffffe0013a554b4 | 0x84594b4 | `sub_8459134` syscall setup |
+
+Faulting insn `0x8061e74: LDR X8,[X20]` inside:
+
+```
+for (a3; a3<=a4; a3+=56)            # kernel-side files[] recs, 56B stride
+  v22 = (a3==a4) ? a5 : *(u32*)(a3+4)   # last rec count comes from arg a5
+  v23 = (*(a3+8))+8
+  do { if(*v23) enter(...); v23+=48 } while(--v22)   # 48B entries
+```
+
+Call site `0x8062c20` passes `a5 = 4` (constant) — the **last** files[] record is
+the kernel-appended dynamic pseudo-entry; a5 is its mapping count. v23 walks
+`(a3+8)+8` + 48B×count — the panic means **the dyn record's mappings array was
+shorter than count=4** → read past a zone object → data abort.
+
+Root cause: our `filescount1`+`dynfix270` dyld submitted `files=[main]` while the
+kernel's dyn-record layout expected the array/count built from a consistent dyn
+entry. Forcing dyn VA=`0x270000000` (x26/x27 in the panic regs) made the kernel
+build a dyn record whose entries array didn't cover count → over-walk.
+
+**Rules learned:**
+- Never submit `files[]` whose declared counts mismatch the kernel's built
+  arrays — populate/reslide walks them blindly (no bounds check).
+- `dynfix270` is dangerous in isolation; dyn VA must be consistent with the
+  dyn record's entry array.
+- Panic ≠ EINVAL: SIGKILL/data-abort during 536 = reached populate; args were
+  accepted far enough to walk records.
+
+Next safe test: `filescount1 + nodyn` (files=[main] only, no appended dyn entry)
+or fully consistent `[main,.01,dyn]` submission.
