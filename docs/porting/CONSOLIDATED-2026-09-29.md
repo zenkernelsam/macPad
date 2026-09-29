@@ -306,10 +306,59 @@ libSystem UUID=`D161E41A`（缓存版，非 shim `B90391D8`）。
 
 ## 12. 下一步（建议顺序）
 
-1. **重启后干净 boot，直接跑 `post_reboot_macfirst.sh`（dyld_plat + macOS 缓存
-   作为第一条 chroot 命令）**——复现 09-28 的 536=0 基线。若复现不了，才轮到
-   msgbuf 取 kr。
-2. 若 EINVAL 复现：用 §7 msgbuf 读 `mapping[%d] failed 0x%x` → 钉死站点。
-3. 536 成功后主攻 **CS 击杀**：先纯 chroot（无 libmachook 注入）对照——判断
-   fault 的 624K r-x 文件是否注入链产物。
-4. libSystem 绑定问题沿 `ProcessConfig+0x208/0x12A` 门链走（STATIC 文档已铺好）。
+### 12a. 09-29 晚间 update：post_reboot_final2.sh + 干净复现结果
+
+**审计结论**（本次 dry-run 全程跑通）：
+
+- `post_reboot_macfirst.sh` = **旧错误配方**（dyld_sf0 + set_blob_cov），勿用。
+- `post_reboot_final.sh` = 09-28 修正版，配方正确但缺依赖守门。
+- **`post_reboot_final2.sh`（已部署 /var/mobile/）= 加固版**：
+  - 步骤 0 依赖全检（缺即 FATAL 退出）+ scheck 自签 TC。
+  - 步骤 1 `RESTORE_NO_VERIFY=1 restore_env.sh`（run_nocskill 的
+    kernel-slide 扫描在本次重启后失效，HELLO 自检打不了 → 跳过）。
+  - 步骤 2 `scheck`（新写 `misc/scheck.c`，动态版，内联 SVC 只调
+    check_np(294) 不碰 536；`sprobe` 会真灌缓存，**不能当探针用**）。
+  - 步骤 4 只跑 `cachereg`（自然 blob，REG×2 + READY ok=1 实测确认）。
+  - 步骤 4→6 之间**禁止任何额外 chroot exec**（此时 blob 已挂，任何
+    dyld 进程都可能自己先灌满 region，抢走首次映射的观测）。
+  - 步骤 8 强制回滚 `dyld_probe_noC`。
+
+**本次 dry-run 的干净实验数据（region 空、blob 自然、dyld_plat）**：
+
+```
+scheck ret=-12            ← region 存在且为空（无污染）
+cachereg REG×2 READY ok=1 ← 自然 blob 附着成功
+[e1..e3] HELLO rc=0       ← echo 走磁盘 fallback，全部 notloaded=1
+dyld cache '(null)' not loaded: syscall to map cache into shared region failed
+                          ← 536 仍 EINVAL —— 是真实失败，不是污染
+[c1] cat /etc/hosts rc=0  ← cat 用磁盘库能跑通！
+[l1] rc=134 缺 libutil    ← ls 需要 libutil（rootfs 里没有，只能等缓存）
+[s1] rc=137 SIGKILL       ← sh 仍被杀（疑 CS/注入链问题）
+```
+
+**这证明 536 EINVAL 在完全干净的条件下可复现**——下一步不再是"先重启复测"，
+而是直接拿内核 `mapping[%d] failed 0x%x` 的真实 kr 值（msgbuf，见 §7），
+把 EINVAL 钉死到 `sub_8017E5C` 的具体分支。
+
+### 12b. 重启后可执行的确切顺序
+
+1. `bash /var/mobile/post_reboot_final2.sh`（全套已部署，依赖自检通过）
+2. 看步骤 2 的 `scheck ret=`：
+   - `-12` = 干净窗口 → 继续（正常路径）
+   - `0` = 已 populated（前面 exec 灌了）→ 仍可测，但数据是"复用"口径
+   - `-22` = 无 region（异常，检查 exec 链）
+3. 看步骤 4 `READY ok=1` + REG×2；缺一则 536 必败，先查 cachereg。
+4. 步骤 6 `e1` 若 `Using-map>0` 即缓存映射成功 → 直接看 cat/ls/sh。
+5. 若仍 EINVAL：跑 `kmsg.py`（msgbuf dump，见 §7）抓 `mapping[i] failed kr=`。
+
+### 12c. 给后面接手的 AI 的最短复现路径
+
+```
+# 设备上（重启越狱激活后第一条命令）:
+bash /var/mobile/post_reboot_final2.sh 2>&1 | tee /tmp/final2.log
+# 若 536 失败:
+/var/jb/usr/bin/python3 /tmp/kmsg.py   # 需要先找 slide,读 msgbuf
+```
+
+msgbuf 全局 = IDB `0xfffffe000aa030a0`(+slide)，其 +0x10 起是环形缓冲；
+SHARED_REGION_TRACE_ERROR 默认 level=1 直接输出到 msgbuf。

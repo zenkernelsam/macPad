@@ -41,10 +41,15 @@ for f in "$R/usr/lib/dyld" "$R/usr/lib/libSystem.B.dylib" \
     done
 done
 
-# 3) verify.
-echo "=== HELLO x3 ==="
-for i in 1 2 3; do
-    /var/mobile/run_nocskill /var/jb/usr/bin/env -i PATH=/usr/bin:/bin \
-        /var/jb/usr/bin/chroot "$R" /bin/echo HELLO 2>&1 | tail -2
-    echo "---"
-done
+# 3) verify — skip with RESTORE_NO_VERIFY=1 (e.g. when run_nocskill's
+#    kernel-slide scan is broken right after a reboot).
+if [ "${RESTORE_NO_VERIFY:-0}" = "1" ]; then
+    echo "=== HELLO x3 skipped (RESTORE_NO_VERIFY=1) ==="
+else
+    echo "=== HELLO x3 ==="
+    for i in 1 2 3; do
+        /var/mobile/run_nocskill /var/jb/usr/bin/env -i PATH=/usr/bin:/bin \
+            /var/jb/usr/bin/chroot "$R" /bin/echo HELLO 2>&1 | tail -2
+        echo "---"
+    done
+fi
