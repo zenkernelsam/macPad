@@ -442,6 +442,407 @@ P = {
         "d10083ff" "f90003e0" "910003e1" "d2800102" "d2800040" "d2800090" "d4001001"
         "12800020" "910083ff" "d65f03c0"),
         "cave3: write(2,errno,8); w0=-1; ret"),
+    # shrink7: @0x35690 cave — clamp mappings[7].size to 0x4000 (test whether
+    #   the last big 645MB RO entry is what populate rejects). dyn@8 untouched.
+    "shrink7":     (0x35690, bytes.fromhex("9e0d0014"), "@0x35690 b 0x38d08 (shrink m7)"),
+    "shrink7cave": (0x38d08, _le(
+        "d2808008"          # mov w8,#0x4000
+        "f900b748"          # str x8,[x26,#0x158]  entry[7]+8 = size (48*7=0x150)
+        "aa1a03e3"          # mov x3,x26  (replay)
+        "17fff322"          # b 0x35694
+    ), "cave: mappings[7].size=0x4000; resume @BL"),
+    # shrink7b: size=0x20000000 (512MB) — discriminates "size cap" vs
+    #   "foff+size <= csOff boundary" (0x7ad4c000+0x20000000=0x9ad4c000 < csOff)
+    "shrink7b":     (0x35690, bytes.fromhex("9e0d0014"), "@0x35690 b 0x38d08 (shrink7b)"),
+    "shrink7bcave": (0x38d08, _le(
+        "52a40008"          # mov w8,#0x20000000
+        "f900b748"          # str x8,[x26,#0x158]  entry[7].size
+        "aa1a03e3"          # mov x3,x26
+        "17fff322"          # b 0x35694
+    ), "cave: mappings[7].size=512MB; resume @BL"),
+    # shrink7c: size=0x22000000 — offset_end=0xa0d4c000>0xa0000000 but
+    #   foff_end=0x9cd4c000<0xa0000000/csOff — discriminates VA-offset bound
+    #   vs file-offset bound.
+    "shrink7c":     (0x35690, bytes.fromhex("9e0d0014"), "@0x35690 b 0x38d08 (shrink7c)"),
+    "shrink7ccave": (0x38d08, _le(
+        "52a44008"          # mov w8,#0x22000000  (movz w8,#0x2200,lsl#16)
+        "f900b748"          # str x8,[x26,#0x158]  entry[7].size
+        "aa1a03e3"          # mov x3,x26
+        "17fff322"          # b 0x35694
+    ), "cave: mappings[7].size=544MB; resume @BL"),
+    # shrink7d: size=0x268b0000 — foff_end=0xa15fc000 just under csOff=0xa160c000.
+    #   Distinguishes foff<csOff (pass) from an earlier foff/offset bound (fail).
+    "shrink7d":     (0x35690, bytes.fromhex("9e0d0014"), "@0x35690 b 0x38d08 (shrink7d)"),
+    "shrink7dcave": (0x38d08, _le(
+        "52a4d168"          # mov w8,#0x268b0000  (movz w8,#0x268b,lsl#16)
+        "f900b748"          # str x8,[x26,#0x158]  entry[7].size
+        "aa1a03e3"          # mov x3,x26
+        "17fff322"          # b 0x35694
+    ), "cave: mappings[7].size=0x268b0000; resume @BL"),
+    # shrink7e: size=0x268b8000 — foff_end=0xa1604000 = csOff-0x8000.
+    "shrink7e":     (0x35690, bytes.fromhex("9e0d0014"), "@0x35690 b 0x38d08 (shrink7e)"),
+    "shrink7ecave": (0x38d08, _le(
+        "52a4d168"          # movz w8,#0x268b,lsl#16  -> 0x268b0000
+        "72900008"          # movk w8,#0x8000,lsl#0   -> 0x268b8000
+        "f900b748"          # str x8,[x26,#0x158]
+        "aa1a03e3"          # mov x3,x26
+        "17fff322"          # b 0x35694
+    ), "cave: mappings[7].size=0x268b8000; resume @BL"),
+    # shrink7f: size=0x268bc000 — foff_end=0xa1608000 = csOff-0x4000 (1 page margin).
+    "shrink7f":     (0x35690, bytes.fromhex("9e0d0014"), "@0x35690 b 0x38d08 (shrink7f)"),
+    "shrink7fcave": (0x38d08, _le(
+        "52a4d168"          # movz w8,#0x268b,lsl#16
+        "72980008"          # movk w8,#0xc000,lsl#0 -> w8=0x268bc000
+        "f900b748"          # str x8,[x26,#0x158]
+        "aa1a03e3"          # mov x3,x26
+        "17fff322"          # b 0x35694
+    ), "cave: mappings[7].size=0x268bc000; resume @BL"),
+    # spinS: @0x35698 (post-BL landing). x0=536 ret. If ret==0 -> b . (stay
+    #   alive with region populated for map inspection); else resume.
+    "spinS":     (0x35698, bytes.fromhex("9c0d0014"), "@0x35698 b 0x38d08 (spinS)"),
+    "spinScave": (0x38d08, _le(
+        "aa0003f7"          # mov x23,x0   (replay 0x35698)
+        "b5fe4c80"          # cbnz w0, 0x3569c  (fail -> resume normal path)
+        "14000000"          # b .          (success -> spin; kill externally)
+    ), "cave: spin on 536 success"),
+    # spinS2: same as spinS but cave moved to 0x38d80 so it can coexist with
+    #   shrink7f (cave at 0x38d08). Entry @0x35698 (post-BL landing, X0=536 ret).
+    "spinS2":     (0x35698, bytes.fromhex("ba0d0014"), "@0x35698 b 0x38d80 (spinS2)"),
+    "spinS2cave": (0x38d80, _le(
+        "aa0003f7"          # mov x23,x0   (replay 0x35698)
+        "35fe48c0"          # cbnz w0, 0x3569c (fail -> resume normal path)
+        "14000000"          # b .          (success -> spin; kill externally)
+    ), "cave2: spin on 536 success"),
+    # ret536: @0x35698 -> write(2,&x0,8); replay mov x23,x0; b 0x3569c.
+    #   Reveals 536's raw return value without altering control flow.
+    "ret536":     (0x35698, bytes.fromhex("ba0d0014"), "@0x35698 b 0x38d80 (ret536)"),
+    "ret536cave": (0x38d80, _le(
+        "d10043ff"          # sub sp,#0x10
+        "f90007e0"          # str x0,[sp,#8]
+        "910023e1"          # add x1,sp,#8 (buf=&ret)
+        "d2800102"          # mov x2,#8
+        "d2800040"          # mov w0,#2
+        "d2800090"          # mov x16,#4
+        "d4001001"          # svc #0x80    write(2,&ret,8)
+        "f94007e0"          # ldr x0,[sp,#8]  (restore ret)
+        "910043ff"          # add sp,#0x10
+        "aa0003f7"          # mov x23,x0   (replay 0x35698)
+        "17fff23d"          # b 0x3569c
+    ), "cave2: write(2,&ret536,8); resume @0x3569c"),
+    # mark536: @0x35690 -> write 'K\n' to fd2; replay mov x3,x26; b 0x35694.
+    #   Proves the 0x35690->cave->0x35694 path is sound (no memory writes).
+    "mark536":     (0x35690, bytes.fromhex("9e0d0014"), "@0x35690 b 0x38d08 (mark536)"),
+    "mark536cave": (0x38d08, _le(
+        "d10043ff"          # sub sp,#0x10
+        "52814848"          # mov w8,#0xa4b   'K\n'
+        "f90007e8"          # str w8,[sp,#8]
+        "910023e1"          # add x1,sp,#8
+        "d2800042"          # mov x2,#2
+        "d2800040"          # mov w0,#2
+        "d2800090"          # mov x16,#4
+        "d4001001"          # svc #0x80
+        "910043ff"          # add sp,#0x10
+        "aa1a03e3"          # mov x3,x26   (replay)
+        "17fff259"          # b 0x35694
+    ), "cave: write 'K\\n'; replay; resume @BL"),
+    # fdpath: @0x35690 -> fcntl(files[0].fd, F_GETPATH, buf); write(2,buf,64)
+    #   Reveals which actual file dyld submitted (vnode identity check).
+    "fdpath":     (0x35690, bytes.fromhex("9e0d0014"), "@0x35690 b 0x38d08 (fdpath)"),
+    "fdpathcave": (0x38d08, _le(
+        "d10303ff"          # sub sp,#0xC0
+        "a9000fe0"          # stp x0,x3,[sp]      save arg regs
+        "a9010fe2"          # stp x2,x3,[sp,#0x10]
+        "f9400028"          # ldr w8,[x1]        fd = files[0].fd
+        "aa0803e0"          # mov w0,w8
+        "d2800641"          # mov w1,#50   F_GETPATH
+        "910203e2"          # add x2,sp,#0x80    buf
+        "d2800b90"          # mov x16,#0x5c fcntl
+        "d4001001"          # svc #0x80
+        "910203e1"          # add x1,sp,#0x80
+        "d2800802"          # mov x2,#64
+        "d2800040"          # mov w0,#2
+        "d2800090"          # mov x16,#4
+        "d4001001"          # svc #0x80       write(2,path,64)
+        "a9400fe0"          # ldp x0,x3,[sp]
+        "a9410fe2"          # ldp x2,x3,[sp,#0x10]
+        "910303ff"          # add sp,#0xC0
+        "aa1a03e3"          # mov x3,x26  (replay)
+        "17fff251"          # b 0x35694
+    ), "cave: fcntl(fd,F_GETPATH); write path; resume @BL"),
+    # badfd: @0x35690 -> files[0].fd = 99 (bogus). If errno flips from EINVAL to
+    #   EBADF, the kernel reached fd resolution -> EINVAL was a LATER check.
+    #   If still EINVAL -> failure is BEFORE fd resolve (region lookup etc.).
+    "badfd":     (0x35690, bytes.fromhex("9e0d0014"), "@0x35690 b 0x38d08 (badfd)"),
+    "badfdcave": (0x38d08, _le(
+        "52800c68"          # mov w8,#99
+        "b9000028"          # str w8,[x1]      files[0].fd = 99
+        "aa1a03e3"          # mov x3,x26   (replay)
+        "17fff260"          # b 0x35694
+    ), "cave: files[0].fd=99; resume @BL"),
+    # anonall: @0x35690 -> for all 9 mappings set flags|0x10 (mark anonymous).
+    #   Kernel's blob-coverage loop skips entries with +44 & 0x10 -> isolates
+    #   whether EINVAL comes from the blob loop vs fd/vnode-level checks.
+    "anonall":     (0x35690, bytes.fromhex("9e0d0014"), "@0x35690 b 0x38d08 (anonall)"),
+    "anonallcave": (0x38d08, _le(
+        "aa1a03e8"          # mov x8,x26        p = mappings
+        "d2800129"          # mov w9,#9         n = 9 entries
+        "d280020b"          # mov w11,#0x10     anonymous bit
+        "b9402c0a"          # loop: ldr w10,[x8,#0x2c]
+        "4a010b2a"          # orr w10,w10,w11
+        "b9002c0a"          # str w10,[x8,#0x2c]
+        "9100c108"          # add x8,x8,#0x30
+        "51000529"          # sub w9,w9,#1
+        "35ffff69"          # cbnz w9, loop
+        "aa1a03e3"          # mov x3,x26   (replay)
+        "17fff259"          # b 0x35694
+    ), "cave: mark all mappings anonymous; resume @BL"),
+    # sfld0: @0x35690 -> files[0].slide = 0. Kernel worker checks
+    #   rec+16 & 0x3FFF == 0 when dword_AA5A578==14; slide=1 is non-aligned
+    #   -> EINVAL before any enter. Zero it to test that check.
+    "sfld0":     (0x35690, bytes.fromhex("9e0d0014"), "@0x35690 b 0x38d08 (sfld0)"),
+    "sfld0cave": (0x38d08, _le(
+        "b900083f"          # str wzr,[x1,#8]   files[0].slide = 0 (REAL +8 field)
+        "aa1a03e3"          # mov x3,x26   (replay)
+        "17fff261"          # b 0x35694
+    ), "cave: files[0].slide=0; resume @BL"),
+    # sfld00: zero BOTH files[0]+8 and +0xC (kernel slide field may be either).
+    "sfld00":     (0x35690, bytes.fromhex("9e0d0014"), "@0x35690 b 0x38d08 (sfld00)"),
+    "sfld00cave": (0x38d08, _le(
+        "b900083f"          # str wzr,[x1,#8]
+        "b9000c3f"          # str wzr,[x1,#0xC]
+        "aa1a03e3"          # mov x3,x26   (replay)
+        "17fff260"          # b 0x35694
+    ), "cave: files[0]+8/+0xC=0; resume @BL"),
+    # tick536: like sfld0 but ALSO write(2,"T",1) on every pass — proves
+    #   whether the 0x35690->536 path is being re-entered in a hot loop.
+    "tick536":     (0x35690, bytes.fromhex("9e0d0014"), "@0x35690 b 0x38d08 (tick536)"),
+    "tick536cave": (0x38d08, _le(
+        "b9000c3f"          # str wzr,[x1,#0xC]  files[0].slide=0 (same field as sfld0)
+        "aa1a03e3"          # mov x3,x26  (replay patched insn)
+        "d100c3ff"          # sub sp,#0x30
+        "a90007e0"          # stp x0,x1,[sp]
+        "a9010fe2"          # stp x2,x3,[sp,#0x10]
+        "a9027bf0"          # stp x16,x30,[sp,#0x20]
+        "52800a88"          # mov w8,#0x54  'T'
+        "3900a3e8"          # strb w8,[sp,#0x28]
+        "9100a3e1"          # add x1,sp,#0x28  buf
+        "d2800040"          # mov w0,#2        fd=stderr
+        "d2800022"          # mov x2,#1        len=1
+        "d2800090"          # mov x16,#4       write()
+        "d4001001"          # svc #0x80
+        "a9427bf0"          # ldp x16,x30,[sp,#0x20]
+        "a9410fe2"          # ldp x2,x3,[sp,#0x10]
+        "a94007e0"          # ldp x0,x1,[sp]
+        "9100c3ff"          # add sp,#0x30
+        "17fff252"          # b 0x35694
+    ), "cave: slide=0 + tick write(2,'T',1); resume @BL"),
+    # noexec0: strip entry[0]'s EXEC bit (prots +0x28/+0x2c: 5->1 r--).
+    #   Tests whether the giant r-x mapping is what populate rejects.
+    "noexec0":     (0x35690, bytes.fromhex("9e0d0014"), "@0x35690 b 0x38d08 (noexec0)"),
+    "noexec0cave": (0x38d08, _le(
+        "52800028"          # mov w8,#1
+        "b9002b68"          # str w8,[x26,#0x28]  e[0].maxProt = r--
+        "b9002f68"          # str w8,[x26,#0x2c]  e[0].initProt = r--
+        "aa1a03e3"          # mov x3,x26  (replay)
+        "17fff25f"          # b 0x35694
+    ), "cave: entry[0] prot 5->1; resume @BL"),
+    # nxeT: same prot strip + write 'A' to fd2 so we know the cave ran
+    #   (isolates pre-BL cave death vs inside-syscall death).
+    "nxeT":     (0x35690, bytes.fromhex("9e0d0014"), "@0x35690 b 0x38d08 (nxeT)"),
+    "nxeTcave": (0x38d08, _le(
+        "d10043ff"          # sub sp,#0x10
+        "52801408"          # mov w8,#0xa0       'A'|0x80 marker
+        "f90007e8"          # str x8,[sp,#8]
+        "910023e1"          # add x1,sp,#8
+        "d2800082"          # mov x2,#4
+        "d2800040"          # mov w0,#2
+        "d2800090"          # mov x16,#4
+        "d4001001"          # svc #0x80          write(2,"A",4)
+        "910043ff"          # add sp,#0x10
+        "52800028"          # mov w8,#1
+        "b9002b68"          # str w8,[x26,#0x28] e[0].maxProt = r--
+        "b9002f68"          # str w8,[x26,#0x2c] e[0].initProt = r--
+        "aa1a03e3"          # mov x3,x26  (replay)
+        "17fff257"          # b 0x35694 (b@0x38d38 -> -0x36a4)
+    ), "cave: tick 'A' + entry[0] prot->r--; resume @BL"),
+    # nxmix: e0 initProt=r-- (+0x2c) but KEEP maxProt=r-x (+0x28).
+    #   Splits "exec-allowed file_check" (max) vs "initial prot".
+    "nxmix":     (0x35690, bytes.fromhex("9e0d0014"), "@0x35690 b 0x38d08 (nxmix)"),
+    "nxmixcave": (0x38d08, _le(
+        "52800028"          # mov w8,#1
+        "b9002f68"          # str w8,[x26,#0x2c]  e[0].initProt = r--
+        "aa1a03e3"          # mov x3,x26  (replay)
+        "17fff25f"          # b 0x35694 (b@0x38d18 -> -0x3684)
+    ), "cave: e[0].initProt->r--, maxProt stays r-x; resume @BL"),
+    # esmall: e0 shrink to 16KB (size+8), keep r-x prots.
+    #   Tests whether giant-size populate vs exec gate causes the failure.
+    "esmall":     (0x35690, bytes.fromhex("9e0d0014"), "@0x35690 b 0x38d08 (esmall)"),
+    "esmallcave": (0x38d08, _le(
+        "d2808088"          # mov x8,#0x4000
+        "f9000768"          # str x8,[x26,#8]    e[0].size = 0x4000
+        "aa1a03e3"          # mov x3,x26  (replay)
+        "17fff25f"          # b 0x35694 (b@0x38d18 -> -0x3684)
+    ), "cave: e[0].size=0x4000 keep r-x; resume @BL"),
+    # e0anon: set the ANON bit on entry[0] only (+44 |= 0x10) -> routes
+    #   e[0] through the anonymous-enter path (sub_8019768), bypassing
+    #   file-pager/cs checks. e[1..7] stay file-backed.
+    "e0anon":     (0x35690, bytes.fromhex("9e0d0014"), "@0x35690 b 0x38d08 (e0anon)"),
+    "e0anoncave": (0x38d08, _le(
+        "b9402f68"          # ldr w8,[x26,#0x2c]
+        "52800209"          # movz w9,#0x10
+        "2a090108"          # orr w8,w8,w9
+        "b9002f68"          # str w8,[x26,#0x2c]
+        "aa1a03e3"          # mov x3,x26  (replay)
+        "17fff25e"          # b 0x35694 (b@0x38d1c -> -0x3688)
+    ), "cave: e[0] |=ANON(0x10@+44); resume @BL"),
+    # tickonly: control probe — write 'A' to fd2, NO field changes.
+    #   Separates "cave plumbing" from "record mutation" as crash cause.
+    "tickonly":     (0x35690, bytes.fromhex("9e0d0014"), "@0x35690 b 0x38d08 (tickonly)"),
+    "tickonlycave": (0x38d08, _le(
+        "d10043ff"          # sub sp,#0x10
+        "52801408"          # mov w8,#0xa0
+        "f90007e8"          # str x8,[sp,#8]
+        "910023e1"          # add x1,sp,#8
+        "d2800082"          # mov x2,#4
+        "d2800040"          # mov w0,#2
+        "d2800090"          # mov x16,#4
+        "d4001001"          # svc #0x80          write(2,"A",4)
+        "910043ff"          # add sp,#0x10
+        "aa1a03e3"          # mov x3,x26  (replay)
+        "17fff255"          # b 0x35694 (b@0x38d34 -> -0x36a0)
+    ), "cave: tick 'A' only; resume @BL"),
+    # sldhi: @0x35690 -> files[0].slide = 0x50000000 (16K-aligned nonzero).
+    #   Theory: kernel worker requires per-record slide % 0x4000 == 0
+    #   (dword_AA5A578==14 pageshift gate). slide=0 passes check but then
+    #   entry[0]'s r-x VA collides with iOS cache exec mappings already in
+    #   the shared submap -> enter fails (not kr==23) -> EINVAL. A real
+    #   randomized slide lifts all entry VAs above the iOS range.
+    "sldhi":     (0x35690, bytes.fromhex("9e0d0014"), "@0x35690 b 0x38d08 (sldhi)"),
+    "sldhicave": (0x38d08, _le(
+        "52aa0008"          # movz w8,#0x5000,lsl#16 = 0x50000000
+        "b9000828"          # str w8,[x1,#8]   files[0].slide = 0x50000000
+        "aa1a03e3"          # mov x3,x26   (replay)
+        "17fff260"          # b 0x35694  (b@0x38d14 -> -0x3680)
+    ), "cave: files[0].slide=0x50000000; resume @BL"),
+    # sldlo: slide = 0x04000000 (64MB) — barely above iOS cache top probe.
+    "sldlo":     (0x35690, bytes.fromhex("9e0d0014"), "@0x35690 b 0x38d08 (sldlo)"),
+    "sldlocave": (0x38d08, _le(
+        "52a08008"          # movz w8,#0x400,lsl#16 = 0x04000000
+        "b9000828"          # str w8,[x1,#8]
+        "aa1a03e3"          # mov x3,x26
+        "17fff260"          # b 0x35694
+    ), "cave: files[0].slide=0x04000000; resume @BL"),
+    # vashift: deterministic VA lift — add 0x50000000 to each of the 8 main
+    #   mappings' va (48B stride) AND set files[0].slide window = 0x4000 so
+    #   kernel's v13 = rand % 0x4000 & ~0x3FFF == 0 always. Lands the whole
+    #   cache at 0x1d0000000+, above every iOS exec mapping (~0x1b5xxx top).
+    "vashift":     (0x35690, bytes.fromhex("9e0d0014"), "@0x35690 b 0x38d08 (vashift)"),
+    "vashiftcave": (0x38d08, _le(
+        "aa1a03e9"          # mov x9,x26        mappings base
+        "52aa000a"          # movz w10,#0x5000,lsl#16 = 0x50000000
+        "d280010b"          # mov x11,#8
+        "f940012c"          # ldr x12,[x9]      L:
+        "8b0a018c"          # add x12,x12,x10
+        "f900012c"          # str x12,[x9]
+        "9100c129"          # add x9,x9,#48
+        "f100056b"          # subs x11,x11,#1
+        "54ffff61"          # b.ne L(-20B)
+        "52800808"          # mov w8,#0x4000
+        "b9000828"          # str w8,[x1,#8]   files[0].slide window=0x4000 -> v13=0
+        "aa1a03e3"          # mov x3,x26  (replay)
+        "17fff257"          # b 0x35694 (b@0x38d38 -> -0x36a4)
+    ), "cave: va[i]+=0x50000000 x8; slide win=0x4000; resume @BL"),
+    # hold536: @0x35690 -> spin forever with fd3/files[] live on stack, so we
+    #   can inspect the cache vnode's ubc fields via KRW while it waits.
+    "hold536":     (0x35690, bytes.fromhex("9e0d0014"), "@0x35690 b 0x38d08 (hold536)"),
+    "hold536cave": (0x38d08, _le(
+        "14000000"          # b . (spin; kill from outside)
+    ), "cave: spin holding fd3 open"),
+    # rdhdr: @0x35698 -> after 536, read *(0x180000000) & *(0x180000010) and
+    #   write 16B to fd2 -> proves whether populate produced real cache pages.
+    "rdhdr":     (0x35698, bytes.fromhex("ba0d0014"), "@0x35698 b 0x38d80 (rdhdr)"),
+    "rdhdrcave": (0x38d80, _le(
+        "d10103ff"          # sub sp,#0x40
+        "f9000fe0"          # stp x0,x3,[sp]    save ret & x3
+        "d2c00308"          # mov x8,#0x180000000
+        "f9400109"          # ldr x9,[x8]       magic word (faults if unmapped)
+        "f90013e9"          # str x9,[sp,#0x20]
+        "f9400909"          # ldr x9,[x8,#0x10] uuid lo
+        "f90017e9"          # str x9,[sp,#0x28]
+        "910083e1"          # add x1,sp,#0x20
+        "d2800202"          # mov x2,#0x10
+        "d2800040"          # mov w0,#2
+        "d2800090"          # mov x16,#4
+        "d4001001"          # svc #0x80    write(2,hdr,16)
+        "a9400fe0"          # ldp x0,x3,[sp]
+        "910103ff"          # add sp,#0x40
+        "aa0003f7"          # mov x23,x0   (replay 0x35698)
+        "17fff238"          # b 0x3569c
+    ), "cave2: read cache hdr @0x180000000, write to fd2, resume"),
+    # skipe0: @0x35690 hook — submit only mappings[1..N-1] (skip entry[0], the
+    #   1.66GB r-x region) by handing the kernel x3=x26+0x30, x2=x2-1.
+    #   Distinguishes "entry[0] is the poison" from "generic populate failure".
+    "skipe0":     (0x35690, bytes.fromhex("9e0d0014"), "@0x35690 b 0x38d08 (skip e0)"),
+    "skipe0cave": (0x38d08, _le(
+        # write(2, "S", 4) marker with reg save/restore — proves cave reached
+        "d10103ff"          # sub sp,#0x40
+        "a90007e0"          # stp x0,x1,[sp]
+        "a90123e2"          # stp x2,x8,[sp,#0x10]
+        "a9023be9"          # stp x9,x14,[sp,#0x20]
+        "52800a68"          # movz w8,#0x53   ('S')
+        "f9001be8"          # str x8,[sp,#0x30]
+        "9100c3e1"          # add x1,sp,#0x30  [IDA-verified]
+        "d2800040"          # mov w0,#2
+        "d2800082"          # mov w2,#4
+        "d2800090"          # mov x16,#4
+        "d4001001"          # svc #0x80
+        "a94007e0"          # ldp x0,x1,[sp]
+        "a94123e2"          # ldp x2,x8,[sp,#0x10]
+        "a9423be9"          # ldp x9,x14,[sp,#0x20]
+        "910103ff"          # add sp,#0x40
+        # actual patch: files[0].count=1 ; x2=1 ; x3=x26+0x30 (submit ONLY e1)
+        "52800028"          # movz w8,#1
+        "b9000428"          # str w8,[x1,#4]   (files[0].count=1)
+        "d2800022"          # mov w2,#1        (mapcnt=1)
+        "9100c343"          # add x3,x26,#0x30 (mappings+48 = entry[1]) [IDA-verified]
+        "17fff250"          # b 0x35694  (from 0x38d54)
+    ), "cave: mark 'S', files[0].count=1, x2=1, x3=mappings+48 (submit e1 only), b 0x35694"),
+    # dump536: @0x35690 (just before BL 536; X0=files_count X1=files X2=mapcnt X26=mappings)
+    #   -> cave 0x38d08: write(2,files,count*12); write(2,mappings,mapcnt*48);
+    #   replay MOV X3,X26; b 0x35694 (the BL) -> syscall runs normally.
+    "dump536":     (0x35690, bytes.fromhex("9e0d0014"), "@0x35690 b 0x38d08 (dump args)"),
+    "dump536cave": (0x38d08, _le(
+        "d10103ff"          # sub sp,#0x40
+        "a90007e0"          # stp x0,x1,[sp]
+        "a90123e2"          # stp x2,x8,[sp,#0x10]
+        "a9023be9"          # stp x9,x16,[sp,#0x20]
+        "52800188"          # mov w8,#12
+        "1b080002"          # mul w2,w0,w8   (files len = count*12)
+        "d2800040"          # mov w0,#2
+        "d2800090"          # mov x16,#4
+        "d4001001"          # svc #0x80      write(2, x1, len)
+        "52800608"          # mov w8,#48
+        "9b080322"          # mul x2,x25,x8  (mappings len = count*48)
+        "aa1a03e1"          # mov x1,x26
+        "d2800040"          # mov w0,#2
+        "d2800090"          # mov x16,#4
+        "d4001001"          # svc #0x80      write(2, x26, len)
+        "a94007e0"          # ldp x0,x1,[sp]
+        "a94123e2"          # ldp x2,x8,[sp,#0x10]
+        "a9423be9"          # ldp x9,x16,[sp,#0x20]
+        "910103ff"          # add sp,#0x40
+        "aa1a03e3"          # mov x3,x26   (replay)
+        "17fff24f"          # b 0x35694
+    ), "cave: dump files[]+mappings[] to fd2, resume into BL @0x35694"),
+    # mcountN: 0x3553c LDUR W13,[X10,#-8] -> MOV W13,#N — cap the per-file
+    #   mapping count written into files[] rec (bisect which mapping fails).
+    #   Record count=N also drives mappings arg (v26+1) so kernel copies N+1.
+    "mcount0":     (0x3553c, bytes.fromhex("0d008052"), "MOV W13,#0  (main count=0)"),
+    "mcount1":     (0x3553c, bytes.fromhex("2d008052"), "MOV W13,#1  (main count=1)"),
+    "mcount2":     (0x3553c, bytes.fromhex("4d008052"), "MOV W13,#2"),
+    "mcount4":     (0x3553c, bytes.fromhex("8d008052"), "MOV W13,#4"),
+    "mcount6":     (0x3553c, bytes.fromhex("cd008052"), "MOV W13,#6"),
+    "mcount7":     (0x3553c, bytes.fromhex("ed008052"), "MOV W13,#7"),
     # Breadcrumb probes: each writes a 1-char marker+'\n' to fd2, replays the
     #   patched insn, branches back. All live in header dead space 0xa40..0xb00.
     #   'A' = start() entry 0x53dc (PACIBSP)            -> cave 0xa40
@@ -670,6 +1071,79 @@ P["xpD"]=(0x342b8, _le("52800aa0d2800030d4001001"), "exit(0x55) @epilogue head")
 P["xpE"]=(0x342d8, _le("52800cc0d2800030d4001001"), "exit(0x66) @B mapSplit site")
 P["xpF"]=(0x34298, _le("528008a0d2800030d4001001"), "exit(0x44) @reuse call site")
 P["xpG"]=(0x352ec, _le("528009e0d2800030d4001001"), "exit(0x4f) @chkstk BLRAA")
+# ck2: robust check_np(294) probe at populate entry 0x35380 (BEFORE 536).
+#   Reports {ret,base} BEFORE touching [base] (old cknpcave dereferenced base
+#   first -> SEGV/0-output when ret!=0 leaves base uninitialized).
+#   ret=22 => task->shared_region NULL (setup gate#2 = the EINVAL source)
+#   ret=12 => region exists but EMPTY (sr_first_mapping==-1; engine fails later)
+#   ret=0  => region POPULATED (gate#12); magic16 tells which cache is inside.
+#   clang-assembled (cave_cknp2x.s), 108B at header dead space 0x970.
+P["ck2entry"] = (0x35380, bytes.fromhex("7c2dff17"), "@0x35380 b 0x970 (ck2 check_np)")
+P["ck2cave"] = (0x970, _le(
+    "d10403ff"    # sub sp,#0x100
+    "f9007fe0"    # str x0,[sp,#0xf8]  (save arg)
+    "f90003ff"    # str xzr,[sp]       base=0
+    "910003e0"    # mov x0,sp          &base
+    "d28024d0"    # mov x16,#294       shared_region_check_np
+    "d4001001"    # svc #0x80
+    "f9000be0"    # str x0,[sp,#0x10]  ret
+    "52800040"    # mov w0,#2
+    "910043e1"    # add x1,sp,#0x10    &{ret,base}
+    "d2800202"    # mov x2,#16
+    "d2800090"    # mov x16,#4
+    "d4001001"    # svc                write(2,{ret,base},16)  FIRST
+    "f9400be9"    # ldr x9,[sp,#0x10]  ret
+    "b5000149"    # cbnz x9,+0x28 -> _skip
+    "f94003e9"    # ldr x9,[sp]        base
+    "b4000109"    # cbz x9,+0x20 -> _skip
+    "a9402d2a"    # ldp x10,x11,[x9]   magic (ret==0 only)
+    "a9022fea"    # stp x10,x11,[sp,#0x20]
+    "52800040"    # mov w0,#2
+    "910083e1"    # add x1,sp,#0x20
+    "d2800202"    # mov x2,#16
+    "d2800090"    # mov x16,#4
+    "d4001001"    # svc                write(2,magic,16)
+    "f9407fe9"    # _skip: ldr x9,[sp,#0xf8]
+    "910403ff"    # add sp,#0x100
+    "aa0903e8"    # mov x8,x9          replay MOV X8,X0
+    "1400d26b"    # b 0x35384  (from 0x9d8)
+), "cave@0x970: check_np {ret,base[,magic]} pre-536; b 0x35384")
+# ck2d: ck2 cave relocated to 0x38d08 (frees 0x970 for slide-mask cave).
+P["ck2dentry"] = (0x35380, bytes.fromhex("620e0014"), "@0x35380 b 0x38d08 (ck2 check_np)")
+P["ck2dcave"] = (0x38d08, _le(
+    "d10403ff" "f9007fe0" "f90003ff" "910003e0" "d28024d0" "d4001001"
+    "f9000be0" "52800040" "910043e1" "d2800202" "d2800090" "d4001001"
+    "f9400be9" "b5000149" "f94003e9" "b4000109" "a9402d2a" "a9022fea"
+    "52800040" "910083e1" "d2800202" "d2800090" "d4001001"
+    "f9407fe9" "910403ff" "aa0903e8" "17fff184"),
+    "cave@0x38d08: check_np {ret,base[,magic]} pre-536; b 0x35384")
+# rethdr: post-536 — write ret(8B); if ret==0 dump 16B cache hdr @0x180000000.
+P["rethdr"] = (0x35698, bytes.fromhex("ba0d0014"), "@0x35698 b 0x38d80 (ret+hdr)")
+P["rethdrcave"] = (0x38d80, _le(
+    "d10103ff"    # sub sp,#0x40
+    "f90007e0"    # str x0,[sp,#8]  ret
+    "52800040"    # mov w0,#2
+    "910023e1"    # add x1,sp,#8
+    "d2800102"    # mov x2,#8
+    "d2800090"    # mov x16,#4
+    "d4001001"    # svc  write(2,&ret,8)
+    "f94007e9"    # ldr x9,[sp,#8]
+    "b5000169"    # cbnz x9,+44 -> done
+    "b26107e8"    # mov x8,#0x180000000
+    "f9400109"    # ldr x9,[x8]
+    "f90013e9"    # str x9,[sp,#0x20]
+    "f9400909"    # ldr x9,[x8,#0x10]
+    "f90017e9"    # str x9,[sp,#0x28]
+    "52800040"    # mov w0,#2
+    "910083e1"    # add x1,sp,#0x20
+    "d2800202"    # mov x2,#16
+    "d2800090"    # mov x16,#4
+    "d4001001"    # svc  write(2,hdr,16)
+    "f94007e0"    # done: ldr x0,[sp,#8]
+    "910103ff"    # add sp,#0x40
+    "aa0003f7"    # mov x23,x0
+    "17fff231"    # b 0x3569c (from 0x38dd8)
+), "cave@0x38d80: write ret; if 0 dump hdr@0x180000000; b 0x3569c")
 P["cklite"]=(0x47290, _le("d280000017ffb3e9"), "cave lite: w0=0;b 0x3429c (no syscalls)")
 P["ckjump"]=(0x47290, _le("d280000017ffb402"), "cave jump-only: w0=0;b 0x3429c")
 P["xpK"]=(0x35380, _le("52800ae0d2800030d4001001"), "exit(0x57) @post-preflightMain land")

@@ -1,5 +1,13 @@
 # macOS 15.6.1 dyld shared-cache bring-up — live state
 
+> **📣 2026-09-29 起：先读 `docs/porting/CONSOLIDATED-2026-09-29.md`**
+> （全文档归一版——已证实/已否证/当前卡点分栏）。本文件仍是按时间序的
+> 编年史；**凡与本文件旧段落冲突，以 CONSOLIDATED 为准**。
+> 09-29 重要更正：① kernel IDB（Instance2）重启后基址规则 =
+> `EA = 0xfffffe0000000000 + 旧0x8xxxxxx偏移`；② 「slide-info v5」理论已否证；
+> ③ 内核 msgbuf 可经 KRW 直读（msgbufp @ 0xfffffe000aa030a0），能拿到
+> `mapping[%d] failed 0x%x` 真实 kr——详见 CONSOLIDATED §7。
+
 **READ THIS FIRST after context loss.** Active task: get dyld to map the
 macOS 15.6.1 shared cache on iPadOS 16.3 (xnu-8792.82.2) so macOS binaries
 run in chroot. This file is the single source of truth — update it whenever

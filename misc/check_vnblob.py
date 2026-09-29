@@ -4,7 +4,7 @@ jb = ctypes.CDLL("/var/jb/basebin/libjailbreak.dylib")
 jb.jbclient_initialize_primitives()
 kr64 = jb.kread64; kr64.restype = ctypes.c_uint64; kr64.argtypes=[ctypes.c_uint64]
 kr32 = jb.kread32; kr32.restype = ctypes.c_uint32; kr32.argtypes=[ctypes.c_uint64]
-KSLIDE=0x158B4000
+KSLIDE=0x1a129000
 PIDHASH_TBL=0xfffffe00079874D0+KSLIDE; PIDHASH_MSK=0xfffffe00079874D8+KSLIDE
 def find_proc(pid):
     t=kr64(PIDHASH_TBL); m=kr64(PIDHASH_MSK); c=kr64(t+(m&pid)*8)
@@ -40,4 +40,9 @@ for i in range(0,16):
     vtype=kr32(vp+0x70)&0xffff
     ubc=unpac(kr64(vp+0x78))
     blob=kr64(ubc+0x50) if ubc else 0
-    print(f"fd{i}: vnode={vp:#x} type={vtype} ubc={ubc:#x} cs_blob={blob:#x}")
+    u8=kr64(ubc+8) if ubc else 0
+    u10=kr64(ubc+0x10) if ubc else 0
+    print(f"fd{i}: vnode={vp:#x} type={vtype} ubc={ubc:#x} ubc+8={u8:#x} ubc+10={u10:#x} cs_blob={blob:#x}")
+    if blob and 0xfffffe0000000000<=blob<=0xfffffe7fffffffff:
+        bp=unpac(blob)
+        print(f"     blob={bp:#x} +38(cov_end)={kr64(bp+0x38):#x} +40={kr64(bp+0x40):#x}")

@@ -25,6 +25,14 @@ static inline long _svc0(long n) {
     __asm__ volatile("svc #0x80" : "=r"(x0) : "r"(x16) : "memory", "cc");
     return x0;
 }
+static inline void _dbg(char c){    // write(2,&c,1)
+    char buf[2]={c,0};
+    register long x16 __asm__("x16") = 4;
+    register long x0  __asm__("x0")  = 2;
+    register const void* xp __asm__("x1") = buf;
+    register long x2 __asm__("x2") = 1;
+    __asm__ volatile("svc #0x80" :: "r"(x16),"r"(x0),"r"(xp),"r"(x2) : "memory","cc");
+}
 
 // ---- globals that dyld fills in via setDefaultProgramVars ----
 extern "C" {
@@ -83,52 +91,52 @@ struct VIS_HIDDEN [[clang::ptrauth_vtable_pointer(process_independent, address_d
 // ---------------------------------------------------------------------------
 // implementations
 // ---------------------------------------------------------------------------
-uintptr_t LibSystemHelpers::version() const { return 7; }
+uintptr_t LibSystemHelpers::version() const { _dbg('v'); return 7; }
 
-void* LibSystemHelpers::malloc(size_t) const { return 0; }
-void  LibSystemHelpers::free(void*) const { }
-size_t LibSystemHelpers::malloc_size(const void*) const { return 0; }
+void* LibSystemHelpers::malloc(size_t) const { _dbg('M'); return 0; }
+void  LibSystemHelpers::free(void*) const { _dbg('f'); }
+size_t LibSystemHelpers::malloc_size(const void*) const { _dbg('z'); return 0; }
 
-int LibSystemHelpers::vm_allocate(unsigned int, uintptr_t*, uintptr_t, int) const { return 1 /*KERN_FAILURE-ish*/; }
-int LibSystemHelpers::vm_deallocate(unsigned int, uintptr_t, uintptr_t) const { return 0; }
+int LibSystemHelpers::vm_allocate(unsigned int, uintptr_t*, uintptr_t, int) const { _dbg('A'); return 1; }
+int LibSystemHelpers::vm_deallocate(unsigned int, uintptr_t, uintptr_t) const { _dbg('D'); return 0; }
 
-int   LibSystemHelpers::pthread_key_create_free(unsigned int*) const { return 0; }
-void* LibSystemHelpers::pthread_getspecific(unsigned int) const { return 0; }
-int   LibSystemHelpers::pthread_setspecific(unsigned int, const void*) const { return 0; }
+int   LibSystemHelpers::pthread_key_create_free(unsigned int* k) const { _dbg('K'); if(k)*k=0; return 0; }
+void* LibSystemHelpers::pthread_getspecific(unsigned int) const { _dbg('g'); return 0; }
+int   LibSystemHelpers::pthread_setspecific(unsigned int, const void*) const { _dbg('s'); return 0; }
 
-void LibSystemHelpers::__cxa_atexit(void (*)(void*), void*, void*) const { }
-void LibSystemHelpers::__cxa_finalize_ranges(const void*, unsigned int) const { }
+void LibSystemHelpers::__cxa_atexit(void (*)(void*), void*, void*) const { _dbg('a'); }
+void LibSystemHelpers::__cxa_finalize_ranges(const void*, unsigned int) const { _dbg('F'); }
 
-bool LibSystemHelpers::isLaunchdOwned() const { return false; }
+bool LibSystemHelpers::isLaunchdOwned() const { _dbg('L'); return false; }
 
 // single-threaded at dyld time -> no-op locks are safe
-void LibSystemHelpers::os_unfair_recursive_lock_lock_with_options(void*, int) const { }
-void LibSystemHelpers::os_unfair_recursive_lock_unlock(void*) const { }
-void LibSystemHelpers::os_unfair_recursive_lock_unlock_forked_child(void*) const { }
-void LibSystemHelpers::os_unfair_lock_lock_with_options(void*, int) const { }
-void LibSystemHelpers::os_unfair_lock_unlock(void*) const { }
+void LibSystemHelpers::os_unfair_recursive_lock_lock_with_options(void*, int) const { _dbg('R'); }
+void LibSystemHelpers::os_unfair_recursive_lock_unlock(void*) const { _dbg('r'); }
+void LibSystemHelpers::os_unfair_recursive_lock_unlock_forked_child(void*) const { _dbg('u'); }
+void LibSystemHelpers::os_unfair_lock_lock_with_options(void*, int) const { _dbg('q'); }
+void LibSystemHelpers::os_unfair_lock_unlock(void*) const { _dbg('Q'); }
 
-void LibSystemHelpers::exit(int result) const {
+void LibSystemHelpers::exit(int result) const { _dbg('x');
     register long x16 __asm__("x16") = 1; /* SYS_exit */
     register long x0  __asm__("x0")  = result;
     __asm__ volatile("svc #0x80" :: "r"(x16), "r"(x0) : "memory");
     for (;;) {}
 }
 
-const char* LibSystemHelpers::getenv(const char*) const { return 0; }
-int         LibSystemHelpers::mkstemp(char*) const { return -1; }
-void        LibSystemHelpers::setDyldPatchedObjCClasses() const { }
-void        LibSystemHelpers::run_async(void* (*)(void*), void*) const { }
+const char* LibSystemHelpers::getenv(const char*) const { _dbg('E'); return 0; }
+int         LibSystemHelpers::mkstemp(char*) const { _dbg('t'); return -1; }
+void        LibSystemHelpers::setDyldPatchedObjCClasses() const { _dbg('P'); }
+void        LibSystemHelpers::run_async(void* (*f)(void*), void* c) const { _dbg('y'); f(c); }
 
-void LibSystemHelpers::setDefaultProgramVars(ProgramVars& vars) const {
+void LibSystemHelpers::setDefaultProgramVars(ProgramVars& vars) const { _dbg('V');
     vars.NXArgcPtr     = &NXArgc;
     vars.NXArgvPtr     = (const char***)&NXArgv;
     vars.environPtr    = (const char***)&environ;
     vars.__prognamePtr = (const char**)&__progname;
 }
 
-FuncLookup    LibSystemHelpers::legacyDyldFuncLookup() const { return 0; }
-mach_o::Error LibSystemHelpers::setUpThreadLocals(const void*, const void*) const { return mach_o::Error(); }
+FuncLookup    LibSystemHelpers::legacyDyldFuncLookup() const { _dbg('l'); return 0; }
+mach_o::Error LibSystemHelpers::setUpThreadLocals(const void*, const void*) const { _dbg('T'); return mach_o::Error(); }
 
 // The helper object that lives in __DATA_CONST,__helper (8 bytes = vptr only).
 __attribute__((section("__DATA_CONST,__helper"), used))
