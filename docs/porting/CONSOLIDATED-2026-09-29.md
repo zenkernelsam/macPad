@@ -275,7 +275,7 @@ libSystem UUID=`D161E41A`（缓存版，非 shim `B90391D8`）。
   09-28 01:04 的 `pmap_mark_page_as_ppl_page_internal` 是已知旧 panic；
   09-29 的重启无新 panic（外因）。
 - scratch 缓存 `/var/mnt/rootfs/macdsc/` 已被多次原地改坏——勿用；
-  干净源 = 主机 `~/Desktop/dyld-cache-15.6.1/dyld_shared_cache_arm64e`。
+  干净源 = 主机 `~/Desktop/macPad/analysis/dyld-cache-15.6.1/dyld_shared_cache_arm64e`。
 
 ---
 

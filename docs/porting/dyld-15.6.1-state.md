@@ -100,7 +100,7 @@ AMFI `hook_file_check_mmap@0xfffffe000a659664`：`prot&4 && !isdyldsharedcache �
 - **exec-veto 级联**：连续多次 CS-invalid exec 后**所有** chroot exec 全 137（连 `true`、连 TC 内 dyld），zsh 自身 dlopen 也开始报 CS invalid。此前会自愈；发生时先验证 `chroot . /usr/bin/true`。
 - **python3 stdin/`-c` 模式 segfault**(rc=139 无输出，Dopamine checkin 限制）——**只用文件脚本**：`/var/mobile/{set_vshared.py,fgdump.py,vnd8.py,objdump2.py,blob_read.py}`。
 - `sysctl` 全路径 `/var/jb/usr/sbin/sysctl`；`vm.shared_region_pivot` 从当前 shell 写会被 EPERM。
-- **scratch 缓存已污染**：`/var/mnt/rootfs/macdsc/` 被我多次原地改（内嵌签名与内容失配）⇒ 勿再用于 CS 实验；恢复源 = Mac `/Users/ciscohe/Desktop/dyld-cache-15.6.1/dyld_shared_cache_arm64e`（0xa1b18000，dynoff 0x12c75c000，prot 0x500000005）。
+- **scratch 缓存已污染**：`/var/mnt/rootfs/macdsc/` 被我多次原地改（内嵌签名与内容失配）⇒ 勿再用于 CS 实验；恢复源 = Mac `/Users/ciscohe/Desktop/macPad/analysis/dyld-cache-15.6.1/dyld_shared_cache_arm64e`（0xa1b18000，dynoff 0x12c75c000，prot 0x500000005）。
 
 ---
 
@@ -1072,7 +1072,7 @@ m8 addr=0x1f8000000 size=0x4000     foff=0x10285c000  ip=1  (dynregion 伪条目
 
 **M) ★★★★★ 536=EINVAL 的真因锁定：缓存 slide-info version=5 不被 iOS 16.3 内核支持。**
 - 链路：engine `sub_8061EF0`(自身无硬编码>3) → 其 slide-pass callee **`sub_8062CA8`** @ **`0xfffffe0008063024`**：`if ((unsigned)(slide_info->version - 1) > 3) → KERN_FAILURE(5)`（源码 `osfmk/vm/vm_shared_region.c:2934` switch(version) 的 default；非 1/2/3/4 全落此）→ 经 `bsd/vm/vm_unix.c:2725` `case KERN_FAILURE: EINVAL` → **22**。
-- **物证**：`xxd -s 0x7ad4c000 -l 32 /Users/ciscohe/Desktop/dyld-cache-15.6.1/dyld_shared_cache_arm64e` = `0500 0000 0040 0000 e708 0000 …` → **version=5、page_size=0x4000(16K)**。5 条 slid mapping 的 `sms_slide_start` 指向处均如此。
+- **物证**：`xxd -s 0x7ad4c000 -l 32 /Users/ciscohe/Desktop/macPad/analysis/dyld-cache-15.6.1/dyld_shared_cache_arm64e` = `0500 0000 0040 0000 e708 0000 …` → **version=5、page_size=0x4000(16K)**。5 条 slid mapping 的 `sms_slide_start` 指向处均如此。
 - **触发条件**：`sms_max_prot & VM_PROT_SLIDE(0x20)`（engine 用 `(prot>>5)&1` 计数 → 与 slide *数值* 无关）⇒ 解释了「强 `files[0].slide=0` 仍 22」；**m0 无 0x20 → 不进 slide pass → 历史单条 mapping 能 536=0**。
 - **次生障碍**：即使把 version 改 4 也仍失败——`page_size=16384 ≠ 内核 `PAGE_SIZE_FOR_SR_SLIDE=4096`（`vm_shared_region.h:98`）。**双重格式不兼容**。
 - **修复方向**（未实现）：① 从新版 xnu(11215+) backport `case 5:` + `vm_shared_region_slide_page_v5` 并把 `PAGE_SIZE_FOR_SR_SLIDE` 放宽为 16K（需内核补丁）；② 用户态重生成缓存 slide-info 为 v4/4K（工作量大，但不碰内核）；③ 应急验证：提交前清掉映射的 `VM_PROT_SLIDE(0x20)` + slide=0 以跳过 slide pass（但 __DATA 的 rebase 指针可能留错，仅确认分支）；④ 换用 slide-info 为 v4/4K 的旧缓存。
@@ -2195,10 +2195,11 @@ iPad13,11). **Load this in IDA to find the EMSGSIZE return site** in
 `shared_region_map_and_slide_2_np` (sysent[536]).
 
 **Full 4.9GB 15.6.1 dyld cache staged on host:**
-`/Users/ciscohe/Desktop/dyld-cache-15.6.1/` — main `dyld_shared_cache_arm64e`
+`/Users/ciscohe/Desktop/macPad/analysis/dyld-cache-15.6.1/` — main `dyld_shared_cache_arm64e`
 (2712764416 B) + `.01` (2203500544 B), verified complete vs device sizes.
-Deliberately outside the repo + outside /tmp. Use `dsc_extractor` or
-`misc/extract_dyld_cache.py` against this pair if library bodies needed.
+Gitignored via `analysis/` (deliberately untracked + outside /tmp). Use
+`dsc_extractor` or `misc/extract_dyld_cache.py` against this pair if library
+bodies needed.
 
 ## Results so far (this session)
 

@@ -10,3 +10,4 @@ __pycache__/
 tmp/
 macws-preview-*
 analysis/
+macos-15.6.1-rootfs/

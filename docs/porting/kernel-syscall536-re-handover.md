@@ -421,8 +421,8 @@ cryptex file — it had been mapped before by other processes/tests).
   `/var/mnt/rootfs/macdsc/` is a scratch copy (has been edited; its
   embedded signature no longer matches contents — do NOT use for CS
   experiments anymore; restore by re-copying from Mac
-  `/Users/ciscohe/Desktop/dyld-cache-15.6.1/`).
-- Pristine cache on Mac: `/Users/ciscohe/Desktop/dyld-cache-15.6.1/dyld_shared_cache_arm64e`
+  `/Users/ciscohe/Desktop/macPad/analysis/dyld-cache-15.6.1/`).
+- Pristine cache on Mac: `/Users/ciscohe/Desktop/macPad/analysis/dyld-cache-15.6.1/dyld_shared_cache_arm64e`
   (size 0xa1b18000, dynoff 0x12c75c000, rec0 prot 0x500000005).
 
 ---

@@ -79,7 +79,7 @@ iOS-side helper daemons (`macws*`) provide services the chroot can't reach
 | `layout/` | .deb payload tree (`layout/DEBIAN/postinst`, `layout/usr/macOS/bin/*`). |
 | `misc/postinst.sh`, `misc/install_rootfs_15.sh`, `misc/ipad_fix_deps.sh` | Rootfs install/fixup. |
 | `docs/porting/rootfs-15.6.1-install.md` | How the 15.6.1 rootfs was built/mounted. |
-| `build-rootfs-15.6.1.sh` (~/Desktop) | Rootfs build script. |
+| `misc/build-rootfs-15.6.1.sh` | Rootfs build script. |
 | `misc/cleanup_all.sh` | One-click stop of the whole chroot stack (use when crash-looping). |
 | `misc/run_bash.sh`, `misc/run_steam_live.sh`, app `test_*`/`macws_*_probe*` | Per-app smoke tests. |
 

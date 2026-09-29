@@ -16,7 +16,7 @@
 
 ### C) ★★★★★ syscall 536 = EINVAL(22) 的真因：**缓存 slide-info version=5，内核只支持 1–4**
 - IDA `sub_8062CA8` @ `0xfffffe0008063024`：`if ((version-1)>3) → KERN_FAILURE(5)`（源码 `osfmk/vm/vm_shared_region.c:2934` switch default）→ `bsd/vm/vm_unix.c:2725` 映射为 **EINVAL(22)**。
-- 物证：`xxd -s 0x7ad4c000 /Users/ciscohe/Desktop/dyld-cache-15.6.1/dyld_shared_cache_arm64e` = `05 00 00 00 00 40 00 00`（version=5, page_size=16K）。
+- 物证：`xxd -s 0x7ad4c000 /Users/ciscohe/Desktop/macPad/analysis/dyld-cache-15.6.1/dyld_shared_cache_arm64e` = `05 00 00 00 00 40 00 00`（version=5, page_size=16K）。
 - 触发：`sms_max_prot & VM_PROT_SLIDE(0x20)`（与 slide 数值无关）；次生障碍 page_size=16K≠内核 4K。
 - 已排除：region 占用（实测空 12）、setup 门6/10/11（KRW 实测 ubc+blob 存在、覆盖 [0,0xa160c000]）、dynregion、slide。
 
@@ -428,10 +428,10 @@ blob 做的事：open `/System/Library/dyld/dyld_shared_cache_arm64e` → F_ADDF
 
 ## 10.8 资源与源码索引
 
-- **15.6.1 缓存完整副本（host）**：`/Users/ciscohe/Desktop/dyld-cache-15.6.1/`
+- **15.6.1 缓存完整副本（host）**：`/Users/ciscohe/Desktop/macPad/analysis/dyld-cache-15.6.1/`
   ——主 2712764416B + `.01` 2203500544B，与设备上文件逐字节一致。
   分析 header/mapping 表用它，不用碰设备。`dsc_extractor`/`misc/extract_dyld_cache.py` 可用。
-- **rootfs staging**：`/Users/ciscohe/Desktop/macos-15.6.1-rootfs` +
+- **rootfs staging**：`/Users/ciscohe/Desktop/macPad/macos-15.6.1-rootfs` +
   `/Users/ciscohe/Desktop/build-rootfs-15.6.1.sh`（产出）→
   `misc/install_rootfs_15.sh`（设备安装）。
 - **xnu 源码**：`/tmp/dyldwork/xnu-xnu-8792.81.2/`（被清则需重下：
