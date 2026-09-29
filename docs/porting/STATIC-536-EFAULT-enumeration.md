@@ -101,8 +101,24 @@ __shared_region_map_and_slide_2_np(numFiles + 1, files, totalMappings + 1, mappi
 3. 同时把第 16 条的 `init_prot/max_prot` 恢复为 `VM_PROT_READ`（0x10000000 非法）。
 4. 若第 16 条 `copyin` 失败（1611）：确认 `sms_file_offset` 指向的 `dynamicData` 在提交时**确实已提交可读**（同进程用户态 ✓），且长度 ≥ `sms_size`。
 
-## 7. 未逐一验证项（诚实清单）
-- `vm_map.c` 中 KERN_INVALID_ADDRESS 的**其余**站点（10144/10274/10301/10313/10373/10386/10759/10918/10934/11819/11856/12153/12270/12309/12526 等）未逐一读上下文；
-  已确认与 536 相关的只有 **2717** 与 **3605**（FIXED 边界块）。→ 需要时可按同一方法补读。
-- `vm_shared_region_map_file_final`(2108) 未读到 KERN_INVALID_ADDRESS ✓（grep 无）⇒ 该函数不是 14 的来源。
-- 未做设备侧验证（本任务限定纯静态）；建议用一次 A/B：把第 16 条 VA 移入 region 后再跑 536。
+## 7. 逐函数体精确枚举（已闭合，替代原"未验证清单"）
+函数边界（C 定义列 0 实测）与体内 KERN_INVALID_ADDRESS/NO_SPACE 计数：
+
+| 函数 | 行区间 | KERN_INVALID_ADDRESS | 备注 |
+|---|---|---|---|
+| `vm_map_enter` | 2389–3449 | **仅 2717** ✓ | 其余 9 处均 `KERN_NO_SPACE`（⇒12）；**536 路径的越界唯一出口** |
+| `vm_map_enter_fourk` | 3449–3977 | 仅 3605 | 4K 页变体，**不在** 536 路径（iOS 16K 页） |
+| `vm_map_enter_mem_object_helper` | 3977–4854 | **0 处** | ★ 结论：**file-backed 映射不可能经此产出 EFAULT** |
+| `vm_map_enter_mem_object` | 4854–4897 | 0 处 | 仅 43 行的薄包装 |
+| `vm_shared_region_map_file_setup` | 1408–1926 | **仅 1611** ✓ | `fd==-1` 匿名 `copyin` 失败 |
+| `vm_shared_region_map_file_final` | 2108–2340 | 0 处 | grep 无 ⇒ 非 14 来源 |
+| `vm_shared_region_slide_mapping` | 2566–2740 | 2615 / 2632 ✓ | 走 slide_info 的 536 形态 |
+| `vm_shared_region_start_address` | 991–1040 | 1024 ✓ | 属 check_np，非 map 路径 |
+
+⇒ **因此本任务输入下 EFAULT(14) 只可能来自三处**：
+① `vm_shared_region.c:1611`（`fd==-1` 条目 `copyin` 失败）；
+② `vm_map.c:2717`（任意映射 `target_address/end` 越 submap 边界）；
+③ `vm_shared_region.c:2615/2632`（带 slide_info 的形态）。
+结合"只交前 13 条返回 0"，可判定：**我们的 14 由 ② 触发**（第 16 条 dyn 的 `VA−sr_base=0x12c75c000` 超 4GB），
+除非第 16 条的 `sms_file_offset` 指向不可读内存（那会先由 ① 命中，且内核会打印
+`for fd==-1 copyin() failed, errno=…` —— **设备侧可直接用这行日志区分 ①/②**）。
