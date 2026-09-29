@@ -449,3 +449,120 @@ allowEnvVarsSharedCache = AMFI bit2 AMFI_DYLD_OUTPUT_ALLOW_CUSTOM_SHARED_CACHE
    若第一条就死 → 是 "在 iOS task 上映射 ≥0x180000000 的 FIXED mmap" 本身被拒。
 4. 次要谜题:为何 adhoc+ent 签名的 dyld amfiFlags 不给 bit2 —— 
    查 iOS amfi 对 chroot 进程的策略(可能需 entitlement 或 kernel patch)。
+
+---
+
+## 14. 2026-09-30 — Devin CLI 接手：mdump cave 落地 + AMFI bit2 谜题解（设备暂不可达）
+
+> 本节全部为**纯静态/RE 进展**（设备当次不可达：Mac 移网到 `192.168.64.x`，
+> iPad 在 `192.168.1.6` 超时，USB 无挂载）。部署动作一律待设备回网。
+
+### 14.0 IDA 实例映射已漂移（接手先核对 `server_health`）
+
+| MCP server | 当前 IDB | imagebase |
+|---|---|---|
+| `ida-pro-mcp-Instance1` | `kc_raw_16.3_T8112.bin`（实为 T8103 内核） | `0xfffffe0007004000` |
+| `ida-pro-mcp-Instance2` | `dyld_15.6.1_arm64e_thin`（**文件偏移==EA**） | `0x0` |
+| `ida-pro-mcp-Instance3` | `dyldwork/amfid_bin` | `0x100000000` |
+
+AGENTS.md 里的表（Inst1=dyld/Inst2=kernel）已过期——**每次先 server_health 再干活**。
+
+### 14.1 mdump cave 已实现并入 `build_dyld.py`（取代设备上丢失的 /tmp/mdump.s）
+
+新 patch key（`mdumpentry`+`mdumpcave`，位于 xpI* 块之后）：
+
+```
+P["mdumpentry"]=(0x345ac, bytes.fromhex("394b0094"))   # BL 0x345ac -> 0x47290
+P["mdumpcave"] =(0x47290, 13 insns = 52B):
+    stp x0,x1,[sp,#-64]! ; stp x2,x3,[sp,#16] ; stp x4,x5,[sp,#32]
+    mov x1,sp ; mov x0,#2 ; mov x2,#48 ; mov x16,#4 ; svc #0x80
+    ldp x0,x1,[sp] ; ldp x2,x3,[sp,#16] ; ldp x4,x5,[sp,#32] ; add sp,#64
+    b _mmap        ; @cave+0x30=0x472c0 -> 0x4f44, 编码 0x017ef721
+```
+
+- dump 宽度从草案的 24B({x0,x1,x5}）扩到 **48B({x0..x5} 全参数）**——
+  同样 13 insn/52B，一次拿全 {VA,size,prot,flags,fd,foff}。
+- 字节序走 `_le()`（字序 hex），与修正后的 cave 约定一致；全部编码由
+  `clang -arch arm64 -c` 汇编产出，非手算（AGENTS.md B2 纪律）。
+- **cave 实测可用 60B**(0x47290..0x472cb，原记 57B)——IDA get_bytes 确认
+  15 个全零 word，下一函数实体在 0x472cc。
+- 构建+自检已过：
+  `python3 build_dyld.py dyld_mdump.bin crossarch plataccept hardpriv mdumpentry mdumpcave`
+  产物 `analysis/dyldwork/dyld_mdump.bin`;`0x345ac=94004b39`(BL→0x47290)✓
+  尾跳 `0x017ef721`→0x4f44 ✓（与 §13.6 草案记录值一致）。
+- **注意冲突**:0x47290 同时被 `cknpcave/cknp2cave/fstcave/e5ccave` 占用——
+  mdumpcave 只能与 mdumpentry 组合，别再叠其它占用同一 cave 的 key。
+
+### 14.2 mmap 循环体 RE（Instance2,`mapSplitCachePrivate` 0x34514..0x345e8)
+
+循环内**完全不触碰映射后的内存**——纯 mmap 序列。所以 SIGKILL 只有两类来源：
+(a) mmap SVC 内部内核主动杀进程；(b) 早前挂起的 kill 在 syscall 边界被投递。
+mdump 语义随之清晰：**fd2 上最后一条 48B 记录的下一条未出现 = 击杀点**；
+若 0 条记录则死在你看不到的更早处（重启探针链往前挪）。
+
+循环参数解码（RE-confirmed）：
+- `x25 = (fileBase - (loadInfo+0x30 + [[+0x1488]+8])) + 0x180000000` 每文件基准；
+  VA = slideBase([[0x1488]+8]) + x25 + (mappingVa - fileVa) —— **私有路径照样
+  把映射摆进 ≥0x180000000 的共享区段**（只是不走 submap/536）。
+- w23 flags:`entry[?]&0x200 ? 0x80012 : 0x12`(MAP_PRIVATE|MAP_FIXED|位19?);
+  w22 prot = `protBits|2` 或原值（受 [x19+0x70]+9 字节&1 调制）。
+
+### 14.3 AMFI bit2(`allowEnvVarsSharedCache`）门控 = **developer_mode && get-task-allow**(RE-confirmed)
+
+`_check_dyld_policy_internal` @ kernelcache `0xfffffe00092a71bc`(Instance1 decompile):
+
+```
+if  proc_issetugid(p)                                    -> info=73 (bits 0,3,6)
+elif developer_mode_state() && proc_has_get_task_allow(p)-> info=95 (bits 0,1,2,3,4,6)  ← bit2=1
+elif ent "com.apple.developer.swift-playgrounds-..."      -> info=91 (bits 0,1,3,4,6)
+else                                                    -> info=73
+info |= 32 if cs_require_lv(p)
+```
+
+- `proc_has_get_task_allow` @0xfffffe000929f2a4 = `(cs_entitlement_flags(p)>>2)&1`
+  （即 CS_GET_TASK_ALLOW 0x4)。我们的 `entitlements.plist` **已含** `get-task-allow`。
+- issetugid 疑云排除：launchdchrootexec 的 `setgid/setuid`(main.m:47/52）确实
+  置 P_SUGID，但 `kern_exec.c:6369` 在 execve 开头清 P_SUGID，仅 VSUID/VSGID 或
+  MACF disjoint cred 才重立（6511)——普通 exec 链末端进程 **issetugid=0**。
+- **结论：唯一剩下的门是 `developer_mode_state()`**(iPad 设置里的开发者模式）。
+  设备回网后两条验证路径：
+  a) `sysctl kern.developer_mode_status`(Dopamine 下常可读）或 Settings>
+     Privacy>Developer Mode 直接开——开了则 forpriv/hardpriv 诊断补丁可以退役，
+     `DYLD_SHARED_REGION=private` 即可原生触发 private 路径；
+  b) 设备上 csflags dump(`misc/csflags_dump.c`）确认 CS_GET_TASK_ALLOW 在。
+- 若 developer_mode_state 仍不给（chroot 路径影响？),fallback 仍是 hardpriv。
+
+### 14.4 misc/otest 已编（上个 session 只有源码）
+
+`clang -target arm64-apple-macosx14 -nostdlib -static -fno-stack-protector -Wl,-e,_main`
+→ `misc/otest`(arm64 静态，与 smap/scheck 同型）。裸 SVC 探针：
+`open(dir)`/`fstatat(469)`/`openat(463)`/绝对路径 open 各打一行 —— 用于在
+设备上直接核对 /tmp/dsc 与 cryptex 路径的 fd/errno（验证 openat 视角）。
+设备上须经 `run_nocskill` 跑（静态 Mach-O 被内核 exec veto,CLI-MILESTONE §修复1)。
+
+### 14.5 设备回网后的执行顺序（runbook)
+
+```
+# host:
+scp analysis/dyldwork/dyld_mdump.bin misc/otest mobile@<IP>:/var/mobile/
+# device(root):
+RESTORE_NO_VERIFY=1 bash /var/mobile/restore_env.sh /var/mobile/dyld_mdump.bin
+# 上面会 ldid+trustcache+铺进 $R/usr/lib/dyld
+cp misc/otest -> $R/private/tmp/otest && trustcache add 其 cdhash
+# 触发 private mmap 循环（stderr 落文件）:
+/var/mobile/run_nocskill /var/jb/usr/bin/env -i PATH=/usr/bin:/bin \
+    DYLD_SHARED_CACHE_DIR=/tmp/dsc DYLD_SHARED_REGION=private \
+    /var/jb/usr/bin/chroot /var/mnt/rootfs /bin/echo HI 2>/tmp/mdump.log
+python3 - <<'PY'   # 解析 48B 记录 {VA,size,prot,flags,fd,foff}
+import struct; d=open('/tmp/mdump.log','rb').read()
+for i in range(0,len(d)//48*48,48):
+    print([hex(x) for x in struct.unpack_from('<6Q',d,i)])
+PY
+```
+
+预期解读：
+- 多条记录且死在中间 → 最后一条的 VA/size/foff 即击杀映射，查 prot/flags;
+- 0 条/第一条就死 → iOS 上 `MAP_FIXED|PRIVATE` 映射 ≥0x180000000 本身被拒
+  （结合 §13.5 的 "cryptex 与普通文件都死"，偏向 VA/region 级而非文件级）;
+- 记得 §13.5 提到残留 shared-region 无法释放（KRW 坏）——若 mdump 显示
+  死因是撞上残留 submap，只能先重启再测（重启后先跑 mdump，别先跑 536)。

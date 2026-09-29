@@ -1195,6 +1195,17 @@ P["xpI5"]=(0x345f8, _le("528012a052800030d4001001"), "exit(0x88) @priv DynRegion
 P["xpI6"]=(0x34b84, _le("528012c052800030d4001001"), "exit(0x89) @priv map_with_linking")
 P["xpI7"]=(0x34e6c, _le("528012e052800030d4001001"), "exit(0x8a) @priv $_0 block")
 
+# DIAGNOSTIC: per-iteration mmap arg dump for the mapSplitCachePrivate loop.
+#   BL site @0x345ac -> cave@0x47290 (60B dead region): write(2,{x0..x5},48)
+#   then tail `b _mmap` — BL sets x30=0x345b0 so _mmap ret lands back at the
+#   real call site. Dumps {VA,size,prot,flags,fd,foff}; last record = kill pt.
+#   Cave body assembled+verified: b _mmap @cave+0x30=0x472c0 -> 0x4f44 =17ef721.
+P["mdumpentry"]=(0x345ac, bytes.fromhex("394b0094"), "@0x345ac bl 0x47290 (mmap arg dump)")
+P["mdumpcave"] =(0x47290, _le("a9bc07e0a9010fe2a90217e4910003e1d2800040d2800602"
+                             "d2800090d4001001a94007e0a9410fe2a94217e4910103ff"
+                             "017ef721"),
+               "cave@0x47290: write(2,mmap_args,48); b _mmap(0x4f44)")
+
 # DEFAULT: original-preflight clean build (no injected blob).
 DEFAULT = ["crossarch", "hasexisting", "prereuse", "filescount1",
            "dynoff", "accessor", "fcntl_nop", "cover_b"]
