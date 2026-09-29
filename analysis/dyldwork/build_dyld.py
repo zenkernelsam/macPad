@@ -1154,6 +1154,47 @@ P["xpA"]=(0x352bc, _le("52800aa0d2800030d4001001"), "exit(0x55) @mapSplit entry"
 P["xpB"]=(0x35770, _le("52800cc0d2800030d4001001"), "exit(0x66) @preflightMain+4")
 P["xpC"]=(0x35384, _le("52800ee0d2800030d4001001"), "exit(0x77) @post-preflight")
 
+
+# --- fstatat pre-probe: dump options->cacheDirFD (x0) to fd2, then tail-call ---
+#   real fstatat (x30 already = 0x357d8 via patched B site).
+P["fstentry"]=(0x357d4, bytes.fromhex("af460094"), "@0x357d4 bl 0x47290 (dirfd dump @pre-fstatat; LR=0x357d8)")
+P["fstexit"] =(0x47290, _le("52800e0052800030d4001001"), "cave: exit(0x70) — reach test for site 0x357d4")
+P["fstcave"] =(0x47290, _le("f81e03e0d10083e1528000405280010252800090d4001001"
+                            "b94002c0910243e1910003e252800003122d0014"),
+               "cave: write(2,&dirfd,8); b fstatat(0x52700); x30=0x357d8 returns")
+
+
+# bisect preflight entry block: exit codes prove reachability
+P["xpF1"]=(0x357b0, _le("52800e2052800030d4001001"), "exit(0x71) @0x357b0 post-LDR-options")
+P["xpF2"]=(0x357c8, _le("52800e4052800030d4001001"), "exit(0x72) @0x357c8 pre-ADD-X1")
+P["xpF3"]=(0x357d0, _le("52800e6052800030d4001001"), "exit(0x73) @0x357d0 pre-fstatat-args-done")
+
+P["xpG1"]=(0x3581c, _le("52800e8052800030d4001001"), "exit(0x74) @0x3581c =openat-FAIL branch taken")
+P["xpG2"]=(0x35830, _le("52800ea052800030d4001001"), "exit(0x75) @0x35830 post-openat-success")
+
+P["xpH1"]=(0x35b00, _le("52800ea052800030d4001001"), "exit(0x75) @fstat64 call")
+P["xpH2"]=(0x35b4c, _le("52800ec052800030d4001001"), "exit(0x76) @pread call")
+P["xpH3"]=(0x35d68, _le("52800ee052800030d4001001"), "exit(0x77) @fcntl97 call")
+P["xpH4"]=(0x35db4, _le("52800f0052800030d4001001"), "exit(0x78) @mmap call")
+P["xpH5"]=(0x35fbc, _le("52800f2052800030d4001001"), "exit(0x79) @numSubCaches call")
+P["xpH6"]=(0x35be8, _le("52800f4052800030d4001001"), "exit(0x7a) @RETAB end")
+
+# DIAGNOSTIC ONLY: force allowEnvVarsSharedCache==1 so DYLD_SHARED_REGION=private
+#   engages mapSplitCachePrivate regardless of AMFI bit2. Not a fix — tests whether
+#   the private mmap path can map the 4.77GB macOS cache on iOS kernel.
+P["forpriv"]=(0xbdb8, bytes.fromhex("1f2003d5"), "nop B.NE @0xbdb8 -> forcePrivate=strcmp(mode,private) only")
+
+# DIAGNOSTIC: force loadDyldCache -> mapSplitCachePrivate unconditionally.
+P["hardpriv"]=(0x34268, bytes.fromhex("1f2003d5"), "nop B.NE @loadDyldCache -> always private")
+
+P["xpI1"]=(0x3438c, _le("5280122052800030d4001001"), "exit(0x84) @priv preflightMain")
+P["xpI2"]=(0x34468, _le("5280124052800030d4001001"), "exit(0x85) @priv preflightSub")
+P["xpI3"]=(0x344ec, _le("5280126052800030d4001001"), "exit(0x86) @priv deallocExisting")
+P["xpI4"]=(0x345ac, _le("5280128052800030d4001001"), "exit(0x87) @priv mmap")
+P["xpI5"]=(0x345f8, _le("528012a052800030d4001001"), "exit(0x88) @priv DynRegion::make")
+P["xpI6"]=(0x34b84, _le("528012c052800030d4001001"), "exit(0x89) @priv map_with_linking")
+P["xpI7"]=(0x34e6c, _le("528012e052800030d4001001"), "exit(0x8a) @priv $_0 block")
+
 # DEFAULT: original-preflight clean build (no injected blob).
 DEFAULT = ["crossarch", "hasexisting", "prereuse", "filescount1",
            "dynoff", "accessor", "fcntl_nop", "cover_b"]

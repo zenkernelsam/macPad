@@ -362,3 +362,90 @@ bash /var/mobile/post_reboot_final2.sh 2>&1 | tee /tmp/final2.log
 
 msgbuf 全局 = IDB `0xfffffe000aa030a0`(+slide)，其 +0x10 起是环形缓冲；
 SHARED_REGION_TRACE_ERROR 默认 level=1 直接输出到 msgbuf。
+
+---
+
+## 13. 2026-09-30 凌晨 — private mmap 路径取证（接手必读）
+
+### 13.1 背景结论（已固化）
+
+macOS 15.6.1 cache 跨 0x180000000→0x2ac75c000(≈4.77GB)> iOS 固定
+`SHARED_REGION_SIZE_ARM64=0x100000000`(4GB)。syscall 536 对
+`.01` 第 4 条起的映射和 DynamicRegion(`va-base=0x12c75c000`)必然
+`-14 EFAULT`(vm_map_enter 边界拒)。**system-wide 路径结构性死亡**。
+→ 转向 dyld 私有路径 `mapSplitCachePrivate`（纯 `mmap(MAP_FIXED|PRIVATE)`,
+不经 shared-region submap，不受 4GB 限制）。
+
+### 13.2 误导链（重要，别重踩）
+
+- `"dyld private shared cache could not be found"` 的 halt 条件是
+  `cacheMode=="private" && cacheFileFound==0`(**与 forcePrivate 无关!**)。
+  只要 cache 没加载且 env 写了 private 就会这么报——不代表 private 路径跑过。
+  反汇编位置:DyldCache 构造函数 `0xc13c-0xc154`(TBZ var_4D8→loc_C208)。
+- 之前看到的该 halt 真相:forcePrivate=0 → 走 systemwide → openat 失败
+  → cacheFileFound=0 → 跳过 "not loaded" 打印 → strcmp "private" 命中 → halt。
+
+### 13.3 forcePrivate 门控(所有偏移已 RE 确认)
+
+```
+ProcessConfig ctor(0xbd40 区):
+  X27 = getenv("DYLD_SHARED_REGION")
+  W9  = (security.allowEnvVarsSharedCache[X21+0x14]==1) && strcmp(X27,"private")==0
+  var_4BC = opts+4 = forcePrivate          (SharedCacheOptions: int dirfd@0, bool forcePrivate@4)
+getDyldCache(0x2fe90) → loadDyldCache(0x34240):
+  0x34260 LDRB W8,[X0,#4]; CMP #1; B.NE→systemwide / B.EQ→mapSplitCachePrivate(0x342dc)
+allowEnvVarsSharedCache = AMFI bit2 AMFI_DYLD_OUTPUT_ALLOW_CUSTOM_SHARED_CACHE
+  — adhoc 签名 dyld 的 amfi_check_dyld_policy_self 未给该位 → forcePrivate 恒 0。
+```
+
+### 13.4 诊断 patch(已录入 build_dyld.py,均为 scaffolding 非 fix)
+
+| key | 位置 | 作用 |
+|---|---|---|
+| `forpriv` | 0xbdb8 NOP | 去掉 security gate,`forcePrivate=strcmp(mode,"private")==0` |
+| `hardpriv` | 0x34268 NOP | loadDyldCache 无条件走 mapSplitCachePrivate |
+| `fstentry`+`fstcave` | 0x357d4 BL→cave@0x47290 | dump options->cacheDirFD 到 fd2 后 tail-call fstatat |
+| `xpI1..7` | 0x3438c/0x34468/0x344ec/0x345ac/0x345f8/0x34b84/0x34e6c | exit(0x91..0x97) 出口探针(已改为不撞信号码) |
+| `xpH1..6` | preflightCacheFile 各 BL 点 | exit(0x75..0x7a) |
+| `xpF1..3` | 0x357b0/0x357c8/0x357d0 | preflightMain 入口二分 |
+
+**Cave 纪律**(今天两次踩雷):
+- `0x47290` 死区只有 **57B**;cave ≤14 条指令。
+- site→cave 用 **BL**(x30=site+4 自然给 tail-call 的真函数当返回地址);
+  用 B 会丢 x30 → 被调函数 ret 跳飞(已验证 139)。
+- cave 里**禁止 movz/movk 绝对地址**(dyld 有 slide)——尾部用相对 `B _func`
+  (例:cave末 @0x472c0 → `_mmap`0x4f44 = `17ef721`)。
+- BL imm26 手算验证:site+imm*4==target(我 0x6aaf 错成 0x1aabc→0x50290 SEGV 一次)。
+
+### 13.5 运行时取证(全部实测)
+
+- env 到达:dirfd=**7**(fst 探针 dump)→ `DYLD_SHARED_CACHE_DIR` open 成功。
+- `openat(7,"dyld_shared_cache_arm64e")` 成功(xpG1 证明到达 0x3581c
+  preflightCacheFile 调用点;0x35824 是 errno==ENOENT 分支)。
+- `preflightCacheFile` **全程走完**(xpH1..H5 各调用点全部到达,
+  含 fcntl(fd,97) 与 mmap/memcmp;正常返回 1)。
+- systemwide(不带 hardpriv):536 EINVAL → "map cache into shared region
+  failed" → fallback 逐文件加载。**/bin/echo 在 fallback 下真的能跑**
+  (打印 HI rc=0);`/usr/bin/env` 因缺 `_access` 符号 abort(134)。
+- hardpriv 强制 private:**0x345ac 的 `_mmap` 循环内被 SIGKILL(137)**
+  (xpI4@0x345ac 到达=148;xpI5@0x345f8 DynamicRegion::make 未到达=137)。
+  mmap 参数:x0=VA, x1=size[entry-0x24], w2=prot(w22), w3=flags(w23,
+  含 0x80012=FIXED|PRIVATE|0x80000), w4=fd, x5=foff[entry-0x1C];
+  循环体 0x3454c..0x345c0,每条目 0x30。
+- cryptex 挂载文件与未挂 blob 的普通文件在 536/mmap 上都会 **SIGKILL**;
+  `/tmp/dsc/`(=rootfs `private/tmp/dsc`)两个文件已用 iOS 侧 cachereg
+  挂好 blob(fcntl=0 ×2,`READY ok=1`)。注意 cachereg 进程需活着保持 vnode。
+- **KRW 本 boot 挂了**(IOSurface primitives 初始化失败,kread 返回垃圾,
+  srwalk 的 SLIDE 硬编码也过期)。region 重置暂不可用。
+
+### 13.6 下一步(CLI 接手第一动作)
+
+1. 设备现状:dyld = crossarch+plataccept+hardpriv+xpI7 探针版;
+   回滚基线 `cp /var/mnt/rootfs/usr/lib/dyld.plat.keep → /usr/lib/dyld`。
+2. `mdump` cave(已在 /tmp/mdump.s 草稿,52B 可入 0x47290):
+   patch `BL _mmap`@0x345ac → cave: write(2,{x0,x1,x5},24) → `b _mmap`(0x4f44,
+   相对 `17ef721` @cave+0x30)。**抓最后一个 mmap 的 {VA,size,foff} = 击杀点**。
+3. 若击杀映射是某条具体条目 → 查 prot/foff/VA 找触发条件;
+   若第一条就死 → 是 "在 iOS task 上映射 ≥0x180000000 的 FIXED mmap" 本身被拒。
+4. 次要谜题:为何 adhoc+ent 签名的 dyld amfiFlags 不给 bit2 —— 
+   查 iOS amfi 对 chroot 进程的策略(可能需 entitlement 或 kernel patch)。
