@@ -1,0 +1,65 @@
+# uncache.py (VirtualMacOniPad): add slide info v5 support
+#
+#   - import dyld_cache_slide_pointer5
+#   - add a C5 collector alongside C, using the v5 pointer encoding
+#     (vm-offset from the cache base + keyIsData/addrDiv instead of a 2-bit
+#     ptrauth key), mirroring dyld SharedCacheRuntime.cpp:767-792
+#   - dispatch on slideInfo.version == 5 as well as 3
+#
+# Companion to misc/dyldextractor-2.2.2-slideinfo5.patch - uncache.py consumes
+# DyldExtractor's extraction context, so v5 must be supported in both.
+#
+# Apply against the fork root with:
+#   patch -p1 -d <VirtualMacOniPad-root> < this-file
+#
+--- a/VirtualMac/vz/uncache.py
++++ b/VirtualMac/vz/uncache.py
+@@ -15,7 +15,10 @@
+ from DyldExtractor.extraction_context import ExtractionContext
+ from DyldExtractor.macho.macho_context import MachOContext
+ from DyldExtractor.dyld.dyld_context import DyldContext
+-from DyldExtractor.dyld.dyld_structs import dyld_cache_slide_pointer3
++from DyldExtractor.dyld.dyld_structs import (
++    dyld_cache_slide_pointer3,
++    dyld_cache_slide_pointer5,
++)
+ from DyldExtractor.macho.macho_structs import mach_header_64
+ from DyldExtractor.converter import slide_info
+ 
+@@ -1300,11 +1303,36 @@
+                                 v = li.plain.pointerValue
+                                 t = ((v & 0x0007F80000000000) << 13) | (v & 0x000007FFFFFFFFFF)
+                                 fx.append([a, t, 0, 0, 0, 0])
++                        if delta == 0:
++                            break
++            # v5 analogue of C.  Same output tuple, but the v5 pointer stores a
++            # vm-offset from the shared cache base and encodes auth metadata with
++            # keyIsData/addrDiv instead of a 2-bit ptrauth key.
++            # Cf. dyld SharedCacheRuntime.cpp:767-792.
++            class C5(slide_info._V5Rebaser):
++                def _rebasePage(self, ctx, pageOffset, delta):
++                    loc = pageOffset
++                    while True:
++                        loc += delta
++                        li = dyld_cache_slide_pointer5(self.dyldCtx.file, loc)
++                        delta = li.regular.next * 8
++                        a = self.mapping.address + (loc - self.mapping.fileOffset)
++                        if in_img(a):
++                            t = self.slideInfo.value_add + li.regular.runtimeOffset
++                            if li.auth.auth:
++                                # 0 -> IA (ptrauth_key_asia), 1 -> DA (ptrauth_key_asda)
++                                k = 2 if li.auth.keyIsData else 0
++                                fx.append([a, t, 1, k, int(li.auth.diversity),
++                                           int(li.auth.addrDiv)])
++                            else:
++                                fx.append([a, t | (li.regular.high8 << 56), 0, 0, 0, 0])
+                         if delta == 0:
+                             break
+             for info in slide_info._getMappingInfo(ectx):
+                 if info.slideInfo.version == 3:
+                     C(ectx, info).run()
++                elif info.slideInfo.version == 5:
++                    C5(ectx, info).run()
+         finally:
+             for sf in subs:
+                 sf.close()
