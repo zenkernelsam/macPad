@@ -308,3 +308,70 @@ IDB（I1，静态，imagebase `0xfffffe0007004000`）中 `map_with_linking_np` �
 - ❌ 期待 `pagein_error != 0` 来证明 pager 出错：`t_pagein_error` 仅由
   `vnode_pager.c:650/796`（VNOP_PAGEIN）设置，dyld_pager 的失败**不写它**
   （`vm_fault.c:5616` 在每次 fault 前清零）——所以 `pagein_error=0` 对本案**无信息量**。
+
+---
+
+## 9. 设备实测（2026-09-30，本会话执行；含三处对本文/项目旧判据的更正）
+
+设备状态：`xnu-8792.82.2`、iPad13,11、load≈4.3、无 chroot GUI 栈在跑（另一条会话空闲）；
+`cachereg` PID 2255 仍在跑（`/tmp/dsc/dyld_shared_cache_arm64e{,.01}` 存在，
+`$R/System/Library/dyld/dyld_shared_cache_arm64e{,.01}` 是指向 `/tmp/dsc/*` 的软链 ✓）。
+
+### 9.1 做了什么
+
+按 §6.1 的 F1 单点补丁（**已签名+入 TC**，含备份与 trap 自动恢复、全程 `mv` 不删除）：
+
+| 项 | 值 |
+|---|---|
+| 原版 dyld | SHA `9956915299c6e3e21c7e650242166bab05dc635da4acac2cbade4e646eec51a1`，inode `245791518`（与交接记录一致） |
+| 补丁后（未签） | SHA `f7820dcdef5f27211097fcc21adad4482cd981fd9d093885e37045347e562478`，仅字节 `0x34790/91/93` 变化 |
+| `ldid -Hsha256 -S<ent>` 后 | SHA `14e2751b3f6e54c7fd617206c181192ed30773fdc7f27caccdcddc7d85c0797f`，`flags=0x0(none)`，CDHash `cd023af61cd044d269a6bb89380c80f5b15979dc`，`jbctl trustcache add` rc=0 |
+| 部署 | inode `245842235`（新 inode ✓），用例脚本 `/var/mobile/f1v2.sh` |
+| 运行 | `DYLD_PRINT_LIBRARIES=1 timeout 90 run_dbg_hold_v2 chroot /var/mnt/rootfs /bin/echo HI` |
+| 恢复 | SHA 回 `9956…51a1`、inode 回 `245791518` ✓（脚本 trap 自动完成） |
+
+部署后**原版 dyld 一直在位**（现值经 SHA 复核为原版）。
+
+### 9.2 结果：m3 写错误签名消失，失败点后移
+
+- **日志里没有** `type=1 code0=0xa` / `far=0x1ee188000` —— 即交接文档记录的 m3 写错误
+  **没有出现**（F1 生效方向正确：跳过 550 ⇒ 不再有 dyld_pager ⇒ 不再有 format-13 拒绝）。
+- 新的异常：`[exc] type=12 code0=0xa000000100000000 code1=0x2ac75c000`，
+  `pc=0x100674ae8`、`lr=0x1006a3e94`、`far=0x1006e509c`、`esr=0x56000080`（EC=0x15=SVC）、
+  `csops flags=0x26803b0d`、`pagein_error=0`；
+  `[pcmap] req_pc=0x100674ae8 entry=0x100674000..0x100710000 prot=5/5`；
+  pc 处指令字节 `e4 03 08 aa 05 00 80 d2 b0 18 80 d2 01 10 00 d4`
+  = `mov x4,x8; mov x5,#0; mov x16,#0xc5; svc #0x80` ⇒ **x16=0xc5=197=mmap 的原生 svc**；
+  `x0=0x2ac75c000 x2=5(PROT_READ|EXEC) x3=0x40012(MAP_FIXED|PRIVATE|0x40000) x4=3`；
+  映射 `0x2ac75c000..0x2ac760000 prot=1/3 resident=0 shadow=1 ref=2`。
+- **THEORY（需下轮验证）**：这是 dyld 对**超过 4GB 的高地址区**做 `MAP_FIXED` mmap 时被内核
+  以 guard 机制（EXC_GUARD）拦下 —— 与项目已知的"`.01` 4.77GB > 4GB region 几何问题"同源；
+  不是 dyld_pager 问题。`echo` **仍未打印 HI**（stdout 仅 49B=`jbctl proc_set_debugged` 的回显）。
+
+### 9.3 三处更正（重要，会影响后续判据）
+
+1. **`/usr/lib/libSystem.B.dylib <D161E41A>` 不能作为"用了 macOS 缓存"的判据。**
+   实测：**未 chroot 的纯 iOS 进程**（`DYLD_PRINT_LIBRARIES=1 /var/jb/usr/bin/ls`）同样打印
+   `<D161E41A-3030-339F-B135-E244271F54C6> /usr/lib/libSystem.B.dylib`。
+   ⇒ 该 UUID 在本机对 iOS 侧与 chroot 侧同时出现，**旧判据（role doc §5 / state doc）需作废或重新校准**。
+   本节实验因此**不能**宣称"libSystem 来自 macOS 缓存"。
+2. **`docs/evidence/m1-*.ips` 里没有 triage 字段**（对 40+ 份 echo/chroot 报告做了全量 grep：
+   无 `dyld_pager`、无 `triage`、无 `1ee188000`）⇒ **本文 §5 的"读 .ips triage"判据在本机不成立**；
+   `triage` 字符串只出现在 sysdiagnose 的 logarchive 里，不在 crash report 里。
+   （§5 降级为：源码上机制存在（E16/E17），但本机 crash report 未携带该字段，
+   需改用 `sysdiagnose` 或下轮直接在 fault 现场读 `kd_buffer_triage`。）
+3. **裸 `chroot` 会被 `Killed: 9`**：`timeout 45 chroot /var/mnt/rootfs /bin/echo HI`
+   → rc=137、stdout 0 字节（`env -i` 与否都一样）。**必须**走
+   `run_dbg_hold_v2`（它会 `jbctl proc_set_debugged`，见其内嵌字符串
+   `[*] jbctl rc=%d` / `Successfully marked proc of pid %d as debugged`）。
+   另外设备上部署的 `/var/mobile/run_nocskill` 已过期：`restore_env.sh` 的 HELLO×3 全部报
+   `[!] proc not found for pid …` ⇒ **本次可用启动器 = `run_dbg_hold_v2`**。
+
+### 9.4 设备上留下的痕迹（供设备侧会话接手，均未删除）
+
+- `$R/.f1_m3_tested`、`$R/.f1v2_tested`：两次实验用过的补丁版 dyld 归档（隐藏文件）。
+- `/var/mobile/dyld_f1_34790.bin`：**已签名+已入 TC** 的补丁版 dyld（SHA `14e2751b…`，
+  CDHash `cd023af6…`）——可直接复用，无需重签。
+- `/var/mobile/dyld_f1v2_backup_orig.bin`：原版拷贝（SHA `9956…51a1`）。
+- `/var/mobile/{f1_m3_test,f1v2}.{sh,out,raw}`、`/var/mobile/f1_base*.{out,raw}`、`/var/mobile/uuidcheck.raw`：日志。
+- 设备 dyld **已恢复原版**（SHA/inode 双复核）；trustcache 为内存态，多了一条补丁 dyld 的项（无害）。
