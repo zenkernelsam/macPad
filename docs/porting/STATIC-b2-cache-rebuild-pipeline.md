@@ -699,3 +699,71 @@ ps -o pid,etime,time,rss -p <pid>           # 累计 CPU 时间 / RSS
 转 **路线 C**：从本机 `UniversalMac_13.2.1_22D68_Restore.ipsw`（12.49 GB）出 rootfs ——
 纯磁盘 I/O、低内存；且 13.2.1 缓存 3.21 GB 天然 < 4 GB、slide info **v3** ⇒
 dyld 自带进程内 fixup，**完全不需要 `.a2s` / uncache**（见 §12）。
+
+---
+
+## 15. 路线 E 机制核查：放大 `SHARED_REGION_SIZE` **在机制上成立**（2026-10-01）
+
+> 触发：用户问"iOS 内核只给这么大一片，是不是还有一个方法改越狱后的 iPad 解除限制？"
+> 级别：`RE-confirmed`（本地 `analysis/xnu-xnu-8792.81.2/` 源码）。
+
+### 15.1 为什么放大能解 —— 致命守卫的确切触发条件
+
+`osfmk/vm/vm_map.c`：
+
+```c
+// :8094 扫描完被删除范围内的 entry 后，若范围尾部仍有未覆盖的空洞：
+} else if (vm_map_round_page(s, VM_MAP_PAGE_MASK(map)) < end) {
+    state |= VMDS_FOUND_GAP;
+    gap_start = s;
+}
+...
+// :8693
+if (state & VMDS_FOUND_GAP) {
+    DTRACE_VM3(kern_vm_deallocate_gap, ...);
+    if (flags & VM_MAP_REMOVE_GAPS_FAIL) {
+        ret.kmr_return = KERN_INVALID_VALUE;
+    } else {
+        vm_map_guard_exception(gap_start, kGUARD_EXC_DEALLOC_GAP);   // ← 致命
+    }
+}
+```
+
+我们的情形：`.01` 的 m2 = `0x27dfd8000..0x28188c000` **横跨 `0x280000000`**
+（= `SHARED_REGION_BASE_ARM64 + SHARED_REGION_SIZE_ARM64`）。
+其下在内核共享区 submap 内，**其上没有任何映射** ⇒ 删除范围出现**尾部空洞** ⇒
+`VMDS_FOUND_GAP` ⇒ 致命守卫。
+
+⇒ **把 `SHARED_REGION_SIZE_ARM64` 放大到覆盖 `0x2ac75c000`，整段就落进 submap 内 ⇒ 无空洞 ⇒
+`MAP_FIXED` 正常完成。** （原以为"放大反而让空洞更大"是**错的**：空洞来自"区域之外未映射"，
+不来自区域尺寸本身。）
+
+### 15.2 三道现实门槛（均未解，须先静态侦察）
+
+1. **它是编译期常量、落在指令里。**
+   `osfmk/mach/shared_region.h:91`：`#define SHARED_REGION_SIZE_ARM64 0x100000000ULL`；
+   在 `osfmk/vm/vm_shared_region.c:693-694` 赋给局部 `size`：
+   ```c
+   case CPU_TYPE_ARM64:
+       base_address = SHARED_REGION_BASE_ARM64;
+       size         = SHARED_REGION_SIZE_ARM64;   // ← 补丁目标：materialize 0x100000000 的指令
+   ```
+   即**改内核代码**，不是改数据；且必须先与 IDB 逐字节核对。
+2. **时机可能是硬伤。** `vm_shared_region_create()` 仅由 `vm_shared_region_enter()` 调用，
+   后者**唯一**的调用点是 `osfmk/vm/vm_map.c:13397`，位于 **`vm_map_exec()`**（`:13376`）之内
+   —— `vm_shared_region.c:55` 的注释直说："When a process is being exec'ed, vm_map_exec()
+   calls vm_shared_region_enter()"。
+   ⇒ 共享区在**开机后第一个进程 exec 时**就已建立并被复用；等 Dopamine 拿到 KRW 再改常量，
+   **对已存在的 submap 无效**。要么让它重建，要么改更早的路径。
+3. **连带项**：`SHARED_REGION_NESTING_SIZE_ARM64`（同值，pmap 用）、
+   `osfmk/arm/pmap/pmap.c:11226` 的 `ARM64_MIN_MAX_ADDRESS`、
+   `osfmk/vm/vm_map_store.h:89-90` 里"该 entry 是否属于共享区"的边界谓词 —— 改一个常量会一起动。
+
+### 15.3 风险与执行顺序
+
+- 风险**高于**"panic 就重启"：区域在启动早期建立，改错**可能开不了机**。
+- 顺序：**先零风险的静态侦察**（`ida-pro-mcp-Instance1` 内核 IDB）——
+  定位 `vm_shared_region_create`、看清 `size` 的赋值指令、确认区域是否真的"每 boot 只建一次"。
+  若结论是"jailbreak 后仍可重建"，再谈设备试验；否则 E 判不可行，回到 C。
+- ⚠️ **内存**：内核 IDB 很大（`kc_raw_16.3_T8112.bin.id0` 681 MB + IDA 进程），
+  **在 a2sb 过夜任务结束前不要加载**，避免抢内存把它挤死。
