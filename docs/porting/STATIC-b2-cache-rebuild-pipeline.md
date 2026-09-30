@@ -432,3 +432,34 @@ OSError: dlopen(...): mmap(addr=0x359F879E0, size=0xB8) failed with errno=22
   见 `include/mach-o/dyld_cache_format.h:374,533`）。
   ⇒ 要么自己补 v5 支持（dyldextractor 的 rebaser + uncache.py 两处），要么换版本。
 - **路线 C（13.4）的相对优势进一步明确**：作者在该版本上跑通，且第三方工具链正好工作在那代格式上。
+
+---
+
+## 10. 其余工具评估（2026-10-01，按用户选择"先评估其余工具"）
+
+| 工具 | 维护状态 | 结论 | 证据 |
+|---|---|---|---|
+| `arandomdev/dyldextractor` 2.2.2 | 最后 push 2025-01-27；56 forks；7 open issues | ❌ 只支持 slide info v2/v3 | `_SlideInfoMap=[2,3]`（本机实测）；issue 搜 "slide info version" 命中 5 条，其中 #5 "Add support for Slide Info version 3"（已关），**无 v5 相关** |
+| `nfzerox/VirtualMacOniPad` 的 `uncache.py` | 活跃（2026） | ❌ **硬编码 v3** | `uncache.py:1286` `class C(slide_info._V3Rebaser)`；`:1291` `dyld_cache_slide_pointer3`；`:1305-1306` `if info.slideInfo.version == 3` |
+| `moraea/dsce` | OCLP 在用 | ❌ 定位不符 | Readme status 明写 **`[ ] support arm64 (unlikely...)`**；`[ ] support Sonoma`；面向 Intel Mac 老 GPU/Wi-Fi |
+| `zhuowei/iOS-run-macOS-executables-tools` | 仓库自述 | ❌ | 描述原文 "**Failed** experiment for running command line macOS tools on jailbroken iOS"；README 在 `master`/`main` 均 404 |
+| `keith/dyld-shared-cache-extractor` | — | 仅抽取 | README：包 Xcode 的 `dsc_extractor.bundle` |
+| `phoenix3200/decache`、`limneos/classdump-dyld` | 旧 | 抽取 / 类转储 | 仓库描述，非"可加载"路线 |
+
+### 10.1 一个必须澄清的概念混淆（否则会得出错误结论）
+
+VirtualMacOniPad 的 README 写"支持 macOS 12 Monterey 直到 macOS 26 Tahoe，**推荐 macOS 15 Sequoia**"，
+**但那指的是来宾 VM 的 macOS**（虚拟机里跑自己的内核，根本不需要 uncache）。
+`uncache.py` 服务的是**宿主侧**：把 macOS 的**框架**变成**能在 iOS 上 `dlopen`** 的形态 ——
+- 文档串原文：`Validate with dyld_info -fixups, then stamp iOS + sign.`
+- 代码 `uncache.py:1333`：`if not os.environ.get("VZ_MAC"): # VZ_MAC: keep macOS Versions/A paths for host dlopen test`
+
+⇒ **它的目标是"在 iPadOS 宿主上加载 macOS 框架"，不是"让 macOS rootfs 脱离共享缓存运行"。**
+两条路线不可互相借用。
+
+### 10.2 总结论（工具评估）
+
+- **目前没有任何第三方工具支持 macOS 15 的 slide info v5**；生态上限大致停在 macOS 13/14 的格式。
+- 这与既有结论吻合：作者在 **13.4** 上跑通，且那正是第三方工具链工作的那一代。
+- ⇒ **路线 C 仍是首选**；若要留在 15.6.1，则须自研 v5 支持（见 §9.5），且还要另行解决
+  "无共享缓存运行 dyld + 3257 个 dylib 全部可加载"的整套问题。
