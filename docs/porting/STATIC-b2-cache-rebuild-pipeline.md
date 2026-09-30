@@ -463,3 +463,44 @@ VirtualMacOniPad 的 README 写"支持 macOS 12 Monterey 直到 macOS 26 Tahoe�
 - 这与既有结论吻合：作者在 **13.4** 上跑通，且那正是第三方工具链工作的那一代。
 - ⇒ **路线 C 仍是首选**；若要留在 15.6.1，则须自研 v5 支持（见 §9.5），且还要另行解决
   "无共享缓存运行 dyld + 3257 个 dylib 全部可加载"的整套问题。
+
+---
+
+## 11. 路线 C 的真实门槛：rootfs 是"从宿主 macOS rsync 出来的"，不是现成包
+
+（2026-10-01；`RE-confirmed` by reading local files。这条以前没被明确指出，容易误判。）
+
+### 11.1 证据
+
+本机就有产物与脚本：
+
+- 目录 `~/Desktop/macPad/macos-15.6.1-rootfs/` —— **20 GB**，正是 15.6.1 的 chroot 根
+  （`System/ usr/ bin/ sbin/ private/ Library/ ...`，含 `etc -> private/etc` 等软链）
+- 脚本 `misc/build-rootfs-15.6.1.sh`（本地文件）。头注释原文：
+  > `build-rootfs-15.6.1.sh — assemble a macOS 15.6.1 chroot rootfs staging tree from this running VirtualMac VM, following the MacWSBootingGuide layout.`
+
+  它 `rsync -aEHx` 的来源是**宿主的** `/System/`、`/System/Volumes/Preboot/Cryptexes/OS/`、
+  `/usr/`、`/bin/`、`/sbin/`、`/System/Library/Templates/Data/`、`/private/etc/`；
+  目标是 `$HOME/Desktop/macos-15.6.1-rootfs`。
+
+### 11.2 推论（重要，改变了路线 C 的含义）
+
+- **`docs/porting/rootfs-15.6.1-install.md` 所说的 `macos-15.6.1-rootfs.tar`（19–20 GB）
+  就是"这台宿主机 macOS 的打包"**。它里面的
+  `System/Library/dyld/dyld_shared_cache_arm64e` **就是宿主 15.6.1 自己的缓存（4.77 GB）**。
+  ⇒ "缓存超出 4 GB 共享区"的**最终来源**是：我们把一个**为桌面地址空间设计的完整系统**
+  原样搬进了 iOS 的 4 GB 共享区。缓存本身没有毛病。
+- ⇒ **路线 C 的门槛不是"找一份现成的 13.4 rootfs 包"，而是"要有 macOS 13.x 的系统文件可 rsync"**。
+  已查：本机与 Nextcloud 同步目录 `~/Library/CloudStorage/Nextcloud-*/macPad_iOS/`
+  都**只有 15.6.1 的安装套件**（`com.kdt.macosbooter_0.3.4_iphoneos-arm64.deb`、
+  `install_rootfs_15.sh`、`ipad_fix_deps.sh`、`安装说明.md`、两个 `.py` helper），
+  **没有任何 13.x 资产**（`find` 无命中）。
+
+### 11.3 可行途径（按成本排序；均需用户决策）
+
+| # | 途径 | 成本 | 备注 |
+|---|---|---|---|
+| C1 | 另起**第二个 macOS 13.x 虚拟机**，跑改版 `build-rootfs-13.4.sh` | 中 | 最贴近作者验证过的配置；脚本现成，基本只改版本号/路径 |
+| C2 | `softwareupdate --fetch-full-installer --full-installer-version 13.4`，再解包 `macOS*.pkg` 的 Payload 取 `/System` | 中高 | 不装系统也能拿到文件，但要处理 installer/cryptex 结构（**待验证**） |
+| C3 | 直接用安装器里的 `BaseSystem.dmg` 当 rootfs | 低？ | BaseSystem 自带**更小**的缓存，但框架极少，能否跑 CLI **待验证** |
+| D | 留在 15.6.1，自研 slide info v5 支持（§9.5） | 高 | 且仍要解决"无共享缓存运行 dyld + 3257 dylib 可加载" |
