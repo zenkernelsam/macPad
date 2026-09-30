@@ -239,6 +239,48 @@ dyld 官方实现、且在 `__map_with_linking_np` 失败时**本来就会走**�
 都被 `internalInstall()` 挡（生产机 `csr_check(CSR_ALLOW_APPLE_INTERNAL)!=0`）；
 `sandboxBlockedPageInLinking()` 未被该门控，但 chroot 未沙箱 ⇒ 恒 false。故无环境变量解。
 
+### 6.1 F1 的精确补丁字节（RE-confirmed via I2，可直接落地）
+
+`analysis/dyld_15.6.1_arm64e_thin`（thin arm64e，VM offset == 文件 offset）：
+
+```
+0x3478c: 3f 05 00 71    CMP  W9, #1
+0x34790: 81 23 00 54    B.NE loc_34C00        ← 改这一条
+0x34C00: 68 23 40 39    LDRB W8, [X27,#8]     ← in-process 块入口（options.enableReadOnlyDataConst）
+```
+
+`B.cond` 编码核对：`0x54002381` ⇒ cond=1(NE)、imm19=0x11C ⇒ target
+`0x34790 + 0x11C*4 = 0x34C00` ✓（与 IDA 报的 target 0x34c00 一致）。
+目标指令 `B loc_34C00`：`imm26 = (0x34C00-0x34790)/4 = 0x11C` ⇒
+`0x14000000|0x11C = 0x1400011C` ⇒ LE 字节 **`1C 01 00 14`**。
+
+⇒ **单点替换：`0x34790: 81 23 00 54` → `1C 01 00 14`**（dyld 文本补丁，
+项目已有 `analysis/dyldwork/build_dyld.py` 的 dyld 补丁流水线；改后需重新签名+入 trustcache，
+见 `dyld-15.6.1-state.md` 的签名配方）。
+
+次要风险（F1 生效后需观察）：in-process 路径对 CONST_DATA 用
+`vm_protect(…|VM_PROT_COPY)`，但**跳过 TPRO**（`SharedCacheRuntime.cpp:1186`），
+所以 `__TPRO_CONST` 在 fixup 期间可能仍是只读。本机实测 m3 条目为 `prot=3/3`（RW、
+未带 TPRO 位 ⇒ `enableTPRO=false`），故该写应当被允许；但 m4/m5 是否另有 TPRO 语义
+需在设备上验证。
+
+### 6.2 F2 的插入点（根因修复，仅供记录）
+
+IDB（I1，静态，imagebase `0xfffffe0007004000`）中 `map_with_linking_np` 的
+`page_size` 校验紧邻处即最佳插入点：
+
+```
+0xfffffe000845a28c: if (*((_WORD *)v11 + 2) != 0x4000) { v10 = 4; goto LABEL_12; }
+0xfffffe000845a2d4: v10 = 4;      // KERN_INVALID_ARGUMENT
+0xfffffe000845a2d8: goto LABEL_12;
+```
+
+应在其后追加：`fmt = *(u16*)(v11+6); if (fmt 不在 {1,2,3,6,9,12}) { v10 = 4; goto LABEL_12; }`。
+⇒ 550 返回 4 ⇒ dyld 既有回退（E14）自然触发。
+**注意：内核 IDB 地址 ≠ 运行时地址**（KASLR slide 每次启动不同），落地前必须按
+`ktriage`/`dsc` 之外的既有流程在运行时定位并逐字节核对（见 AGENTS.md "Kernel write safety"）。
+
+
 ---
 
 ## 7. 明确撤回 / 更正
