@@ -1,0 +1,215 @@
+# dyldextractor 2.2.2: add slide info v5 (macOS 15+ shared caches) support
+#
+#   - dyld_structs.py : dyld_cache_slide_info5 + dyld_chained_ptr_arm64e_shared_cache_{rebase,auth_rebase}
+#   - slide_info.py   : _SlideInfoMap[5] + _V5Rebaser, and a logging fix (int vs str)
+#
+# Algorithm mirrors dyld's own in-process walk: dyld/SharedCacheRuntime.cpp:767-792
+# and include/mach-o/dyld_cache_format.h:515-530.
+#
+# Apply with:  patch -p1 -d <site-packages> < this-file
+
+--- a/DyldExtractor/dyld/dyld_structs.py
++++ b/DyldExtractor/dyld/dyld_structs.py
+@@ -318,8 +318,94 @@
+ 			("raw", c_uint64),
+ 			("plain", _plain),
+ 			("auth", _auth),
++		]
++
++		def __new__(cls, dataSource: bytes, offset=0):
++			if dataSource:
++				instance = None
++				if memoryview(dataSource).readonly:
++					instance = cls.from_buffer_copy(dataSource, offset)
++				else:
++					instance = cls.from_buffer(dataSource, offset)
++
++				instance._fileOff_ = offset
++				return instance
++			else:
++				super().__new__(cls)
++
++		def __init__(self, dataSource: bytes, offset=0) -> None:
++			pass
++
++		def __len__(self) -> int:
++			return sizeof(self)
++
++else:
++	raise NotImplementedError("Unable use a union on a big endian system!")
++
++
++class dyld_cache_slide_info5(Structure):
++
++	version: int 			# currently 5
++	page_size: int 			# currently 4096 (may also be 16384)
++	page_starts_count: int
++	value_add: int
++	# uint16_t    page_starts[/* page_starts_count */]
++
++	_fields_ = [
++		("version", c_uint32),
++		("page_size", c_uint32),
++		("page_starts_count", c_uint32),
++		("value_add", c_uint64),
++	]
++
++
++if sys.byteorder == "little":
++	class _regular5(Structure):
++		runtimeOffset: int 	# offset from the start of the shared cache
++		high8: int
++		unused: int
++		next: int 			# 8-byte stride
++		auth: int 			# == 0
++
++		_fields_ = [
++			("runtimeOffset", c_uint64, 34),
++			("high8", c_uint64, 8),
++			("unused", c_uint64, 10),
++			("next", c_uint64, 11),
++			("auth", c_uint64, 1),
+ 		]
+ 
++	class _auth5(Structure):
++		runtimeOffset: int 	# offset from the start of the shared cache
++		diversity: int
++		addrDiv: int
++		keyIsData: int 		# 0 -> IA key, 1 -> DA key
++		next: int 			# 8-byte stride
++		auth: int 			# == 1
++
++		_fields_ = [
++			("runtimeOffset", c_uint64, 34),
++			("diversity", c_uint64, 16),
++			("addrDiv", c_uint64, 1),
++			("keyIsData", c_uint64, 1),
++			("next", c_uint64, 11),
++			("auth", c_uint64, 1),
++		]
++
++	class dyld_cache_slide_pointer5(Union):
++
++		_fileOff_: int
++
++		raw: int
++		regular: _regular5
++		auth: _auth5
++
++		_fields_ = [
++			("raw", c_uint64),
++			("regular", _regular5),
++			("auth", _auth5),
++		]
++
+ 		def __new__(cls, dataSource: bytes, offset=0):
+ 			if dataSource:
+ 				instance = None
+--- a/DyldExtractor/converter/slide_info.py
++++ b/DyldExtractor/converter/slide_info.py
+@@ -19,7 +19,9 @@
+ 	dyld_cache_mapping_info,
+ 	dyld_cache_slide_info2,
+ 	dyld_cache_slide_info3,
+-	dyld_cache_slide_pointer3
++	dyld_cache_slide_info5,
++	dyld_cache_slide_pointer3,
++	dyld_cache_slide_pointer5
+ )
+ 
+ from DyldExtractor.macho.macho_structs import (
+@@ -29,7 +31,8 @@
+ 
+ _SlideInfoMap = {
+ 	2: dyld_cache_slide_info2,
+-	3: dyld_cache_slide_info3
++	3: dyld_cache_slide_info3,
++	5: dyld_cache_slide_info5
+ }
+ 
+ 
+@@ -252,7 +255,58 @@
+ 				top8Bits = value51 & 0x0007F80000000000
+ 				bottom43Bits = value51 & 0x000007FFFFFFFFFF
+ 				newValue = (top8Bits << 13) | bottom43Bits
++
++			ctx.writeBytes(locOff, struct.pack("<Q", newValue))
++
++			if delta == 0:
++				break
++			pass
++		pass
++	pass
++
++
++class _V5Rebaser(_V3Rebaser):
++	"""Rebaser for slide info version 5 (macOS 15+ shared caches).
++
++	The v5 ``dyld_cache_slide_info`` header is laid out exactly like v3
++	(version, page_size, page_starts_count, u64, page_starts[]), and the
++	NO_REBASE page attribute is the same 0xFFFF, so only the in-page pointer
++	encoding differs.  Semantics taken from dyld's
++	mach_o/ChainedFixups.cpp PointerFormat_DYLD_CHAINED_PTR_ARM64E_SHARED_CACHE:
++
++	    auth    -> target = runtimeOffset (+ slideInfo.value_add)
++	    regular -> target = (high8 << 56) | runtimeOffset
++	"""
++
++	def _rebasePage(
++		self,
++		ctx: MachOContext,
++		pageOffset: int,
++		delta: int
++	) -> None:
++		locOff = pageOffset
+ 
++		while True:
++			locOff += delta
++			locInfo = dyld_cache_slide_pointer5(self.dyldCtx.file, locOff)
++
++			# 8-byte stride; same bit position in both union variants
++			delta = locInfo.regular.next * 8
++
++			# Mirrors dyld's own in-process v5 walk, SharedCacheRuntime.cpp:
++			#   uint64_t target = slideHeader->value_add
++			#                   + loc->regular.runtimeOffset + results->slide;
++			#   if ( loc->auth.auth ) loc->raw = signPointer(loc, target);
++			#   else                  loc->raw = target | ptr.cache64e.high8();
++			# The auth variant is stored unsigned here on purpose: the auth
++			# metadata (key/diversity/addrDiv) is re-emitted separately by the
++			# chained-fixups converter, exactly as _V3Rebaser does.
++			target = self.slideInfo.value_add + locInfo.regular.runtimeOffset
++			if locInfo.auth.auth:
++				newValue = target
++			else:
++				newValue = target | (locInfo.regular.high8 << 56)
++
+ 			ctx.writeBytes(locOff, struct.pack("<Q", newValue))
+ 
+ 			if delta == 0:
+@@ -283,7 +337,7 @@
+ 		slideInfoVer = dyldCtx.readFormat("<I", slideInfoOff)[0]
+ 
+ 		if slideInfoVer not in _SlideInfoMap:
+-			logger.error("Unknown slide info version: " + slideInfoVer)
++			logger.error("Unknown slide info version: " + str(slideInfoVer))
+ 			return None
+ 
+ 		# Assume that only the second mapping has slide info
+@@ -310,7 +364,7 @@
+ 				slideInfoVer = context.readFormat("<I", mapping.slideInfoFileOffset)[0]
+ 
+ 				if slideInfoVer not in _SlideInfoMap:
+-					logger.error("Unknown slide info version: " + slideInfoVer)
++					logger.error("Unknown slide info version: " + str(slideInfoVer))
+ 					continue
+ 
+ 				slideInfo = _SlideInfoMap[slideInfoVer](
+@@ -467,5 +521,7 @@
+ 			_V2Rebaser(extractionCtx, info).run()
+ 		elif info.slideInfo.version == 3:
+ 			_V3Rebaser(extractionCtx, info).run()
++		elif info.slideInfo.version == 5:
++			_V5Rebaser(extractionCtx, info).run()
+ 		else:
+ 			logger.error("Unknown slide version.")
