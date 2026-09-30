@@ -153,9 +153,18 @@ open IDA at all.
 
 | MCP server name | Port | IDB contents | Use for |
 |---|---|---|---|
-| `ida-pro-mcp-Instance1` | 13337 | `analysis/dyld_15.6.1_arm64e_thin` | macOS 15.6.1 dyld RE |
-| `ida-pro-mcp-Instance2` | 13338 | `analysis/kc_raw_16.3_T8112.bin` — **filename is misnamed; actually the T8103 (M1/iPad13,11) kernel**, xnu-8792.82.2 | kernel RE (AMFI/cs/vm) |
-| `ida-pro-mcp-Instance3` | 13339 | `analysis/dyldwork/amfid_bin` | amfid RE |
+| `ida-pro-mcp-Instance1` | 13337 | `analysis/kc_raw_16.3_T8112.bin` — **filename is misnamed; actually the T8103 (M1/iPad13,11) kernel**, xnu-8792.82.2, imagebase `0xfffffe0007004000` | kernel RE (AMFI/cs/vm) |
+| `ida-pro-mcp-Instance2` | 13338 | `analysis/dyld_15.6.1_arm64e_thin`, imagebase `0x0` | macOS 15.6.1 dyld RE |
+| `ida-pro-mcp-Instance3` | 13339 | `analysis/dyldwork/amfid_bin`, imagebase `0x100000000` | amfid RE |
+
+**The instance→binary binding is NOT stable across IDA restarts.** Always call
+`server_health` first and read `module`/`imagebase` before citing any address;
+the table above is only the 2026-09-30 observation. Server config lives in
+`~/.qoder-cn/mcp.json` and `~/.qoder-cn/settings.json` (both must list the
+three `ida-pro-mcp-Instance{1,2,3}` HTTP entries). If this session's tool list
+does not expose them, they can still be driven over the MCP HTTP protocol
+(reference driver: post `initialize` → `notifications/initialized` →
+`tools/call`, carrying the `mcp-session-id` response header).
 
 ### Kernel write safety (load-bearing — device has panicked once already)
 
@@ -322,6 +331,21 @@ project's built-in tools (what `sprobe`, `launchdchrootexec`, `libmachook`,
 the `lldb_*` scripts, `loadtc`, `extract_dyld_cache.py` etc. are FOR) and
 the proven procedure for porting a new macOS version rootfs onto the iPad.
 The toolchain already exists — reuse it, don't reinvent it.
+
+## Host File Safety (load-bearing rule)
+
+**Never permanently delete a file on the host or on the device.** Any removal —
+cleanup, stale artifacts, experiment leftovers, even files created in the same
+session — must *move* the file to the macOS Trash so it stays recoverable:
+
+```bash
+mv <path> ~/.Trash/            # never `rm -f` / `rm -rf`
+```
+
+`rm -rf` is allowed only when the user has explicitly authorized permanent
+deletion of that exact path in that exact request. This repo (and the device's
+staging dir) is the only durable record of a multi-session porting effort; a
+mistaken `rm` costs far more than the disk space it frees.
 
 ## Hard rules for reverse engineering
 
