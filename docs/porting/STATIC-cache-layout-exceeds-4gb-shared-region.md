@@ -174,7 +174,36 @@ sharedRegionStart + dynamicDataOffset = 0x2ac75c000   ← 与故障地址逐位�
   并核对它取地址的来源字段；或**直接改 `.01` 的头**（把其 m2..m6 重排进 ≤4GB —— 等于缓存手术）。
 - 若这一跳仍不下，则 B2（重建 ≤4GB 缓存）或 C（13.x）就是必选项。
 
+### 10. B1 追加三次尝试（新 inode！）—— 全部无效 ⇒ 地址来自**内核 region 状态**（2026-09-30）
+
+第 9 节的三次尝试都是**原地改同 inode**，可能被内核的按-vnode 页/blob 缓存掩盖。本节三次全部改用
+**新 inode**（`cp` → 改副本 → `mv` 就位 → 重新 `cachereg` 挂 blob，`READY ok=1`），仍逐位相同：
+
+| # | 改动（新 inode） | 结果 |
+|---|---|---|
+| B1-4 | 仅 cryptex 主缓存：`sharedRegionSize→0x100000000` + `subCacheArrayCount→0` + `ddo→0x77080000` | 相同（gap `0x2ac75c000`） |
+| B1-5 | **两份**主缓存同时做上面三字段（CR inode 245847338 / DST inode 245847459） | 相同 |
+| B1-6 | **两份 `.01`** 的映射表裁剪（m2 size→`0x2028000` 使其末端=0x280000000；m3..m6 size→0） | 相同 |
+
+**结论（证据闭环）**：故障地址 `0x2ac75c000` 与**两个缓存文件的任何元数据都无关**
+（六次改动：文件在/不在、ddo、declared size、subCacheArray、`.01` mapping 表，全无效）。
+唯一自洽的解释是：**该地址来自内核里已建立的 shared region 状态**——region 在**创建时**按当时
+缓存的声明尺寸（`0x12c760000` ≈4.7GB）记录了范围，此后**跨进程持久**（`vm.shared_region_persistence=0`
+但 iOS 侧进程一直持有，故不会被 destroy-delay 回收）。
+
+**⇒ 直接推论（与项目文档一致）**：**任何缓存侧改动都必须先重建 region ⇒ 必须重启**。
+这也解释了 state doc 里的"实测：shared region 跨进程持久；所以要换缓存必须重启"。
+
+**附带事实**：
+- `vm.shared_region_destroy_delay` 可写（120→5 实测成功，已还原 120），但因 iOS 侧持有 region，休眠不会回收。
+- `JetsamEvent-2026-09-30-230519.ips`：设备内存压力主要来自一个 **10.8GB 的
+  `com.apple.Virtualization.VirtualMachine`**（非本项目）—— `free` 仅 5540 页(≈90MB)、压缩器 ~3.9GB。
+  **重启 iPad 会杀掉该 VM**，故重启需用户明确授权。
+- 本轮全部设备改动均已回滚并复核：CR/DST 主缓存与 `.01` 的 inode/尺寸/字段恢复原值，dyld SHA `9956…51a1`
+  + inode `245791518` 复核；无文件被删除（`mv`-only；备份见 §9.4 与本轮 `/.orig_*_v5|v6`、`/.f1*` 隐藏文件）。
+
 ### 9.4 本轮设备副作用清单（均已回滚/保留，未删除任何文件）
+
 
 - 主缓存两份头的**头部页备份**：`/var/mobile/hdr_{CR,DST}{,_v2,_v3}.bak`（各 0x1000 字节）。
 - `$CR`、`$DST` 两份主缓存头已恢复原值（`ddo=0x12c75c000`、`sharedRegionSize=0x12c760000`、`subC=1`，已复核）。
