@@ -281,3 +281,79 @@ $ strings -a /usr/bin/update_dyld_shared_cache | wc -l
      （THEORY，待设备验证）。
    - `SharedCacheRuntime.cpp:917`：`uint8_t* buffer = (uint8_t*)SHARED_REGION_BASE;`（**编译期常量**
      0x180000000）⇒ 缓存落址**无法**靠改 header 的 `sharedRegionStart` 平移。
+3. `SharedCacheRuntime.cpp:926 / 1455-1468` `deallocateExistingSharedCache()`：
+   ```cpp
+   uint64_t existingCacheAddress = 0;
+   if ( __shared_region_check_np(&existingCacheAddress) == 0 ) {
+       (void)__shared_region_check_np(NULL);   // <rdar://problem/73957993> remove the shared region sub-map
+   }
+   ```
+   在 mmap 之前**先移除内核既有的共享区子映射**。若这一步在 iOS 上失败/部分生效，
+   后续 `MAP_FIXED` 就会撞上残留映射（待设备侧验证）。
+
+---
+
+## 8. 第三方工具实测：`DyldExtractor` **不支持** macOS 15 缓存（2026-10-01）
+
+### 8.1 环境（宿主 = macOS 15.6.1）
+
+- 宿主 Python 3.14.7（homebrew）；**PEP 668** 拦截 → 用 venv `tmp/dscvenv`
+- `pip install dyldextractor` → **2.2.2**（`arandomdev/dyldextractor`，PyPI 最新），带 `capstone 4.0.2`
+- 两个已解的坑：
+  - `capstone 4.0.2` 需要 `distutils`（Python ≥3.12 已移除）→ `pip install setuptools`
+  - 新版 setuptools 又移除 `pkg_resources` → 固定 `setuptools<81`
+- CLI 是 **`dyldex` / `dyldex_all`**（不是 `python -m dyldextractor`）
+
+### 8.2 它能解析 macOS 15.6.1 缓存（能读 images 列表）
+
+```
+$ tmp/dscvenv/bin/dyldex -l -b -f libSystem analysis/dyld-cache-15.6.1/dyld_shared_cache_arm64e
+libsystem_platform.dylib … libSystem.B.dylib …（0.29s 完成）
+```
+
+### 8.3 但**抽取必失败**：它只支持 slide info **v2/v3**，而本缓存**全是 v5**
+
+```
+>>> sorted(DyldExtractor.converter.slide_info._SlideInfoMap.keys())
+[2, 3]
+```
+```
+$ tmp/dscvenv/bin/dyldex -e /usr/lib/libz.1.dylib -o tmp/dscextract analysis/dyld-cache-15.6.1/dyld_shared_cache_arm64e
+File ".../DyldExtractor/converter/slide_info.py", line 460, in processSlideInfo
+  mappingInfo = _getMappingInfo(extractionCtx)
+File ".../DyldExtractor/converter/slide_info.py", line 313, in _getMappingInfo
+  logger.error("Unknown slide info version: " + slideInfoVer)
+TypeError: can only concatenate str (not "int") to str
+（根因：line 312 `if slideInfoVer not in _SlideInfoMap` → 313 行把 int 当 str 拼）
+```
+
+同一次排查顺带用 `struct` 直读 `mappingWithSlide`（结构体为
+`<QQQQQQII>` = 56 字节，`include/mach-o/dyld_cache_format.h:141`），**独立复现**了主文档 §1 的映射表：
+
+```
+main (映射 8 条, mappingWithSlideOffset=0x3e8)
+ m0 0x180000000 +0x067f5c000 -> 0x1e7f5c000   (无 slide)
+ m1 0x1e7f5c000 +0x001e90000 -> 0x1e9dec000   slideInfoVer=5 pageSize=0x4000
+ m2 0x1ebdec000 +0x00239c000 -> 0x1ee188000   ver=5
+ m3 0x1ee188000 +0x000024000 -> 0x1ee1ac000   ver=5   ← 历史 m3 受害者
+ m4 0x1ee1ac000 +0x01200000  -> 0x1ef3ac000   ver=5
+ m5 0x1ef3ac000 +0x07cc4000  -> 0x1f7070000   ver=5
+ m6 0x1f9070000 +0x05cdc000  -> 0x1fed4c000   (无 slide)
+ m7 0x1fed4c000 +0x268c0000  -> 0x22560c000   (无 slide)
+.01 (映射 7 条)
+ m0 0x22560c000 +0x54808000  -> 0x279e14000   (无 slide)
+ m1 0x279e14000 +0x021c4000  -> 0x27bfd8000   ver=5
+ m2 0x27dfd8000 +0x038b4000  -> 0x28188c000   ver=5   ← 跨 0x280000000 边界
+ m3 0x28188c000 +0x00d90000  -> 0x28261c000   ver=5
+ m4 0x28261c000 +0x045d4000  -> 0x286bf0000   ver=5
+ m5 0x288bf0000 +0x001dc000  -> 0x288dcc000   (无 slide)
+ m6 0x288dcc000 +0x23990000  -> 0x2ac75c000   (无 slide)  ← 异常地址
+```
+
+### 8.4 结论
+
+- `dyldextractor 2.2.2`（PyPI 最新）**不能用于 macOS 15.6.1**；要它工作需自行实现
+  slide-info v5 的 rebaser（自研工作量，等同重写其 `converter/slide_info.py`）。
+- ⇒ "用 DyldExtractor 把缓存 dylib 变成可加载 → 走 no-cache 路线" **在本版本上不成立**。
+- 下一步候选：`nfzerox/VirtualMacOniPad` 的 `uncache.py`（面向新系统，可能支持 v5）；
+  `dsce`、`iOS-run-macOS-executables-tools`。
