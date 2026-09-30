@@ -98,3 +98,41 @@ python3 misc/dsc_cache_subset.py closure /tmp/miniroot/bin/echo /tmp/miniroot/bi
 - ⚠️ 宿主 **Python 调 dsc_extractor.bundle 会崩**（已两次）——只用 §3 自编的独立工具。
 - ⚠️ 设备实验保持：`mv`-only、原件保留、每轮复核 dyld SHA/inode；重启会杀掉 10.8GB 的 Virtualization VM。
 - 本文件是这条流水线的唯一事实来源；每推进一步就更新它并 push。
+
+---
+
+## 6. **2026-10-01 进展：提取已解决，mini-root 就绪，只差 sudo 跑 builder**
+
+### 6.1 提取器：**不需要自己编译** —— 用上一会话已写好的 `analysis/dyldwork/extract_host2.py`
+它用 `_NSConcreteGlobalBlock` + `ctypes.CFUNCTYPE` 构造了**真正的 block**（正是我定位的崩溃点：
+`dsc_extractor.cpp:990` 无条件调用 progress 块，传 NULL 就跳 PC=0x0）；而仓库里那份
+`misc/extract_dyld_cache.py` 传的是 NULL ✗（两次 Python 崩溃就是它）。
+实测（读取宿主自己那份 24G90 缓存，等价于我们的本地副本）：
+
+```
+python3 analysis/dyldwork/extract_host2.py /tmp/dsc_ho        # -> rc=0
+# 结果：3257 个文件 / 4.4GB  （= 该缓存的全部镜像）
+```
+（`analysis/dyld-dyld-1286.10/dyld.xcodeproj` 的 `xcodebuild` 路线**不可用**：本机只有 CLT，
+`xcodebuild` 直接报 "requires Xcode" ✗。）
+
+### 6.2 依赖闭包 + mini-root（已完成）
+- 种子：从设备取 `/bin/{echo,sh,bash,cat,ls,date}`（`/tmp/seeds/`）。
+- 闭包：`python3 misc/dsc_cache_subset.py closure /tmp/seeds/{echo,sh,bash,cat,ls,date} \
+  --search /tmp/dsc_ho --out /tmp/dsc_subset.txt` ⇒ **564 个 dylib / 870.2 MB**
+  （仅 2 个良性未解析：`MLCompilerServices`、`libobjc-env.dylib`）。
+- mini-root：`/tmp/miniroot_1561/` = 564 dylib（按 install name 路径）+ 6 个种子 + `SystemVersion.plist`
+  ⇒ **570 文件 / 871.8 MB**（版本 24G90 ✓，**远小于 4GB**）。
+
+### 6.3 下一步：**用 sudo 跑 builder**（唯一需要 root 的一步）
+非 root 时 `update_dyld_shared_cache` **静默不做事**（rc=0、无输出、无产物 ⇒ 已实测两次）。
+请在**宿主**上执行（⚠️ `-root` 只指向 /tmp 沙箱，**绝不可** `-root /`）：
+
+```
+sudo /usr/bin/update_dyld_shared_cache -root /tmp/miniroot_1561 -arch arm64e
+ls -la /tmp/miniroot_1561/System/Library/Caches/com.apple.dyld/
+```
+预期产物：`/tmp/miniroot_1561/System/Library/Caches/com.apple.dyld/dyld_shared_cache_arm64e{,.01,...}`
+（总跨度应 ≤4GB；可能耗时数分钟）。拿到产物后即可进入 §4 的部署与验证（推设备 → 重算 cdhash 入 TC →
+`cachereg` → 重启 → 跑 `misc/post_reboot_cli_test.sh` 的同一套见证）。
+
