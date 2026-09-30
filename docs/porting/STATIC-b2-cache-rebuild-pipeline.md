@@ -589,3 +589,51 @@ fork 的 `VirtualMac/vz/uncache.py` 比 upstream 多 ~1 KB，改动只在 `a2s_b
 优先复用已有 `.a2s` 缓存、缺失时降级为直接查询并打印 WARNING（注释点明
 "macOS 22D68 cache is the one that matters for the shipping payload"）。
 **slide info 处理仍是 v3-only（`:1307 _V3Rebaser`、`:1327 version == 3`）** —— 与 §9.3 一致。
+
+---
+
+## 13. 两条"留在 15.6.1"的路线：执行计划（用户选定：**先 D，再 E；两者都记录**）
+
+> 2026-10-01 用户答复："2 和 3 都想试，先试 2 吧，记得把这些方向也记录下来。"
+> 即：**先做 D（自研 slide info v5），D 之后再看 E（改内核共享区）**。
+
+### 13.A 路线 D —— 自研 slide info **v5** 支持
+
+**目标**：让 `dyldextractor` + `uncache.py` 能处理 macOS 15.6.1 的缓存，产出
+"可加载的 arm64e dylib"，最终在**不带共享缓存**的情况下让 macOS dyld 从磁盘加载 libSystem 等。
+
+**为什么可行（证据）**
+- v5 与 v3 的 `dyld_cache_slide_info` 头部**同构**：`version / page_size / page_starts_count / u64 / page_starts[]`
+  （`include/mach-o/dyld_cache_format.h:374` v3 的 u64 叫 `auth_value_add`，`:533` v5 叫 `value_add`）。
+- 真正的差异只在**指针编码**：
+  - v3 = `dyld_cache_slide_pointer3`：51 位 `pointerValue` + 11 位 `offsetToNextPointer`（另有 auth 变体）
+  - v5 = `dyld_cache_slide_pointer5`：`dyld_chained_ptr_arm64e_shared_cache_{rebase,auth_rebase}`
+
+**待办（按顺序）**
+1. `DyldExtractor/dyld/dyld_structs.py`：加 `dyld_cache_slide_info5`、`dyld_cache_slide_pointer5`、
+   `dyld_chained_ptr_arm64e_shared_cache_rebase/_auth_rebase`；
+2. `DyldExtractor/converter/slide_info.py`：注册 `_SlideInfoMap[5]`，实现 `_V5Rebaser`
+   （或把 `_V3Rebaser` 参数化以复用 `value_add` 语义）；
+3. `uncache.py` 的 v3-only 分支（`:1307` `_V3Rebaser`、`:1327` `version == 3`）改成 v3/v5 双支持；
+4. **产出物必须落成补丁文件**（照 VirtualMac 的 `patches/dyldextractor-2.2.2-arm64e.patch` 形式）放进 `misc/`，
+   **不能只活在 `tmp/dscvenv/`**（`tmp/` 被 gitignore）。
+5. 验收链：`dyldex` 抽 `libz.1.dylib` → `uncache.py` 转换 → `dyld_info -fixups` 通过 →
+   **宿主 `dlopen` 成功**（对照 §9.4：现状是 `mmap errno=22`）。
+6. 其后才是大工程：让整套 rootfs 的 dylib 可加载 + 让 dyld 在无缓存下运行。
+
+### 13.B 路线 E —— 改 iOS 内核的共享区尺寸（备用，D 之后评估）
+
+**思路**：15.6.1 的缓存映射越过 `0x280000000`（= `SHARED_REGION_BASE + SHARED_REGION_SIZE`）。
+若能放大 iOS 的 `SHARED_REGION_SIZE`，15.6.1 原样即可跑。
+
+**现有条件**：xnu 源码（`analysis/xnu-xnu-8792.81.2`）、内核 IDA 环境
+（`analysis/kc_raw_16.3_T8112.bin` + `ida-pro-mcp-Instance1`）、设备写权限（用户已授权）。
+
+**风险与前置**（照 AGENTS.md 的内核写安全规则）：
+- 必须先在**运行时**按代码签名定位函数，再与 IDB 逐字节核对；**不得凭偏移直接写**；
+- PAC 签名的指针字段禁止裸写（曾因 `v_mount` 裸写触发 `Ptrauth failure with DA key` panic）；
+- Dopamine KRW 通道（`kread64/kwrite64` + kcall）可用；
+- 该常量若被多处引用（`vm_shared_region.c`、`osfmk/mach/shared_region.h` 等），需先做完整 xref 枚举，
+  并考虑放大后与 iOS 自身共享缓存布局的相互影响。
+
+**执行顺序**：**D 先做**（纯用户态、可逆、不碰内核）；E 只在 D 收益不足时启动。
