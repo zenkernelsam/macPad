@@ -296,3 +296,48 @@ sharedRegionStart + dynamicDataOffset = 0x2ac75c000   ← 与故障地址逐位�
 要么**消除"部分已映射"这一前提**（例：干净 region + private 让 dyld 自行整体 mmap；
 本机 shared region 跨进程持久，需重启才干净——见 state doc 的"需重启拿干净 region"）。
 
+---
+
+## 12. 重启后验证结果 + 判别实验 + 为什么头字段补丁**不可能**修好（2026-09-30 晚）
+
+### 12.1 重启验证：**失败**（"内核 region 状态"假设被否证）
+重启 6 分钟后跑 `misc/post_reboot_cli_test.sh`（`PATCH_STATE=OK`、5 文件新 inode 生效、TC 齐全、
+`cachereg` 4/4 `READY ok=1`）：**异常逐位不变** —— `code1=0x2ac75c000`、`pc=dyld_base+0xae8`、
+`x0=0x2ac75c000 x2=5 x3=0x40012 x4=3 x16=0xc5`，`VERDICT=STILL-BLOCKED-same-guard`
+（`far` 这次是内核地址 `0xfffffe8dc04f8330` ⇒ 再次印证寄存器快照不可靠）。
+⇒ 全新启动（region 必为新建）下补丁仍无效 ⇒ §4 的"stale region"解释**作废**。
+
+### 12.2 判别实验：dyld **确实**读我改的那份缓存，但**越界映射不止一个**
+做法：把另外两份主缓存副本 `mv` 移开、只留 cryptex 那份，并把它的 `dynamicDataOffset` 改成
+特征值 `0x10000000`（VM `0x190000000`，区内）：
+- 异常地址**随之改变**：`0x2ac75c000` → **`0x2ac760000`**（= `sharedRegionStart + 0x12c760000` = 原声明尺寸末端）；
+- 失败**操作也变了**：从"文件后备 R+X 缓存段"（`x2=5 x3=0x40012 x4=3`）变成
+  **匿名 RWX 映射**（`x2=3 x3=0x41012 x4=0xffffffffffffffff` = `MAP_ANON|MAP_FIXED`，
+  `[vmext] … external=0 shadow=0`）⇒ 即 §8 提到的"high-reserve 型匿名 RWX"。
+⇒ ①补丁生效（地址会动）②**区外映射有多个**：把一个挪进区，另一个立刻顶上。
+
+### 12.3 为什么"改头字段"注定修不好（RE-confirmed，决定性）
+主缓存头里**它自己的元数据就指向区外的地址**：
+```
+functionVariantInfoAddr = 0x28fd21fa0   dylibsPBLSetAddr = 0x28fd23fa0   programTrieAddr = 0x293eaabb0
+```
+三者都落在 **`.01` 的 m6（`0x288dcc000..0x2ac75c000`）**内 ⇒ dyld 为读取 PBL set / trie /
+function-variant **必须映射 `.01` 尾部页**，而那些页 VA > `0x280000000` ⇒ 必然进守卫区。
+叠加"缓存总跨度 4.77GB > 区域 4GB"（§1）：**任何头字段/布局微调都无法把"内容"塞回区内**，
+`slide` 也救不了（slide 是整体平移，不能缩小跨度）。
+⇒ **15.6.1 要跑通，必须让缓存的"内容+元数据"整体 ≤4GB** ⇒ 只能**重建/缩容缓存**（B2'）
+或**换版本面**（C）。
+
+### 12.4 B2' 可行性（新证据：宿主与 rootfs **同 build**）
+- 宿主 Mac：`ProductVersion 15.6.1 / BuildVersion 24G90` —— 与设备 rootfs **同一 build**；
+- 宿主 `/usr/bin/update_dyld_shared_cache`（84288B）与 rootfs 内那份**同尺寸、同 `dyld-1286.10`**
+  ⇒ **与设备 dyld 同版本**（也再次确认 IDB/本地源码对应 15.6.1）；
+- 开源树 `cache-builder/update_dyld_shared_cache.cpp` 是**空壳**（真工具闭源），但
+  `cache-builder/dyld_shared_cache_builder.mm` 是真实实现库（支持 `-root`）。
+⇒ **B2' 路径**：把 rootfs 中"缓存候选"的 dylib 文件（缓存 `imagesText` 列出的 3257 条路径，约 ~5GB）
+取到宿主 → 用宿主 24G90 的 `update_dyld_shared_cache -root <沙箱 root>` 生成**总跨度 ≤4GB** 的缓存
+→ 部署到 `$CR`/`$DST` → 重算 cdhash 入 TC + `cachereg` → **重启后**验证。
+- ⚠️ **绝不能**把 `-root` 指向 `/`（会重建宿主自身的缓存）；一律用 `/tmp` 下沙箱 root。
+- ⚠️ 代价：~5GB 传输 + 一次（可能需 root 的）构建；新缓存 UUID/cdhash 全变，须重算并登记。
+
+
