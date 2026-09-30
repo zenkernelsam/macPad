@@ -41,10 +41,18 @@
    - 缺两个**私有头**，需桩：`CommonCrypto/CommonDigestSPI.h`（`CCDigest` 用公开 `CC_SHA1/SHA256` 实现，
      语义正确）与 `CrashReporterClient.h`（弱符号 no-op）；另 `_simple.h` 可空桩。桩与 shim 见 `/tmp/dscmods/`。
    - `.c` 与 `.cpp` **分别**编译再链接（避免 C 函数被 C++ 改名）。
-3. **当前障碍**：链接缺 dyld 自身的 C++ 符号（`Diagnostics::Diagnostics(bool)` 等）⇒ 需把
-   `common/*.cpp` 一并编译；其中 `common/Diagnostics.cpp`、`common/DyldSharedCache.cpp`、
-   `common/CachePatching.cpp` 等**仍有编译错误**（错误头见 `/tmp/err_<name>.txt`）⇒ 下一轮逐个补桩/加 `-I`
-   即可（属于纯机械工作）。
+3. **当前障碍（已更正为更准确的结论）**：**手工编译 `dsc_extractor` 在本机不可行** ——
+   `common/*.cpp` 需要多个**私有 SDK 头**（`sandbox/private.h`、`System/sys/fsgetpath.h`、
+   `corecrypto/ccdigest.h`、`libc_private.h` …）与**内部编译宏**（例如
+   `MachOFile::canBePlacedInDyldCache`、`objc_visitor::sharedCacheSelectorStringsBaseAddress`
+   只有在 Apple 内部 `-D` 下才可见），而 `_simple_salloc/_simple_vsprintf/...` 也**不由
+   libsystem_platform 导出**（实测 `nm -gU` 计数为 0）。本机只有 CLT（`xcode-select -p` =
+   CommandLineTools ⇒ **无 `xcodebuild`**）。
+   ⇒ **正确做法是用 dyld 自己的 Xcode 工程**（`analysis/dyld-dyld-1286.10/dyld.xcodeproj` 存在）：
+   `xcodebuild -project dyld.xcodeproj -target dsc_extractor`（需**完整 Xcode**）。
+   已尝试的机械修补（`-std=c++20 -fblocks`、全目录 `-I`、`-include Availability.h`、
+   `CommonDigestSPI/CrashReporterClient/_simple/libc_private` 桩）把编译推进到"仅缺内部宏/私有头"，
+   半成品对象保存在 `/tmp/dsc_o_*.o`，桩在 `/tmp/dscmods/`。
 
 **已保存的半成品对象**：`/tmp/dsc_o_extract.o`（extractor，`-fblocks` 版）、`/tmp/dsc_o_main.o`
 （CLI + SIGSEGV 处理器 + 真 progress block）、`/tmp/dsc_o_shim.o`（CCDigest/CR 弱符号）、
