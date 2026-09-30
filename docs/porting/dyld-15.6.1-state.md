@@ -1,5 +1,63 @@
 # macOS 15.6.1 dyld shared-cache bring-up — live state
 
+> **2026-09-30 最新勘误（优先于旧摘要）**：设备缓存旧式 slide 头为零，
+> 但 `mappingWithSlide` 表的 m1..m5 均有有效 v5 blob；不能据旧头宣称“无 slide-info”。
+> IDA 实证：私有缓存 page-in linking 提交 pointer format 13，而 iPadOS 16.3
+> dyld pager 分派范围仅 1..12，13 落失败路径。**兼容性缺口已确认，
+> 本次 m3 fault 是否实际走此路径仍待运行时证明**；不恢复旧 syscall 536 归因。
+> 旧 `CacheFinder+0xb9f8` 定位没有捕获加载基址证据，暂时撤回，也不据此推断异步异常。
+> 完整证据、已备取证工具和下一关见
+> `docs/evidence/m1-dyld-pager-format13-20260930.md`；
+> 设备原文见 `docs/evidence/m1-cache-slide-metadata-20260930.txt`。
+>
+> **2026-09-30（静态侧）根因闭合 —— 以
+> `docs/porting/STATIC-m3-dyld-pager-format13.md` 为准：**
+> ① 交接文档的"ring 里没有 printf ⇒ 格式分派未走到"**前提错误**：release 内核里
+> `printf` 被 `CONFIG_NO_PRINTF_STRINGS` 宏化、格式串被 DCE（`misc_protos.h:180-186`），
+> 真机内核字节级 0 命中；这些消息改走 **kdebug triage**
+> （`kdebug_triage.c:327-329`，eventid `0x04000008` = DYLD_PAGER_SLIDE_ERROR）。
+> ② 真机 `dyld_pager_data_request`（I1 `sub_FFFFFE00080661A4`）里 `format-1<=0xB`
+> 才进 switch，**13 落到汇聚点 → ktriage + KERN_FAILURE(5)**，无 printf ⇒
+> data_request=5 ⇒ `vm_fault.c:1892` ⇒ `vm_fault.c:5693` ⇒ `KERN_MEMORY_ERROR=10`，
+> 与实测 `code0=0xa` 吻合（**不再是 THEORY**）。
+> ③ **根因在内核 550 漏检**：真机 `map_with_linking_np`（I1 `sub_FFFFFE000845A084`）
+> 校验 version/page_size/binds/chains/CS 覆盖，**唯独不校验 `mwli_pointer_format`**
+> ⇒ 550 对不可 fixup 的 blob 返回成功、失败推迟到每页首 fault 且静默。
+> ④ 修复靶点：dyld 侧 `0x34790 B.NE loc_34C00 → B loc_34C00`（走 dyld 自身
+> in-process 回退，低风险）；根因修复在内核 550 加格式白名单。
+> ⑤ **新确定性判据**：crash report 的 `TASK_CRASHINFO_KERNEL_TRIAGE_INFO_V1`
+> 会带 triage 字符串（`kern_exit.c:770-774`）——查
+> `"dyld_pager_data_request hit a page sliding error"` 即可裁决，无需 kdebug/msgbuf。
+>
+> **2026-09-30（goal 第 1 轮）CLI 主障碍已定量 —— 见
+> `docs/porting/STATIC-cache-layout-exceeds-4gb-shared-region.md`：**
+> ① 15.6.1 缓存总布局 `0x180000000..0x2ac75c000`（≈4.77GB）**超出 iOS 16.3 共享区
+> `0x180000000..0x280000000`（4GB）≈745MB**；主缓存最高端 `0x22560c000`，
+> `.01` 从 `0x22560c000` 续到 **`0x2ac75c000`**（= 当前 `EXC_GUARD(DEALLOC_GAP)` 的 gap 地址）。
+> ② 出错指令是 **dyld 自己的手写 `mmap` 桩**（`x16=197`，字节序列在 rootfs 中**仅**
+> `/usr/lib/dyld` 出现，pc 恒为 `dyld_base+0xae8`）；`vm_map.c:8693-8702` 的
+> `VMDS_FOUND_GAP` → `vm_map_guard_exception(GAP)` 即该 reason 的另一产生点。
+> ③ **负结果**：藏 `.01` 文件无效（布局由缓存头元数据决定）⇒ "只用主缓存"必须**重建缓存**。
+> ④ 本轮修好：`$R/dev` 缺失 → `mkdir -p` + `mountdevfs` → **`/dev/ptmx` 出现**；
+> 补挂 bash/sh/cat/ls/date/libmachook_arm64 的 TC；cachereg 增覆盖 cryptex inode。
+> ⑤ `launchdchrootexec` **不做** `jbctl proc_set_debugged` ⇒ 作者 `run_bash.sh` 在我们 fork 上
+> 必 `Killed: 9`（可修，需 Theos 构建）；实验一律用 `/var/mobile/run_dbg_hold_v2`。
+>
+> **2026-09-30（静态侧）设备实测更正（详见 STATIC 文档 §9）：**
+> ① 上条的 `.ips` triage 判据**在本机不成立**：全量 grep 40+ 份 echo/chroot 报告，
+> 无 `dyld_pager`/`triage`/`1ee188000` 字段（triage 只在 sysdiagnose logarchive 里）。
+> ② `<D161E41A>` **不是**"用 macOS 缓存"的判据：未 chroot 的 iOS 进程
+> （`/var/jb/usr/bin/ls`）同样打印它。旧判据作废。
+> ③ 裸 `chroot` ⇒ `Killed: 9`；必须用 `run_dbg_hold_v2`（内含 `jbctl proc_set_debugged`）。
+> 设备上 `run_nocskill` 已过期（`proc not found`），`restore_env.sh` 的 HELLO×3 全部失败。
+> ④ **F1 实测有效方向**：打补丁后（signed SHA `14e2751b…`，CDHash `cd023af6…`，
+> `/var/mobile/dyld_f1_34790.bin` 可复用）跑
+> `run_dbg_hold_v2 chroot /var/mnt/rootfs /bin/echo HI`：**m3 写错误签名
+> （type=1 code0=0xa far=0x1ee188000）不再出现**；新失败点为 dyld 内原生
+> `mov x16,#0xc5; svc #0x80`（mmap）触发 **EXC_GUARD(type=12)**，
+> `code1=0x2ac75c000`（>4GB 高地址区）、`csflags=0x26803b0d`。
+> `HI` 仍未打印。设备 dyld 已恢复原版（SHA/inode 双复核）。
+
 > **📣 2026-09-29 起：先读 `docs/porting/CONSOLIDATED-2026-09-29.md`**
 > （全文档归一版——已证实/已否证/当前卡点分栏）。本文件仍是按时间序的
 > 编年史；**凡与本文件旧段落冲突，以 CONSOLIDATED 为准**。
@@ -2578,3 +2636,261 @@ sh : 11 个导入全部解析 ✓（rc=137 SIGKILL ← 另一新类别问题）
   3. `ls` 还缺 `libutil.dylib`/`libncurses.5.4.dylib` 两个 shim + 91 符号（工程量大）。
 - **旁证保留**：`dyld_compat.bin`（关段序 policy，不影响映射）；缓存映射配方（iOS 先行 → macOS，见上文）；
   铁律：shim 必须存在且签名有效、FS 写要在 cachereg 之前。
+
+## 2026-09-30 CLI 续查：真实 iOS 内核的 shared-region teardown 调用链（静态 RE；未运行新设备实验）
+
+先核对 MCP 的**实际** IDB，而非只信 `server_health`：本次 `server_health` 显示 Instance1=dyld、Instance2=kernel，但 `Instance1.py_eval` 的 `idautils.Segments()` 实际含 `0xfffffe0007004000` 起的 kernel 段及 `0xfffffe000801df20` 函数；`Instance2.py_eval` 实际只见 `0x0` 起的 dyld 段。以下内核反编译/反汇编均由 **Instance1 的实际 kernel 地址空间**取得；此现象与 CONSOLIDATED §14.0 的实例漂移相吻合。内核静态文件：`analysis/kc_raw_16.3_T8112.bin.i64`（文件名并非可靠硬件代号）。不要把 MCP health 的 IDB 名称单独当成 RE 结果的归属证明。
+
+- RE-confirmed：sysent[294] handler `sub_FFFFFE0008459024`：`0x8459098` 检查用户指针为 NULL 后，在 `0x84590e0` 调 `sub_FFFFFE000806391C(task,sr)`，`0x84590ec` 调 `sub_FFFFFE0008060A68(task,0)`，`0x84590f0` 赋返回 0。前一调用的返回值**没有进入 syscall 返回码**。非 NULL 指针在 first-mapping 不存在时于 `0x84590c8` 返回 12 (`ENOMEM`)；不存在 sr 时于 `0x84590d0` 返回 22 (`EINVAL`)。前次 dyld 探针 `check_np(&base)=12` 与“sr 对象存在但没有 first mapping”一致，并**不证明 nested submap 内无其他条目**。
+- RE-confirmed：`sub_FFFFFE000806391C` 是实际 teardown 映射尝试：`0x806395c` 从 `sr+0x38` / `sr+0x40` 取 base/size；`0x8063980` 对正常 task map 设 `x5=0x100`（`vm_map_kernel_flags_t.vmkf_overwrite_immutable`，源码 `vm_statistics.h:424-433`），`0x80639e8` 设 `w4=0x4000`（`VM_FLAGS_OVERWRITE`，源码 `vm_statistics.h:276`），`0x80639f4` 调 `sub_FFFFFE00080686BC`，结果直接返回给**不检查结果**的 handler。实际内核该函数没有在此路径打印开源树 `vm_shared_region_remove()` 的错误日志；不要依赖 `dmesg` 找它。
+- RE-confirmed：`sub_FFFFFE00080686BC` 把映射交给 `sub_FFFFFE0008017E5C`；无对象的正常路径再入 `sub_FFFFFE0008019768`。后者在 `a5 & 0x4000` 时调 `sub_FFFFFE000801DF20(map,start,end, flags,...)`（`0x8019d60` 附近）：`vmkf=0x100` 时传 `flags=88=0x58`，含 `0x10=VM_MAP_REMOVE_IMMUTABLE`、`0x8=NO_MAP_ALIGN`、`0x40=NO_YIELD`。失败清理路径另一次调用 `vm_map_delete` **不是** overwrite 主路径，不能据此推断 overwrite 参数。若 delete 返回非 0，或 delete 后原条目仍在，随后的 lookup 都可令映射失败；**具体失败点和返回码尚未实测**。
+- RE-confirmed：`sub_FFFFFE000801DF20` 是实际 `vm_map_delete`。在 `0x801e2c0` 的 permanent+submap 分支，`flags & 0x10` 为真时**不走** nested-submap 的保护性递归拒绝分支；没有 immutable flag 时才检查 nested entries（`0x801e340` 测 bit19）。因此“iOS 内核无条件禁止 immutable permanent-submap overwrite”已被反证；早先据此作的原因归属是错误假设。真正的拒绝位置仍待确定。源码类比仅供交叉核对：`vm_map.c:18692-18727` / `vm_shared_region.c:2483-2523`，不能代替设备内核结果。
+
+**与现有运行证据的边界**：此前 dyld 进程 `check_np(NULL)=0`、`check_np(&base)=12`、`MAP_FIXED` 在 shared-region VA 返回 `ENOMEM`，并观察到 reserved/is_sub_map 条目；这些**不能**推导出 `sub_FFFFFE000806391C` 的返回码或判定其失败原因。高地址 `0x2ac75c000` 的 `EXC_GUARD` 与低地址 `ENOMEM` 须分别追踪，不可把后者简单解释成 4GB 越界。后续优先采集 teardown 后同一 task 的 map 条目边界和内核实际 `mach_vm_map_kernel` 的 kr（若 KRW 不稳定，优先只读 probe；严禁未经验证地址的内核写入）。对照同条件原生 iOS task 与 macOS dyld task，区分 nested 条目、range/gap 检查和 map-enter 失败；没有返回码前保持 THEORY，不提交任何跳过检查的“修复”。
+
+### 同轮追加：mmap errno 歧义与受探针污染的设备实验
+
+- RE-confirmed（同一真实 kernel IDB）：`sub_FFFFFE0008019768` 在 `0x8019d60` 对 `a5 & 0x4000` 的 overwrite 先调用 `vm_map_delete`；若进入删后 lookup，现存条目覆盖请求区间会返回 `KERN_NO_SPACE=3`；在 delete **之前**还有 `start < map->min_offset || end > map->max_offset` 等边界返回 `KERN_INVALID_ADDRESS=1`。对照开源 `bsd/kern/kern_mman.c:874-886`，**两者都会译为 `ENOMEM`**；且实际设备内核 sysent[197] @ `0xfffffe000799a8f8` 的 `sy_call=0xfffffe00083a7f8c`（IDA `get_qword(sysent+16)`）也已反编译核实：匿名 mmap 在 handler `sub_FFFFFE00083A7F8C` 的 `v74=sub_FFFFFE0008017E5C(...)` 进入 `LABEL_195`；文件 mmap 的 `v74=sub_FFFFFE0008024600(...)` 同样汇入该 label；这里 `v74<=3` 时对 `case 1,3` 返回 `v31=12`，对 `case 2` 返回 13。此前“`ENOMEM` 唯一证明 `KERN_NO_SPACE`/条目没删”已被真实内核**反证**。这只能留下候选分支，不能宣布当前命中哪个。开源 `vm_map.c:3173-3222` 还列有 RLIMIT_AS/DATA 在建图后返回 `KERN_NO_SPACE` 的路径；同样尚未排除。`VM_FLAGS_FIXED` 在 `vm_statistics.h:266` 为零，teardown 的 `0x4000` 即 `FIXED|OVERWRITE`，不是遗漏了 FIXED。
+- 2026-09-30 只读设备核对：`nc -z -G 2 192.168.64.1 2222` 成功；`sshpass -e ssh -p 2222 root@192.168.64.1 'uname -a; ls -l ...'` 返回 `root:xnu-8792.82.2~1/RELEASE_ARM64_T8103 iPad13,11`。当前 `/var/mnt/rootfs/usr/lib/dyld` 大小 1239616，mtime `Sep 30 12:02`；`/var/mobile/dyld_mm.bin` 同时间/长度，之前的 `DF/AN/FL/TD/F2` mmap-matrix cave **仍处于部署状态**。`/var/mnt/rootfs/private/tmp/srteardown` 已存在，但不能假定运行它时已进入其 `_start`。
+- 运行尝试（不改设备文件）：`sshpass -e ssh -p 2222 root@192.168.64.1 'timeout 25 /var/mobile/run_dbg /var/jb/usr/bin/chroot /var/mnt/rootfs /private/tmp/srteardown'`。观察到的**原文**：`[*] task_for_pid kr=0 port=3075`、`[*] child STOPPED sig=0`、`DF\0...AN\0...FL\0...TD\0...F2\0...`、`[exc] type=12 code0=0xa000000100000000 code1=0x2ac75c000 thr=4099 tsk=3843`、`[vm] 0x2ac75c000..0x2ac760000 prot=1/3 off=0x0 shared=0`；远端 `timeout` 返回 124。**没有**出现 `srteardown.c:33` 的 `[TD] shared_region teardown test`，因此所有输出属于当前 dyld cave 而非 `srteardown`。此次实验不能证明 teardown 或普通进程 mmap 的结果，也不能把 `DF/AN` 当作 srteardown 的记录。异常再次证实 dyld probe 在高地址触发 `EXC_GUARD`；`run_dbg` 的 exception reply 报 `kr=268435459`，应排查捕获器处理方式，不能把 124 解释为进程自发挂起。
+- 随后试图仅作原生进程 prewalk：`RUN_DBG_PREWALK=1 timeout 12 /var/mobile/run_dbg /var/jb/usr/bin/true`，SSH 直接报 `UNIX authentication refused` / `Too many authentication failures`，**未启动实验**。不要重复猜测密码或默默替换已部署 dyld；先让用户确认 SSH 认证恢复及设备是否允许短暂切换到受控的 baseline dyld。若允许，先保存当前文件的 hash/签名/路径，按既有 restore runbook 以新 inode 切换，实验后原样恢复；若不允许，使用 iOS-native 原生探针且不要经过 chroot dyld。
+
+### 实测对照：在基线 dyld 下，`srteardown` 的 task 可以完成拆除和 FIXED 映射
+
+用户确认密码仍为原值且**明确允许短暂切换 dyld 后原样恢复**。SSH 增加 `-o PubkeyAuthentication=no -o PreferredAuthentications=password -o NumberOfPasswordPrompts=1` 后连接成功；先前的 `Too many authentication failures` 不能当成设备不可达的证据，具体触发认证失败的条件未独立定位。只读查验：当前 dyld SHA-256=`9956915299c6e3e21c7e650242166bab05dc635da4acac2cbade4e646eec51a1`（1239616 B）；基线 `/var/mnt/rootfs/usr/lib/dyld.plat.keep` SHA-256=`11df010c56a7d0328e853587448c9ed7f345cc36a8b2c0077cb7a0ac5b131249`（1239648 B）。复制到**事前确认不存在**的 `/var/mobile/dyld_cli_pre_teardown.bin` 和 `/var/mobile/dyld_cli_baseline.bin`，并比较原件与备份 SHA-256，输出 `backups verified`。`restore_env.sh` 会**重签 SRC 自身**，所以只把基线**副本**传给脚本，不能传 `.plat.keep` 原件。
+
+部署：`sshpass -e ssh -p 2222 -o PubkeyAuthentication=no -o PreferredAuthentications=password -o NumberOfPasswordPrompts=1 root@192.168.64.1 'RESTORE_NO_VERIFY=1 /var/jb/usr/bin/bash /var/mobile/restore_env.sh /var/mobile/dyld_cli_baseline.bin'`，输出 `deployed dyld md5=f24e6c7d82444310db3569c3a5f0112d`、`TC 137c18ada228b0a4b1b9a13187d5dd34aa358ef0 hit=2 (/var/mnt/rootfs/usr/lib/dyld)`；设备的 bash 在 `/var/jb/usr/bin/bash`，**不是** `/bin/bash`。运行相同 probe（无 private/cache 环境变量）：
+
+```
+sshpass -e ssh -p 2222 -o PubkeyAuthentication=no -o PreferredAuthentications=password -o NumberOfPasswordPrompts=1 root@192.168.64.1 \
+  'timeout 12 /var/mobile/run_dbg /var/jb/usr/bin/chroot /var/mnt/rootfs /private/tmp/srteardown'
+[*] task_for_pid kr=0 port=3331
+[*] child STOPPED sig=0
+dyld[5882]: dyld cache '(null)' not loaded: syscall to map cache into shared region failed
+[TD] shared_region teardown test
+  check_np(&base) ret=-12 base=0x00000000deadbeef
+  check_np(NULL)  ret=0
+  mmap FIXED @0x180000000 -> 0x0000000180000000
+  mmap hint  @0x2ac75c000 -> 0x00000002ac75c000
+  mmap FIXED @0x2ac75c000 -> 0x00000002ac75c000
+  check_np(&base) ret=-22 base=0x00000000deadbeef
+[DONE]
+[*] child exited rc=0
+```
+
+VERDICT：这个经过**基线 dyld** 启动的探针 task 在 `check_np(NULL)` 之后成功 `MAP_FIXED` 到原 shared-region VA；这里的 shared-region 拆除足以使它的固定映射成功。高 VA 先通过非固定 hint 真实占住一个 16K entry，再用 FIXED 替换也成功；这只证实“预占 gap 可避免本 probe 的空洞 guard”，**不是** macOS shared-cache 的修复，更不意味着可以把 DynamicRegion 改成匿名零页。起初部署的 mmap-matrix dyld 比较实验不成立，因为它的 cave 在 `srteardown` 前触发了 EXC_GUARD；本次切换基线才绕开了该污染。要比较 dyld cave task，需要精确检查它执行 teardown 的时序/映射边界、在同一 task 停住后读 region，而不是把不同进程的 errno 直接归咎于内核 permanent-entry 策略。
+
+实验后**立刻**用新 inode 从原诊断版备份恢复 `/var/mnt/rootfs/usr/lib/dyld`，chmod 755，并由设备 Python 计算 SHA-256：输出 `restored sha256=9956915299c6e3e21c7e650242166bab05dc635da4acac2cbade4e646eec51a1`，等于切换前值。原始基线 `.plat.keep` 未被重签；两个 `/var/mobile/dyld_cli_*.bin` 作为本次可审计备份保留。未写内核、未把临时探针当生产修复。
+
+## 2026-09-30 CLI 下一阶段：真实缓存 libSystem 的可检验取证（仅离线准备）
+
+**目标纠偏**：`CLI-MILESTONE-2026-09-28.md` 的 `echo/cat/msh` 用的是磁盘 shim；这不是用户要求的“macOS 15.6.1 rootfs 真实系统库 CLI”。阶段性验收必须同时满足：原版 rootfs 命令正确输出和 rc=0；`DYLD_PRINT_LIBRARIES`/映射证明实际 libSystem 来自 **macOS** cache（先前目标 UUID `D161E41A`，须按设备 cache 再核对），非磁盘 shim 和非 iOS 缓存；无 `not loaded`、`wrong platform` 或未消费映射页的伪成功。系统级 536 的 region 固定 4 GB，不能直接覆盖整个约 4.77 GB 的 macOS cache；private mmap 路径是当前优先调查对象，但也要保留主缓存限定对照，不能先验宣布它完全不可用。
+
+**RE 交叉核对**：本轮 IDA `py_eval` 看真实 segment，Instance1 是 `0xfffffe0007004000` 起内核、Instance2 是 `0x0` 起 dyld，仍不能靠 server_health 名称猜。实际 dyld `deallocateExistingSharedCache` @ `0x3420c`: `0x34224` 调 `check_np(&base)`，`0x34228 CBNZ` 令 ret=12（sr 对象空）时跳过 `0x34230 check_np(NULL)`；实际 `mapSplitCachePrivate` 在入口预检之后调用它，并在循环固定 mmap 前使用预期 VA。源码类比 `analysis/dyld-dyld-1286.10/dyld/SharedCacheRuntime.cpp:865-1012,1455-1465`。真实内核 `sub_FFFFFE000806391C` 使用 `VM_FLAGS_OVERWRITE=0x4000`、immutable 覆盖标记；但 syscall 294 handler 不透传它的内部 kr。真实 `vm_map_enter` @ `0xfffffe0008019768` 的范围检查（反编译中 `v167 < min || v167+size > max`）会给 `KERN_INVALID_ADDRESS=1`，overwrite-delete 后 lookup 有 `KERN_NO_SPACE=3`，两者经实际 sysent[197] 的 BSD handler 都成 `ENOMEM=12`。故先前 `deallocnp` NOP/`check_np(NULL)==0` 均**不足**以证明原因或修复；当前未采到内部 kr。高 VA 的 `EXC_GUARD DEALLOC_GAP` 独立追踪。
+
+**实验前主机侧准备（此时未部署设备；后续首次实验见下节）**：
+
+- `misc/run_dbg.c` 保留旧 `RUN_DBG_PREWALK`、`RUN_DBG_KILLONSTOP` 行为；`RUN_DBG_LIVEWALK=1` 时新增每个 SIGSTOP/SIGUSR1 的 `[live] stop=N` 标记，从 `0x180000000` 走到 `0x2ac760000`，显示 region 的 prot/offset/shared/reserved 和 `mach_vm_region` 跳过的 **gap**。`RUN_DBG_STOP_LIMIT=2` 只在第二个有效 stop 后结束**实验子进程**（spawn 悬挂遗留 `sig=0` 不计数）。每条 `object_name` send right 用 `mach_port_deallocate` 释放；可读现有 stop 洞，不涉及 kernel 写入。
+- `misc/srteardown.c` 只有在 `-DSRTEARDOWN_STOPS` 构建时调用 `getpid(20)`/`kill(37,signum)`；原 v1 错用 `19=SIGCONT`，v2 已改 `17=SIGSTOP`，意图是在 `check_np(NULL)` 前后停住；缺省构建维持原实验输出/行为。上次基线 dyld 下它的成功映射属于 **app `_start` 较晚阶段**，不能替代 private dyld 入口对照。
+- `analysis/dyldwork/build_dyld.py` 新的 `srpair_e` + `srpair_c` 把 private 入口 `0x342dc`（IDA 原字 `PACIBSP=0xd503237f`）跳到 `0x970`（IDA 验证前 `0x90` 字节全零）。cave 顺序：getpid→SIGSTOP（前态）→`check_np(NULL)`→把 raw syscall ret 写 fd2 8 字节→getpid→SIGSTOP（后态）→自旋，保证不带不完整寄存器状态返回 dyld。site `a531ff17` 经 IDA 位移计算落在 `0x970`；cave 共 22 条/88B，host clang 单独汇编 `/tmp/srpair_check.s` 后 `otool -tV` 验证每条语义，`otool -t` 的编码与 builder `_le()` 输入逐 word 一致。builder 拒绝漏配另一半、与 `deallocnp` 联用或与 `mmprobe` 等占用相同 site/cave 的 key 联用。此为**实验 child task 内主动尝试 teardown** 的用户态诊断，不是只读调用、不是 fix，也不使用内核写入；只有 `run_dbg` 的 VM-region 快照是只读的。
+- Host `clang -target arm64-apple-ios14 -isysroot ~/theos/sdks/iPhoneOS16.5.sdk -O2 -o /tmp/run_dbg_cli_pair misc/run_dbg.c` 构建成功（仅旧有 pointer-sign warning）；`clang -target arm64e-apple-macosx14 -isysroot <同一 SDK> -nostdlib -DSRTEARDOWN_STOPS -Wl,-e,__start -lSystem -o /tmp/srteardown_cli_pair misc/srteardown.c` 成功（sysroot target mismatch 警告）；普通/双停探针各 `-fsyntax-only` 通过。`python3 analysis/dyldwork/build_dyld.py /tmp/dyld_srpair_test.bin crossarch plataccept hardpriv srpair_e srpair_c` 构建 1240752 B；故意叠 `mmprobe_c` 或遗漏 `srpair_c` 均按预期失败。**这些产物未签名、未注册 TC、未上传 iPad；不能把构建成功当设备实验结果。**
+
+**设备当前只读确认**：以 `-o PubkeyAuthentication=no -o PreferredAuthentications=password -o NumberOfPasswordPrompts=1` 读取 dyld SHA-256=`9956915299c6e3e21c7e650242166bab05dc635da4acac2cbade4e646eec51a1`，与先前恢复后的值及 `/var/mobile/dyld_cli_pre_teardown.bin` 一致；`dyld.plat.keep` SHA-256=`11df010c56a7d0328e853587448c9ed7f345cc36a8b2c0077cb7a0ac5b131249`。本轮**没有**再次切换 dyld、kill 已有 daemon、重启或运行新增设备 probe。用户对再次切换的选择是 skip；下次需具体列操作和恢复命令、取得授权后才能比较 private dyld 与 app 入口两种相同 stop 快照。预计用 `RUN_DBG_LIVEWALK=1 RUN_DBG_STOP_LIMIT=2`，以 `[live] stop=1/2` 的差别和 ret、缓存真实加载证据定分支；若两个阶段 VM map 相同而 app 的 `check_np(NULL)` 能拆，则进一步对照 task VM max/min、region 身份和时间点，**不要**从单个 errno 直接打补丁。附带只读检查：设备 `/var/jb/usr/sbin/sysctl kern.developer_mode_status` 返回 `sysctl: unknown oid 'kern.developer_mode_status'`（rc=1）；§14.3 设想的该 sysctl 不能用于本设备确认开发者模式，**不能据此推断模式关闭**。
+
+### 已授权的一次设备双停点试验：信号编号错误，VM 对照未发生
+
+用户在离线准备后**只授权这一次**临时切换 dyld。先只读校验 `dyld` 与新备份 `/var/mobile/dyld_cli_srpair_pre.bin` 都是 SHA-256 `9956915299c6e3e21c7e650242166bab05dc635da4acac2cbade4e646eec51a1`；将 host 编译的 dyld 和 `run_dbg_pair` 上传设备 `/var/mobile/`，分别以 macOS ent 和 `misc/run_nocskill.entitlements.plist` 签名，CDHash `bac138526a5b1ddb15f5a3e27c61178ff25dd3b4`、`49f7f216b954c3c1931a69bf1e91b6102761b528`，经 `jbctl trustcache info` **转小写**比较均命中（初次大小写敏感检查误报 false，已当场复核）。远端 shell 的 `EXIT` trap 负责从备份创建新 inode 并恢复原解释器、核验 SHA。探针 dyld SHA-256 `477f6fe8b3c7a07b8b9fc4fec801e09e86cedabc68ed1a8718e7ccd639fc277e`。
+
+原始设备文件 `/var/mobile/dyld_cli_srpair_trace.raw`（156B）末尾关键数据：
+```
+[*] spawned pid=6119 (suspended)
+[*] jbctl rc=0
+[*] task_for_pid kr=0 port=2563
+[*] set_exc_ports kr=0
+[*] task_resume kr=0
+[*] child STOPPED sig=0
+<随后 8 字节 00 00 00 00 00 00 00 00>
+EXPERIMENT_LAUNCHER_RC=124
+RESTORED_SHA256=9956915299c6e3e21c7e650242166bab05dc635da4acac2cbade4e646eec51a1
+```
+`ps -p 6119` 未发现遗留 child。**没有** `stop=1/2` 快照；8 字节零仅显示原始 `check_np(NULL)` 返回 0，不证明 VM 条目删除。IDA/仓内 XNU `bsd/sys/signal.h:105,107,122` 验证 Darwin `SIGSTOP=17`、`SIGCONT=19`、`SIGUSR1=30`；最初 `srpair_c`、旧 `stopcave`/`stopnpcave`/`np2dump2` 和 `run_dbg` 都误把 `kill(pid,19)` 视为 STOP，实际上只是 CONT。先前许多“没收到 SIGSTOP/探针自身 spin”的解释需以此修正。这是**探针自身 ABI 常量错误**，不能拿缺少停点归因于设备或内核 VM。
+
+主机已将 `srpair_c` 的两处 `MOV X1,#19` 改为 `MOV X1,#17`（汇编字 `d2800221`），将 `run_dbg` 有效信号判断改为 SDK `SIGSTOP/SIGUSR1`，`misc/srteardown.c` 可选停点改用 SDK `SIGSTOP`。新产物在 `/tmp/dyld_srpair_test_v2.bin`、`/tmp/run_dbg_cli_pair_v2`、`/tmp/srteardown_cli_pair_v2`；`otool -tV /tmp/srpair_check_v2.o` 确认两次 `mov x1,#0x11`，编译成功。**此时 v2 尚未部署**；其获准重测与结论见下节。
+
+### 第二次独立授权的 v2 重测：停点成功，但 VM 查询用的 task port 已失效
+
+用户另行明确授权只运行一次修正后的临时 dyld 切换。开跑前当前 dyld 和先前备份 SHA-256 相同，旧 `.dyld_cli_srpair_stage`/`_restore` 和新 trace 路径均不存在；v2 dyld 和 v2 run_dbg 的签名 CDHash 分别为 `0136cdfb8749804b221773fa6799e075d50f9881` 与 `a05c43416bcfbdba225174eec6cc74547bca8175`，经 `jbctl trustcache info` 规范化大小写后均命中。v2 dyld 部署时 SHA-256 `5262c837427c9f0af5520892d28554f647e7340f672151489a928227883c87d5`。remote EXIT trap 恢复原 dyld，输出 `RESTORED_SHA256=9956915299c6e3e21c7e650242166bab05dc635da4acac2cbade4e646eec51a1`。
+
+设备保存原始日志 `/var/mobile/dyld_cli_srpair_trace_v2.raw`（431B），`/var/mobile/dyld_cli_srpair_trace_v2.out`；标准错误关键原文：
+```
+[*] spawned pid=6178 (suspended)
+[*] jbctl rc=0
+[*] task_for_pid kr=0 port=2563
+[*] set_exc_ports kr=0
+[*] task_resume kr=0
+[*] child STOPPED sig=0
+[*] child STOPPED sig=17
+[live] stop=1 walk 0x180000000..0x2ac760000
+[live] region lookup kr=268435459 at 0x180000000
+<8 bytes 00 00 00 00 00 00 00 00>
+[*] child STOPPED sig=17
+[live] stop=2 walk 0x180000000..0x2ac760000
+[live] region lookup kr=268435459 at 0x180000000
+[*] killing child
+[*] child SIGNALED 9
+```
+远端 launcher rc=0（runner 正常处理两个停止点），但该 rc **不是 macOS CLI 成功**。真实 XNU `osfmk/mach/message.h:1184` 定义 `268435459=0x10000003=MACH_SEND_INVALID_DEST`。两个快照都未读取任何 VM region；**不能**根据查询失败说 region 存在/不存在或拆除成功/失败。8 字节 0 仍只是 syscall 294 的表面返回值。`run_dbg` 在 child 尚处于 suspended `chroot` 阶段时取的 task port，之后 `chroot` exec 到 macOS image；旧 port 在最终停点无效是**待证实的具体机制**，首先应在有效 SIGSTOP 时重新 `task_for_pid` 并打印旧/新 port 与返回码。
+
+主机 `misc/run_dbg.c` 已做最小修订：每个有效 stop 重新调用 `task_for_pid`，若成功，释放旧 send right、用新 port 做只读 `mach_vm_region`；失败则原样报告，不猜测映射结果。`clang -target arm64-apple-ios14 -isysroot ~/theos/sdks/iPhoneOS16.5.sdk -O2 -o /tmp/run_dbg_cli_pair_v3 misc/run_dbg.c` 编译成功（只有先前 pointer-sign warning）。**此时 v3 尚未部署**；第三次单独授权的试验和结果见下节。
+
+### 第三次单独授权的 v3 实测：同一 dyld task 的 teardown 真正替换 permanent submap
+
+用户明确表示直接继续，并在单独确认问题中授权一次 v3 实验。最初 SCP 遇一次 `Permission denied`（无文件传输、更未替换解释器），停止重试、确认用户意图后以已知认证方式成功只读登录并再校验现有 dyld SHA，随后上传、签名 v3 runner（CDHash `8ae928a08687dd8217b2718948ed0e5899069aca`），核对 v3 runner 与既有 v2 dyld 均在 TC。此轮使用既有 v2 dyld，不改补丁字节；运行中该 dyld SHA `5262c837427c9f0af5520892d28554f647e7340f672151489a928227883c87d5`，18 秒超时保护下一个 child 正常被 runner 结束，EXIT trap 报 `RESTORED_SHA256=9956915299c6e3e21c7e650242166bab05dc635da4acac2cbade4e646eec51a1`，独立 SSH 读取同 SHA，`ps -p 6236` 无残留实验进程。
+
+设备原始 `/var/mobile/dyld_cli_srpair_trace_v3.raw`（621B），关键原文：
+```
+[*] spawned pid=6236 (suspended)
+[*] jbctl rc=0
+[*] task_for_pid kr=0 port=2819
+[*] child STOPPED sig=0
+[*] child STOPPED sig=17
+[live] task_for_pid kr=0 old=2819 new=3331
+[live] stop=1 walk 0x180000000..0x2ac760000
+[live] 0x180000000..0x280000000 prot=1/1 off=0x0 shared=0 resv=1
+[live] gap 0x280000000..0x2ac760000
+<8 bytes 00 00 00 00 00 00 00 00 = check_np(NULL) raw ret>
+[*] child STOPPED sig=17
+[live] task_for_pid kr=0 old=3331 new=3331
+[live] stop=2 walk 0x180000000..0x2ac760000
+[live] 0x180000000..0x280000000 prot=0/0 off=0x0 shared=0 resv=0
+[live] gap 0x280000000..0x2ac760000
+[*] killing child
+[*] child SIGNALED 9
+```
+
+**运行确认的事实（同 PID、同 task 在两个信号点）**：exec 后重新 `task_for_pid` 从旧 port 2819 换得可用 port 3331，旧 port 确实不能用于最终 image 的 map；`check_np(NULL)` 将原始 `resv=1` shared-region submap **替换**为非 reserved、`PROT_NONE` 的普通 4 GB 映射，不是把所有 VM entries 删成空洞。`check_np(NULL)==0` 仍只说明 syscall 外层成功，**这次是 VM snapshot 而非返回值**证明 4 GB 实体发生变化。高 VA `0x280000000..0x2ac760000` 在前后都是 gap，空洞 FIXED 触发的 `EXC_GUARD` 是独立关卡。dyld 原版 `deallocateExistingSharedCache@0x3420c` 在 `check_np(&base)==12`（空 sr）时 `CBNZ@0x34228` 跳过 teardown，说明它未走刚刚证实可替换 submap 的路径；**还需受控测试**使它只在空 sr 时调用 teardown 后，私有 cache 低地址固定文件 mmap 是否成功，不可从 VM 条目变化单独宣布 CLI 跑通。历史的 `deallocnp` 无条件 NOP 诊断未成功，不能删去该反例；当时另有入口 cave/同 task 时序混淆，须对照实际部署的 key 和日志后重评。无需新 kernel 写入。下一步优先做条件化 ret=12 的最小 dyld branch fix；再单独处理高 VA 的合法预占、实际签名页和缓存 libSystem 来源。
+
+**基于 v3 的离线最小条件补丁（尚未设备部署）**：IDA 对实际 dyld `0x34220..0x3423c` 的原始反汇编显示：`BL check_np(&base)` @`0x34224`; `CBNZ W0,0x34234` @`0x34228`，原字 `60000035`; `MOV X0,#0` @`0x3422c`; `BL check_np(NULL)` @`0x34230`; `LDP/ADD/RETAB` @`0x34234..0x3423c`。在 `build_dyld.py` 增加配对 `emptysr_e`（把非零 ret 导入空的 `0x47290` cave）和 `emptysr_c`（`cmp w0,#12; b.ne 原 epilogue 0x34234; b 原 teardown 0x3422c`）。因此 ret=0 完全保留原流，ret=12 仅补做原来的 teardown，其他非零仍沿原 skip；没有替换 `check_np` 本身、更没有 NOP 掉错误检查。IDA `py_eval` 独立验算分支落点（site `40830935`、cave `1f300071017df654e5b3ff17`），host clang `cmp w0,#12` 汇编 word `7100301f` 一致。builder 先校验原 site word，再拒绝配对缺漏及与已有 `deallocnp`、`srpair` 或相同 cave 的 mdump 等叠加。
+
+Host `python3 analysis/dyldwork/build_dyld.py /tmp/dyld_emptysr_test.bin crossarch plataccept hardpriv emptysr_e emptysr_c` 成功（1240752B），故意叠 `mdumpcave` 或漏配 cave 均按预期失败，`git diff --check` 通过。**这只是有实证根据的修复候选，不是设备上已证实的成功路径**；尤其旧无条件 `deallocnp` 曾没有使真实 mmap 成功，不能隐藏该反例。后续获准的设备实验应只替换这个条件分支并在低 VA file mmap 返回处记录实际结果，失败则检验后态 map 和返回 VM 码。
+
+**高地址另案静态证据**：先核对本文件既有的“Exact overflow map” §（约 1679-1696 行）：`.01` 的 m2 从 `0x27dfd8000` 跨过 4 GB 顶到 `0x28188c000`，m3..m6 全在高区并延续到 `0x2ac75c000`；因此**文件映射会先于 DynamicRegion** 碰到潜在的 gap guard，不能只处理最后 16K 动态配置。此前还有分拆 system-wide/main + private 尾部的 hybrid 方案（约 1702-1729 行），其范围与真实缓存 libSystem 来源仍需对照，别重造已有路线。实际 macOS 15.6.1 dyld `DyldSharedCache::DynamicRegion::make@0x511c0` 反编译：`prefAddress!=0` 直接 `mmap(prefAddress,0x4000,3,4114,-1,0)`，4114=`0x1012=MAP_FIXED|PRIVATE|ANON`，失败返回空；对照开源 `common/DyldSharedCache.cpp:2175-2199`。动态配置 `0x2ac75c000` 落在 v3 前后可见的空洞；以前基线 app 的 `srteardown` 证明该高 VA 先 **非固定 hint 建真实 entry，再 FIXED 覆盖同址** 可避免本 probe 的 DEALLOC_GAP。尚未验证原版 dyld 与真实 cache 是否能用同样顺序；若试验必须检查 hint 真正返回预期地址、失败回滚误映射、覆盖后的内容/保护，而非用匿名零页伪装缓存内容。签名页消费和 libSystem provenance 仍是独立门槛。
+
+### 第四次单独授权：条件化 empty-sr teardown 让私有缓存前进到 `.01` 跨界 mapping
+
+用户就新 `emptysr_e/emptysr_c` 目标另行明确授权一次临时替换。替换前从原 dyld 独立创建 `/var/mobile/dyld_cli_emptysr_pre.bin`，双 SHA 为 `9956915299c6e3e21c7e650242166bab05dc635da4acac2cbade4e646eec51a1`；`/var/mobile/dyld_emptysr_test.bin` 签名 CDHash=`6ff7c93e159ba75076e21c880fd87237e1079d33`，TC 验证命中。运行时 dyld SHA=`2b981ed621a649be3783df32fd0a192119bbfda0950a6ccfde11afe0105a78da`；只运行一个 `timeout 15 /var/mobile/run_dbg_pair_v3 /var/jb/usr/bin/chroot /var/mnt/rootfs /bin/echo HI` child，远端 EXIT trap 恢复后及独立 SSH 双重核验最终原 SHA。实验 PID 6300 的 `ps -p 6300` 无遗留。
+
+设备原始 `/var/mobile/dyld_cli_emptysr_trace.raw`（586B）要点（原文）：
+```
+[*] spawned pid=6300 (suspended)
+[*] jbctl rc=0
+[*] task_for_pid kr=0 port=2563
+[*] task_resume kr=0
+[*] child STOPPED sig=0
+[exc] exception msg id=2405 size=84
+[exc] type=12 code0=0xa000000100000000 code1=0x280000000 thr=3587 tsk=6915
+[exc] pc=0x104454f90 lr=0x1044845b0 sp=0x16bc330c0 cpsr=0x40001000
+[exc] x0=27dfd8000 x1=0 x2=3 x3=40012
+[exc] x4=4 x5=569cc000 x16=c5 x30=lr
+[vm] 0x27dfd8000..0x28188c000 prot=3/3 off=0x569cc000 shared=0
+[exc] reply kr=268435459
+EXPERIMENT_LAUNCHER_RC=124
+RESTORED_SHA256=9956915299c6e3e21c7e650242166bab05dc635da4acac2cbade4e646eec51a1
+```
+
+IDA 对实际 dyld `_mmap` stub `0x4f88 MOV X16,#0xc5`、`0x4f8c SVC #0x80`、`0x4f90 B.CC` 确认 PC 是 **mmap syscall 返回点**；`lr=...45b0` 与 private 循环 call site `0x345ac→0x345b0` 相符（dyld load base 相同），`x16=0xc5=197`。异常的 `code1=0x280000000` 是**4 GB shared-region 顶边界**，不是后续 DynamicRegion 的 `0x2ac75c000`。`mach_vm_region` 在异常捕获时看到 `.01` m2 `0x27dfd8000..0x28188c000` 文件映射，起始 fileoff `0x569cc000`，prot=3；与历史 Exact overflow map 的 m2 范围相符，证明顺序已推进至至少这条**跨界**映射。不能因 VM entry 存在断言 m2 每页都有效、可执行或完整成功：本次 kernel 在边界抛 `EXC_GUARD`，debugger 的 exception reply 因错误使用接收 port 而非请求自带的 send-once reply port 报 `MACH_SEND_INVALID_DEST`、父 runner 最终超时（静态勘误见下段）。stdout 仅是 jailbreakd 的 `Successfully marked proc...`，**没有**原版 `/bin/echo` 的 `HI`，因此真实缓存 libSystem CLI 仍未达标。
+
+**归因范围**：与先前同 cache/私有路径 `15 条 FIXED ENOMEM` 的运行相比，ret=12 条件化 teardown 后至少取得 `.01` m2 VM entry，支持低地址 shared-region 清理前提成立；但 `hardpriv`、cache 状态、签名与不同诊断 cave 的历史差异仍需保留，不要夸大成“所有前 10 条映射已被实际页读取验证”。下一个独立关口是 `MAP_FIXED` 跨越 `0x280000000` 或后续高区空洞触发 `DEALLOC_GAP`。**THEORY / 待证伪**：在调用第一个文件 mmap 前，用非固定 hint **仅预占**真实高区 `[0x280000000,0x2ac760000)` 的 PROT_NONE 虚拟区，必须核对返回 VA 正好等于 hint，之后让原有 `MAP_FIXED|FILE` 逐段真实覆盖；若内核仍在边界报 guard，则否证假设。它不改变真实缓存内容或重定位，但 VM 虚拟地址大约 0.69 GB、用户地址空间/资源限制必须另测；不可把占位页当缓存 image，且必须在文件覆盖及实际页验证之后才谈 CLI 成功。参考既有 hybrid 方案和基线 app 的高 VA 16K hint/FIXED 成功对照，避免重造错误方案。
+
+**异常捕获器独立勘误（主机已编译，设备未测 v4）**：旧 `misc/run_dbg.c:126` 构造 exception reply 时把 `msgh_remote_port` 误设成收到消息的 `msgh_local_port`（exception 接收 port），所以 `mach_msg` 返回 `0x10000003=MACH_SEND_INVALID_DEST`、child 等回复、外层 timeout=124。项目已有可工作的 `misc/excsnap.c:77-84` 与 `misc/run_nocskill.c:254-261` 都用**请求的 `msgh_remote_port`**（send-once reply right），且把请求 NDR 原样拷贝到 reply。已按相同协议修正 `run_dbg.c` 的 reply port 与 NDR，host `clang ... -o /tmp/run_dbg_cli_pair_v4 misc/run_dbg.c` 成功（旧有 pointer-sign warning）。**此时尚无设备 v4 数据**；下述独立原生进程测试已补足协议验证。该修改与上述 VM teardown/高地址占位分别验证。
+
+**v4 捕获器独立实测（不替换 dyld）**：主机用 iOS target 编译临时 `int main(void){ __builtin_trap(); }`，上传为 `/var/mobile/run_dbg_exc_probe`；与 `/var/mobile/run_dbg_pair_v4` 分别签名（CDHash `d4e5c835092fd80d4c810e6d0e935b49031eb4a3`、`45825709b8906a7a392fa75d30be31f366aa5303`），TC 经设备实际列表核验。设备 `timeout 8 /var/mobile/run_dbg_pair_v4 /var/mobile/run_dbg_exc_probe`：`[*] child STOPPED sig=0` → `[exc] exception msg id=2405 size=84` → `[exc] type=6 code0=0x1 code1=0x104610000` → `[*] child SIGNALED 5`，命令正常 rc=0、没有 `reply kr=268435459`、没有外层 timeout。**运行确认**修正后的 exception reply 可以被 kernel 消费并正常递送 SIGTRAP；这只是原生 iOS child 的协议验证，不证明 macOS dyld/cache 任何新的结果，也不验证 EXC_GUARD 的内核策略。
+
+**下一关的主机侧诊断候选（尚无设备数据）**：新增 `build_dyld.py` 的 `highreserve_e/highreserve_c`，仅能与 `emptysr_e/c` 成对共存。IDA 原版 `mapSplitCachePrivate@0x342dc` 首指令 `PACIBSP`，分支 `a531ff17` 落在验证全零的 `0x970` 洞；host clang 将 `/tmp/highreserve_check.s` 编成 0x8c 字节（≤已验证 0x90 零区），逐 word 复核 `otool -t/-tV`。cave 保存 `x0..x5,x8,x9,x16`，执行**非固定** `mmap(hint=0x280000000,len=0x2c760000,PROT_NONE,MAP_PRIVATE|MAP_ANON,fd=-1)`，若结果不是严格相同 VA，则释放偏离的临时映射并 `exit(87)`（显式诊断失败）；若匹配则恢复全部暂存寄存器/SP，重放原 `PACIBSP`，在 cave `0x9dc` 用 IDA 验算的 `B 0x342e0` (`0x1400ce41`) 回原函数剩余序列。后续 `.01` 高区和 DynamicRegion **仍由原 dyld 的真实 `MAP_FIXED|FILE` / RW mmap 覆盖**；占位只为了把原先空洞变成已登记 VM entry，不代替缓存文件数据。建构命令：`python3 analysis/dyldwork/build_dyld.py /tmp/dyld_emptysr_highreserve.bin crossarch plataccept hardpriv emptysr_e emptysr_c highreserve_e highreserve_c`，1240752B；与 `mmprobe_c` 同洞组合按预期被拒，`git diff --check` 通过。该 candidate 的非固定 hint 可能被内核移到别处/资源限制拒绝（会以 87 显式失败），即使回到原 dyld 仍可能遇 code-signing、平台选择和真实页 fault。**此时尚未执行新的解释器切换**；结果见下节。
+
+### 第五次单独授权：高地址 guard 不再出现，转为主缓存 m3 首字节 `KERN_MEMORY_ERROR`
+
+用户单独确认了高区 PROT_NONE 非固定 hint 的受控诊断。设备原 dyld 和新备份 `/var/mobile/dyld_cli_highreserve_pre.bin` 运行前 SHA 均为 `9956915299c6e3e21c7e650242166bab05dc635da4acac2cbade4e646eec51a1`；新候选签名 CDHash `5a1d78f23b16c1b3e3dceacf5b043c6228ab9022` 与已单独验证的 v4 runner 哈希均在设备 TC。临时 dyld SHA `3f2048c9303464f673c8df2a661748a642175415c95ace31b3ff7f91a6937062`，单个隔离 child 使用 `timeout 15 /var/mobile/run_dbg_pair_v4 /var/jb/usr/bin/chroot /var/mnt/rootfs /bin/echo HI`；trap 与独立 SSH 再核验恢复原 SHA，无残留 PID 6388。
+
+设备原始 stderr `/var/mobile/dyld_cli_highreserve_trace.raw`（736B），关键原文：
+```
+[*] spawned pid=6388 (suspended)
+[*] jbctl rc=0
+[*] task_for_pid kr=0 port=6915
+[*] task_resume kr=0
+[*] child STOPPED sig=0
+[exc] exception msg id=2405 size=84
+[exc] type=1 code0=0xa code1=0x1ee188000 thr=5891 tsk=2563
+[exc] pc=0x10294b9f8 lr=0xa01200010294b9ec sp=0x16d679dd0 cpsr=0x60001000
+[exc] x0=1ee188000 x1=8 x2=16d6799ff x3=e
+[vm] 0x1ee188000..0x1ee1ac000 prot=3/3 off=0x0 shared=0
+[vm] 0x1ee1ac000..0x1ef3ac000 prot=3/3 off=0x6c1ac000 shared=0
+[*] child SIGNALED 10
+EXPERIMENT_LAUNCHER_RC=0
+RESTORED_SHA256=9956915299c6e3e21c7e650242166bab05dc635da4acac2cbade4e646eec51a1
+```
+
+**严格判读**：XNU `osfmk/mach/kern_return.h:118` 定义 `KERN_MEMORY_ERROR=10`；这是 type=1 `EXC_BAD_ACCESS`，**不是之前的 type=12 EXC_GUARD**；v4 reply 正常，父 runner rc0 仅表示捕获并等到 child 的信号退出，child SIGBUS(10)，没有 `/bin/echo` 的 `HI`。既有本文件 1037-1046 行的原始映射表确认主缓存 m3 `[0x1ee188000,0x1ee1ac000)`、fileoff `0x6c188000`（正常 `mach_vm_region` 在此段头输出 `off=0` 是 VM object offset，不等于 cache 文件偏移）；该 VM entry `prot=3/3` 存在仍不能证明实际页可读取。实际 dyld 地址 slide 推出 `pc=0xb9f8`；IDA `dyld4::CacheFinder::CacheFinder@0xb854` 的 `0xb9f0 LDRB [X19,#0x30]`、`0xb9f4 CMP W8,#1`、`0xb9f8 B.NE` 表明异常时已在装载缓存后的 CacheFinder 阶段；fault 地址是缓存 m3 首字节，非 dyld text PC。**runtime-confirmed** 此次没有重现边界 guard，已推进到缓存数据的首次 fault；但无法从 code0=10 唯一推断 vnode pager、文件覆盖、签名页校验还是其他 VM 错误。必须继续查真实内核 fault/backing 及设备报错，不能给 kernel 签名 check 打 NOP。高区 PROT_NONE 只是帮助 VM 占位的**诊断 scaffold**，不是最终数据来源，也未验证全部 cache 映射可访问。
+
+**不替换 dyld 的反证对照（设备仍为原 dyld SHA）**：真实 cache symlink 是 chroot 的 `/System/Library/dyld/dyld_shared_cache_arm64e -> /tmp/dsc/dyld_shared_cache_arm64e`；iOS 宿主原路径 `/var/mnt/rootfs/private/tmp/dsc/dyld_shared_cache_arm64e`（size `0xa1b18000`），**不是**宿主 `/var/mnt/rootfs/System/Library/dyld/...`（绝对 symlink 在 chroot 外解析会失败）。新增 `misc/cache_page_probe.c` iOS 原生、签名 TC CDHash `3c4a7fdc5570b5c7c92586847e940093fbbc9c9c`，设备普通 `mmap(NULL,0x4000,RW,PRIVATE,fd,0x6c188000)` 首字节=0x00，单独 `pread(fd,offset=0x6c188000,1)` 返回 n=1 byte=0x00。
+
+进一步新增 `misc/cache_page_fixed.c` 的 iOS 原生 helper（只在自身 task 做 raw syscall，不改动设备解释器或全局 VM；签名 CDHash `b02ededefc2040ce0977427413cee4ea387f1ee8`，TC 验证），原生可执行 text/数据放在低 `0x100...` 区，因此 `check_np(NULL)` 后不用已解除的 iOS libc，而直接走自身的 `svc(5/294/197/4/1)`。clang `-target arm64-apple-ios14 -fno-stack-protector -O2` 产物 `otool -tV` 核对 teardown 后无任何 libc 调用。由验证过 exception reply 的 v4 runner 启动，原始输出：
+```
+[*] spawned pid=6456 (suspended)
+[*] jbctl rc=0
+[fixed] open=0x0000000000000003
+[fixed] check_np(NULL)=0x0000000000000000
+[fixed] mmap=0x00000001ee188000
+[fixed] reading
+[fixed] value=0x0000000000000000
+[*] child exited rc=0
+```
+固定地址 `0x1ee188000`、file offset `0x6c188000`、prot=RW、flags=`MAP_FIXED|PRIVATE|UNIX03=0x40012` 与 dyld 目标 m3 的起点/参数相同；**主缓存相同页在另一个 task 可真实读取**，直接反证“主文件磁盘页普遍坏掉/该地址不可映射”。但此探针只映射 16K，而 dyld m3 为 0x24000；也没有 macOS 平台 executable/task 语义，不足以定因。下一组单变量：原生 task 以完整 m3 长度固定 mmap，再对比两种 task 的 `mach_vm_region` extended info/entry backing、代码签名与 fault 错误路径（如 page error、shadow severed、pager 自身返回码）；严禁直接上内核 bypass。
+
+**映射长度控制试验**：同一 `misc/cache_page_fixed.c` 用 `-DCACHE_PAGE_LENGTH=0x24000` 编译新原生 helper，与实际主缓存 m3 **完整长度一致**，签名 CDHash `76816a6c55fd011828140db162e76c3dffd44730` 并验证 TC。v4 runner 独立 child 原文：
+```
+[*] spawned pid=6476 (suspended)
+[fixed] open=0x0000000000000003
+[fixed] check_np(NULL)=0x0000000000000000
+[fixed] mmap=0x00000001ee188000
+[fixed] reading
+[fixed] value=0x0000000000000000
+[*] child exited rc=0
+```
+现在按 symlink 推导的文件路径、fileoff `0x6c188000`、VA `0x1ee188000`、size `0x24000`、RW、flags `0x40012` 均可与 dyld m3 对齐（实际 vnode/inode 仍须验证）；此前原生成功不能仅归结于 mmap 长度短。**仍存在的显著未控变量**包括：原版 macOS exec task 的 platform/csflags/VM map 状态、前面缓存段映射和高区预占、pager/object chain、是否真正复用了同一个 vnode/fileglob（可只读 stat/inode/extended info 核对）。不把 `KERN_MEMORY_ERROR` 直接归因于代码签名，也不改核内策略。
+
+**相邻段顺序 + VM object 只读基线**：iOS 原生版 `-DCACHE_MAP_PREFIX -DCACHE_PAGE_LENGTH=0x24000` 在自身 task 先按 main m0/m1/m2 的真实 VA/foff/长度/保护逐一 FIXED 映射（程序输出分别 `0x180000000`、`0x1e7f5c000`、`0x1ebdec000`），接着 main m3 `0x1ee188000` 首字节仍可读 0x00、child rc0。前 3 段造成数据页失败的简单解释进一步被排除。扩展后的 `misc/run_dbg.c` v5 只读查询 `csops(CS_OPS_STATUS)`、`mach_vm_region(VM_REGION_EXTENDED_INFO)`，并以 `CACHE_STOP_BEFORE_READ` 在 iOS-native child 的 m3 映射完成后停住：
+```
+[*] spawned pid=6526 (suspended)
+[fixed] prefix=0x0000000180000000
+[fixed] prefix=0x00000001e7f5c000
+[fixed] prefix=0x00000001ebdec000
+[fixed] mmap=0x00000001ee188000
+[*] child STOPPED sig=17
+[live] task_for_pid kr=0 old=7171 new=7171
+[live] csops rc=0 flags=0x3680380d errno=0
+[liveext] 0x1ee188000..0x1ee1ac000 tag=0 resident=1 external=1 shadow=1 mode=1 ref=5
+[live] 0x1ee188000..0x1ee1ac000 prot=3/3 off=0x6c188000 shared=0 resv=0
+[*] child SIGNALED 9
+```
+最后 SIGKILL 是 runner 按 `RUN_DBG_STOP_LIMIT=1` 结束**仅此实验 child**，不是 m3 fault；此前无 stop 的相同前缀探针已在读页后正常 rc0。native 数据含 `external_pager=1,shadow=1,resident=1`，`csflags=0x3680380d` 为对照基线而非 macOS task 状态。v5 runner/stop helper 分别按 `misc/run_nocskill.entitlements.plist` 签名，CDHash `83ed83c4639f970c76a8bd63261a0af5b383bc91`、`6b5397a8096ef88c8a6dfe74aca2b330a877fc0e`，TC 两项经大小写规范化验证。下一步须在独立获准的 macOS dyld child 里收集同一 m3 的 extended info 和 csops 再比较；下节已完成对照。
+
+### 第六次单独授权：同一 dyld 诊断版的 m3 fault 对照揭示不同的 VM object chain
+
+用户单独批准**仅复用**第五次高区诊断 dyld（签名 CDHash `5a1d78f23b16c1b3e3dceacf5b043c6228ab9022`，运行 SHA `3f2048c9303464f673c8df2a661748a642175415c95ace31b3ff7f91a6937062`），把 runner 改为已 TC 核验的 v5。备份 `/var/mobile/dyld_cli_m3cmp_pre.bin` 与实验前 dyld 双 SHA 均为原值，remote EXIT trap/独立复核恢复相同 SHA。一个限时原版 `/bin/echo HI` child，原始 stderr `/var/mobile/dyld_cli_m3cmp_trace.raw`（870B）：
+```
+[*] spawned pid=6553 (suspended)
+[*] jbctl rc=0
+[*] task_for_pid kr=0 port=7683
+[*] child STOPPED sig=0
+[exc] type=1 code0=0xa code1=0x1ee188000 thr=3843 tsk=3587
+[exc] csops pid=6553 rc=0 flags=0x26803b0d errno=0
+[vmext] 0x1ee188000..0x1ee1ac000 tag=0 resident=0 external=1 shadow=3 mode=1 ref=6
+[exc] pc=0x104f1b9f8 lr=0xb546000104f1b9ec
+[vm] 0x1ee188000..0x1ee1ac000 prot=3/3 off=0x0 shared=0
+[*] child SIGNALED 10
+EXPERIMENT_LAUNCHER_RC=0
+RESTORED_SHA256=9956915299c6e3e21c7e650242166bab05dc635da4acac2cbade4e646eec51a1
+```
+
+**和同地址/同文件/同 offset/同长度的原生成功 task 对照**：native `flags=0x3680380d, m3 resident=1 external=1 shadow=1 ref=5, basic offset=0x6c188000`；macOS exec 后 `flags=0x26803b0d, m3 resident=0 external=1 shadow=3 ref=6, basic offset=0`。XNU `osfmk/kern/cs_blobs.h:44-45,71` 确认差额恰好是 native 有 `CS_DEBUGGED=0x10000000`，macOS task 则有 `CS_HARD|CS_KILL=0x300`；`jbctl proc_set_debugged` 作用于 suspended **exec 前**的 `chroot`，跨 macOS exec 没保留在最终 task 的 csflags（runtime-confirmed，不能再把 launcher 的 `jbctl rc=0` 当 target DEBUGGED）。但**这不等于签名必定根因**：开源 `vm_fault.c:2775,2778-2794` 中显式 `cs_invalid_page` 拒绝设 `KERN_CODESIGN_ERROR=50`，而此处实际 `KERN_MEMORY_ERROR=10`。`vm_region_basic_info_64.offset` 来自 VM entry/object offset；shadow 从 1→3 和 offset 从 `0x6c188000`→0 表示映射链不同，但不直接证明 file offset 被改为 0、vnode 不同或零页替代。继续沿 `vm_fault` 的 `VMP_ERROR`/shadow-severed/pager 回报分支定位 10，先查可用的只读 kernel/triage 数据和实际 vnode/UBC 关系，不能仅凭 csflags 去 NOP 签名策略。macOS cached libSystem CLI 尚未成功。
