@@ -136,3 +136,28 @@ ls -la /tmp/miniroot_1561/System/Library/Caches/com.apple.dyld/
 （总跨度应 ≤4GB；可能耗时数分钟）。拿到产物后即可进入 §4 的部署与验证（推设备 → 重算 cdhash 入 TC →
 `cachereg` → 重启 → 跑 `misc/post_reboot_cli_test.sh` 的同一套见证）。
 
+
+### 6.4 builder 第一次 sudo 运行：**静默无产物**（已定位两个原因，待复跑）
+
+`sudo update_dyld_shared_cache -root /tmp/miniroot_1561 -arch arm64e` → 无输出、无产物
+（`<root>/System/Library/Caches/com.apple.dyld/` 不存在；miniroot 内所有文件时间戳都还停留在装配时刻）。
+已排除/修正两点：
+
+1. **miniroot 缺 `/usr/lib/dyld`**（缓存构建必须把 dyld 本体放进 root）。更关键的是
+   **dyld4 要求"缓存里的 dyld"与进程用的磁盘 dyld 一致**（否则整份缓存会被忽略），
+   而宿主 `/usr/lib/dyld`（fat，2289328B，SHA `e371c8cb…`）**≠** 设备 rootfs 那份
+   （thin，1239616B，SHA `9956915299c6e3e21c7e650242166bab05dc635da4acac2cbade4e646eec51a1`，
+   被 fork 改签过）⇒ 已把**设备的 dyld 原样拷入** `/tmp/miniroot_1561/usr/lib/dyld` ✓。
+2. 关于该工具的**要求**：CLI 包装器闭源（`cache-builder/update_dyld_shared_cache.cpp` 在开源树里是空壳），
+   但构建引擎 `cache_builder/NewSharedCacheBuilder.cpp` 是开源的 —— 若复跑仍静默，下一步就从这里读它的
+   root 前提（以及用 `log show --predicate 'process == "update_dyld_shared_cache"'` 抓它的 os_log 输出，
+   **它的日志走 syslog 而不走 stdout**，这正是"看不到输出"的原因）。
+
+**复跑命令**（宿主，⚠️ `-root` 只能指向 /tmp 沙箱）：
+
+```
+sudo /usr/bin/update_dyld_shared_cache -root /tmp/miniroot_1561 -arch arm64e 2>&1 | tail -20
+ls -la /tmp/miniroot_1561/System/Library/Caches/com.apple.dyld/
+# 若仍静默，抓它的 syslog：
+log show --last 2m --style compact --predicate 'process == "update_dyld_shared_cache"' | tail -20
+```
