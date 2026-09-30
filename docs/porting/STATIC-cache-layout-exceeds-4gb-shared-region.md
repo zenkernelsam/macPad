@@ -2,6 +2,9 @@
 
 > 作者：静态侧 Agent。日期：2026-09-30（goaf 第 1 轮）。
 > 结论等级：`RE-confirmed`（反汇编/源码/实测字节）／`runtime-confirmed`（设备日志、crash report）／`THEORY`。
+> "已否证" = 至少一次可复现实验否定了该假设，**不要重试**。
+> **阅读顺序**：本文按主题追加，物理顺序为 0→6、9（9.1-9.3）、11、10、9.4、8、7；
+> 首读建议 0 → 1 → 2 → 3 → 9/10 → **11（当前状态 + 重启流程）**。
 
 ---
 
@@ -12,11 +15,16 @@
    **≈745MB（`0x2c75c000`）落在共享区之外**（RE-confirmed，见 §1 映射表）。
 2. 这与 m3 写错误、以及当前 `EXC_GUARD(DEALLOC_GAP)` **是同一根因的两个症状**；
    异常地址 `0x2ac75c000` 恰是 **`.01` 最后一个映射（m6）的末端**（`0x288dcc000+0x23990000`）。
-3. 出错代码是 **dyld 自己**：pc 恒为 `dyld_base+0xae8`，该 16 字节序列
-   （`e4 03 08 aa 05 00 80 d2 b0 18 80 d2 01 10 00 d4` = `mov x4,x8; mov x5,#0; mov x16,#0xc5; svc #0x80`，
-   `x16=0xc5=197=mmap`）**在根文件系统中仅出现于 `/usr/lib/dyld`**（文件偏移 `0xa0c/0xa88/0xad8`）。
-4. **负结果**：把 `.01` 文件藏起来**不改变故障** ⇒ 布局由**缓存头元数据**决定，不是"文件在不在"；
-   要"只用主缓存"必须**重建缓存**（或改布局），不是挪文件。
+3. **地址源头未定论**：`0x2ac75c000` 有两条同址来源（主缓存 `sharedRegionStart+dynamicDataOffset`；
+   `.01` 映射表 m6 末端），但**六次缓存侧改动全部无效**（§9、§10）⇒ 领先假设 = 该地址来自
+   **内核里已建立、跨进程持久的 shared region 状态**（创建时按缓存声明的 4.7GB 记录）
+   ⇒ **任何缓存侧改动都必须先重建 region = 重启**。补丁已就位、只等重启（§11）。
+4. **一条旧结论已下调**：先前"出错代码是 dyld 自己的 mmap 桩（`pc=dyld_base+0xae8`）"**不可靠**：
+   `0xae8` 落在 dyld 的 **load-commands 区**内（`__text` 自 `0x1000` 起、`sizeofcmds=0x950`），
+   且 `far` 在各次运行中从用户文本地址变到内核地址（`0xfffffe8b…`）⇒ 该寄存器快照是**合成的/过期的**。
+   （"该 16 字节序列在 rootfs 中仅出现于 `/usr/lib/dyld`"仍是**文件事实**，但不再据此推断执行流。）
+5. 异常码本身**无法区分**两个产生点（`vm_map.c:8693-8702` 用户态跨洞删除 vs
+   `vm_reclaim.c:592-604` 内核 reclaim），故 §9/§10 以"谁能改变地址"为判据。
 
 ---
 
@@ -174,7 +182,7 @@ sharedRegionStart + dynamicDataOffset = 0x2ac75c000   ← 与故障地址逐位�
   并核对它取地址的来源字段；或**直接改 `.01` 的头**（把其 m2..m6 重排进 ≤4GB —— 等于缓存手术）。
 - 若这一跳仍不下，则 B2（重建 ≤4GB 缓存）或 C（13.x）就是必选项。
 
-### 11. 已施加的补丁 + 重启验证流程（2026-09-30，等待重启）
+## 11. 已施加的补丁 + 重启验证流程（2026-09-30；**补丁已就位、等待重启**）
 
 **当前设备状态（已复核）**：dyld = 原版（SHA `9956…51a1`、inode `245791518`）；
 5 个缓存文件**已打补丁且全部走新 inode**（原件以隐藏名保留在同目录，可一键还原）：
@@ -244,6 +252,8 @@ sharedRegionStart + dynamicDataOffset = 0x2ac75c000   ← 与故障地址逐位�
 - `$R/dev` 已建并挂 devfs（`/dev/ptmx` ✓）。
 
 
+## 8. 方向 A（"干净 region + private"）**已否证**（含 `srteardown` 探针结果）
+
 **做什么**：把上一会话自建的探针 `misc/srteardown.c`（其注释已逐条描述本故障：
 `mmap FIXED @0x2ac75c000 → gap zone: DEALLOC_GAP guard → SIGKILL`）在设备上补签+入 TC，
 经 `run_dbg_hold_v2` 送进 chroot 执行。
@@ -264,6 +274,8 @@ sharedRegionStart + dynamicDataOffset = 0x2ac75c000   ← 与故障地址逐位�
    或 **(C) 扩大内核共享区**（改 `SHARED_REGION_SIZE`，内核文本补丁，本机已 panic 过一次，**不做**）。
    "private/avoid 环境变量 + 清 region"这条便宜路线**到此为止，不要再试**。
 
+
+## 7. `DYLD_SHARED_REGION` 两格实测（F1 在位，均已回滚并复核）
 
 **发现（RE-confirmed，dyld 源码）**：`DyldProcessConfig.cpp:1321` 读
 `cacheMode = environ("DYLD_SHARED_REGION")`，`:1350`
