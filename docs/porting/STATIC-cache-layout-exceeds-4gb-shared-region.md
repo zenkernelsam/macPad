@@ -136,7 +136,28 @@ vmRegionInfo:
 
 ---
 
-## 7. `DYLD_SHARED_REGION` 两格实测（2026-09-30，F1 在位，均已回滚并复核 SHA/inode）
+## 8. 方向 A（"干净 region + private"）**已否证**（2026-09-30，同一轮内完成）
+
+**做什么**：把上一会话自建的探针 `misc/srteardown.c`（其注释已逐条描述本故障：
+`mmap FIXED @0x2ac75c000 → gap zone: DEALLOC_GAP guard → SIGKILL`）在设备上补签+入 TC，
+经 `run_dbg_hold_v2` 送进 chroot 执行。
+
+**结果**：`/var/mnt/rootfs/tmp/srteardown` 的输出**一个字节都没有**（OUT 仅 runner 的
+`Successfully marked proc of pid ... as debugged`），异常与 echo/bash 完全相同
+（`type=12 code0=0xa000000100000000 code1=0x2ac75c000`、`pc=dyld_base+0xae8`、`x2=5`、`x3=0x40012`、`x16=0xc5`）
+⇒ **它连 `main` 都没到，死在 dyld 的缓存映射里**。
+
+**推论（RE + runtime）**：
+1. 任何 chroot 内 macOS 二进制都会在 dyld 映射 `.01` 尾部时死掉 ⇒ 该故障**发生在 main 之前**，
+   所以"改用户态代码/环境变量"无法绕过（A 路线不成立）。
+2. 该地址区间**不是**"共享区在不在"的问题：`srteardown.c` 的设计本身已表明，`check_np(NULL)`
+   清掉永久 region 后 `0x180000000` 可以 FIXED 映射，但 `0x2ac75c000` **仍然**触发
+   `DEALLOC_GAP` ⇒ `[0x280000000, 0xfc0000000)` 是**内核守卫区**（共享区末端与 commpage 之间），
+   macOS 任务的普通映射被禁止。
+3. ⇒ 只有两条真出路：**(B) 让缓存布局（含 `.01`）整体落在 `≤0x280000000`**（缩容/重建/重排），
+   或 **(C) 扩大内核共享区**（改 `SHARED_REGION_SIZE`，内核文本补丁，本机已 panic 过一次，**不做**）。
+   "private/avoid 环境变量 + 清 region"这条便宜路线**到此为止，不要再试**。
+
 
 **发现（RE-confirmed，dyld 源码）**：`DyldProcessConfig.cpp:1321` 读
 `cacheMode = environ("DYLD_SHARED_REGION")`，`:1350`
