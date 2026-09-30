@@ -9,6 +9,8 @@ ROOT = Path(__file__).resolve().parents[1]
 STEAM_SOURCE = ROOT / "libmachook/Compatibility/MacWSSteamProcess.m"
 PREFLIGHT = ROOT / "layout/usr/macOS/bin/prepare_steam_runtime.sh"
 APP_INPUT = ROOT / "libmachook/AppInputBridge.m"
+KEY_PROBE = ROOT / "misc/host_key_probe.py"
+CLEANUP = ROOT / "misc/cleanup_all.sh"
 
 
 class SevenDaysToDieSteamRuntimeTests(unittest.TestCase):
@@ -17,6 +19,8 @@ class SevenDaysToDieSteamRuntimeTests(unittest.TestCase):
         cls.source = STEAM_SOURCE.read_text()
         cls.preflight = PREFLIGHT.read_text()
         cls.app_input = APP_INPUT.read_text()
+        cls.key_probe = KEY_PROBE.read_text()
+        cls.cleanup = CLEANUP.read_text()
 
     def test_only_exact_depot_entry_points_redirect_to_arm_runtime(self):
         body = self.source.split(
@@ -59,6 +63,30 @@ class SevenDaysToDieSteamRuntimeTests(unittest.TestCase):
         self.assertNotIn("MACWS_AGX_CRASH_DIAG", environment)
         self.assertNotIn("MACWS_JIT_MPROTECT_TRACE", environment)
 
+    def test_second_steam_generation_reuses_checked_in_arm_runtime(self):
+        helper = self.source.split(
+            "static id MacWSExistingSevenDaysRuntimeApplication", 1
+        )[1].split("static NSString *MacWSInsertLibraryForSteamExecutable", 1)[0]
+        self.assertIn(
+            "MacWSIsSevenDaysToDieARMRuntimeExecutable(executablePath)",
+            helper,
+        )
+        self.assertIn("runningApplicationsWithBundleIdentifier:", helper)
+        self.assertIn("isTerminated", helper)
+        self.assertIn("executableURL", helper)
+        self.assertIn("kill(processIdentifier, 0)", helper)
+
+        launch = self.source.split(
+            "static id MacWSSteamLaunchApplicationAtURL", 1
+        )[1].split("static id MacWSSteamOpenURL", 1)[0]
+        reuse = launch.index("MacWSExistingSevenDaysRuntimeApplication(")
+        runtime_launch = launch.index(
+            "gMacWSOriginalNSWorkspaceLaunchApplication(\n"
+            "                workspace, selector, runtimeApplicationURL"
+        )
+        self.assertLess(reuse, runtime_launch)
+        self.assertIn("existing 7DTD runtime reused", launch)
+
     def test_preflight_requires_real_arm64_runtime_and_resolved_resources(self):
         body = self.preflight.split("prepare_7dtd_arm_runtime()", 1)[1].split(
             "retire_breakpad_backlog()", 1
@@ -85,6 +113,15 @@ class SevenDaysToDieSteamRuntimeTests(unittest.TestCase):
         self.assertLess(graphics, user_cache)
         self.assertLess(user_cache, trust)
         self.assertLess(trust, launch)
+
+    def test_recovery_kills_the_exact_prepared_arm_player(self):
+        self.assertIn(
+            "seven_days_exec='/Users/root/Library/Application Support/Steam/"
+            "steamapps/macws-runtime/7 Days To Die/7DaysToDie-ARM.app/"
+            "Contents/MacOS/7 Days To Die'",
+            self.cleanup,
+        )
+        self.assertIn('"$seven_days_exec"|"$seven_days_exec "*', self.cleanup)
 
     def test_preflight_repairs_only_exact_7dtd_data_roots(self):
         body = self.preflight.split("prepare_7dtd_user_data()", 1)[1].split(
@@ -141,6 +178,58 @@ class SevenDaysToDieSteamRuntimeTests(unittest.TestCase):
             "BOOL queueForGameTick = MacWSMainBundleUsesQueuedGameInput", 1
         )[1].split("CGFloat normalizedX", 1)[0]
         self.assertIn("queueForGameTick, NO", key_route)
+
+    def test_native_player_publishes_fullscreen_drawable_capability(self):
+        predicate = self.app_input.split(
+            "static BOOL MacWSMainBundleUsesFullscreenCanvasPresentation", 1
+        )[1].split("static NSSet *MacWSVisibleWindowNumberSnapshot", 1)[0]
+        self.assertIn("com.annapurnainteractive.Stray", predicate)
+        self.assertIn("com.The-Fun-Pimps.7-Days-To-Die", predicate)
+
+    def test_modifier_poll_uses_current_event_only_at_exact_unity_callsite(self):
+        compatibility = self.app_input.split(
+            "static uint64_t MacWSSevenDaysCGEventSourceFlagsState", 1
+        )[1].split("static void MacWSInstallUnityDidSendEventDiagnostic", 1)[0]
+        self.assertIn("stateID == 1", compatibility)
+        self.assertIn("MacWSAppInputDispatchModifierDepth != 0", compatibility)
+        self.assertIn("0xf1de34u", compatibility)
+        self.assertIn("return MacWSAppInputDispatchModifierFlags", compatibility)
+        self.assertIn(
+            "MacWSOriginalCGEventSourceFlagsState(stateID)", compatibility
+        )
+        self.assertIn(
+            "D50F7C77-F422-3DE2-986B-1237215E50F7", compatibility
+        )
+        self.assertIn("expectedCallSite", compatibility)
+
+        dispatch = self.app_input.split(
+            "static void MacWSAppInputApplicationSendEvent", 1
+        )[1].split("static void MacWSInstallApplicationKeyWitness", 1)[0]
+        install = dispatch.index(
+            "MacWSInstallSevenDaysModifierStateCompatibility()"
+        )
+        send = dispatch.index("MacWSOriginalApplicationSendEvent(")
+        self.assertLess(install, send)
+        self.assertIn('sel_registerName("modifierFlags")', dispatch)
+        self.assertIn(
+            "MacWSAppInputDispatchModifierFlags = "
+            "previousDispatchModifierFlags",
+            dispatch,
+        )
+        self.assertIn(
+            "MacWSAppInputDispatchModifierDepth = "
+            "previousDispatchModifierDepth",
+            dispatch,
+        )
+
+    def test_key_probe_can_opt_in_to_correlated_latency_diagnostics(self):
+        self.assertIn("LATENCY_DIAGNOSTIC", self.key_probe)
+        self.assertIn('"--latency-diagnostic"', self.key_probe)
+        self.assertIn("if args.latency_diagnostic else 0", self.key_probe)
+        self.assertIn("APP-INPUT KEY-EVENT", self.app_input)
+        self.assertIn("APP-INPUT KEY-RETURN", self.app_input)
+        self.assertIn("APP-INPUT UNITY-DID-SEND", self.app_input)
+        self.assertIn("APP-INPUT 7DTD-WORLD-STATE", self.app_input)
 
     def test_vnc_window_target_keeps_desktop_coordinate_affine(self):
         mapping = self.app_input.split(

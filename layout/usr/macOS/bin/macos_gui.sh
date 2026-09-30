@@ -1567,6 +1567,7 @@ restore_cold_boot_trust() {
     set --
     for path in \
         /var/jb/usr/macOS/bin/launchdchrootexec \
+        /var/jb/usr/macOS/bin/launchservicesd \
         /var/jb/usr/macOS/bin/macwsaudiooutd \
         /var/jb/usr/macOS/lib/libmachook.dylib \
         /var/jb/usr/macOS/lib/libmachook_arm64.dylib \
@@ -1578,12 +1579,17 @@ restore_cold_boot_trust() {
         "$ROOTFS/System/Library/Frameworks/CydiaSubstrate.framework/CydiaSubstrate" \
         /var/jb/Library/Frameworks/CydiaSubstrate.framework/CydiaSubstrate \
         "$ROOTFS/bin/bash" \
+        "$ROOTFS$DEFAULTS_BIN" \
+        "$ROOTFS/usr/sbin/filecoordinationd" \
         "$ROOTFS/System/Library/CoreServices/launchservicesd" \
         "$ROOTFS/System/Library/CoreServices/launchservicesd.dylib" \
+        "$ROOTFS$LSREGISTER_BIN" \
         "$ROOTFS/System/Library/PrivateFrameworks/SkyLight.framework/Versions/A/Resources/CursorAsset" \
         "$ROOTFS/System/Library/PrivateFrameworks/SkyLight.framework/Versions/A/Resources/CursorAsset_base" \
         "$ROOTFS$P_SHAREDFILELISTD" \
         "$ROOTFS/System/Library/PrivateFrameworks/SkyLight.framework/Resources/WindowServer" \
+        "$ROOTFS$VNC_BIN" \
+        "$ROOTFS$TERM_BIN" \
         "$ROOTFS/System/Library/PrivateFrameworks/SystemStatusServer.framework/Support/systemstatusd" \
         "$ROOTFS/usr/local/libexec/macws-cfprefsd" \
         "$ROOTFS/usr/sbin/coreaudiod" \
@@ -1766,6 +1772,9 @@ ensure_cfprefsd_dirhelper_tree() {
     local temporary_leaf="$temporary_user/TemporaryItems"
     local temporary_mobile="$temporary_root/folders.501"
     local temporary_mobile_leaf="$temporary_mobile/TemporaryItems"
+    local root_home="$ROOTFS/private/var/root"
+    local root_library="$root_home/Library"
+    local root_preferences="$root_library/Preferences"
     local mobile_home="$ROOTFS/Users/mobile"
     local mobile_library="$mobile_home/Library"
     local mobile_preferences="$mobile_library/Preferences"
@@ -1775,9 +1784,11 @@ ensure_cfprefsd_dirhelper_tree() {
     local mobile_temp_dir="$mobile_user_root/T"
 
     mkdir -p "$temporary_leaf" "$temporary_mobile_leaf" \
+        "$root_preferences" \
         "$mobile_preferences" "$mobile_user_dir" "$mobile_cache_dir" \
         "$mobile_temp_dir" || return 1
     chown root:wheel "$temporary_root" "$temporary_user" "$temporary_leaf" \
+        "$root_home" "$root_library" "$root_preferences" \
         2>/dev/null || true
     chown 501:501 "$temporary_mobile" "$temporary_mobile_leaf" \
         "$mobile_home" "$mobile_library" "$mobile_preferences" \
@@ -1786,6 +1797,7 @@ ensure_cfprefsd_dirhelper_tree() {
         2>/dev/null || return 1
     chmod 1311 "$temporary_root" || return 1
     chmod 0700 "$temporary_user" "$temporary_leaf" || return 1
+    chmod 0700 "$root_home" "$root_library" "$root_preferences" || return 1
     chmod 0700 "$temporary_mobile" "$temporary_mobile_leaf" \
         "$mobile_preferences" || return 1
     chmod 0755 "$mobile_home" "$mobile_library" || return 1
@@ -2073,6 +2085,17 @@ PY
     <key>RunAtLoad</key><true/>
     <key>KeepAlive</key><false/>
     <key>ThrottleInterval</key><integer>5</integer>
+    <!-- RE-confirmed in Ventura 13.4 CoreServicesInternal and
+         runtime-confirmed on iPad13,6: uid 0's /var/root home candidate is
+         rejected against Finder's canonical /private/var/root bookmark,
+         leaving the stale bit set even after the canonical fallback resolves.
+         CoreFoundation's supported fixed-home input makes the first candidate
+         canonical and stops sharedfilelistd's resolve/update notification
+         loop without bypassing bookmark validation. -->
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>CFFIXED_USER_HOME</key><string>/private/var/root</string>
+    </dict>
     <key>StandardOutPath</key><string>${LOGDIR}/sharedfilelistd.out</string>
     <key>StandardErrorPath</key><string>${LOGDIR}/sharedfilelistd.err</string>
 </dict>
@@ -4910,6 +4933,21 @@ start_macos() {
     for workspace_log in finder-desktop dock systemuiserver controlcenter; do
         rm -f "$LOGDIR/$workspace_log.log"
     done
+    # AirPlayReceiver's supported p2pSolo preference is the authoritative
+    # capability source when this chroot has no usable AWDL interface. Set it
+    # before ControlCenter constructs APAdvertiserBTLEManager; otherwise the
+    # failed IO80211 capability query leaves its initialization incomplete and
+    # a retry timer consumes CPU for the lifetime of the desktop session.
+    rm -f "$LOGDIR/airplay-power.log"
+    if ! /var/jb/usr/bin/timeout -k 2 10 \
+            "$CHROOTEXEC" 0 0 "$ROOTFS" "$WORKSPACECTL_BIN" \
+            configure-airplay-power \
+            > "$LOGDIR/airplay-power.log" 2>&1; then
+        log "ERROR: AirPlay power capability configuration failed."
+        tail -n 20 "$LOGDIR/airplay-power.log" 2>/dev/null || true
+        return 1
+    fi
+    log "AirPlay AWDL-Solo capability configured through Apple's settings API."
     if ! proc_running "$P_FINDER"; then
         launchctl load "$FINDER_DESKTOP_PLIST" || return 1
     else

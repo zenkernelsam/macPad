@@ -59,6 +59,7 @@ COREAUDIOD_AUDIO_ENT="/var/jb/usr/macOS/bin/coreaudiod-ios-audio.entitlements.pl
 LOAD_DYLIB_PATCHER="/var/jb/usr/macOS/bin/add_macho_load_dylib.py"
 CODE_REQUIREMENT_WRITER="/var/jb/usr/macOS/bin/write_code_requirement.py"
 WEATHER_PREPARER="/var/jb/usr/macOS/bin/prepare_weather_app.py"
+WINDOWSERVER_PREPARER="/var/jb/usr/macOS/bin/prepare_ventura_windowserver.py"
 ASPHALT_CA_INTERMEDIATE="/var/jb/usr/macOS/share/certificates/SectigoPublicServerAuthenticationCAOVR36.pem"
 ASPHALT_OPENSSL_CONFIG="/var/jb/usr/macOS/share/openssl/openssl.cnf"
 MACOS_CA_BUNDLE="/var/mnt/rootfs/etc/ssl/cert.pem"
@@ -490,6 +491,52 @@ add_all_trustcache() {
     add_trustcache "$path"
     add_arm64e_trustcache "$path"
     add_x86_64_trustcache "$path"
+}
+
+ensure_filecoordinationd_signature() {
+    local target="$ROOTFS/usr/sbin/filecoordinationd"
+    local backup="${target}.macws-original"
+    local temporary="${target}.macws-new.$$"
+    local current_entitlements=""
+    [ -f "$target" ] || return 0
+    current_entitlements=$(ldid -e "$target" 2>/dev/null || true)
+    if ! printf '%s\n' "$current_entitlements" |
+            grep -Fq '<key>com.apple.private.graphics-restart-no-kill</key>'; then
+        [ -e "$backup" ] || cp -p "$target" "$backup" || return 1
+        rm -f "$temporary"
+        cp -p "$target" "$temporary" || return 1
+        ldid -S"$ENT" -M "$temporary" || {
+            rm -f "$temporary"; return 1;
+        }
+        chown root:wheel "$temporary" 2>/dev/null || true
+        chmod 0755 "$temporary" || return 1
+        mv -f "$temporary" "$target" || return 1
+        echo '[INFO] prepared filecoordinationd for chroot launch'
+    fi
+    add_all_trustcache "$target"
+}
+
+prepare_windowserver_runtime() {
+    local target="$ROOTFS/System/Library/PrivateFrameworks/SkyLight.framework/Resources/WindowServer"
+    local backup="${target}.macws-original"
+    local state=0
+    [ -f "$target" ] || return 0
+    [ -f "$WINDOWSERVER_PREPARER" ] || {
+        echo '[ERROR] verified WindowServer preparation helper is missing' >&2
+        return 1
+    }
+    if /var/jb/usr/bin/python3 "$WINDOWSERVER_PREPARER" --check "$target"; then
+        state=0
+    else
+        state=$?
+    fi
+    if [ "$state" -eq 1 ]; then
+        [ -e "$backup" ] || cp -p "$target" "$backup" || return 1
+        /var/jb/usr/bin/python3 "$WINDOWSERVER_PREPARER" "$target" || return 1
+    elif [ "$state" -ne 0 ]; then
+        return "$state"
+    fi
+    sign_and_trustcache "$target"
 }
 
 # iPadOS rejects the stock Ventura CT policy on these early audio images before
@@ -1033,7 +1080,34 @@ case "$MACWS_ROOTFS_BUILD" in
         ;;
 esac
 add_all_trustcache "/var/mnt/rootfs/bin/bash"
-add_all_trustcache "/var/mnt/rootfs/System/Library/CoreServices/launchservicesd"
+ensure_filecoordinationd_signature || exit 1
+prepare_windowserver_runtime || exit 1
+LAUNCHSERVICES_LOADER=/var/jb/usr/macOS/bin/launchservicesd
+LAUNCHSERVICES_TARGET=/var/mnt/rootfs/System/Library/CoreServices/launchservicesd
+LAUNCHSERVICES_PAYLOAD=/var/mnt/rootfs/System/Library/CoreServices/launchservicesd.dylib
+LAUNCHSERVICES_PAYLOAD_SOURCE=/var/jb/usr/macOS/Frameworks/launchservicesd.dylib
+if [ ! -e "$LAUNCHSERVICES_PAYLOAD" ]; then
+	cp -pv "$LAUNCHSERVICES_PAYLOAD_SOURCE" \
+		"${LAUNCHSERVICES_PAYLOAD}.macws-new.$$" || exit 1
+	mv -fv "${LAUNCHSERVICES_PAYLOAD}.macws-new.$$" \
+		"$LAUNCHSERVICES_PAYLOAD" || exit 1
+fi
+if ! cmp -s "$LAUNCHSERVICES_LOADER" "$LAUNCHSERVICES_TARGET"; then
+	# Fresh rootfs images contain Ventura's stock MH_EXECUTE. Preserve it
+	# once, then atomically install the project's thin loader next to the
+	# extracted payload dylib. A new inode also avoids stale AMFI vnode state.
+	if [ ! -e "${LAUNCHSERVICES_TARGET}.macws-original" ]; then
+		cp -pv "$LAUNCHSERVICES_TARGET" \
+			"${LAUNCHSERVICES_TARGET}.macws-original" || exit 1
+	fi
+	cp -pv "$LAUNCHSERVICES_LOADER" \
+		"${LAUNCHSERVICES_TARGET}.macws-new.$$" || exit 1
+	chown root:wheel "${LAUNCHSERVICES_TARGET}.macws-new.$$" || exit 1
+	chmod 0755 "${LAUNCHSERVICES_TARGET}.macws-new.$$" || exit 1
+	mv -fv "${LAUNCHSERVICES_TARGET}.macws-new.$$" \
+		"$LAUNCHSERVICES_TARGET" || exit 1
+fi
+add_all_trustcache "$LAUNCHSERVICES_TARGET"
 SYSTEMSTATUSD="/var/mnt/rootfs/System/Library/PrivateFrameworks/SystemStatusServer.framework/Support/systemstatusd"
 if [ -f "$SYSTEMSTATUSD" ] &&
    ! ldid -e "$SYSTEMSTATUSD" 2>/dev/null | grep -q '<key>com.apple.systemstatus.domains</key>'; then
@@ -1044,10 +1118,7 @@ if [ -f "$SYSTEMSTATUSD" ] &&
     ldid -S"$ENT" -M "$SYSTEMSTATUSD" || exit 1
 fi
 add_all_trustcache "$SYSTEMSTATUSD"
-if [ ! -e "/var/mnt/rootfs/System/Library/CoreServices/launchservicesd.dylib" ]; then
-	cp -vf /var/jb/usr/macOS/Frameworks/launchservicesd.dylib "/var/mnt/rootfs/System/Library/CoreServices/launchservicesd.dylib"
-fi
-add_all_trustcache "/var/mnt/rootfs/System/Library/CoreServices/launchservicesd.dylib"
+add_all_trustcache "$LAUNCHSERVICES_PAYLOAD"
 add_all_trustcache "/var/mnt/rootfs/System/Library/PrivateFrameworks/SkyLight.framework/Resources/WindowServer"
 add_all_trustcache /var/jb/usr/macOS/bin/HostInjectBootstrap
 add_all_trustcache /var/mnt/rootfs/System/Library/Frameworks/Metal.framework/XPCServices/MTLCompilerService.xpc/Contents/MacOS/MTLCompilerService
@@ -1435,10 +1506,13 @@ for application_bundle in /var/mnt/rootfs/Applications/*.app; do
         "$(basename "$application_bundle" .app)"
 done
 # Microsoft Office's applications talk to this helper before an injected app
-# can ask autosignd to repair it.  Its project+native merged signature persists
-# in the rootfs, while Dopamine's dynamic trustcache does not survive a reboot.
-# Re-register the installed image without changing its identifier/entitlements.
-add_all_trustcache \
+# can ask autosignd to repair it.  A freshly expanded Microsoft 16.91 package
+# carries only its vendor application identifier here; runtime inspection on
+# iPad14,4 / iPadOS 16.2 (2026-09-29) showed that the known-working helper also
+# needs the project's native+MacWS merged launch policy.  Establish that
+# persistent invariant once, preserving the vendor identity with ldid -M, then
+# restore every architecture's dynamic trust entry on later boots.
+ensure_project_signature_and_trustcache \
     /var/mnt/rootfs/Library/PrivilegedHelperTools/com.microsoft.office.licensingV2.helper
 # vnc server
 add_all_trustcache /var/mnt/rootfs/System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart

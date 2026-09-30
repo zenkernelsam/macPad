@@ -34,6 +34,8 @@
 #import <pwd.h>
 #include <execinfo.h>
 #import "macws_host_protocol.h"
+#import "macws_process_ancestry.h"
+#import "macws_power_lifecycle.h"
 #include "macws_keyboard_state.h"
 #include "macws_atomic_pointer_click.h"
 #import "macws_pointer_activation.h"
@@ -4730,6 +4732,143 @@ static void macws_install_filecache_diagnostic(
             target, macws_filecache_finalize_original);
 }
 
+// Diagnostic only.  A runtime sample of Finder on the iPad13,6 target showed
+// its TNode::SynchronizeChildren worker repeatedly waiting on
+// sharedfilelistd's synchronous bookmark resolution.  RE of the exact
+// Ventura 13.4 sharedfilelistd binary at __TEXT+0x1a3ec..+0x1a560 shows that
+// -[ListManager resolveItemWithIdentifier:onList:options:reply:] calls
+// +[NSURL URLByResolvingBookmarkData:options:relativeToURL:
+// bookmarkDataIsStale:error:], and only when the returned stale byte is set
+// does it call -bookmarkDataWithOptions:... followed by -[Item setBookmark:]
+// and -[ListController updateItem:originatorToken:].  Observe those public
+// Foundation boundaries so the offending stored URL can be repaired at its
+// source.  This hook preserves both calls, their out parameters, and their
+// return values; it is never installed without MACWS_SFL_DIAG=1.
+typedef id (*MacWSResolveBookmarkURLFn)(
+    id, SEL, id, NSUInteger, id, BOOL *, id *);
+typedef id (*MacWSCreateBookmarkDataFn)(
+    id, SEL, NSUInteger, id, id, id *);
+static MacWSResolveBookmarkURLFn macws_resolve_bookmark_url_original = NULL;
+static MacWSCreateBookmarkDataFn macws_create_bookmark_data_original = NULL;
+static _Atomic unsigned macws_sfl_diagnostic_lines = 0;
+
+static const char *macws_sfl_url_path(id value, char path[PATH_MAX]) {
+    path[0] = '\0';
+    if (!value || ![value isKindOfClass:NSURL.class]) return "(nil)";
+    NSURL *url = (NSURL *)value;
+    if (url.isFileURL && [url getFileSystemRepresentation:path
+                                                     maxLength:PATH_MAX])
+        return path;
+    const char *absolute = url.absoluteString.UTF8String;
+    if (!absolute) return "(unprintable)";
+    strlcpy(path, absolute, PATH_MAX);
+    return path;
+}
+
+static const char *macws_sfl_data_digest(id value, char digest[17]) {
+    digest[0] = '\0';
+    if (![value isKindOfClass:NSData.class]) return "none";
+    NSData *data = (NSData *)value;
+    unsigned char bytes[CC_SHA256_DIGEST_LENGTH];
+    CC_SHA256(data.bytes, (CC_LONG)data.length, bytes);
+    for (size_t index = 0; index < 8; index++)
+        snprintf(digest + index * 2, 3, "%02x", bytes[index]);
+    return digest;
+}
+
+static id macws_sfl_resolve_bookmark_url_diagnostic(
+    id receiver, SEL selector, id data, NSUInteger options, id relativeURL,
+    BOOL *stale, id *error) {
+    id result = macws_resolve_bookmark_url_original
+        ? macws_resolve_bookmark_url_original(
+              receiver, selector, data, options, relativeURL, stale, error)
+        : nil;
+    unsigned line = atomic_fetch_add_explicit(
+        &macws_sfl_diagnostic_lines, 1, memory_order_relaxed);
+    if (line < 512) {
+        char resultPath[PATH_MAX];
+        char relativePath[PATH_MAX];
+        char digest[17];
+        dprintf(STDERR_FILENO,
+                "MACWS-SFL resolve caller=%p options=%#lx bytes=%lu sha=%s "
+                "stale=%d result=%s relative=%s error=%s\n",
+                __builtin_return_address(0), (unsigned long)options,
+                (unsigned long)[data length],
+                macws_sfl_data_digest(data, digest), stale ? !!*stale : -1,
+                macws_sfl_url_path(result, resultPath),
+                macws_sfl_url_path(relativeURL, relativePath),
+                error && *error
+                    ? [[*error description] UTF8String] ?: "(unprintable)"
+                    : "none");
+    }
+    return result;
+}
+
+static id macws_sfl_create_bookmark_data_diagnostic(
+    id url, SEL selector, NSUInteger options, id resourceKeys,
+    id relativeURL, id *error) {
+    id result = macws_create_bookmark_data_original
+        ? macws_create_bookmark_data_original(
+              url, selector, options, resourceKeys, relativeURL, error)
+        : nil;
+    unsigned line = atomic_fetch_add_explicit(
+        &macws_sfl_diagnostic_lines, 1, memory_order_relaxed);
+    if (line < 512) {
+        char urlPath[PATH_MAX];
+        char relativePath[PATH_MAX];
+        char digest[17];
+        dprintf(STDERR_FILENO,
+                "MACWS-SFL create caller=%p options=%#lx url=%s "
+                "relative=%s bytes=%lu sha=%s error=%s\n",
+                __builtin_return_address(0), (unsigned long)options,
+                macws_sfl_url_path(url, urlPath),
+                macws_sfl_url_path(relativeURL, relativePath),
+                (unsigned long)[result length],
+                macws_sfl_data_digest(result, digest),
+                error && *error
+                    ? [[*error description] UTF8String] ?: "(unprintable)"
+                    : "none");
+    }
+    return result;
+}
+
+static void macws_install_shared_file_list_diagnostic(void) {
+    const char *program = getprogname();
+    const char *enabled = getenv("MACWS_SFL_DIAG");
+    if (!program || strcmp(program, "sharedfilelistd") != 0 || !enabled ||
+        strcmp(enabled, "1") != 0)
+        return;
+
+    Class urlClass = objc_getClass("NSURL");
+    SEL resolveSelector = sel_registerName(
+        "URLByResolvingBookmarkData:options:relativeToURL:"
+        "bookmarkDataIsStale:error:");
+    Method resolveMethod = urlClass
+        ? class_getClassMethod(urlClass, resolveSelector) : NULL;
+    SEL createSelector = sel_registerName(
+        "bookmarkDataWithOptions:includingResourceValuesForKeys:"
+        "relativeToURL:error:");
+    Method createMethod = urlClass
+        ? class_getInstanceMethod(urlClass, createSelector) : NULL;
+    if (resolveMethod) {
+        IMP implementation = method_getImplementation(resolveMethod);
+        macws_resolve_bookmark_url_original =
+            (MacWSResolveBookmarkURLFn)implementation;
+        method_setImplementation(
+            resolveMethod, (IMP)macws_sfl_resolve_bookmark_url_diagnostic);
+    }
+    if (createMethod) {
+        IMP implementation = method_getImplementation(createMethod);
+        macws_create_bookmark_data_original =
+            (MacWSCreateBookmarkDataFn)implementation;
+        method_setImplementation(
+            createMethod, (IMP)macws_sfl_create_bookmark_data_diagnostic);
+    }
+    dprintf(STDERR_FILENO,
+            "MACWS-SFL diagnostic installed resolve=%p create=%p\n",
+            resolveMethod, createMethod);
+}
+
 // Diagnostic-only probe for Finder's DesktopServices volume registry.  The
 // actual Ventura 13.4 crash at DesktopServicesPriv+0xe8f50 dereferences
 // `this+0x200` with x0 == NULL.  RE of the caller at +0xe8374 shows that x0 is
@@ -5573,9 +5712,54 @@ static void macws_configure_mono_interpreter_if_requested(void) {
 
 extern void MacWSInstallAudioRenderBridge(void);
 
+static _Atomic bool g_macws_controlcenter_airplay_route_configured = false;
+
+static void macws_configure_controlcenter_airplay_settings_route(void) {
+    const char *program = getprogname();
+    char executable[PATH_MAX] = {0};
+    BOOL isControlCenter =
+        program && strcmp(program, "ControlCenter") == 0;
+    if (!isControlCenter &&
+        proc_pidpath(getpid(), executable, sizeof(executable)) > 0) {
+        const char *suffix =
+            "/ControlCenter.app/Contents/MacOS/ControlCenter";
+        size_t pathLength = strlen(executable);
+        size_t suffixLength = strlen(suffix);
+        isControlCenter = pathLength >= suffixLength &&
+            strcmp(executable + pathLength - suffixLength, suffix) == 0;
+    }
+    if (!isControlCenter || atomic_exchange_explicit(
+            &g_macws_controlcenter_airplay_route_configured, true,
+            memory_order_acq_rel)) {
+        return;
+    }
+
+    typedef int32_t (*APSSettingsSetUseXPCHelperFn)(bool);
+    APSSettingsSetUseXPCHelperFn setUseXPCHelper =
+        (APSSettingsSetUseXPCHelperFn)dlsym(
+            RTLD_DEFAULT, "APSSettingsSetUseXPCHelper");
+    int32_t status = setUseXPCHelper ? setUseXPCHelper(false) : -1;
+
+    // RE-confirmed via the Ventura AirPlaySupport image loaded in the
+    // running M1 ControlCenter: APSSettingsSetUseXPCHelper stores the route
+    // byte consumed by _ShouldUseXPCHelper's dispatch_once block. Configure
+    // that supported route only after dyld has mapped AirPlaySupport: an
+    // eager dlopen from a Logos constructor runtime-confirmed as SIGTRAP
+    // (launchd exit -5) before ControlCenter reached main.
+    fprintf(stderr,
+            "#### CONTROL-CENTER-POWER AirPlay preferences route=%s "
+            "status=%d\n",
+            setUseXPCHelper ? "cfpreferences" : "unavailable", status);
+    fflush(stderr);
+}
+
 void loadImageCallback(const struct mach_header* header, intptr_t vmaddr_slide) {
     Dl_info info = {};
     (void)dladdr(header, &info);
+    if (info.dli_fname &&
+        strstr(info.dli_fname, "/AirPlaySupport.framework/") != NULL) {
+        macws_configure_controlcenter_airplay_settings_route();
+    }
     if (info.dli_fname &&
         (strstr(info.dli_fname, "/AudioToolbox.framework/") != NULL ||
          strstr(info.dli_fname, "/AudioUnit.framework/") != NULL)) {
@@ -11220,6 +11404,7 @@ __attribute__((constructor)) void InitStuff() {
     }
     macws_schedule_preview_coreimage_renderer_adapter();
     macws_install_steam_volume_compatibility();
+    macws_install_shared_file_list_diagnostic();
     MacWSInstallOfficeMultiplyFilterCompatibility();
     // Settings extensions carry libmachook through a bundle-local load command.
     // Retry their ExtensionFoundation/LaunchServices boundary only after the
@@ -17108,6 +17293,67 @@ cleanup:
 // IOKit
 io_connect_t iogpuClients[10];
 int iogpuClientsCount = 0;
+enum {
+    MACWS_AGX_DEVICE_INFO_ABI_UNKNOWN = 0,
+    MACWS_AGX_DEVICE_INFO_ABI_NATIVE_78 = 1,
+    MACWS_AGX_DEVICE_INFO_ABI_LEGACY_70 = 2,
+};
+static _Atomic int g_macws_agx_device_info_abi =
+    MACWS_AGX_DEVICE_INFO_ABI_UNKNOWN;
+
+// Establish the kernel's read-only device-info contract at the same boundary
+// that publishes a newly opened AGX user-client.  Waiting for AGXMetal to make
+// its own selector-0x100 query is too late/unreliable: runtime-confirmed on the
+// iPad13,11 / 20E252 target, the first type-0 resource request reached this
+// shim while the cache was still UNKNOWN and was consequently translated with
+// the iOS 16.3 tail layout.  That exact request returned 0xe00002be and left
+// SkyLight without a composite destination.
+//
+// Both calls are read-only and use only the two RE/runtime-confirmed output
+// sizes: iOS 16.4.1 accepts Ventura's 0x78, while iOS 16.3 rejects 0x78 with
+// kIOReturnBadArgument and accepts 0x70.  Select from the kernel result rather
+// than a model or build-number guess.
+static void macws_probe_agx_device_info_abi(io_connect_t client) {
+    uint8_t output[0x78] = {0};
+    size_t output_size = sizeof(output);
+    IOReturn result = IOConnectCallStructMethod(
+        client, 0x100, NULL, 0, output, &output_size);
+    if (result == KERN_SUCCESS) {
+        atomic_store(&g_macws_agx_device_info_abi,
+                     MACWS_AGX_DEVICE_INFO_ABI_NATIVE_78);
+        dprintf(STDERR_FILENO,
+            "#### AGX device-info ABI probe conn=%u requested=0x78 "
+            "actual=%#zx result=%#x selected=native-0x78\n",
+            client, output_size, result);
+        return;
+    }
+
+    IOReturn first_result = result;
+    size_t first_actual_size = output_size;
+    if (result == kIOReturnBadArgument) {
+        memset(output, 0, sizeof(output));
+        output_size = 0x70;
+        result = IOConnectCallStructMethod(
+            client, 0x100, NULL, 0, output, &output_size);
+        if (result == KERN_SUCCESS) {
+            atomic_store(&g_macws_agx_device_info_abi,
+                         MACWS_AGX_DEVICE_INFO_ABI_LEGACY_70);
+            dprintf(STDERR_FILENO,
+                "#### AGX device-info ABI probe conn=%u requested=0x78 "
+                "actual=%#zx result=%#x fallback=0x70 actual=%#zx "
+                "result=%#x selected=legacy-0x70\n",
+                client, first_actual_size, first_result,
+                output_size, result);
+            return;
+        }
+    }
+
+    dprintf(STDERR_FILENO,
+        "#### AGX device-info ABI probe conn=%u requested=0x78 "
+        "actual=%#zx result=%#x fallback-result=%#x selected=unknown\n",
+        client, first_actual_size, first_result, result);
+}
+
 static BOOL IOConnectIsIOGPU(io_connect_t client) {
     for(int i = 0; i < iogpuClientsCount; ++i) {
         if(iogpuClients[i] == client) {
@@ -22550,8 +22796,8 @@ bool MacWSAGXNoCopyABIReady(const void *agx_initializer,
 IOReturn IOConnectCallMethod_new(io_connect_t client, uint32_t selector, const uint64_t *in, uint32_t inCnt, const void *inStruct, size_t inStructCnt, uint64_t *out, uint32_t *outCnt, void *outStruct, size_t *outStructCnt) {
     uint32_t orig = selector;
     int skip = caller_is_libmachook(__builtin_return_address(0));
+    size_t deviceInfoRequestedSize = outStructCnt ? *outStructCnt : 0;
     if (!skip) selector = IOConnectTranslateSelector(client, selector);
-    if(IOConnectIsIOGPU(client) && selector == 0x100 && outStructCnt && *outStructCnt == 0x78) *outStructCnt = 0x70;
     // sel=0x9 (ResCreate): WAS bumping outStructCnt 0x50 → 0x10000 here based
     // on a misread of `IOGPUDevice::new_resource <+76>`. Standalone iOS-native
     // test (misc/agx_iogpu_probe.c + misc/sel9_test_macos.c) proves the OPPOSITE:
@@ -22665,6 +22911,9 @@ IOReturn IOConnectCallMethod_new(io_connect_t client, uint32_t selector, const u
         agxClientID = (agxType == 0 || t80_has_parent)
             ? *(const uint32_t *)(src + 0x48) : 0;
         int patched = 0;
+        BOOL native_78_layout = atomic_load(
+            &g_macws_agx_device_info_abi) ==
+            MACWS_AGX_DEVICE_INFO_ABI_NATIVE_78;
         memcpy(shadowbuf, inStruct, inStructCnt);
         if(bc == 0 && agxType == 0) {
             // Heap byte-count fixup (only valid for type=0 heap creation;
@@ -22693,8 +22942,10 @@ IOReturn IOConnectCallMethod_new(io_connect_t client, uint32_t selector, const u
                 (sz32 ? sz32 : 0x1000);
             uint64_t nb = g_macws_agx_initfull_len ?
                 g_macws_agx_initfull_len : fallback_span;
-            *(uint64_t *)(shadowbuf + 0x40) = nb;
-            if (!(f15 & 0x08)) {
+            if (!native_78_layout) {
+                *(uint64_t *)(shadowbuf + 0x40) = nb;
+            }
+            if (!native_78_layout && !(f15 & 0x08)) {
                 // Full 0x68-byte LLDB captures of the matching iOS 16.3
                 // requests establish a tail-field ABI shift:
                 //
@@ -22714,7 +22965,23 @@ IOReturn IOConnectCallMethod_new(io_connect_t client, uint32_t selector, const u
                 *(uint64_t *)(shadowbuf + 0x58) = 0;
             }
             agxHeapSz = nb;
-            patched = 1;
+            if (!native_78_layout) {
+                patched = 1;
+            } else if (macws_runtime_diagnostics_enabled()) {
+                static _Atomic unsigned native_type0_logs = 0;
+                unsigned native_type0_log = atomic_fetch_add(
+                    &native_type0_logs, 1) + 1;
+                if (native_type0_log <= 8) {
+                    fprintf(stderr,
+                        "#### AGXIOC type0 native-0x78 layout preserved: "
+                        "+0x40=%#llx +0x48=%#llx +0x50=%#llx "
+                        "+0x58=%#llx\n",
+                        (unsigned long long)*(const uint64_t *)(src + 0x40),
+                        (unsigned long long)*(const uint64_t *)(src + 0x48),
+                        (unsigned long long)*(const uint64_t *)(src + 0x50),
+                        (unsigned long long)*(const uint64_t *)(src + 0x58));
+                }
+            }
             if (g_macws_agx_initfull_len &&
                 macws_runtime_diagnostics_enabled()) {
                 static _Atomic int exact_len_log_count = 0;
@@ -23065,7 +23332,15 @@ IOReturn IOConnectCallMethod_new(io_connect_t client, uint32_t selector, const u
         // iOS sends at +0x58.  Therefore +0x58 must be reconstructed from the
         // current IOSurface's properties, not blindly zeroed.  Presence of
         // that span also supplies native layout-word bit 33.
-        if(agxType == 0x82) {
+        // Runtime-confirmed on the iPad13,11 / 20E252 target with a native
+        // Metal IOSurface control: the successful iOS type-0x82 request has
+        // the same layout as Ventura's raw request (+0x38=IOSurfaceID,
+        // +0x50=0, +0x58=0x180888f00 for the 2732x2048 BGRA control).
+        // Applying the iOS 16.3 translation moved those fields to +0x30 and
+        // +0x50 and the same kernel returned 0xe00002c2.  Preserve the
+        // measured native-0x78 ABI; retain the established translation only
+        // for the legacy-0x70 contract.
+        if(agxType == 0x82 && !native_78_layout) {
             uint32_t f14 = *(const uint32_t *)(src + 0x14);
             uint64_t old_40 = *(const uint64_t *)(src + 0x40);
             uint64_t old_50 = *(const uint64_t *)(src + 0x50);
@@ -23165,9 +23440,28 @@ IOReturn IOConnectCallMethod_new(io_connect_t client, uint32_t selector, const u
         selector == 0x1a;
     int submit_diag_active = translated_agx_submit &&
         macws_submit_diag_enabled();
-    // The byte-validated native-AGX ABI translation is part of submitting
-    // this foreign producer's command buffer, independent of debug files.
-    int submit_fix_active = translated_agx_submit;
+    // The AGX device-info reply size identifies the matching command ABI.
+    // Runtime-confirmed on iPad13,11 / 20E252: preserving the native-0x78
+    // command storage produced 13 consecutive completed final composites
+    // (status=4, clean=13, error=0).  Applying the iOS 16.3 compactor to the
+    // same workload produced MTL internal errors 0x102/0x103.  Keep the
+    // byte-validated compactor only for the legacy-0x70 ABI.
+    int native78_submit_layout = translated_agx_submit &&
+        atomic_load(&g_macws_agx_device_info_abi) ==
+            MACWS_AGX_DEVICE_INFO_ABI_NATIVE_78;
+    int submit_fix_active = translated_agx_submit &&
+        !native78_submit_layout;
+    if (native78_submit_layout && macws_runtime_diagnostics_enabled()) {
+        static _Atomic unsigned native78_submit_logs = 0;
+        unsigned native78_submit_log =
+            atomic_fetch_add(&native78_submit_logs, 1) + 1;
+        if (native78_submit_log <= 8) {
+            dprintf(STDERR_FILENO,
+                "#### AGX native-0x78 SUBMIT-ABI #%u: command storage "
+                "preserved; legacy-0x70 compactor not applicable\n",
+                native78_submit_log);
+        }
+    }
     // The ABI translator and the byte-dump diagnostic are independent gates.
     // Previously, macws_kcmd_fix was silently inert unless submit_diag also
     // existed, which made the same PF80 submit complete in exclusive tests but
@@ -23277,6 +23571,28 @@ IOReturn IOConnectCallMethod_new(io_connect_t client, uint32_t selector, const u
         r = IOConnectCallMethod(client, selector, in, inCnt,
                                 inStruct, inStructCnt,
                                 out, outCnt, outStruct, outStructCnt);
+    }
+    // setupImmediate's read-only device-info ABI changed within iOS 16.
+    // Runtime-confirmed on iPad13,11 / 20E252: selector 0x100 rejects 0x70
+    // and accepts Ventura's original 0x78.  The earlier iPad13,6 / 20D67
+    // kernel does the reverse.  Preserve the caller's native 0x78 first and
+    // retry the legacy size only after the kernel explicitly rejects it;
+    // this keeps both contracts without a model/build-number guess.
+    if (!skip && IOConnectIsIOGPU(client) && selector == 0x100 &&
+        outStructCnt && deviceInfoRequestedSize == 0x78) {
+        if (r == KERN_SUCCESS) {
+            atomic_store(&g_macws_agx_device_info_abi,
+                         MACWS_AGX_DEVICE_INFO_ABI_NATIVE_78);
+        } else if (r == kIOReturnBadArgument) {
+            *outStructCnt = 0x70;
+            r = IOConnectCallMethod(client, selector, in, inCnt,
+                                    inStruct, inStructCnt,
+                                    out, outCnt, outStruct, outStructCnt);
+            if (r == KERN_SUCCESS) {
+                atomic_store(&g_macws_agx_device_info_abi,
+                             MACWS_AGX_DEVICE_INFO_ABI_LEGACY_70);
+            }
+        }
     }
     if (submit_timing_sequence && submit_timing_sequence <= 1024) {
         struct timespec submit_timing_after = {0};
@@ -23661,12 +23977,15 @@ static uint32_t macws_coexist_completion_pace_us(void) {
     enum {
         kDefaultPaceUS = 100000,
         kMinimumPaceUS = 8333,
-        // Static macOS desktops still kept the iPad AGX at 27% device
-        // utilization with the previous 100-ms ceiling.  Permit a slower
-        // idle-only A/B; macws_coexist_activity_pace_us() continues to select
-        // the independently bounded interactive/render cadence as soon as a
-        // real input or versioned render-activity record arrives.
-        kMaximumPaceUS = 500000,
+        // Runtime-confirmed on the M1 iPad baseline: WindowServer's sampled
+        // work was the synthetic non-coalesced display timer even on an
+        // unchanged desktop. Keep the previously validated 100-ms production
+        // ceiling here: the current render-activity producer is deliberately
+        // limited to known game processes, so a slower generic ceiling could
+        // throttle an ordinary AppKit animation after its input window ends.
+        // Lock-screen power saving is handled separately by the durable sleep
+        // marker, which stops synthetic completions entirely.
+        kMaximumPaceUS = 100000,
     };
     static dispatch_once_t once;
     static uint32_t pace_us = kDefaultPaceUS;
@@ -23717,6 +24036,50 @@ static uint32_t macws_coexist_completion_pace_us(void) {
         }
     });
     return pace_us;
+}
+
+static BOOL macws_process_descends_from_pid(pid_t process, pid_t ancestor) {
+    return MacWSProcessDescendsFrom(process, ancestor);
+}
+
+static BOOL macws_render_activity_is_authorized(
+        const MacWSRenderActivityRecord *activity, uint64_t nowNS) {
+    if (!activity || !nowNS) return NO;
+    // Rolling upgrades can leave an already-running Stray/7DTD process on the
+    // timestamp-only v1 producer until the next launch. Preserve that exact
+    // established signal; every generic producer uses v2 with an exact PID.
+    if (activity->version == MACWS_RENDER_ACTIVITY_LEGACY_VERSION)
+        return activity->producerPID == 0;
+    if ((activity->version != MACWS_RENDER_ACTIVITY_AUTHORITY_VERSION &&
+         activity->version != MACWS_RENDER_ACTIVITY_VERSION) ||
+        activity->producerPID <= 1) return NO;
+
+    static int authorityFD = -1;
+    if (authorityFD < 0) {
+        authorityFD = open(MACWS_RENDER_AUTHORITY_PATH,
+                           O_RDONLY | O_CLOEXEC);
+    }
+    if (authorityFD < 0) return NO;
+    MacWSRenderAuthorityRecord authority = {0};
+    ssize_t count = pread(authorityFD, &authority, sizeof(authority), 0);
+    static const uint64_t authorityFreshnessNS = 2 * NSEC_PER_SEC;
+    BOOL valid = count == sizeof(authority) &&
+        authority.magic == MACWS_RENDER_AUTHORITY_MAGIC &&
+        authority.version == MACWS_RENDER_AUTHORITY_VERSION &&
+        authority.size == sizeof(authority) && authority.ownerPID > 1 &&
+        authority.layerWindowID != 0 && authority.width != 0 &&
+        authority.height != 0 && nowNS >= authority.timestampNS &&
+        nowNS - authority.timestampNS <= authorityFreshnessNS &&
+        macws_process_descends_from_pid(activity->producerPID,
+                                        authority.ownerPID);
+    if (!valid) {
+        // displayd unlinks the old inode when no focused window exists. Drop
+        // our descriptor on any invalid/stale observation so a later focused
+        // generation at the same path is discoverable immediately.
+        close(authorityFD);
+        authorityFD = -1;
+    }
+    return valid;
 }
 
 static uint32_t macws_coexist_activity_pace_us(uint32_t idle_pace_us) {
@@ -23778,12 +24141,25 @@ static uint32_t macws_coexist_activity_pace_us(uint32_t idle_pace_us) {
         MacWSRenderActivityRecord record = {0};
         ssize_t count = pread(render_activity_fd, &record,
                               sizeof(record), 0);
-        if (count == sizeof(record) &&
+        BOOL currentRecord = count == sizeof(record) &&
+            (record.version == MACWS_RENDER_ACTIVITY_VERSION ||
+             record.version == MACWS_RENDER_ACTIVITY_LEGACY_VERSION) &&
+            record.size == sizeof(record);
+        BOOL priorRecord = count == sizeof(MacWSRenderActivityRecordV2) &&
+            (record.version == MACWS_RENDER_ACTIVITY_LEGACY_VERSION ||
+             record.version == MACWS_RENDER_ACTIVITY_AUTHORITY_VERSION) &&
+            record.size == sizeof(MacWSRenderActivityRecordV2);
+        if (priorRecord) {
+            // The v3 fields are appended, so the already-read prefix is
+            // complete. Normalize only the in-process size before applying
+            // the same authorization and cadence checks below.
+            record.size = sizeof(record);
+        }
+        if ((currentRecord || priorRecord) &&
             record.magic == MACWS_RENDER_ACTIVITY_MAGIC &&
-            record.version == MACWS_RENDER_ACTIVITY_VERSION &&
-            record.size == sizeof(record) &&
             record.targetPaceUS >= kMinimumRenderPaceUS &&
-            record.targetPaceUS <= kMaximumRenderPaceUS) {
+            record.targetPaceUS <= kMaximumRenderPaceUS &&
+            macws_render_activity_is_authorized(&record, now_ns)) {
             render_ns = record.timestampNS;
             render_pace_us = record.targetPaceUS;
             render_record_valid = YES;
@@ -23901,12 +24277,40 @@ static void macws_coexist_drain_interaction_wake(int socket_fd) {
     }
 }
 
+static void macws_coexist_wait_while_workspace_sleeping(int socket_fd) {
+    // hostd creates this marker at the lock transition, posts the AppKit
+    // NSWorkspaceWillSleepNotification bridge, then gives applications a
+    // bounded notification interval before suspending them. Do not manufacture
+    // display completions while the screen is locked: a real sleeping Mac
+    // does not keep asking WindowServer to compose invisible frames. A
+    // one-second bounded poll is only a recovery path if the wake datagram is
+    // lost.
+    while (access(MACWS_WORKSPACE_SLEEP_MARKER, F_OK) == 0) {
+        if (socket_fd >= 0) {
+            struct pollfd descriptor = {
+                .fd = socket_fd,
+                .events = POLLIN,
+            };
+            int result;
+            do {
+                result = poll(&descriptor, 1, 1000);
+            } while (result < 0 && errno == EINTR);
+            if (result > 0 && (descriptor.revents & POLLIN))
+                macws_coexist_drain_interaction_wake(socket_fd);
+        } else {
+            usleep(1000 * 1000);
+        }
+    }
+}
+
 static uint32_t macws_coexist_wait_for_completion_slot(uint32_t interval_us) {
     static pthread_mutex_t pace_lock = PTHREAD_MUTEX_INITIALIZER;
     static uint64_t last_completion_ns = 0;
     uint32_t slept_us = 0;
 
     pthread_mutex_lock(&pace_lock);
+    int wake_fd = macws_coexist_interaction_wake_socket();
+    macws_coexist_wait_while_workspace_sleeping(wake_fd);
     struct timespec now_ts = {0};
     if (clock_gettime(CLOCK_MONOTONIC, &now_ts) == 0) {
         uint64_t start_ns = (uint64_t)now_ts.tv_sec * NSEC_PER_SEC +
@@ -23916,8 +24320,6 @@ static uint32_t macws_coexist_wait_for_completion_slot(uint32_t interval_us) {
         uint64_t target_ns = base_ns +
             (uint64_t)effective_interval_us * 1000u;
         uint64_t now_ns = start_ns;
-        int wake_fd = macws_coexist_interaction_wake_socket();
-
         while (target_ns > now_ns) {
             uint64_t remaining_ns = target_ns - now_ns;
             uint64_t remaining_ms = (remaining_ns + NSEC_PER_MSEC - 1) /
@@ -24043,6 +24445,7 @@ static IOReturn MacwsIOMobileFramebufferSwapEnd_new(void *framebuffer) {
 IOReturn IOConnectCallStructMethod_new(io_connect_t client, uint32_t selector, const void *inStruct, size_t inStructCnt, void *outStruct, size_t *outStructCnt) {
     uint32_t orig = selector;
     int struct_skip = caller_is_libmachook(__builtin_return_address(0));
+    size_t deviceInfoRequestedSize = outStructCnt ? *outStructCnt : 0;
     if (!struct_skip)
         selector = IOConnectTranslateSelector(client, selector);
     // kern_SwapEnd passes fb+0x18 as its selector-5 input (0x46c bytes
@@ -24120,15 +24523,6 @@ IOReturn IOConnectCallStructMethod_new(io_connect_t client, uint32_t selector, c
 
         return cancel_r;
     }
-    // AGX GPU device-info query (method 256 / setupImmediate): macOS 13.4 asks for
-    // a 0x78 (120-byte) output struct, but the iOS 16.x GPU userclient hard-checks
-    // the output size at 0x70 (112). The 8-byte mismatch -> kIOReturnBadArgument and
-    // AGX device init aborts. Clamp to what the iOS kernel accepts. (Found by diffing
-    // macOS AGXMetal13_3 727C250E vs iOS BA327004 in Ghidra: both selector 0x100,
-    // outStructCnt 0x78 vs 0x70.)
-    if(IOConnectIsIOGPU(client) && selector == 0x100 && outStructCnt && *outStructCnt == 0x78) {
-        *outStructCnt = 0x70;
-    }
     // 15.6.1 userland packs the active swap ID at inStruct+0x98, but the
     // iOS 16.3 kernel's selector-5 ABI still reads it at +0x50 (the 13.4
     // layout).  When the real kern_SwapEnd reaches the kernel (non-
@@ -24143,6 +24537,25 @@ IOReturn IOConnectCallStructMethod_new(io_connect_t client, uint32_t selector, c
         *(uint32_t *)((char *)inStruct + 0x50) = swap_id;
     }
     IOReturn r = IOConnectCallStructMethod(client, selector, inStruct, inStructCnt, outStruct, outStructCnt);
+    // See the matching IOConnectCallMethod path above.  Keep the macOS 0x78
+    // request on iOS 16.4.1, and fall back to iOS 16.3's RE-confirmed 0x70
+    // contract only when the first read-only query returns BadArgument.
+    if (!struct_skip && IOConnectIsIOGPU(client) && selector == 0x100 &&
+        outStructCnt && deviceInfoRequestedSize == 0x78) {
+        if (r == KERN_SUCCESS) {
+            atomic_store(&g_macws_agx_device_info_abi,
+                         MACWS_AGX_DEVICE_INFO_ABI_NATIVE_78);
+        } else if (r == kIOReturnBadArgument) {
+            *outStructCnt = 0x70;
+            r = IOConnectCallStructMethod(client, selector, inStruct,
+                                          inStructCnt, outStruct,
+                                          outStructCnt);
+            if (r == KERN_SUCCESS) {
+                atomic_store(&g_macws_agx_device_info_abi,
+                             MACWS_AGX_DEVICE_INFO_ABI_LEGACY_70);
+            }
+        }
+    }
     // Read-only witness for the exclusive-mode control experiment.  The exact
     // 0x46c-byte shape is the macOS 13.4 kern_SwapEnd call verified above;
     // coexistence returns from the narrow SwapCancel branch before reaching
@@ -24575,6 +24988,9 @@ kern_return_t IOServiceOpen_new(io_service_t service, task_port_t owningTask, ui
         iogpuClients[iogpuClientsCount++] = *connect;
         fprintf(stderr, "#### debugbydcmmc IOServiceOpen agx connect=%d type=%#x (requested=%#x)\n",
             *connect, type, requested_type);
+        if (macws_agx_native_enabled()) {
+            macws_probe_agx_device_info_abi(*connect);
+        }
     }
     return result;
 }

@@ -8,6 +8,7 @@
 
 @import Foundation;
 @import Darwin;
+@import CydiaSubstrate;
 
 #import <objc/message.h>
 #import <objc/runtime.h>
@@ -30,6 +31,7 @@
 #import "macws_control_protocol.h"
 #import "macws_dock_expose_notify.h"
 #import "macws_host_protocol.h"
+#import "macws_power_lifecycle.h"
 #import "macws_menu_protocol.h"
 #import "macws_stream_protocol.h"
 #import "MacWSCatalystInputPolicy.h"
@@ -114,6 +116,7 @@ typedef const void *(*MacWSEventRef)(id, SEL);
 typedef void (*MacWSPostEvent)(id, SEL, id, BOOL);
 typedef void (*MacWSSendEvent)(id, SEL, id);
 typedef BOOL (*MacWSUnityDidSendEvent)(id, SEL, id);
+typedef uint64_t (*MacWSCGEventSourceFlagsState)(int32_t);
 typedef id (*MacWSNextEvent)(id, SEL, NSUInteger, id, id, BOOL);
 typedef void (*MacWSHandleApplicationEvent)(id, SEL, id);
 typedef void (*MacWSMenuEventLoop)(id, SEL, BOOL, id);
@@ -152,6 +155,52 @@ static BOOL MacWSWindowPresentationIsOnScreen(id window,
                                               BOOL *knownOut);
 static id MacWSPresentingWindow(id window, id application);
 static id MacWSRootPresentingWindow(id window, id application);
+static BOOL MacWSRuntimeDiagnosticsEnabled(void);
+static int MacWSWorkspaceWillSleepToken = -1;
+static int MacWSWorkspaceDidWakeToken = -1;
+
+static void MacWSPostWorkspacePowerNotification(BOOL sleeping) {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        Class workspaceClass = objc_getClass("NSWorkspace");
+        if (!workspaceClass) return;
+        id workspace = ((MacWSMsgID)objc_msgSend)(
+            workspaceClass, sel_registerName("sharedWorkspace"));
+        id center = workspace ? ((MacWSMsgID)objc_msgSend)(
+            workspace, sel_registerName("notificationCenter")) : nil;
+        if (!center) return;
+        NSString *name = sleeping
+            ? @"NSWorkspaceWillSleepNotification"
+            : @"NSWorkspaceDidWakeNotification";
+        ((MacWSMsgVoidIDID)objc_msgSend)(
+            center, sel_registerName("postNotificationName:object:"),
+            name, workspace);
+    });
+}
+
+static void MacWSInstallWorkspacePowerLifecycle(void) {
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        uint32_t sleepResult = notify_register_dispatch(
+            MACWS_WORKSPACE_WILL_SLEEP_NOTIFY,
+            &MacWSWorkspaceWillSleepToken, dispatch_get_main_queue(),
+            ^(int token) {
+                (void)token;
+                MacWSPostWorkspacePowerNotification(YES);
+            });
+        uint32_t wakeResult = notify_register_dispatch(
+            MACWS_WORKSPACE_DID_WAKE_NOTIFY,
+            &MacWSWorkspaceDidWakeToken, dispatch_get_main_queue(),
+            ^(int token) {
+                (void)token;
+                MacWSPostWorkspacePowerNotification(NO);
+            });
+        if (MacWSRuntimeDiagnosticsEnabled()) {
+            fprintf(stderr,
+                    "#### APP-POWER bridge pid=%d sleep=%u wake=%u\n",
+                    getpid(), sleepResult, wakeResult);
+        }
+    });
+}
 // Main-thread-only semantic menu snapshot cache. ObjC objects never cross the
 // process boundary: Host receives generation-scoped integer IDs, while the
 // target process retains the corresponding item and index path solely long
@@ -679,6 +728,11 @@ static double MacWSAppInputGestureHitValueBefore;
 static BOOL MacWSAppInputGestureHitHasValue;
 static MacWSSendEvent MacWSOriginalApplicationSendEvent;
 static MacWSUnityDidSendEvent MacWSOriginalUnityDidSendEvent;
+static MacWSCGEventSourceFlagsState
+    MacWSOriginalCGEventSourceFlagsState;
+static const struct mach_header_64 *MacWSSevenDaysUnityImage;
+static __thread uint64_t MacWSAppInputDispatchModifierFlags;
+static __thread unsigned MacWSAppInputDispatchModifierDepth;
 static _Atomic uint64_t MacWSUnityMouseDiagnosticUntilMicros;
 static _Atomic uint64_t MacWSUnityMouseDiagnosticSequence;
 static MacWSHandleApplicationEvent MacWSOriginalHandleActivatedEvent;
@@ -1666,6 +1720,125 @@ static void MacWSLogUnityNGUIInputState(const char *phase) {
     if (hoverText && api.monoFree) api.monoFree(hoverText);
 }
 
+// Unity 2022.3.62f2 asks CGEventSourceFlagsState(1) while dispatching every
+// AppKit event. That is normally equivalent to the modifierFlags carried by
+// the NSEvent currently being dispatched. It is not equivalent in this
+// launchd-created chroot session: a 7DTD sample captured all 2782/2782 main-
+// thread samples in
+//
+//   UnityPlayer+0xf1de30 -> SLEventSourceFlagsState
+//     -> CGSEventSourceForID -> CGSEventSourceShutdown -> mutex_lock
+//
+// RE-confirmed in the exact Ventura 13.4 SkyLight image: the failed source-ID
+// lookup owns the event-source cache mutex when it calls Shutdown, which tries
+// to acquire the same mutex again. Use the already-authoritative modifier
+// flags from the real NSEvent only at the one RE-confirmed Unity call site.
+// This does not invent a key state or suppress Unity's event handler; every
+// other caller and every call outside the active AppKit dispatch reaches the
+// original CoreGraphics implementation unchanged.
+static uint64_t MacWSSevenDaysCGEventSourceFlagsState(int32_t stateID) {
+    void *signedReturnAddress = __builtin_return_address(0);
+    void *returnAddress = ptrauth_strip(signedReturnAddress,
+                                        ptrauth_key_return_address);
+    if (stateID == 1 && MacWSAppInputDispatchModifierDepth != 0 &&
+        MacWSSevenDaysUnityImage &&
+        (uintptr_t)returnAddress ==
+            (uintptr_t)MacWSSevenDaysUnityImage + 0xf1de34u) {
+        return MacWSAppInputDispatchModifierFlags;
+    }
+    return MacWSOriginalCGEventSourceFlagsState
+        ? MacWSOriginalCGEventSourceFlagsState(stateID) : 0;
+}
+
+static BOOL MacWSMachHeaderHasUUID(const struct mach_header_64 *header,
+                                   const uint8_t expected[16]) {
+    if (!header || header->magic != MH_MAGIC_64) return NO;
+    const uint8_t *cursor = (const uint8_t *)header + sizeof(*header);
+    const uint8_t *end = cursor + header->sizeofcmds;
+    for (uint32_t index = 0; index < header->ncmds; index++) {
+        if (cursor + sizeof(struct load_command) > end) return NO;
+        const struct load_command *command =
+            (const struct load_command *)cursor;
+        if (command->cmdsize < sizeof(*command) ||
+            cursor + command->cmdsize > end) return NO;
+        if (command->cmd == LC_UUID &&
+            command->cmdsize >= sizeof(struct uuid_command)) {
+            const struct uuid_command *uuid =
+                (const struct uuid_command *)command;
+            return memcmp(uuid->uuid, expected, 16) == 0;
+        }
+        cursor += command->cmdsize;
+    }
+    return NO;
+}
+
+static void MacWSInstallSevenDaysModifierStateCompatibility(void) {
+    static _Atomic int installState;
+    if (atomic_load_explicit(&installState, memory_order_acquire) == 2 ||
+        !MacWSMainBundleIsSevenDaysToDie()) return;
+
+    // Exact shipped arm64 UnityPlayer.dylib:
+    // SHA-256 89ddca014c60f0a909e23fe87664f0c5ac70fe1889621a533c252cc8b6985e56
+    // UUID D50F7C77-F422-3DE2-986B-1237215E50F7. The byte witness includes
+    // the complete predicate and the BL whose return address is +0xf1de34.
+    static const uint8_t expectedUUID[16] = {
+        0xd5, 0x0f, 0x7c, 0x77, 0xf4, 0x22, 0x3d, 0xe2,
+        0x98, 0x6b, 0x12, 0x37, 0x21, 0x5e, 0x50, 0xf7,
+    };
+    static const uint8_t expectedCallSite[] = {
+        0xf4, 0x4f, 0xbe, 0xa9, 0xfd, 0x7b, 0x01, 0xa9,
+        0xfd, 0x43, 0x00, 0x91, 0xf3, 0x03, 0x00, 0xaa,
+        0xf4, 0x0f, 0x84, 0x52, 0x1f, 0x00, 0x14, 0x6a,
+        0x61, 0x02, 0x00, 0x54, 0x20, 0x00, 0x80, 0x52,
+        0x00, 0xf2, 0x1a, 0x94, 0x13, 0x00, 0x13, 0x2a,
+    };
+
+    const struct mach_header_64 *unityImage = NULL;
+    uint32_t imageCount = _dyld_image_count();
+    for (uint32_t index = 0; index < imageCount; index++) {
+        const char *name = _dyld_get_image_name(index);
+        if (!name || !strstr(name, "/UnityPlayer.dylib")) continue;
+        const struct mach_header_64 *header =
+            (const struct mach_header_64 *)_dyld_get_image_header(index);
+        if (!MacWSMachHeaderHasUUID(header, expectedUUID) ||
+            memcmp((const uint8_t *)header + 0xf1de10u,
+                   expectedCallSite, sizeof(expectedCallSite)) != 0) {
+            fprintf(stderr,
+                "#### APP-INPUT 7DTD-MODIFIER-COMPAT unsupported-image "
+                "path=%s\n", name);
+            fflush(stderr);
+            atomic_store_explicit(&installState, 3, memory_order_release);
+            return;
+        }
+        unityImage = header;
+        break;
+    }
+    if (!unityImage) return;
+
+    int expected = 0;
+    if (!atomic_compare_exchange_strong_explicit(
+            &installState, &expected, 1,
+            memory_order_acq_rel, memory_order_acquire)) return;
+    void *target = dlsym(RTLD_DEFAULT, "CGEventSourceFlagsState");
+    if (!target) {
+        atomic_store_explicit(&installState, 3, memory_order_release);
+        return;
+    }
+    MSHookFunction(target, (void *)MacWSSevenDaysCGEventSourceFlagsState,
+                   (void **)&MacWSOriginalCGEventSourceFlagsState);
+    if (!MacWSOriginalCGEventSourceFlagsState) {
+        atomic_store_explicit(&installState, 3, memory_order_release);
+        return;
+    }
+    MacWSSevenDaysUnityImage = unityImage;
+    atomic_store_explicit(&installState, 2, memory_order_release);
+    fprintf(stderr,
+        "#### APP-INPUT 7DTD-MODIFIER-COMPAT installed pid=%d "
+        "unity=%p caller=0xf1de34 state=1 route=current-NSEvent\n",
+        getpid(), unityImage);
+    fflush(stderr);
+}
+
 static void MacWSInstallUnityDidSendEventDiagnostic(void) {
     static BOOL installed;
     if (installed || !MacWSRuntimeDiagnosticsEnabled() ||
@@ -1693,6 +1866,7 @@ static void MacWSInstallUnityDidSendEventDiagnostic(void) {
 // the exact native down/up pair matched above; every unrelated event passes
 // through byte-for-byte unchanged.
 static void MacWSAppInputApplicationSendEvent(id self, SEL command, id event) {
+    MacWSInstallSevenDaysModifierStateCompatibility();
     MacWSInstallUnityDidSendEventDiagnostic();
     NSUInteger type = event ? ((MacWSMsgUInteger)objc_msgSend)(
         event, sel_registerName("type")) : 0;
@@ -1951,8 +2125,21 @@ static void MacWSAppInputApplicationSendEvent(id self, SEL command, id event) {
             }
         }
     }
+    uint64_t previousDispatchModifierFlags =
+        MacWSAppInputDispatchModifierFlags;
+    unsigned previousDispatchModifierDepth =
+        MacWSAppInputDispatchModifierDepth;
+    if (event && MacWSMainBundleIsSevenDaysToDie()) {
+        MacWSAppInputDispatchModifierFlags =
+            ((MacWSMsgUInteger)objc_msgSend)(
+                event, sel_registerName("modifierFlags"));
+        MacWSAppInputDispatchModifierDepth =
+            previousDispatchModifierDepth + 1;
+    }
     if (MacWSOriginalApplicationSendEvent)
         MacWSOriginalApplicationSendEvent(self, command, event);
+    MacWSAppInputDispatchModifierFlags = previousDispatchModifierFlags;
+    MacWSAppInputDispatchModifierDepth = previousDispatchModifierDepth;
     if (systemLatencyMainStart > 0.0) {
         double dispatchEnd = MacWSInputUptimeSeconds();
         MacWSInputRecord latencyRecord = {
@@ -7562,8 +7749,18 @@ static BOOL MacWSMainBundleUsesFullscreenCanvasPresentation(void) {
     // than resizing the 2388x1668 desktop.  Publish that application-level
     // presentation capability here so Host can fit the exact catalog window
     // without guessing from a localized title or a transient rectangle.
+    // Runtime-confirmed on the iPad14,5 7DTD deployment: the prepared native
+    // Unity 2022.3.62f2 process publishes a focused 1366x1024 game window with
+    // bundle identifier com.The-Fun-Pimps.7-Days-To-Die and sends its real
+    // CAMetalDrawable IOSurfaces through the same direct-drawable transport.
+    // Without this capability its catalog flags were 0x49 (Focused, Visible,
+    // Resizable) while the off-screen Steam Helper was 0x20f, so fullscreen
+    // Host selected the helper and kept rendering the 2732x2048 desktop
+    // capture instead of the game's 1366x1024 drawable.
     return [identifier isEqualToString:
-        MacWSRuntimeString("com.annapurnainteractive.Stray")];
+                MacWSRuntimeString("com.annapurnainteractive.Stray")] ||
+        [identifier isEqualToString:
+                MacWSRuntimeString("com.The-Fun-Pimps.7-Days-To-Die")];
 }
 
 static NSSet *MacWSVisibleWindowNumberSnapshot(id application) {
@@ -11304,17 +11501,27 @@ static uint32_t MacWSLogicalWindowGroupID(id window, id application) {
     if (ownNumber <= 0 || (uint64_t)ownNumber > UINT32_MAX) return 0;
     uint32_t groupID = (uint32_t)ownNumber;
 
-    SEL tabGroupSelector = sel_registerName("tabGroup");
+    // Do not use NSWindow.tabGroup as a query. Runtime-confirmed on Ventura
+    // 13.4 with 7DTD's UnityWindow: the public getter enters
+    // -[NSWindow _tabGroup], creates an NSWindowStackController, then blocks
+    // synchronously in IconServices while constructing its tab-bar item. The
+    // metrics publisher must observe AppKit, never mutate it.  The private
+    // getter below returns the already-installed controller (nil for a plain
+    // window); its `windows` collection is the same membership needed for a
+    // stable logical identity.
+    SEL stackControllerSelector = sel_registerName("_windowStackController");
     if (!((MacWSMsgBoolSEL)objc_msgSend)(
             window, sel_registerName("respondsToSelector:"),
-            tabGroupSelector)) return groupID;
-    id tabGroup = ((MacWSMsgID)objc_msgSend)(window, tabGroupSelector);
-    if (!tabGroup) return groupID;
+            stackControllerSelector)) return groupID;
+    id stackController = ((MacWSMsgID)objc_msgSend)(
+        window, stackControllerSelector);
+    if (!stackController) return groupID;
     SEL windowsSelector = sel_registerName("windows");
     if (!((MacWSMsgBoolSEL)objc_msgSend)(
-            tabGroup, sel_registerName("respondsToSelector:"),
+            stackController, sel_registerName("respondsToSelector:"),
             windowsSelector)) return groupID;
-    id groupWindows = ((MacWSMsgID)objc_msgSend)(tabGroup, windowsSelector);
+    id groupWindows = ((MacWSMsgID)objc_msgSend)(
+        stackController, windowsSelector);
     NSUInteger groupCount = [groupWindows count];
 
     // NSWindow.windowNumber is the capture identity, not the user's window
@@ -11324,7 +11531,7 @@ static uint32_t MacWSLogicalWindowGroupID(id window, id application) {
     // smallest number.  Member associations carry the identity across a
     // native merge that replaces the tab-group object.
     id token = objc_getAssociatedObject(
-        tabGroup, &MacWSLogicalWindowGroupAssociationKey);
+        stackController, &MacWSLogicalWindowGroupAssociationKey);
     if (!token) {
         for (NSUInteger index = 0; index < groupCount && !token; index++) {
             token = objc_getAssociatedObject(
@@ -11362,7 +11569,7 @@ static uint32_t MacWSLogicalWindowGroupID(id window, id application) {
             token, sel_registerName("unsignedIntValue"));
     }
     if (token && groupID != 0) {
-        objc_setAssociatedObject(tabGroup,
+        objc_setAssociatedObject(stackController,
             &MacWSLogicalWindowGroupAssociationKey, token,
             OBJC_ASSOCIATION_RETAIN_NONATOMIC);
         for (NSUInteger index = 0; index < groupCount; index++) {
@@ -11644,7 +11851,20 @@ static void MacWSPublishWindowMetrics(void) {
 }
 
 static void MacWSScheduleWindowMetricsPublish(void) {
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 500 * NSEC_PER_MSEC),
+    static _Atomic bool initialPublishScheduled = false;
+    BOOL initial = !atomic_exchange_explicit(
+        &initialPublishScheduled, true, memory_order_acq_rel);
+    uint64_t delay = initial ? 500 * NSEC_PER_MSEC : 5 * NSEC_PER_SEC;
+    // Window move/resize/update notifications publish committed changes in
+    // 50 ms. This timer is only a recovery witness for a lost sidecar or a
+    // framework-created window that emitted no observable notification.
+    // Runtime fs_usage on iPad13,6 confirmed that the old recovery path
+    // scanned and stat'ed every process's metrics sidecar every 500 ms while
+    // the desktop was unchanged. Preserve one fast bootstrap pass, then keep
+    // that bounded fallback scan off the idle desktop hot path. A separate
+    // A/B showed Finder's SharedFileList resolver has its own 500-ms source,
+    // so this change deliberately makes no claim to fix that unrelated loop.
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, delay),
                    dispatch_get_main_queue(), ^{
         @autoreleasepool { MacWSPublishWindowMetrics(); }
         MacWSScheduleWindowMetricsPublish();
@@ -11829,6 +12049,7 @@ static void MacWSInstallAppInputBridgeNow(void) {
     }
     if (dockEndpoint) MacWSPublishDockExposeState(NO);
     if (!dockEndpoint) {
+        MacWSInstallWorkspacePowerLifecycle();
         MacWSInstallWorkspaceOpenWitness();
         MacWSInstallApplicationKeyWitness();
         MacWSInstallMenuEventLoopWitness();
@@ -11953,6 +12174,14 @@ __attribute__((destructor)) static void MacWSRemoveAppInputBridge(void) {
     if (MacWSAppInputSocket >= 0) close(MacWSAppInputSocket);
     if (MacWSAppInputPath[0]) unlink(MacWSAppInputPath);
     if (MacWSWindowMetricsPath[0]) unlink(MacWSWindowMetricsPath);
+    if (MacWSWorkspaceWillSleepToken >= 0) {
+        notify_cancel(MacWSWorkspaceWillSleepToken);
+        MacWSWorkspaceWillSleepToken = -1;
+    }
+    if (MacWSWorkspaceDidWakeToken >= 0) {
+        notify_cancel(MacWSWorkspaceDidWakeToken);
+        MacWSWorkspaceDidWakeToken = -1;
+    }
     [MacWSLastWindowMetricsEntries release];
     MacWSLastWindowMetricsEntries = nil;
     [MacWSMenuCaches release];
