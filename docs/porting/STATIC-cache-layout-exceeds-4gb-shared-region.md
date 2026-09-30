@@ -136,7 +136,53 @@ vmRegionInfo:
 
 ---
 
-## 8. 方向 A（"干净 region + private"）**已否证**（2026-09-30，同一轮内完成）
+## 9. B1（"主缓存单独"）三次尝试 —— **均无效**（2026-09-30，每次均已回滚并复核）
+
+### 9.1 元凶候选字段实测
+
+主缓存头字段（本地副本 = 设备副本，逐字节同）：
+```
+dynamicDataOffset  = 0x12c75c000   dynamicDataMaxSize = 0x4000
+sharedRegionStart  = 0x180000000   sharedRegionSize  = 0x12c760000   (末端 0x2ac760000)
+subCacheArray: offset=0x333e8 count=1 → entry[0] vmOffset=0xa560c000 (= 0x22560c000, 即 .01 起点)
+sharedRegionStart + dynamicDataOffset = 0x2ac75c000   ← 与故障地址逐位一致
+.01 的 m6: va=0x288dcc000 size=0x23990000 END=0x2ac75c000   ← 另一条同址线索
+```
+
+### 9.2 三次尝试（cryptex 与 /tmp/dsc 两份都改，改完立刻重挂 cachereg）
+
+| # | 改动（`$CR` 与 `$DST` 两份主缓存头） | 结果 |
+|---|---|---|
+| B1-1 | 直接**藏起 `.01` 文件**（mv，不是删除） | 异常逐位相同（gap `0x2ac75c000`） |
+| B1-2 | `dynamicDataOffset` → `0x77080000`（落在区内 32MB 空洞，VM 地址 `0x1f7080000`） | 相同 |
+| B1-3 | `subCacheArrayCount` → 0 **且** `sharedRegionSize` → `0x100000000`（≤4GB）**且** `ddo` → `0x77080000` | 相同 |
+
+三次运行的其他量均不变：`x0=0x2ac75c000`、`x2=5`(R+X)、`x3=0x40012`(MAP_FIXED\|PRIVATE\|SUPERPAGE_SIZE_ANY)、
+`x4=3`(**fd 3**，即缓存文件)、`x16=0xc5`(197=mmap)、`pc=dyld_base+0xae8`、
+`[vmext] 0x2ac75c000..0x2ac760000 prot=1/3 resident=0 external=1 shadow=1`。
+
+### 9.3 结论与遗留问题（**这是下一轮的第一个待解问题**）
+
+- 该 `MAP_FIXED` **可执行**映射的**目标地址与"哪份缓存/哪些头字段"无关**（三次改动皆无效）⇒
+  地址 `0x2ac75c000` 由**其他地方**产生。现存的同址线索只剩两条：
+  (i) **`.01` 自身映射表 m6 的末端**（`0x288dcc000+0x23990000`）；
+  (ii) 主缓存声明区末端 `sharedRegionStart+sharedRegionSize` 的最后 16KB（该字段已改无效，故更可能是 (i)）。
+- 因 `fd=3`（缓存文件）且 `PROT_READ|EXEC`，它**不是** dynamic-data（RW）⇒ 更像是 dyld 为
+  **某段可执行内容**（`.01` 的某段 / atlas / TPRO 表）做的 `MAP_FIXED`。
+- **下一步（B2 之前的最后一跳）**：用 IDA（I2，注意其输入是上一会话的变体，须以设备原版 SHA 件为准）
+  或 `DYLD_PRINT_SEGMENTS`-类手段定位 dyld 里"对 fd 做 MAP_FIXED 可执行映射"的调用点，
+  并核对它取地址的来源字段；或**直接改 `.01` 的头**（把其 m2..m6 重排进 ≤4GB —— 等于缓存手术）。
+- 若这一跳仍不下，则 B2（重建 ≤4GB 缓存）或 C（13.x）就是必选项。
+
+### 9.4 本轮设备副作用清单（均已回滚/保留，未删除任何文件）
+
+- 主缓存两份头的**头部页备份**：`/var/mobile/hdr_{CR,DST}{,_v2,_v3}.bak`（各 0x1000 字节）。
+- `$CR`、`$DST` 两份主缓存头已恢复原值（`ddo=0x12c75c000`、`sharedRegionSize=0x12c760000`、`subC=1`，已复核）。
+- dyld 恢复原版（SHA `99569152…51a1`、inode `245791518`，每轮均复核）。
+- 新增 cachereg 实例若干（cryptex / tmpdsc / 补丁版），日志在 `/var/mobile/cachereg_*v*.log`。
+- 实验用隐藏归档：`$R/usr/lib/.f1orig4..6`、`.f1tested4..6`（`mv` 换文件，未删）。
+- `$R/dev` 已建并挂 devfs（`/dev/ptmx` ✓）。
+
 
 **做什么**：把上一会话自建的探针 `misc/srteardown.c`（其注释已逐条描述本故障：
 `mmap FIXED @0x2ac75c000 → gap zone: DEALLOC_GAP guard → SIGKILL`）在设备上补签+入 TC，
