@@ -153,6 +153,27 @@
   @ VA `0xfffffe0007ea1e43`（文件偏移 `0xE9DE43`）反向 xref。
 - **S4 全部失败** ⇒ 回路线 C（13.2.1，资产已在 `~/Desktop/VirtualMacOniPad/…/UniversalMac_13.2.1_22D68_Restore.ipsw`）。
 
+### 5.1 附注：规模比想象的小得多（对 D 是好消息）
+
+早先为 **B2'（重建缓存）** 算过一份**依赖闭包**（种子 = `/bin/{echo,sh,bash,cat,ls,date}`），
+证据在 `STATIC-b2-cache-rebuild-pipeline.md:119-125`：
+
+| 范围 | 数量 | 体积 |
+|---|---|---|
+| 缓存全量抽取（`extract_host2.py`） | 3257 个 dylib | 4.4 GB |
+| **CLI 依赖闭包**（`dsc_cache_subset.py`） | **564 个 dylib** | **870.2 MB** |
+| mini-root（闭包 + 6 个种子 + `SystemVersion.plist`） | 570 个文件 | **871.8 MB** |
+
+两个含义：
+1. **对 B2'**：证明"≤4 GB 的缓存"**在体积上完全做得到**（871.8 MB ≪ 4 GB）—— 那条路缺的只是 builder，不是体积。
+2. **对 D**：要"做成可加载"的范围可以从 3257 个缩到 **564 个**，工程量降一个数量级。
+
+⚠️ 注意别混淆三个不同的产物（都曾被记成"从 4.x GB 解压出来的东西"）：
+`extract_host2.py` 的 **3257 个 Mach-O dylib / 4.4 GB**、
+`dsc_cache_subset` 的 **570 文件 / 871.8 MB mini-root**、
+以及 `ipsw a2sb` 的 **`.a2s` 查找表 / 713 MB（22D68 同款）** ——
+前两者是**可执行文件**，最后一个是**"地址→符号"索引**（里面没有代码），服务于**不同路线**（B2' vs D）。
+
 **风险分级**：S1 最低（配置/签名层）；S2 中等（数据写，有先例，但要先拿到偏移并遵守校验流程）；
 E1/E3 最高（text 写，无先例，可能 panic **或开不了机**）。
 
