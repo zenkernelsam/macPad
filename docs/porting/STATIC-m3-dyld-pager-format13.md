@@ -375,3 +375,37 @@ IDB（I1，静态，imagebase `0xfffffe0007004000`）中 `map_with_linking_np` �
 - `/var/mobile/dyld_f1v2_backup_orig.bin`：原版拷贝（SHA `9956…51a1`）。
 - `/var/mobile/{f1_m3_test,f1v2}.{sh,out,raw}`、`/var/mobile/f1_base*.{out,raw}`、`/var/mobile/uuidcheck.raw`：日志。
 - 设备 dyld **已恢复原版**（SHA/inode 双复核）；trustcache 为内存态，多了一条补丁 dyld 的项（无害）。
+
+### 9.5 新卡点的静态定位（EXC_GUARD 解码，RE-confirmed）
+
+`[exc] type=12 code0=0xa000000100000000 code1=0x2ac75c000` 按内核自己的编码解释
+（`osfmk/kern/exc_guard.h:136-172`：`code[63:61]=GUARD_TYPE`、`code[60:32]=flavor`、
+`code[31:0]=target`，**subcode = offset/gap_start**）：
+
+| 字段 | 值 | 含义（RE-confirmed） |
+|---|---|---|
+| type | `0xa… >> 61` = **5** | `GUARD_TYPE_VIRT_MEMORY`（`exc_guard.h:147`） |
+| flavor | `(0xa0000001_00000000 >> 32) & 0x1fffffff` = **1** | `kGUARD_EXC_DEALLOC_GAP`（`osfmk/mach/vm_statistics.h:334`） |
+| target | 0 | 未使用 |
+| subcode/code1 | `0x2ac75c000` | **gap 地址**（首个空洞） |
+
+产生点：`osfmk/vm/vm_map.c:8693-8702` —— `VMDS_FOUND_GAP` 时，
+若有 `VM_MAP_REMOVE_GAPS_FAIL`（`vm_map_internal.h:160 = 0x20`）→ 返回
+`KERN_INVALID_VALUE`；**否则 `vm_map_guard_exception(gap_start, kGUARD_EXC_DEALLOC_GAP)`
+（`:8701`）→ `thread_guard_violation`（`:7792`）**，按 `task_exc_guard` 位可能致命。
+
+⇒ **新卡点的性质**：某个 macOS 组件（THEORY：dyld 的共享缓存映射收尾 / libSystem 的
+mmap 包装）对一段**含空洞（gap@0x2ac75c000）的高地址区间**做 `vm_deallocate`，
+内核把它**升级成 EXC_GUARD 异常**（而非仅返回错误码）。同址 `0x2ac75c000` 在本项目
+旧 echo 崩溃里也出现过（`EXC_BAD_ACCESS code=1 KERN_INVALID_ADDRESS`）⇒ 这是
+"`.01` 4.77GB > 4GB region 几何"那片高区的老问题，与 dyld_pager/format 13 **无关**。
+
+**诚实标注**：runner 打印的寄存器快照（pc 落在一条 `mov x16,#0xc5; svc #0x80` 的
+原生 mmap 桩上，`x0=0x2ac75c000 x2=5 x3=0x40012 x4=3`，其中 `0x40000`=SUPERPAGE_SIZE_ANY）
+可能是**另一线程 mid-syscall 的快照**，未必就是那次 deallocate 本身 ⇒ "具体调用者"
+仍是 THEORY；**确定的是 guard 类型/flavor/gap 地址**（三者来自内核编码，不依赖快照）。
+
+**下一步（设备侧）**：找出做这次 deallocate 的 macOS 组件与调用栈
+（候选：dyld 共享缓存映射失败回滚 / `deallocateExistingSharedCache`、
+libSystem 的 `mmap`-wrapping、或 `shared_region` 收尾），再决定修法方向：
+(a) 让高区区间**不留洞**（几何问题），或 (b) 拦掉这次 dealloc/gap 检查。
