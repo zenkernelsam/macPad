@@ -767,3 +767,69 @@ if (state & VMDS_FOUND_GAP) {
   若结论是"jailbreak 后仍可重建"，再谈设备试验；否则 E 判不可行，回到 C。
 - ⚠️ **内存**：内核 IDB 很大（`kc_raw_16.3_T8112.bin.id0` 681 MB + IDA 进程），
   **在 a2sb 过夜任务结束前不要加载**，避免抢内存把它挤死。
+
+---
+
+## 16. ⭐ 里程碑：路线 D 核心链路打通 —— 15.6.1 的 dylib 已能**可加载**（2026-10-01 05:29）
+
+> 级别：`runtime-confirmed`（宿主机实测 dlopen 成功）。这是 §13.A 第 5 步验收卡的**通过**记录。
+
+### 16.1 过夜 a2sb 结果
+
+```
+analysis/dyld-cache-15.6.1/dyld_shared_cache_arm64e.a2s = 1,131,246,871 B (1.13 GB)
+日志：Saving symbol cache (15,433,164 symbols)
+      parsing private symbols... cache does NOT contain local symbols   ← release 缓存无本地符号，预期内
+      parsing objc info... ⨯ failed ... __objc_stubs ... Continuing on without it
+耗时：4h51m（4110s user / 24797s sys / 165% cpu）
+```
+
+### 16.2 完整链路与命令（可复现）
+
+```bash
+C=analysis/dyld-cache-15.6.1/dyld_shared_cache_arm64e
+I=~/Desktop/VirtualMacOniPad/VirtualMac/build/toolchain/bin/ipsw-a2sb
+# 1) 抽取（dyldextractor 带上 misc/dyldextractor-2.2.2-slideinfo5.patch）
+tmp/dscvenv/bin/dyldex -e /usr/lib/libxml2.2.dylib -o /tmp/dex2/libxml2.2.dylib $C
+# 2) 转成可加载（uncache.py 带上 misc/uncache-slideinfo5.patch）
+env VZ_IPSW="$I" VZ_MAC=1 tmp/dscvenv/bin/python /tmp/uncache_v5.py \
+    $C libxml2 /tmp/dex2/libxml2.2.dylib /tmp/uncached/libxml2.2.dylib
+# 3) 验收：唯一化 install name → 重签 → dlopen（`VZ_MAC=1` 保住 macOS 路径）
+```
+
+> `install_name_tool -id` 会拒改这类产物（`dyld chained fixups out of place`），
+> 故用**等长字节改写 `LC_ID_DYLIB`**（cmd=**0xD**，注意不是 `LC_LOAD_DYLIB`=0xC）+ `codesign -s - --force`。
+> 唯一化 ID 是**排除假阳性**的关键：否则 dyld 会按 install name 去重、返回缓存里那份。
+
+### 16.3 实测结果（宿主 macOS 15.6.1 上 `dlopen`）
+
+| 镜像 | rebases | binds(auth-stub) | imports | ADRP 重写 | 产物 | dlopen |
+|---|---|---|---|---|---|---|
+| `/usr/lib/libz.1.dylib` | 25 | 18 (17) | 17 | 15 | 131,408 B | ✅ `zlibVersion()` 返回 `1.2.12` |
+| `/usr/lib/libbz2.1.0.dylib` | 16 | 24 (19) | 24 | 46 | 147,904 B | ✅ |
+| `/usr/lib/libxml2.2.dylib` | **3621** | 134 (118) | 126 | **2015** | 1,181,872 B | ✅ |
+
+决定性证据（唯一 install name + `DYLD_PRINT_LIBRARIES=1`）：
+```
+dyld[27052]: <FD078C6F-…> /private/tmp/libz_uniq.dylib   ← dyld 映射的是我们的文件
+RESULT zlibVersion = b'1.2.12'
+```
+**对照 §9.4 的旧状态**：那时同样的产物是 `dlopen → mmap(…) failed with errno=22`、`install_name_tool` 直接拒读。
+⇒ **v5 支持的两个补丁确实把"抽出来不可加载"变成了"抽出来可加载"**。
+
+### 16.4 已知无害告警（不阻塞）
+
+- `dyld_info -fixups`：`__DATA_CONST segment missing SG_READ_ONLY flag` —— 元数据瑕疵，dyld 照常加载。
+- `linkedit_optimizer.py:271: Symbols Cache doesn't contain local symbols` —— release 缓存本就没有本地符号。
+
+### 16.5 这一步**没有**证明什么（避免过度解读）
+
+1. 只在**宿主**上 `dlopen` 成功；**设备侧（chroot、iOS 内核）未做任何验证**。
+2. 只测了 3 个 dylib；**没有**证明整套 rootfs（或 CLI 闭包 564 个）都能加载。
+3. **没有**触及最终目标（无共享缓存运行 dyld + `/bin/echo HI`）——那仍是独立的大工程。
+
+### 16.6 下一步
+
+1. **扩样**：对闭包里的镜像批量跑同一条链，统计成功率（本轮已启动）。
+2. 处理失败样本（若有）。
+3. 之后才谈"铺进 rootfs + 让 dyld 无缓存运行"，以及设备侧验证。
