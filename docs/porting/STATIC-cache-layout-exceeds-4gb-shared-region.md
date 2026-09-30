@@ -133,3 +133,27 @@ vmRegionInfo:
 2. 顺带修 `launchdchrootexec` 补 `proc_set_debugged`（让作者的 `run_bash.sh`/`chroot_works` 路线可用），
    需 Theos 设备构建。
 3. 每次实验保持：`mv`-only 换文件、原版 SHA/inode 双复核、每阶段更新 `dyld-15.6.1-state.md` 并 push。
+
+---
+
+## 7. `DYLD_SHARED_REGION` 两格实测（2026-09-30，F1 在位，均已回滚并复核 SHA/inode）
+
+**发现（RE-confirmed，dyld 源码）**：`DyldProcessConfig.cpp:1321` 读
+`cacheMode = environ("DYLD_SHARED_REGION")`，`:1350`
+`opts.forcePrivate = security.allowEnvVarsSharedCache && (cacheMode=="private")`；
+而 `security.allowEnvVarsSharedCache` 来自 **AMFI 输出位 `AMFI_DYLD_OUTPUT_ALLOW_CUSTOM_SHARED_CACHE`**（`:938`）。
+另有 `cacheMode=="avoid"` ⇒ `:1396` 跳过加载共享缓存。
+
+| 实验 | 命令（要点） | 结果 |
+|---|---|---|
+| T4 | `DYLD_SHARED_REGION=private` + F1 + `/bin/echo HI` | **同一个 EXC_GUARD**（gap `0x2ac75c000`，pc=`dyld_base+0xae8`，`x16=0xc5`）⇒ private **不解决** |
+| T5 | `DYLD_SHARED_REGION=avoid` + F1（对照） | **runner 自身 `Abort trap: 6`**，out/raw 皆空 ⇒ 该 env **确实被读取/放行**（T4 的"private"也应已生效） |
+
+**判读（提高了机制精度）**：守卫的成因不是"地址落在区域外"，而是
+**dyld 对 `.01` 尾部区间（`0x288dcc000..0x2ac75c000`）做 `MAP_FIXED` 时，该区间横跨
+"已被 536 共享区映射（≤`0x280000000`）/ 未映射（>`0x280000000`）"的边界** ⇒
+`vm_map.c:8693-8702` 的 `VMDS_FOUND_GAP` → `kGUARD_EXC_DEALLOC_GAP` 致命。
+⇒ 真正的解要么**让布局不再跨界**（缩容/重建缓存，或让 `.01` 尾部整体落在区内/区外），
+要么**消除"部分已映射"这一前提**（例：干净 region + private 让 dyld 自行整体 mmap；
+本机 shared region 跨进程持久，需重启才干净——见 state doc 的"需重启拿干净 region"）。
+
