@@ -174,7 +174,38 @@ sharedRegionStart + dynamicDataOffset = 0x2ac75c000   ← 与故障地址逐位�
   并核对它取地址的来源字段；或**直接改 `.01` 的头**（把其 m2..m6 重排进 ≤4GB —— 等于缓存手术）。
 - 若这一跳仍不下，则 B2（重建 ≤4GB 缓存）或 C（13.x）就是必选项。
 
-### 10. B1 追加三次尝试（新 inode！）—— 全部无效 ⇒ 地址来自**内核 region 状态**（2026-09-30）
+### 11. 已施加的补丁 + 重启验证流程（2026-09-30，等待重启）
+
+**当前设备状态（已复核）**：dyld = 原版（SHA `9956…51a1`、inode `245791518`）；
+5 个缓存文件**已打补丁且全部走新 inode**（原件以隐藏名保留在同目录，可一键还原）：
+
+| 文件 | 新 inode | 补丁 |
+|---|---|---|
+| `$CR/dyld_shared_cache_arm64e` | 245847887 | `sharedRegionSize=0x100000000`、`subCacheArrayCount=0`、`dynamicDataOffset=0x77080000` |
+| `$DST/dyld_shared_cache_arm64e` | 245847898 | 同上 |
+| `$CR/dsc_main_orig` | 245847902 | 同上（第三个主缓存副本，先前搜索发现的） |
+| `$CR/dyld_shared_cache_arm64e.01` | 245847907 | `m2.size=(0x280000000−m2.va)`、`m3..m6.size=0` ⇒ 有效范围止于 `0x280000000` |
+| `$DST/dyld_shared_cache_arm64e.01` | 245847910 | 同上 |
+
+每个文件都重挂过 CS blob（`cachereg … READY ok=1`）。
+
+**工具（已入库，也已在设备 `/var/mobile/`）**：
+- `misc/apply_4gb_layout_patch.sh apply|restore` —— 施加/还原（`mv`-only、原件保留）。
+- `misc/post_reboot_cli_test.sh` —— **重启后一键**：校验补丁状态 → `restore_env.sh` 复原 TC →
+  `mountdevfs` + 断言 `/dev/ptmx` → 对 4 个缓存文件重跑 `cachereg` → 部署 F1（已签名产物）→
+  跑 `/bin/echo HI` 见证（带 `DYLD_PRINT_LIBRARIES`）→ 回滚原版 dyld 并复核 SHA。
+
+**重启是验证的前提**：内核的 shared region 在创建时按当时缓存声明尺寸（`0x12c760000`）记录范围并跨进程持久，
+所以缓存侧改动必须等 region 重建（= 重启）才生效。**重启会杀掉设备上正在运行的 10.8GB
+`com.apple.Virtualization.VirtualMachine`（用户已授权）**；Dopamine 为 semi-untethered，重启后需重新越狱。
+
+**重启后判据**（`post_reboot_cli_test.sh` 的输出）：
+- 若 `[exc] type=12 code0=0xa…  code1=0x2ac75c000` **消失**且 `/bin/echo HI` 打出 `HI` ⇒ **B1 成功、CLI 里程碑达成**
+  （届时把 F1 标注为"deliberate opt-out"，并按 §6 继续 r1..r3 阶梯）。
+- 若仍是同一异常 ⇒ "region 状态"解释被否证，回头看 dyld 侧（IDA 定位 R+X `MAP_FIXED` 取址点）或改走 B2/C。
+
+## 10. B1 追加三次尝试（新 inode！）—— 全部无效 ⇒ 地址来自**内核 region 状态**（2026-09-30）
+
 
 第 9 节的三次尝试都是**原地改同 inode**，可能被内核的按-vnode 页/blob 缓存掩盖。本节三次全部改用
 **新 inode**（`cp` → 改副本 → `mv` 就位 → 重新 `cachereg` 挂 blob，`READY ok=1`），仍逐位相同：
