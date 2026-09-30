@@ -409,3 +409,41 @@ mmap 包装）对一段**含空洞（gap@0x2ac75c000）的高地址区间**做 `
 （候选：dyld 共享缓存映射失败回滚 / `deallocateExistingSharedCache`、
 libSystem 的 `mmap`-wrapping、或 `shared_region` 收尾），再决定修法方向：
 (a) 让高区区间**不留洞**（几何问题），或 (b) 拦掉这次 dealloc/gap 检查。
+
+### 9.6 产生点已锁定：**内核 VM reclaim（不是 mmap、不是 dyld）** —— RE-confirmed
+
+沿 `kGUARD_EXC_DEALLOC_GAP` 反查，唯一两条产生路径是 `vm_map.c:8701` 与
+**`vm_reclaim.c:603`**；后者与观测**逐字段吻合**：
+
+```
+vm_reclaim.c:592-604
+  kr = vm_map_remove_guard(map, trunc(entry->address), round(entry->address+entry->size),
+                           VM_MAP_REMOVE_GAPS_FAIL, KMEM_GUARD_NONE).kmr_return;
+  if (kr == KERN_INVALID_VALUE) reclaim_kill_with_reason(metadata, kGUARD_EXC_DEALLOC_GAP, entry->address);
+
+vm_reclaim.c:278-291
+  EXC_GUARD_ENCODE_TYPE(code,  guard_type);   /* = GUARD_TYPE_VIRT_MEMORY(5) → [63:61] */
+  EXC_GUARD_ENCODE_FLAVOR(code, reason);      /* = kGUARD_EXC_DEALLOC_GAP(1) → [60:32] */
+  EXC_GUARD_ENCODE_TARGET(code, 0);           /* target 0 → [31:0] */
+  subcode = entry->address
+```
+
+⇒ `code0 = (5<<61)|(1<<32)|0 = 0xa000000100000000`、`code1 = 0x2ac75c000`
+**完全一致**。故新卡点 = **内核的 VM reclaim 机制**（`mach_vm_reclaim`：进程登记"可回收区间"，
+内核在内存压力下回收）在 `0x2ac75c000` 处**遇到空洞** ⇒ `reclaim_kill_with_reason` 以
+**EXC_GUARD 致命终止该进程**（`vm_reclaim.c:311-321`：`fatal = task_exc_guard & TASK_EXC_GUARD_VM_FATAL`，
+非 fatal 时 `os_log_info("Skipping non fatal guard exception")`）。
+
+**这与 dyld_pager / format 13 / mmap guard 都无关**，而是**内存压力**类失败：
+本机同时驻留 `dyld_shared_cache_arm64e`(2.71GB) + `.01`(2.20GB) 且 load≈4.3，
+macOS 侧（libsystem_malloc 的 VM-reclaim 注册）登记的区间被回收时窗口内出现空洞。
+
+**可动杠杆（按风险排序）**：
+1. 降内存压力：跑之前尽量释放内存（例：unload 无关 launchd job、`purge`、只注册一个缓存文件）。
+2. 让登记区间**无洞**：查是谁登记了跨洞区间（`entry->address=0x2ac75c000`），修正登记范围。
+3. 禁用登记侧：macOS malloc/VM-reclaim 注册开关（若存在 env/plist 开关）。
+4. 内核侧：把该 reason 视为非 fatal（`TASK_EXC_GUARD_VM_FATAL` 清位）——**不推荐**（改的是安全语义）。
+
+**验证方法**：跑之前先看 `vm_stat`/内存压力；fault 后查 `os_log`/dmesg 里是否出现
+`vm_reclaim:` 字样与 `Skipping non fatal guard exception`；若 EXC_GUARD 不再出现而 CLI 继续前进，
+即证明本轮焦点应从 dyld 转向内存压力。
