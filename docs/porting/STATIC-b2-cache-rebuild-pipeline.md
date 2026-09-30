@@ -504,3 +504,88 @@ VirtualMacOniPad 的 README 写"支持 macOS 12 Monterey 直到 macOS 26 Tahoe�
 | C2 | `softwareupdate --fetch-full-installer --full-installer-version 13.4`，再解包 `macOS*.pkg` 的 Payload 取 `/System` | 中高 | 不装系统也能拿到文件，但要处理 installer/cryptex 结构（**待验证**） |
 | C3 | 直接用安装器里的 `BaseSystem.dmg` 当 rootfs | 低？ | BaseSystem 自带**更小**的缓存，但框架极少，能否跑 CLI **待验证** |
 | D | 留在 15.6.1，自研 slide info v5 支持（§9.5） | 高 | 且仍要解决"无共享缓存运行 dyld + 3257 dylib 可加载" |
+
+---
+
+## 12. **路线 C 的资产已在本机；且 13.2.1 天然满足 goal 的"进程内 fixup"要求**
+
+（2026-10-01；触发：用户提示"我 Desktop 下有自己 fork 的 VirtualMacOniPad"→ 实测确认。级别：`RE-confirmed`。）
+
+### 12.1 资产清单（`~/Desktop/VirtualMacOniPad/VirtualMac/build/`，用户自己的 fork）
+
+| 文件 | 大小 |
+|---|---|
+| `downloads/UniversalMac_13.2.1_22D68_Restore.ipsw` | 12,494,476,408 B（完整 macOS 13.2.1） |
+| `downloads/UniversalMac_11.6_20G165_Restore.ipsw` | 13,957,005,940 B |
+| `inputs/macos/22D68__MacOS/dyld_shared_cache_arm64e` | 1,600,389,120 B |
+| `inputs/macos/22D68__MacOS/dyld_shared_cache_arm64e.01` | 1,719,320,576 B |
+| `inputs/macos/22D68__MacOS/…map` / `….a2s` | 936,269 / 713,357,412 B |
+| `inputs/macos11/20G165__MacOS/dyld_shared_cache_arm64e` | 2,362,294,272 B |
+
+fork 的 remote：`origin=github.com/zenkernelsam/VirtualMacOniPad`，`upstream=nfzerox/VirtualMacOniPad`。
+
+### 12.2 实测：22D68 缓存与 iOS 4 GB 共享区**完全相容**
+
+`struct` 直读 `mappingWithSlide`（结构体 56 B，`include/mach-o/dyld_cache_format.h:141`）：
+
+```
+主缓存  sharedRegionStart=0x180000000  sharedRegionSize=0xcd7c0000   (声明 3.208 GB)
+ m0 0x180000000 +0x5440c000 -> 0x1d440c000
+ m1 0x1d440c000 +0x03004000 -> 0x1d7410000   slideInfoVer=3 pageSize=0x1000
+ m2 0x1d9410000 +0x02354000 -> 0x1db764000   ver=3
+ m3 0x1db764000 +0x01bfc000 -> 0x1dd360000   ver=3
+ m4 0x1dd360000 +0x034b0000 -> 0x1e0810000   ver=3
+ m5 0x1e2810000 +0x00b34000 -> 0x1e3344000   (无 slide)
+.01
+ m0 0x1e3344000 +0x30454000 -> 0x213798000   (无 slide)
+ m1 0x213798000 +0x011f4000 -> 0x21498c000   ver=3
+ m2 0x21698c000 +0x0230c000 -> 0x218c98000   ver=3
+ m3 0x218c98000 +0x016d4000 -> 0x21a36c000   ver=3
+ m4 0x21a36c000 +0x01484000 -> 0x21b7f0000   ver=3
+ m5 0x21d7f0000 +0x2ffcc000 -> 0x24d7bc000   (无 slide)
+```
+
+- **总跨度 `0x180000000..0x24d7bc000` = `0xcd7bc000` ≈ 3.207 GB**
+- **区域末端 `0x24d7c0000` < iOS 共享区末端 `0x280000000`** ✔（富余 ≈ 0.79 GB），
+  **没有任何映射跨 `0x280000000` 边界** —— 而 15.6.1 的 `.01 m2` 恰恰卡在这里。
+- 版本对照：
+
+| | 15.6.1 (24G90) | 13.2.1 (22D68) |
+|---|---|---|
+| 缓存总跨度 | 4.77 GB | **3.21 GB** |
+| 声明 `sharedRegionSize` | `0x12c760000` | `0xcd7c0000` |
+| 越过 `0x280000000` | **是**（`.01 m2..m6`） | **否** |
+| slide info 版本 | **5** | **3** |
+
+### 12.3 为什么 13.2.1 **天然**满足 goal 的"逼 dyld 走进程内 fixup"（无需求补丁）
+
+`dyld/SharedCacheRuntime.cpp:1042-1063`：
+```cpp
+bool canUsePageInLinking = options.usePageInLinking;
+...
+const dyld_cache_slide_info* slideInfoHeader = (const dyld_cache_slide_info*)subcache.mappings[j].sms_slide_start;
+if ( slideInfoHeader->version != 5 ) {
+    canUsePageInLinking = false;      // ← 13.2.1 (v3) 在这里被判 false
+}
+```
+⇒ **缓存是 v3 ⇒ dyld 根本不调用 `__map_with_linking_np`(syscall 550)**，直接走
+`rebaseDataPages()` 进程内重定位（`SharedCacheRuntime.cpp:1179-1207`）。于是：
+- 不存在 format-13 的分派问题（内核根本收不到请求）；
+- 不经过内核 dyld_pager 的共享区登记 ⇒ 没有 `kGUARD_EXC_DEALLOC_GAP` 的触发点；
+- **这正是 goal 写的 "force dyld onto its in-process fixup path"——格式自带，不需要任何补丁。**
+
+### 12.4 结论与下一步
+
+- **路线 C 不再需要外部资产**：`UniversalMac_13.2.1_22D68_Restore.ipsw`（12.49 GB）**已在本机**。
+- 下一步：读 `VirtualMac/scripts/prepare-inputs.sh`（9540 B）——VirtualMac 正是用它把 IPSW
+  展开成 `build/inputs/macos/<build>__MacOS/`；它自带"从 IPSW 取 macOS 系统文件"的现成逻辑，
+  正好当路线 C 的 rootfs 来源。
+- 然后照 `misc/build-rootfs-15.6.1.sh` 的 rsync 清单改一版 `build-rootfs-13.2.1.sh`，
+  沿用既有 `install_rootfs_15.sh` → `postinst` → `run_bash.sh -c "echo HI"` 阶梯验证。
+
+### 12.5 附：`uncache.py` 在 fork 里的差异（与路线 C 无关，但记录）
+
+fork 的 `VirtualMac/vz/uncache.py` 比 upstream 多 ~1 KB，改动只在 `a2s_batch()`：
+优先复用已有 `.a2s` 缓存、缺失时降级为直接查询并打印 WARNING（注释点明
+"macOS 22D68 cache is the one that matters for the shipping payload"）。
+**slide info 处理仍是 v3-only（`:1307 _V3Rebaser`、`:1327 version == 3`）** —— 与 §9.3 一致。
