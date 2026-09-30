@@ -357,3 +357,78 @@ main (映射 8 条, mappingWithSlideOffset=0x3e8)
 - ⇒ "用 DyldExtractor 把缓存 dylib 变成可加载 → 走 no-cache 路线" **在本版本上不成立**。
 - 下一步候选：`nfzerox/VirtualMacOniPad` 的 `uncache.py`（面向新系统，可能支持 v5）；
   `dsce`、`iOS-run-macOS-executables-tools`。
+
+---
+
+## 9. `uncache.py`（VirtualMacOniPad）—— 找到了"缺失的那一步"，但它同样只支持 slide info **v3**
+
+### 9.1 项目定位与兼容性
+
+- 仓库：`nfzerox/VirtualMacOniPad`（README 用 `curl` 取得；**WebFetch 被网关 403，curl 可用**）
+- **要求 iPadOS 14–16.3.1**（我们的 iPad13,6 / iOS 16.3 在范围内）—— 但它是**虚拟机路线**
+  （Hypervisor + UTM 式），跑的是自己的 macOS 内核，**与我们的 chroot 路线不同**。
+- 致谢名单含 `MacWSBootingGuide`、`DyldExtractor`、`dsce`、`iOS-run-macOS-executables-tools`。
+
+### 9.2 三个关键文件
+
+| 文件 | 大小 | 作用 |
+|---|---|---|
+| `VirtualMac/vz/uncache.py` | 84544 | **把 DyldExtractor 的"仅供 RE"产物变成可加载的 arm64e `LC_DYLD_CHAINED_FIXUPS`** |
+| `VirtualMac/patches/dyldextractor-2.2.2-arm64e.patch` | 4623 | 修现代缓存 ObjC 相对方法选择器基址（`__objc_opt_ro` 取代已消失的 `__objc_scoffs`） |
+| `VirtualMac/vz/ipsw_patches/dyld_a2sb.go` | 1692 | 给 `ipsw` 加批量 `dyld a2sb`（批量 地址→符号） |
+
+`uncache.py` 头注释（原文摘录）：
+```
+uncache: regenerate loadable arm64e LC_DYLD_CHAINED_FIXUPS for a cache image.
+Takes DyldExtractor's (RE-only) output and makes it loadable:
+  - collect the image's own slide-info-v3 fixups (location-filtered)
+  - classify rebase (in-image) vs bind (cross-image); resolve binds via `ipsw dyld a2s`
+  - emit DYLD_CHAINED_PTR_ARM64E_USERLAND chains (auth-preserving), weave into __DATA*
+  - add LC_DYLD_CHAINED_FIXUPS, clear MH_DYLIB_IN_CACHE
+Validate with `dyld_info -fixups`, then stamp iOS + sign.
+Usage: uncache.py <main-cache> <image-substr> <dyldextractor-output> <final-output>
+```
+
+### 9.3 卡点：同样是 **slide info 版本**
+
+`uncache.py:1305-1306`：
+```python
+for info in slide_info._getMappingInfo(ectx):
+    if info.slideInfo.version == 3:
+```
+**只处理 v3**；我们的缓存是 **v5**（见 §8.3）。
+
+### 9.4 实测：dyldextractor 能抽出 Mach-O，但那是"仅供 RE"形态
+
+先修它自带的日志 bug（`slide_info.py:313` 把 int 当 str 拼 → `str(slideInfoVer)`），
+之后 5 条 `Unknown slide info version: 5` 只记录、不再崩：
+
+```
+$ tmp/dscvenv/bin/dyldex -e /usr/lib/libz.1.dylib -o tmp/dscextract/libz.1.dylib \
+      analysis/dyld-cache-15.6.1/dyld_shared_cache_arm64e
+$ file tmp/dscextract/libz.1.dylib
+Mach-O 64-bit dynamically linked shared library arm64e        (102734 bytes)
+```
+
+但**不可加载**（符合预期：dyldextractor 产物是给 IDA 看的，不是给 dyld 加载的）：
+```
+$ install_name_tool -id /tmp/libz_test.dylib /tmp/libz_test.dylib
+fatal error: file not in an order that can be processed (function starts data out of place)
+$ python3 -c "import ctypes; ctypes.CDLL('/tmp/libz_test.dylib')"
+OSError: dlopen(...): mmap(addr=0x359F879E0, size=0xB8) failed with errno=22
+```
+段地址仍是**缓存里的原值**（`__TEXT vmaddr=0x18e619000`、`__DATA_CONST 0x1e85a09e0`、
+`__AUTH_CONST 0x1f057cf30`、`__LINKEDIT 0x1fed4c000`）⇒ 无 `LC_DYLD_CHAINED_FIXUPS`、
+无重定位、vmaddr 未归零 —— 正是 `uncache.py` 要补的那一段。
+
+### 9.5 结论
+
+- **工具找对了，但整条第三方工具链（dyldextractor 2.2.2 + uncache.py）只覆盖 slide info v2/v3**，
+  而 macOS 15.6.1 用 v5 ⇒ 对 15.6.1 **全线不可用**。
+- v5 并非"改个常量"：`dyld_cache_slide_pointer5` 用的是现代
+  `dyld_chained_ptr_arm64e_shared_cache_{rebase,auth_rebase}` 编码，与 v3 的
+  `dyld_cache_slide_pointer3`（51 位 pointerValue + 11 位链偏移 + 2 位 unused）**完全不同**。
+  两版 `dyld_cache_slide_info` 头部相同（`version/page_size/page_starts_count/+u64/page_starts[]`，
+  见 `include/mach-o/dyld_cache_format.h:374,533`）。
+  ⇒ 要么自己补 v5 支持（dyldextractor 的 rebaser + uncache.py 两处），要么换版本。
+- **路线 C（13.4）的相对优势进一步明确**：作者在该版本上跑通，且第三方工具链正好工作在那代格式上。
