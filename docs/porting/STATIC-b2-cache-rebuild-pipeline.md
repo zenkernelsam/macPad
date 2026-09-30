@@ -194,3 +194,90 @@ $ strings -a /usr/bin/update_dyld_shared_cache | wc -l
 （`prepare_ventura_windowserver.py`、`22F82` 的缓存 CDHash 都在仓库里）。
 **需要用户提供一份 13.4 rootfs（DMG 或安装器）** —— 设备与宿主上目前**都没有**
 （已搜：设备 `/var/mnt`、`/var/mnt/r2`、staging 目录；宿主 `~/Downloads`、`/Users/ciscohe/*.dmg`）。
+
+---
+
+## 7. 【更正 §6.5】不是"没有 builder"，而是"builder 缺 `ld/`"；本机其实有 Xcode 26.3
+
+> 日期：2026-10-01（同日第二轮；触发：用户问"网上应该有开源工具？"并指出 `analysis/` 下就有
+> `MacWSBootingGuide`）。级别：`RE-confirmed`（源码清单 + xcodebuild 实测日志）。
+
+### 7.1 §6.5 里被推翻的两条
+
+1. **"本机只有 CLT、无 Xcode" → 错。** 实测
+   `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcodebuild -version`
+   → **Xcode 26.3 (17C529)**。`xcode-select -p` 报 `requires Xcode` 只是因为它指向
+   `/Library/Developer/CommandLineTools`；**用 `DEVELOPER_DIR` 即可绕过，无需 sudo**。
+   另：本机 macOS = **15.6.1 (24G90)**，与设备 chroot 的 rootfs **完全同版本**。
+2. **"官方 builder 不在系统里 ⇒ 没有可用的官方 builder" → 只对了一半。**
+   `/usr/bin/update_dyld_shared_cache`（84288 B，fat x86_64+arm64）**确实是桩**：
+   `nm -gU` 仅 `__mh_execute_header`、`strings` 仅版本 banner + `fffff`，与开源树
+   `cache-builder/update_dyld_shared_cache.cpp`（全文 `int main(){return 0;}`）对应。
+   **但那只是 1 KB 的 CLI 包装 —— builder 本体是完整开源的**（见 7.2）。
+
+### 7.2 builder 源码清单（`RE-confirmed`，本地 `analysis/dyld-dyld-1286.10/`）
+
+| 目录 | 关键文件（字节） |
+|---|---|
+| `cache-builder/` | `dyld_shared_cache_builder.mm`(58081)、`AppCacheBuilder.cpp`(286312)、`CacheBuilder.cpp`、`OptimizerBranches.cpp`(60220)、`OptimizerLinkedit.cpp`(46806)、`AdjustDylibSegments.cpp`(92904)、`kernel_collection_builder.cpp`、`update_dyld_sim_shared_cache.cpp` |
+| `cache_builder/` | `NewSharedCacheBuilder.cpp/h`、`SubCache.cpp`(2458 行)、`Chunk.cpp`、`CacheDylib.cpp`、`Optimizers.cpp`、`IMPCaches.cpp`、`SectionCoalescer.cpp`、`ASLRTracker.cpp`、`BuilderOptions.cpp` |
+| `shared_cache_linker/` | `SharedCacheLinker.cpp`(21740)、`.h`、`_private.h` |
+| `mach_o/`、`mach_o_writer/` | 完整 |
+| 编译脚本 | `build-scripts/update_dyld_shared_cache-build.sh`（内部即 `xcodebuild -target dyld_shared_cache_builder …`） |
+
+`xcodebuild -project dyld.xcodeproj -list` 中**确有** `dyld_shared_cache_builder` 目标。
+
+### 7.3 实测：编译推进到哪一步
+
+```
+# 1) xcodebuild -target dyld_shared_cache_builder -sdk macosx RC_ARCHS=arm64e
+  ✗ lsl/Allocator.h:44:10: fatal error: '_simple.h' file not found
+  #  修复：tmp/dscstub/_simple.h（补全 _simple_getenv/_simple_dprintf/_simple_vdprintf 原型）
+  #        + CPATH=<该目录>；三符号均由 libSystem 导出（已在 MacOSX.sdk 的 libSystem.tbd 确认）
+
+# 2)
+  ✓ libmach_o_writer / libmach_o … 通过
+  ✗ error: Build input file cannot be found: '…/ld/options/Options.cpp'
+     '…/ld/passes/Inits.cpp' '…/ld/Relocations.cpp' '…/ld/PersistentAtom.cpp'
+     '…/ld/options/Options_AtomInfo.cpp' '…/ld/options/Options_Output.cpp'
+     (in target 'SharedCacheLinker.framework')
+```
+
+**根因**：`ld/` 目录**整体不在开源树里**（`ls -d ld` → No such file）。`ld/` 是 ld64 那套内部
+链接器源码。而 `cache_builder/NewSharedCacheBuilder.cpp:54` 明确
+`#include <SharedCacheLinker/SharedCacheLinker.h>`，`SharedCacheLinker.framework` 的 Sources
+里就是 `ld/*.cpp` ⇒ **builder 强依赖 SLC，SLC 强依赖未开源的 `ld/`**。
+
+### 7.4 结论（更新）
+
+- **官方 builder 无法仅凭开源 drop 编译** —— 卡点是 `ld/`（ld64）源码缺失，**不是** `_simple.h`
+  这类小件。（可选但昂贵：给 SLC 造桩 / 裁掉 closure 功能。）
+- **B2''（自建 ≤4GB 缓存）仍未打通**，但**卡点已精确**，且**"本机没有工具链"的疑问已消除**。
+- **第三方开源工具**（下一轮评估，用户提示的方向）：
+  - `DyldExtractor`（Python，`pip install dyldextractor`）—— 抽出并**修复**成接近可加载的 dylib；
+  - `nfzerox/VirtualMacOniPad` 的 **`uncache.py`** —— 专门把"有损抽取物"补成可加载
+    （重建 chained fixups / GOT+auth-GOT / ObjC sel·protocol·相对方法列表 / 跨段 PC-relative /
+    平台标记改写）；**其致谢名单里明确列有 `MacWSBootingGuide`（本项目）**；
+  - `dsce`、`iOS-run-macOS-executables-tools`、`macmade/dyld_cache_extract`、
+    `keith/dyld-shared-cache-extractor`。
+- 若这些工具能把 dylib 变成"可直接 dlopen"的形态，可考虑**不走共享缓存**
+  （`cacheMode="avoid"`）——但该模式受 AMFI 门禁（§T4/T5 已证被拦），需先解门禁或改为 dyld 侧补丁。
+
+### 7.5 附带：dyld 源码里与"chroot / 老内核"直接相关的两处开关（`RE-confirmed`）
+
+1. `dyld/DyldProcessConfig.cpp:235-239` —— Apple 亲笔注释：
+   ```cpp
+   // hack to allow macOS 13 dyld to run chrooted on older kernels
+   if ( (this->dyldCache.addr == nullptr) ||
+        (this->dyldCache.addr->header.mappingOffset <= offsetof(dyld_cache_header, cacheSubType)) )
+       this->process.pageInLinkingMode = 0;
+   ```
+   我们的缓存是**新格式**，条件为假 ⇒ 该 hack **不生效**（这正是 goal 里"逼 dyld 走进程内 fixup"的现成钩子）。
+2. `pageInLinkingMode`（0/1/2/3）与 `DYLD_PAGEIN_LINKING`：
+   - `Loader.cpp:2043`：`canUsePageInLinkingSyscall = (mode>=2) && !libSystemInitialized() && !sandboxBlockedPageInLinking()`
+   - `DyldProcessConfig.cpp:1339`：`opts.usePageInLinking = (mode>=2) && !sandboxBlockedPageInLinking()`
+   - **但** `SharedCacheRuntime.cpp:984` 的 `mmap(…, MAP_FIXED|MAP_PRIVATE, …)` 是**无条件**执行的
+     （与 `usePageInLinking` 无关），页内 fixup 才由它分流 ⇒ **单改 mode 很可能不解决 m3 写错误**
+     （THEORY，待设备验证）。
+   - `SharedCacheRuntime.cpp:917`：`uint8_t* buffer = (uint8_t*)SHARED_REGION_BASE;`（**编译期常量**
+     0x180000000）⇒ 缓存落址**无法**靠改 header 的 `sharedRegionStart` 平移。
