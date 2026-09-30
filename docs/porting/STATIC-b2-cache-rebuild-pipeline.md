@@ -637,3 +637,65 @@ fork 的 `VirtualMac/vz/uncache.py` 比 upstream 多 ~1 KB，改动只在 `a2s_b
   并考虑放大后与 iOS 自身共享缓存布局的相互影响。
 
 **执行顺序**：**D 先做**（纯用户态、可逆、不碰内核）；E 只在 D 收益不足时启动。
+
+---
+
+## 14. 过夜运行：为 15.6.1 缓存生成 `.a2s` 符号索引（路线 D 的前置）
+
+> 2026-10-01 00:36 起。用户明确选择"**继续跑 a2sb**"，已知内存风险并接受。
+
+### 14.1 确切命令、产物、进程
+
+```bash
+cd /Users/ciscohe/Desktop/macPad
+I=~/Desktop/VirtualMacOniPad/VirtualMac/build/toolchain/bin/ipsw-a2sb
+$I --no-color dyld a2sb \
+   --cache analysis/dyld-cache-15.6.1/dyld_shared_cache_arm64e.a2s \
+   analysis/dyld-cache-15.6.1/dyld_shared_cache_arm64e \
+   /tmp/a2s_probe_addrs.txt
+# 地址文件内容无所谓（索引是全量的）；产物 = analysis/dyld-cache-15.6.1/dyld_shared_cache_arm64e.a2s
+```
+
+| 项 | 值 |
+|---|---|
+| PID（本次运行） | `21271` |
+| 日志 | `/tmp/.../tasks/b14o5p96b.output` —— 命令里带了 `| tail -25`，**中途无进度输出**，属正常 |
+| 防休眠 | 已起 `caffeinate -i -w 21271`（`pmset -g assertions` 可见 `PreventUserIdleSystemSleep 1`） |
+
+**语义已核实**（`ipsw-src/pkg/dyld/symbols.go:530-563`，用户 fork 的 ipsw 源码）：
+`.a2s` 不存在时走 `ParsePublicSymbols → ParseLocalSyms → ParseStubIslands → ParseAllObjc
+→ SaveAddrToSymMap` ⇒ **全量地址→符号索引**（不是"只缓存查过的"），且**只在最后一次性落盘**。
+
+> 附注：`ipsw dyld a2sb <DSC> <ADDRFILE>` 的定位是"按地址批量查符号"，`--cache` 是它顺带建/用的
+> 索引。这个索引正是"把缓存里裸的 unslid 跨镜像指针换成符号绑定"所必需的——与 IDA 反编译 dyld
+> 无关（IDA 回答"代码干什么"，a2sb 回答"这个地址是哪个符号"）。
+
+### 14.2 风险（已告知，用户选择继续）
+
+```
+RAM 10.0 GB；vm.swapusage total=0（无交换空间）；a2sb RSS 4.32 GB 且仍在增长；
+free pages ≈ 15 MB；load average ≈ 10
+```
+中途被 jetsam/OOM 杀掉 ⇒ **零产物**（因为只在最后 `SaveAddrToSymMap` 落盘）。
+
+### 14.3 早晨怎么判定成败（三条命令）
+
+```bash
+ls -la analysis/dyld-cache-15.6.1/*.a2s     # 出现 = 索引建成（22D68 同款为 713 MB）
+pgrep -f bin/ipsw-a2sb                      # 有 PID = 还在跑
+ps -o pid,etime,time,rss -p <pid>           # 累计 CPU 时间 / RSS
+```
+
+### 14.4 成功之后，路线 D 的后续（按序）
+
+1. 应用两个补丁：`misc/dyldextractor-2.2.2-slideinfo5.patch`、`misc/uncache-slideinfo5.patch`
+   （都已在 `--dry-run` 下验证可干净应用）
+2. `dyldex` 抽出目标镜像 → `VZ_IPSW=<ipsw-a2sb> uncache.py <15.6.1 主缓存> <镜像名> <抽取物> <输出>`
+3. 验收：`dyld_info -fixups` 通过 → **宿主 `dlopen` 成功**（现状是 `mmap errno=22`）
+4. 再扩到整套 rootfs（~3257 个 dylib）+ 让 dyld 在无共享缓存下运行
+
+### 14.5 备选（若 a2sb 挂掉）
+
+转 **路线 C**：从本机 `UniversalMac_13.2.1_22D68_Restore.ipsw`（12.49 GB）出 rootfs ——
+纯磁盘 I/O、低内存；且 13.2.1 缓存 3.21 GB 天然 < 4 GB、slide info **v3** ⇒
+dyld 自带进程内 fixup，**完全不需要 `.a2s` / uncache**（见 §12）。
