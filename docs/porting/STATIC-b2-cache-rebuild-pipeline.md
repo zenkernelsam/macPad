@@ -833,3 +833,34 @@ RESULT zlibVersion = b'1.2.12'
 1. **扩样**：对闭包里的镜像批量跑同一条链，统计成功率（本轮已启动）。
 2. 处理失败样本（若有）。
 3. 之后才谈"铺进 rootfs + 让 dyld 无缓存运行"，以及设备侧验证。
+
+### 16.7 扩样结果：10 个 CLI 核心库，8 个通过（2026-10-01 05:33）
+
+脚本：`misc/uncache_batch.sh`（抽取 → uncache → 唯一化 ID → 重签 → `dlopen`，逐条打点）。
+
+| 镜像 | rebases | binds | 产物 | dlopen |
+|---|---|---|---|---|
+| `/usr/lib/libc++.1.dylib` | 1810 | 401 | 954,752 B | ✅ |
+| `/usr/lib/libsqlite3.dylib` | 1719 | 233 | 1,937,160 B | ✅ |
+| `/usr/lib/libncurses.5.4.dylib` | 1506 | 100 | 411,056 B | ✅ |
+| `/usr/lib/libarchive.2.dylib` | 667 | 283 | 1,135,792 B | ✅ |
+| `/usr/lib/libcompression.dylib` | 577 | 50 | 951,288 B | ✅ |
+| `/usr/lib/libedit.3.dylib` | 540 | 120 | 231,128 B | ✅ |
+| `/usr/lib/libpcap.A.dylib` | 431 | 103 | 313,016 B | ✅ |
+| `/usr/lib/libiconv.2.dylib` | 14 | 49 | 131,936 B | ✅ |
+| `/usr/lib/libSystem.B.dylib` | 4 | 144 | 100,352 B | ⚠️ `Killed: 9` —— **测试设计问题** |
+| `/usr/lib/libobjc.A.dylib` | — | — | — | ❌ **dyldex 无法抽取** |
+
+**两个失败的定性：**
+
+- **`libSystem.B.dylib`（⚠️ 不是机制失败）**：它在缓存里是 **85,550 B 的 umbrella 桩**，
+  而 libSystem 在**每个进程里都已加载**——我们把它改名后再加载，等于在同一进程里塞第二份 libSystem，
+  被 `Killed: 9` 是预期后果。**该镜像不能用"宿主 dlopen"来验证**，需单独设计验证方式。
+- **`libobjc.A.dylib`（❌ 真实的工具限制）**：`dyldex -l -f libobjc` **能列出**
+  `/usr/lib/libobjc.A.dylib`，但 `dyldex -e /usr/lib/libobjc.A.dylib` 与 `-e /usr/lib/libobjc.dylib`
+  **都报 `Unable to find image`**（注：先前一次诊断里它"看起来成功"，其实是管道掩盖了退出码，**该结论已作废**）。
+  ⇒ 这是 dyldextractor 对该镜像的抽取限制（疑与其在缓存里的 ObjC 优化/布局有关），**与我们的 v5 补丁无关**，
+  需单独处理。
+
+**结论**：在可正常验证的样本上 **8/8 通过**，规模从 14 到 1810 个 rebase 都覆盖到了；
+剩下的 `libobjc` 是抽取器限制（可绕过：换工具或单独处理），`libSystem.B` 需要另设验证方法。
