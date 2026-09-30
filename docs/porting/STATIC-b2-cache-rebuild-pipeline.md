@@ -161,3 +161,36 @@ ls -la /tmp/miniroot_1561/System/Library/Caches/com.apple.dyld/
 # 若仍静默，抓它的 syslog：
 log show --last 2m --style compact --predicate 'process == "update_dyld_shared_cache"' | tail -20
 ```
+
+### 6.5 **结论：B2'' 在本机不可实现**（2026-10-01，证据确凿）
+
+补上 miniroot 的 `/usr/lib/dyld`（设备那份，SHA 与记录一致）后**再次 sudo 复跑**：
+仍然**无输出、无产物**；`log show --predicate 'process == "update_dyld_shared_cache"'` **一条日志都没有**。
+
+⇒ 直接检查该二进制本身（`size` / `nm` / `strings`）：
+
+```
+$ size /usr/bin/update_dyld_shared_cache
+__TEXT 16384   __DATA 0   __OBJC 0        ← 16KB 的桩
+$ nm -gU /usr/bin/update_dyld_shared_cache
+0000000100000000 T __mh_execute_header   ← 除入口外没有任何函数
+$ strings -a /usr/bin/update_dyld_shared_cache | wc -l
+4                                        ← 只有版本 banner
+```
+
+**`/usr/bin/update_dyld_shared_cache` 在 macOS 15 上就是一个空壳**
+（与开源树里那份 `cache-builder/update_dyld_shared_cache.cpp` 的
+`int main(...) { return 0; }` **完全对应**）。真正的缓存构建器
+（`dyld_shared_cache_builder` / `dyld_shared_cache_util`）**随 Apple 内部构建系统发布，不在系统里**
+（本机又只有 CLT、无 Xcode；`xcodebuild` 直接 `requires Xcode` ✗）。
+
+**⇒ 因此"在 15.6.1 版本内重建 ≤4GB 缓存"这条路在本机不可实现**：
+- 自建 builder = 重写整个 cache 构建器（fixup/PBL/trie/subcache），不可行；
+- 官方 builder 本机不存在；
+- 手工编译 `dsc_extractor` 亦因私有 SDK 头/内部宏而失败（§6.1 记录）。
+
+**剩下的可行路线 = C（换 13.4 Ventura rootfs）**：13.4 的缓存约 2.5GB，天然 <4GB，
+且 `pointer_format=12` 本内核支持（format-13 墙不存在）；作者已在该版本上跑通
+（`prepare_ventura_windowserver.py`、`22F82` 的缓存 CDHash 都在仓库里）。
+**需要用户提供一份 13.4 rootfs（DMG 或安装器）** —— 设备与宿主上目前**都没有**
+（已搜：设备 `/var/mnt`、`/var/mnt/r2`、staging 目录；宿主 `~/Downloads`、`/Users/ciscohe/*.dmg`）。
