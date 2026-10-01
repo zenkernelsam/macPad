@@ -224,3 +224,123 @@ DYLD_INSERT_LIBRARIES=/usr/local/lib/libmachook_arm64.dylib  + F1 + 原始缓存
 
 上游新代码**不能**直接解决我们的问题；但 §8.3 那个 `objc_addExceptionHandler` 暗示值得在
 "查 `exit(90)` 成因"时一并考虑（例如：让 ElleKit 的初始化器不走老式异常注册路径，或看它是否因此 trap 后自尽）。
+
+---
+
+## 9. 给复核方（隔壁 AI）的逐条复核清单
+
+> 目的：让独立复核者能用**最少的步骤**验证（或推翻）我的每条观察。
+> 每条格式：**结论 / 复现 / 期望 / 什么会推翻它**。
+> 设备访问：`sshpass -p cisco ssh -o StrictHostKeyChecking=no -p 2222 root@192.168.64.1`
+> ⚠️ 设备上是 **zsh 且不做变量分词**：命令必须写成数组形式，例如
+> `S=(sshpass -p cisco ssh … root@192.168.64.1); "${S[@]}" '…'`
+> ⚠️ 设备上**没有** `shasum` / `strings` / `xxd` / `pgrep` / `lldb`；用 `wc -c`、`cat -v`、`od`。
+> ⚠️ 设备 python 是 procursus 的，**没有 `os.chroot`**，需 `ctypes.CDLL(None).chroot()`。
+
+### V0（前置）确认设备处于"好状态"
+- **复现**：`wc -c /var/mnt/rootfs/usr/lib/dyld`
+- **期望**：`1239616`（= 设备原始 dyld，SHA `9956915299c6e3e21c7e650242166bab05dc635da4acac2cbade4e646eec51a1`）；
+  缓存主/`.01` = `2712764416` / `2203500544`（**未打 4GB 布局补丁**）。
+- **推翻**：若尺寸不同 ⇒ 有人跑过 `apply_4gb_layout_patch.sh` 或部署了 F1。
+
+### V1 ⭐【最重要】原始缓存 + F1 ⇒ 131 镜像加载、零 EXC_GUARD
+- **复现**：
+  ```bash
+  R=/var/mnt/rootfs
+  cp /var/mobile/dyld_f1_34790.bin "$R/usr/lib/.f1s_v" && chmod 755 "$R/usr/lib/.f1s_v"
+  mv "$R/usr/lib/dyld" "$R/usr/lib/.f1o_v" && mv "$R/usr/lib/.f1s_v" "$R/usr/lib/dyld"
+  DYLD_PRINT_LIBRARIES=1 DYLD_PRINT_INITIALIZERS=1 timeout 300 \
+    /var/mobile/run_dbg_hold_v2 /var/jb/usr/bin/chroot "$R" /bin/echo HI > /tmp/v1.out 2> /tmp/v1.raw
+  # 还原：mv "$R/usr/lib/dyld" "$R/usr/lib/.f1t_v" && mv "$R/usr/lib/.f1o_v" "$R/usr/lib/dyld"
+  ```
+- **期望**：`/tmp/v1.raw` 有 **400+ 行 `dyld[PID]: <UUID> <path>`**，唯一路径数 ≈ **131**，
+  含 `/usr/lib/libSystem.B.dylib`、`libsystem_kernel/platform/pthread/malloc`、`libobjc.A.dylib`、
+  `libc++.1`、`CoreFoundation`、`Network`、`IOKit`、`IOMobileFramebuffer`、`IOSurface`、swift 全套；
+  **`grep -c '\[exc\]' /tmp/v1.raw` = 0**。
+- **推翻**：若出现 `[exc] type=12 code0=0xa000000100000000`（= EXC_GUARD）⇒ 那条"原始缓存不出守卫"不成立。
+- **注意（易误判）**：`timeout` 必须 **> 90 s**；否则看不到结尾的 `[*] child exited rc=90`，会误以为"卡死"。
+
+### V2 "打 4GB 布局补丁反而坏"（对照）
+- **复现**：看 `misc/post_reboot_cli_test.sh` 的输出/日志 `post_reboot_cli_test.log` 里**更早那次**运行。
+- **期望**：那次报 `GUARD_2ac75c000_HITS=1` / `VERDICT=STILL-BLOCKED-same-guard`，
+  且 `[vm] 0x2ac75c000..0x2ac760000 prot=1/3`（**写只读页**）。
+- **推翻**：若能在**打补丁**的状态下稳定加载 libSystem ⇒ 我的"补丁是坏的那步"就不成立。
+
+### V3 `HI` 不打印，且进程在初始化器阶段 `exit(90)`
+- **复现**：同 V1，看 `/tmp/v1.out`（只有 `Successfully marked proc …`，**无 `HI`**）与 `/tmp/v1.raw` 的**最后一条**
+  `running initializer`。
+- **期望**：最后一条是 `… in /private/preboot/CFD92CED…/dopamine-…`（**越狱注入**，路径被 dyld 截断在 96 字符左右）。
+- **推翻**：若最后一条初始化器是某个 **macOS 系统库**（而非 `/private/preboot/…`）⇒ 我的"卡在越狱注入"归因错。
+- **另一条可查性检查**：`ls /var/mnt/rootfs/private/preboot/` **是空的** ⇒ 那批注入 dylib 在 chroot 内如何解析**我未查清**，
+  这本身是个待解的疑点（供你复核）。
+
+### V4 那个 stderr blob 不是 libmachook、也不是失败标记
+- **复现**：与 V1 同，但**不设** `DYLD_INSERT_LIBRARIES`；再跑一次项目自己的
+  `run_bash.sh -c "echo hi"`。
+- **期望**：两种情况下**同一个 7 条记录的 blob**（`44 46 …`/`41 4e …`/`46 4c …`/`54 44 …`/`46 32 …`/`48 47 …`/`48 41 …`，
+  每条 8B tag + 8B 值；`HG`/`HA` 的值 = `0x2ac75c000` / `0x2ac760000`）。
+- **推翻**：若某个运行里 blob 消失 ⇒ "通用诊断"的说法错，它可能与某条具体失败绑定。
+
+### V5 ⭐ 内核侧地址（需要 KRW；`kcall` 不可用但 `kread/kwrite` 可用）
+- **V5a** `task_exc_guard` = **`task + 0x5C4`**
+  - **复现**：`proc_self()` → `+0x18` = `ro` → `ro+0x8` = `task`（**剥 PAC**：`0xffff800000000000 | (v & 0x7FFFFFFFFFFF)`），
+    读 `task+0x5C4`。
+  - **期望**：普通进程 `0x99`；`proc_find(1)`（launchd）`0x53`；`proc_find(0)`（kernel_task）`0x00`。
+  - **推翻**：值不随任务变化、或三个进程读不出上述形态。
+- **V5b** `task_exc_guard_default` = **IDB `0xFFFFFE000A9FABE0`**
+  - **复现**：先求 slide——用 `vm_shared_region_create`（IDB `0xFFFFFE0008060FD0`）的**序言字节**
+    `7f2303d5 ff0303d1 e923056d fc6f06a9` 做 needle，**步长 0x1000** 扫；
+    本 boot 得 `SLIDE = 0x1a874000`，于是运行时地址 `0xfffffe002526ebe0`，读回应为 **`0x00000099`**。
+  - **推翻**：若值不是 `0x99`（平台字节）或第三方字节不是 `0x00`。
+  - **注意**：项目原 `kfind_slide.py` **步长 0x200000**，会漏掉非 2MB 对齐的 slide——这是它报 "no hit" 的原因。
+- **V5c** `size = SHARED_REGION_SIZE_ARM64` 的物化点 = **`0xfffffe0008061160`** = `MOVZ X20,#1,LSL#32`（字节 `34 00 C0 D2`）
+  - **注意**：IDA 把它显示为 **`MOV`**，按 `movz`/`LDR`/immediate 搜**都搜不到**；
+    只能在函数内**文本搜索** `100000000`。
+- **V5d** `exec` **重建 task**（同一 pid 下 task 指针变化、guard 归位 `0x99`）；`fork` **复制父任务的 guard**
+  （`sub_FFFFFE0007FA31B4`：`LDR W8,[X22,#0x5C4]`→`STR W8,[X19,#0x5C4]`，`kernel_task` 特判置 0）。
+
+### V6 E2：守卫可被"非致命化"（机制成立，但不解决根因）
+- **复现**：`kwrite32(task_exc_guard_default_runtime, 0x90)`（先确认原值 `0x99`），再跑见证。
+- **期望**：从 `EXIT=137`（守卫 SIGKILL）变成 **`EXIT=90`**。
+- **推翻**：若仍 137 ⇒ 该位不是致命性的来源。
+- ⚠️ **务必还原 `0x99`**（我离开时已还原）。
+
+### V7 路线 D 的工具链（可独立验证）
+- **复现**：`misc/dyldextractor-2.2.2-slideinfo5.patch` + `misc/uncache-slideinfo5.patch` 应用到
+  dyldextractor 2.2.2 / uncache.py 后，对 `analysis/dyld-cache-15.6.1/dyld_shared_cache_arm64e`
+  抽 `/usr/lib/libxml2.2.dylib` → uncache → **宿主 `dlopen`**（需把 install name 唯一化以排除 dyld 去重）。
+- **期望**：`dlopen` 成功（libxml2：3621 rebases / 134 binds）。
+- **推翻**：若 `mmap errno=22`（= 打补丁前的状态）。
+
+### V8 上游合并
+- **复现**：`git merge --no-commit --no-ff upstream/main`（`upstream = DCMMC/macPad`）。
+- **期望**：rc=0、零冲突；改动 38 文件 / +3253 / −282，全为 GUI/窗口/输入/性能。
+
+---
+
+## 10. commit / merge 总结（给复核方与记录）
+
+| commit | 内容 |
+|---|---|
+| `8d0d15c` | **merge upstream/main**（11 个提交：Retina 预设、Electron 滚动、drawable 归属、120 Hz、IME→AppKit 焦点）— 干净合并 |
+| `9910b6d` | 上游合并评估：内容对阻塞**无直接帮助**；唯一暗示 = `objc_addExceptionHandler` interpose；实测"插入 libmachook 不改变结局" |
+| `87049ad` | 最终交接：修正设备状态描述 + 精确复现命令 |
+| `0cb4297` | **正式交接回复**（本文档 §0-§7） |
+| `b1aeced` | **重大发现**：原始缓存 + F1 ⇒ 131 镜像加载、零守卫；卡点转到初始化器 |
+| `198700c` | S1/S2 结果 + **对我自己两条结论的更正** |
+| `49424d2` | 完整交接简报（544 行） |
+| `802009e` | E2 机制成立 + "撞上布局根因"（**后已撤回**，见 `198700c`/`b1aeced`） |
+| `dfd1d4b`/`512491d` | 第三方 dsc 工具评估：全都不支持 slide info v5 |
+| `150a3f1` | D③ 研究："条件可行"（**后由 `2a01bce` 判定不可行**） |
+| `2a01bce` | **D③ 判定不可行**（`reuseExistingCache` 是快路径） |
+| `80ccdff`/`543ac62` | 路线 C 资产发现（13.2.1 缓存 3.21 GB）与 rootfs 来源修正 |
+| `ad3b785`/`f4fc7ce` | **v5 补丁两个**（dyldextractor + uncache.py），v5 支持落地 |
+| `6dd7640` | 过夜 `.a2s` 索引（1.13 GB）的运行与判定方法 |
+| `2df12be`/`ea7e6cc` | 路线 D 里程碑（**dylib 可加载**）+ 批量冒烟（8/8） |
+| `c69d32b` | Phase 2 内核 IDB 字节级验证 |
+
+**核心资产位置**：
+- `.a2s` 符号索引：`analysis/dyld-cache-15.6.1/dyld_shared_cache_arm64e.a2s`（1.13 GB）
+- 两个 v5 补丁：`misc/dyldextractor-2.2.2-slideinfo5.patch`、`misc/uncache-slideinfo5.patch`
+- E2 与复核脚本：`misc/e2_launch.py`、`e2_probe.py`、`e2_patch_default.py`、`e2_slide.py`、`e2_thrdump.py`、`uncache_batch.sh`
+- F1 dyld：设备 `/var/mobile/dyld_f1_34790.bin`（SHA `14e2751b…`，CDHash `cd023af61cd044d269a6bb89380c80f5b15979dc`）
