@@ -10,7 +10,7 @@
 
 | 变体 | 判定 | 一句话依据 |
 |---|---|---|
-| **E1 放大 `SHARED_REGION_SIZE_ARM64`** | ❌ **不可行** | 是**编译期常量**（要写 text）；区域在**开机首个 exec** 就建立；且项目**无内核 text 写成功先例**、文档记 KTRR/PPL 下 text 写挂死 |
+| **E1 放大 `SHARED_REGION_SIZE_ARM64`** | ❌ **不可行**（补丁点已精确到 1 条指令，见 §7） | 是**编译期常量**（要写 kernel `__text`）；区域在**开机首个 exec** 就建立；且项目**无内核 text 写成功先例**、文档记 KTRR/PPL 下 text 写挂死 |
 | **E2 让该守卫非致命** | ✅ **可行（首选）** | `task_exc_guard` 位控制：清 `VM_FATAL` 后 `vm_map.c:8701` 成空操作、`return KERN_SUCCESS`，`MAP_FIXED` 继续建立映射 |
 | **E2′ 让进程不被判为"平台二进制"** | ✅ **可能零内核补丁**（待实测） | 平台二进制 `default & 0xff = 0x99`（含 FATAL）；第三方 `(default >> 8) & 0xff = 0`（**全静默**）⇒ 非平台进程本来就不会致命 |
 | E3 只特判 submap 边界 | ⛔ 不建议 | 等价于 E1 的 text 补丁，且连带更多 |
@@ -187,3 +187,119 @@ E1/E3 最高（text 写，无先例，可能 panic **或开不了机**）。
 - `docs/porting/dyld-15.6.1-state.md:2790-2796`（**原始崩溃字段**）、`:604-607`、`:1534-1548`（KRW 能力）
 - `docs/porting/CONSOLIDATED-2026-09-29.md:44-50`（地址约定）、`:83/116`（`task+0x3E8`）
 - `AGENTS.md`（内核写安全规则、IDA 实例表、设备访问）
+
+---
+
+## 7. Phase 2：内核 IDB 字节级交叉验证（2026-10-01，IDA Instance1）
+
+> 实例自检：`module = kc_raw_16.3_T8112.bin`，`imagebase = 0xfffffe0007004000`，
+> `auto_analysis_ready / hexrays_ready = true`。内核**符号已剥离**（全为 `sub_*`），
+> 故以下全部靠**字符串/xref 锚点 + 源码比对**定位。
+
+### 7.1 `vm_shared_region_create` = `sub_FFFFFE0008060FD0`（0x574 字节）`RE-confirmed`
+
+锚点：字符串 `"vm_shared_region.c"` @ `0xfffffe0007ea1e43`，其 xref 只有两处
+（`sub_FFFFFE0008060FD0`、`sub_FFFFFE0008063294`）。反编译前者，**逐条对上源码**：
+
+| 源码（`vm_shared_region.c`） | 反编译所见 |
+|---|---|
+| 全局队列 `vm_shared_region_queue`（`:180`） | `off_FFFFFE000A9F2300`，遍历 `*(v20+8)` 双链表 |
+| lookup 键 `cpu_type/cpu_subtype/root_dir/64bit/page_shift/reslide/driverkit/rsr_version`（`:386-398`） | `v20[8]==a2`、`v20[9]==a3`、`*((_QWORD*)v20+3)==a1`、`*((unsigned __int8*)v20+115/112/120/119)`、`v20[36]==a8` |
+| 命中则 `reference_locked`（ref++，`:400-402`） | 调 `sub_FFFFFE00080609E0(v20)` |
+| 未命中则 `kalloc_type(..., Z_WAITOK\|Z_NOFAIL)`（`:685`） | `zalloc_flags(&unk_FFFFFE00079E9910, 0x8000, ...)` |
+| **`size = SHARED_REGION_SIZE_ARM64`（`:693-694`）** | **见 §7.2** |
+| panic `"shared_region: vm_shared_region_lastid wrapped @%s:%d"`（`:422`，源文件 424 行） | 完全一致（字符串 `aSharedRegionVm` @ `0xfffffe0007ea1e0d`） |
+
+**⇒ 编译产物与源码一致**，可作为后续补丁的依据。
+
+### 7.2 ⭐ E1 的补丁点：**一条 4 字节指令**
+
+```
+0xfffffe000806115c   MOV  X19, #0x180000000     ← base_address = SHARED_REGION_BASE_ARM64
+0xfffffe0008061160   MOV  X20, #0x100000000     ← size = SHARED_REGION_SIZE_ARM64
+                     字节: 34 00 C0 D2 = MOVZ X20, #1, LSL#32   （RE-confirmed by get_bytes）
+```
+
+- 分支上下文：`a2 == 0x100000C`（= `CPU_TYPE_ARM64`）且 `a4`（is64bit）非 0 时取这对常量；
+  紧随其后 `sub_FFFFFE00080222FC(v31, 0, v25, 1)`（建 map）与把 `v25` 存进 region 结构。
+- **放大到 8 GB 只需把 `0xfffffe0008061160` 的 `MOVZ X20, #1` 改成 `#2`**（`34 00 C0 D2` → `54 00 C0 D2`）。
+- ⚠️ 注意：IDA 把它显示为 `MOV`（别名），所以按 `movz`/`LDR`/`immediate` 搜都**搜不到**——
+  本轮先按 mnemonic 搜 0 命中，改用**函数内文本搜索** `100000000` 才定位到。
+- **但该地址在 `com.apple.kernel:__text` 内** ⇒ E1 的障碍**依旧是 KTRR/PPL 下的 text 写入**，
+  与 §3 的结论一致：**补丁本身极简，难的是"能不能写进去"**。
+
+### 7.3 附带产出：`vm_shared_region` 结构体字段偏移（`RE-confirmed`）
+
+由 `v16`（新建的 region）的赋值序列读出：
+
+| 偏移 | 字段 | 来源 |
+|---|---|---|
+| `+0x00` | 引用计数（初始 1） | `*(_QWORD*)v16 = 1` |
+| `+0x18` | `root_dir` | `*((_QWORD*)v16+3) = a1` |
+| `+0x20` | `cpu_type` | `*((_DWORD*)v16+8) = a2` |
+| `+0x24` | `cpu_subtype` | `*((_DWORD*)v16+9) = a3` |
+| **`+0x38`** | **`sr_address`** | `*((_QWORD*)v16+7) = v24` |
+| **`+0x40`** | **`sr_size`** | `*((_QWORD*)v16+8) = v25` |
+| `+0x48` | `sr_pmap_nesting_start` | `*((_QWORD*)v16+9) = v24` |
+| `+0x50` | `sr_pmap_nesting_size` | `*((_QWORD*)v16+10) = v25` |
+| `+0x70` | `sr_page_shift` | `v16[112] = v61` |
+| `+0x73` | `sr_64bit` | `v16[115] = a4 != 0` |
+| `+0x76` | `sr_stale`（查找时要求为 0） | `v16[118] = 0` |
+| `+0x77` | `sr_reslide` | `v16[119] = v54` |
+| `+0x90` | `sr_rsr_version` | `*((_DWORD*)v16+36) = a8` |
+| `+0xA0` | `sr_id`（`vm_shared_region_lastid` 递增而来） | `*((_DWORD*)v16+40) = v40` |
+
+> 这些是**数据字段**，将来若走"重建 region"或"运行时改 region 尺寸"的路，需要它们。
+
+### 7.4 更正：`task_exc_guard` 的位与默认值（**源码为准**）
+
+调研 subagent 报"平台二进制 `default & 0xff = 0x99`"，**与源码不符**，以源码更正：
+
+```c
+// osfmk/mach/task_info.h:546-559
+TASK_EXC_GUARD_VM_DELIVER 0x01 / VM_ONCE 0x02 / VM_CORPSE 0x04 / VM_FATAL 0x08
+TASK_EXC_GUARD_MP_FATAL   0x80            ; THIRD_PARTY_DEFAULT_SHIFT 0x8
+// osfmk/kern/task.c:460,470
+#define _TASK_EXC_GUARD_ALL_FATAL (_TASK_EXC_GUARD_MP_FATAL | _TASK_EXC_GUARD_VM_FATAL)   // = 0x88
+uint32_t task_exc_guard_default = _TASK_EXC_GUARD_ALL_FATAL;
+```
+**⇒ E2 要清的是 bit `0x08`**（要更保险就连 `0x01` 一起清）。
+
+并且一个重要的新事实：设置该默认值的 boot-arg **只在 `#if DEVELOPMENT || DEBUG` 下编译**
+（`osfmk/kern/task.c:923-929`）⇒ **release 内核上无法用 boot-arg 改**，`_TASK_EXC_GUARD_ALL_FATAL`
+（=0x88）是硬编码默认。
+
+### 7.5 仍未解：`task->task_exc_guard` 的字节偏移
+
+- `type_inspect("task")` 返回 size 异常、无成员 ⇒ IDB 无可用 `struct task` 类型。
+- 尝试经 `kern.task_exc_guard_default` 的 sysctl oid
+  （字符串 @ `0xfffffe0007ed97c6` → oid @ `0xfffffe0007991618`）反查全局变量**未成功**：
+  该 oid 各指针解引用后**没有**任何一处等于 `0x88`/`0x08`/`0x99`，其 `+0x28`
+  指向 `0xfffffe00079df180`，而那是个自指的链表结构（不是默认值本身）。**该线索判定为不通。**
+- **下一步（未做）**：改用设备侧扫描——在 `proc_task(p)` 得到的 task 结构里搜
+  "低字节 = 0x88 且是 4 字节对齐"的字（平台二进制默认值），并用"改一个已知进程的该字段、
+  观察 guard 是否变非致命"来闭环验证。
+- ⚠️ 附加风险：若该字段被 PAC 保护或位于只读区，E2 的"数据写"路线也要重估（见 §4 反证表）。
+
+### 7.6 调用点与守卫函数：做到哪一步
+
+- **`vm_shared_region_enter`（`sub_FFFFFE0008063720`，沿用项目既有标注）只有 1 个 code xref**：
+  `0xfffffe000802d4b4`，位于 `sub_FFFFFE000802D40C`（0x174 字节）内。
+  **这与源码"`vm_shared_region_enter` 唯一调用点在 `vm_map_exec` 内"（`vm_map.c:13397`）一致**，
+  即"exec 是唯一入口"。
+  （保留意见：调用者仅 372 字节，比典型的 `vm_map_exec` 小；未进一步证明其身份，但"唯一调用者"这一
+  结构事实本身已足够支撑 §2 的时序结论。）
+- **`vm_map_guard_exception` 未在 IDB 定位**：内核无符号，且该函数缺少唯一字符串锚点。
+  **判定：不阻塞** —— E2 需要的是 `task->task_exc_guard` 的**位**（已由源码确认，见 §7.4）与
+  该字段的**偏移**（§7.5 未解），而不是这个函数的地址；定位它不会改变任何结论。
+  将来若需要，可经 `vm_map.c` 的 panic 字符串簇做 xref 收敛。
+
+### 7.7 Phase 2 小结
+
+| 计划项 | 结果 |
+|---|---|
+| 定位 `vm_shared_region_create` | ✅ `sub_FFFFFE0008060FD0`，与源码逐条对上（§7.1） |
+| 定位 `size` 的赋值指令 | ✅ **`0xfffffe0008061160` = `MOVZ X20,#1,LSL#32`**（字节 `34 00 C0 D2`）（§7.2） |
+| `vm_map_exec` 内的调用点 | ✅ 间接：`vm_shared_region_enter` 唯一 xref = `0xfffffe000802d4b4`（§7.6） |
+| `vm_map_guard_exception` 实现 | ⚠️ 未定位（无唯一锚点）；**不阻塞**，且不影响任何判定（§7.6） |
+| 附带 | `vm_shared_region` 字段偏移表（§7.3）、`TASK_EXC_GUARD` 位更正（§7.4） |
