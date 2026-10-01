@@ -993,23 +993,38 @@ HI
 | **iOS-only** 哨兵 `enable-dylibs-to-override-cache` → 切到 `.development` 缓存变体 | `SharedCacheRuntime.cpp:502-518`（整段在 `#endif //!TARGET_OS_OSX` 之内）；`DYLD_SHARED_CACHE_DEVELOPMENT_EXT=".development"`；哨兵须 < 1024 B（`ENABLE_DYLIBS_TO_OVERRIDE_CACHE_SIZE`） |
 | `DYLD_SHARED_REGION=avoid` 仅模拟器有效 | `DyldProcessConfig.cpp:1394-1396` 注释原文 `// only support DYLD_SHARED_REGION=avoid on simulator` |
 
-### 18.4 ⭐ 因此转向：`forcePrivate` 才是那条门
+### 18.4 ⚠️ 更正：`forcePrivate` 这扇门**早已被实测否证**（勿重试）
 
-`loadDyldCache` 的第一个分支就是它：`options.forcePrivate → mapSplitCachePrivate()` —— **把缓存私有 mmap 进本进程，不进共享区**。
-那样 **4 GB 共享区限制根本不存在**，15.6.1 的 4.77 GB 缓存可以直接私有映射。
+我一开始把 `forcePrivate` 当作"重新打开的门"——**这是错的**。
+查 `docs/porting/STATIC-cache-layout-exceeds-4gb-shared-region.md:278-294`（早期 T4 实验）：
 
-而 `forcePrivate` 的来源（`DyldProcessConfig.cpp:1350`）：
-```cpp
-opts.forcePrivate = security.allowEnvVarsSharedCache && (cacheMode != nullptr) && (strcmp(cacheMode,"private")==0);
-```
-即 `DYLD_SHARED_REGION=private` + `security.allowEnvVarsSharedCache`，
-后者 = `amfiFlags & AMFI_DYLD_OUTPUT_ALLOW_CUSTOM_SHARED_CACHE`（`:938`）。
+| 实验 | 命令要点 | 结果 |
+|---|---|---|
+| **T4** | `DYLD_SHARED_REGION=private` + F1 + `/bin/echo HI` | **同一个 EXC_GUARD**（gap `0x2ac75c000`，`pc=dyld_base+0xae8`，`x16=0xc5`）⇒ **private 不解决** |
+| T5 | `DYLD_SHARED_REGION=avoid` + F1（对照） | runner 自身 `Abort trap: 6`，out/raw 皆空 |
 
-**与早期 T4/T5 结论的差别**：当时记的是"被 AMFI 拦"。但本轮确认门禁只是**一个 AMFI policy 位**，
-而 AMFI 的 env 剪除（`pruneEnvVars`，`:1025-1052`）在**越狱环境**下会被绕过
-⇒ **这条值得用一次设备实验重新判定**，而不是继续按"已否证"处理。
+**机制解释（与本轮源码交叉验证一致）**：`mapSplitCachePrivate` 仍然要在**同一批地址**上做
+`MAP_FIXED`，而 `.01` 尾部区间依旧横跨"已建立的共享区 submap / 其上未映射"的边界
+⇒ 依旧 `VMDS_FOUND_GAP` ⇒ 依旧致命。**"private" 只改变映射的归属，不改变 VAR 冲突。**
 
-### 18.5 连带：D 路线的工具修复进展（仍是资产）
+⇒ **结论不变**：`DYLD_SHARED_REGION=private` 属"**已否证**"，**不要重试**。（本轮差点重跑，故在此显式记录。）
+
+> 附：T5 曾据"runner Abort trap: 6"推断"该 env 被读取/放行"。但本轮源码显示
+> `avoid` 在**非模拟器**上会被忽略（`DyldProcessConfig.cpp:1394-1396`），
+> 所以 T5 那个现象**不能**作为"env 生效"的证据。该推断应下调为存疑。
+
+### 18.5 D③ 判定之后：15.6.1 还剩什么
+
+| 选项 | 状态 |
+|---|---|
+| E1 放大共享区（改 1 条 text 指令） | 补丁点已精确（§7.2），卡在 KTRR/PPL 下的 text 写 |
+| E2 让 DEALLOC_GAP 非致命（清 `task_exc_guard` bit 0x08） | **仍未试**，是 15.6.1 上最便宜的一条 |
+| E2′ 非平台二进制（免补丁） | 未试 |
+| `DYLD_SHARED_REGION=private` | ❌ **已否证（T4）** |
+| D③ 无缓存运行 | ❌ 本轮判定不可行（§18.1） |
+| C 换 13.2.1 | ✅ 资产齐备，不需要任何解包/内核算术 |
+
+### 18.6 连带：D 路线的工具修复进展（仍是资产）
 
 - 重建了 `/tmp` 被重启清空的工具链；`misc/uncache-slideinfo5.patch` 现在**同时包含** v5 支持与一处**新修复**：
   `uncache.py` 原来用 `in_img(rt)` 当守卫，但目标可能"落在段范围内、却不在 `amap` 映射表里" ⇒ `amap(rt)` 返回 `None` 崩溃。
