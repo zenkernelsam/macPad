@@ -387,9 +387,13 @@ RC=90   stdout 为空（无 hi）
 ```
 ⇒ **修正后的可信结论**：**chroot 是生效的，macOS 库能加载，但进程仍以 `RC=90` 结束、`hi` 不打印。**
 （`DYLD_PRINT_ENV` 显示链路里带着 `DYLD_INSERT_LIBRARIES=/usr/lib/systemhook.dylib`（Dopamine 的 ElleKit 注入），
-`launchdchrootexec` 会把目标改成 `libmachook_arm64.dylib`；但 `/var/mnt/rootfs/usr/lib/ellekit/` 与
-`/var/mnt/rootfs/var/jb` **都是空的**，所以 chroot 内**无法**解析 ElleKit 的那条路径 ——
-⇒ "ElleKit 让 macOS 进程 exit(90)"这个归因**需要重新验证**，我目前**不能**确认它。）
+`launchdchrootexec` 会把**目标**的插入表改成 `libmachook_arm64.dylib`。
+
+**关于 ElleKit 是否可被 chroot 内解析：我又测了一次，并更正** ——
+`/var/mnt/rootfs/usr/lib/ellekit/` **不存在**，但 **`/var/mnt/rootfs/var/jb` 是空的 `..` 之外还有内容（bind）**
+⇒ **ElleKit 的路径在 chroot 内很可能是可达的**（经 `/var/jb`）。
+⇒ **"ElleKit 让 macOS 进程 exit(90)"仍是一个成立假设，但我尚未用"按 PID 分诊"证实**。
+（我先前那句"chroot 内无法解析 ElleKit"**作废**。）
 
 ### 11.4 更正后的下一步（唯一可靠做法）
 
