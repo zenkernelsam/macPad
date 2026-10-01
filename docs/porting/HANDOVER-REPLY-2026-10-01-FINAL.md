@@ -344,3 +344,58 @@ DYLD_INSERT_LIBRARIES=/usr/local/lib/libmachook_arm64.dylib  + F1 + 原始缓存
 - 两个 v5 补丁：`misc/dyldextractor-2.2.2-slideinfo5.patch`、`misc/uncache-slideinfo5.patch`
 - E2 与复核脚本：`misc/e2_launch.py`、`e2_probe.py`、`e2_patch_default.py`、`e2_slide.py`、`e2_thrdump.py`、`uncache_batch.sh`
 - F1 dyld：设备 `/var/mobile/dyld_f1_34790.bin`（SHA `14e2751b…`，CDHash `cd023af61cd044d269a6bb89380c80f5b15979dc`）
+
+---
+
+## 11. ⚠️ 重大更正：§12 的"131 镜像加载"是**假阳性**（2026-10-01 晚）
+
+> 这一节推翻了 `HANDOVER-15.6.1-COMPLETE-BRIEF` §12.2 的招牌结论。**请以本节为准。**
+
+### 11.1 发现过程
+
+在做 §9-V3 复核时我注意到加载列表里出现 `IOMobileFramebuffer`（iOS 框架）与
+`/private/preboot/…`（iOS 路径），于是做了三项独立判据：
+
+| 判据 | 结果 |
+|---|---|
+| 日志里 `bin/echo` 出现次数 | **0** ⇒ chroot 里的 macOS `echo` **从未运行** |
+| 每个 PID 的**主可执行** | 全是 `/private/preboot/CFD92CED…/dopamine-…`（**iOS** 路径），包括我以为是 chroot 子进程的那个 PID |
+| 加载到的 `libsystem_kernel` UUID | `C76E6BED-…` ≠ **宿主 macOS 15.6.1** 的 `6E4A96AD-04B8-3E8A-B91D-087E62306246` |
+
+**⇒ 那"131 个镜像"全是 iOS 进程加载 iOS 库**（`libSystem.B.dylib` 那些行是 **iOS 的**）。
+**根因**：`misc/post_reboot_cli_test.sh` 的见证用的是 **`/var/jb/usr/bin/chroot`（procursus chroot）**，
+**它没能真正 chroot**；脚本只看"有没有 `code1=0x2ac75c000`"，于是把 iOS 进程的正常输出误判成 `FIXED`。
+
+### 11.2 因此撤回/下调
+
+- **撤回**："原始缓存 + F1 ⇒ 131 镜像 / 共享缓存 libSystem 加载成功 / VERDICT=FIXED"。
+  该 **VERDICT 本身也无意义**（它在测 iOS 进程）。
+- **下调**：`post_reboot_cli_test.sh` 作为"端到端见证"**不可信**（它不 chroot）——
+  这一点对未来任何人都是重要教训。
+- §12.3 的"打补丁反而坏"对照**同样来自该脚本的日志**，**一并存疑**（需用能真正 chroot 的手段重测）。
+- §12.5 的 blob 归因（ElleKit）**未受影响**（它由 `noinsert` 与 sanity 路径两条独立证据支持）。
+- §12.6/§12.7 的"下一步"**仍然有效**，但要用**能真正 chroot 的路径**执行。
+
+### 11.3 用正确路径得到的（更可靠的）观察
+
+改用项目**正规路径** `run_bash.sh`（→ `launchdchrootexec`，它有正确的 entitlement + `jbctl proc_set_debugged`）：
+
+```
+DYLD_PRINT_LIBRARIES=1 bash /var/jb/usr/macOS/bin/run_bash.sh -c "echo hi"
+RC=90   stdout 为空（无 hi）
+日志出现 /bin/bash（macOS 主可执行）与 279 行 dyld LIB ⇒ **这条路径确实 chroot 了、且加载了 macOS 库**
+```
+⇒ **修正后的可信结论**：**chroot 是生效的，macOS 库能加载，但进程仍以 `RC=90` 结束、`hi` 不打印。**
+（`DYLD_PRINT_ENV` 显示链路里带着 `DYLD_INSERT_LIBRARIES=/usr/lib/systemhook.dylib`（Dopamine 的 ElleKit 注入），
+`launchdchrootexec` 会把目标改成 `libmachook_arm64.dylib`；但 `/var/mnt/rootfs/usr/lib/ellekit/` 与
+`/var/mnt/rootfs/var/jb` **都是空的**，所以 chroot 内**无法**解析 ElleKit 的那条路径 ——
+⇒ "ElleKit 让 macOS 进程 exit(90)"这个归因**需要重新验证**，我目前**不能**确认它。）
+
+### 11.4 更正后的下一步（唯一可靠做法）
+
+1. **只用 `run_bash.sh`（或 `launchdchrootexec`）路径**做见证；**弃用 `post_reboot_cli_test.sh` 的 `chroot` 写法**。
+2. **按 PID 分开日志**：先定位**主可执行恰为 `/bin/bash`（或 `/bin/echo`）的那个 PID**，
+   再只看那个 PID 的 LIB/INITIALIZER 行。**不要把 iOS 助手进程的行算进去**（我这一轮就是栽在这里）。
+3. 拿到那个 PID 的**最后一条初始化器**，才是 `exit(90)` 的真实现场。
+4. 注意 `DYLD_PRINT_ENV=1` 会让日志爆量并可能改变失败模式（我的 rb3 运行里就没有出现 chroot'd bash）——
+   **一次只开一个诊断变量**。

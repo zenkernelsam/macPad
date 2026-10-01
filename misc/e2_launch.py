@@ -66,6 +66,8 @@ else:
 env = {
     "PATH": "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin",
     "HOME": "/Users/root", "USER": "root", "TMPDIR": "/tmp", "SHELL": "/bin/bash",
+    "DYLD_PRINT_LIBRARIES": "1",
+    "DYLD_PRINT_INITIALIZERS": "1",
 }
 if os.path.exists(ROOT + "/usr/local/lib/libmachook.dylib"):
     env["DYLD_INSERT_LIBRARIES"] = "/usr/local/lib/libmachook.dylib"
