@@ -170,3 +170,57 @@ GUARD_2ac75c000_HITS=1 / VERDICT=STILL-BLOCKED-same-guard
   PAC 数据指针需剥（`0xffff800000000000 | (v & 0x7FFFFFFFFFFF)`）；
   设备 SSH `root@192.168.64.1 -p 2222`（密码 `cisco`，**zsh 不做变量分词**，命令要放进数组 `S=(sshpass …); "${S[@]}" '…'`）；
   设备 python 是 procursus 的，**没有 `os.chroot`**，要用 `ctypes.CDLL(None).chroot()`。
+
+---
+
+## 8. 上游新提交的合并与"有没有暗示"评估（2026-10-01）
+
+### 8.1 合并：**干净，已并入**
+
+- `upstream = DCMMC/macPad`：**11 个新提交**（`bda24de..062c2ca`），相对 merge-base 的真实改动
+  = **38 文件 / +3253 / −282**。
+- `git merge --no-commit --no-ff upstream/main` → **rc=0、零 CONFLICT、"Automatic merge went well"**。
+- 已合并并推送：`8d0d15c STATIC: merge upstream (GUI/windowing/input: …)`。
+
+### 8.2 内容评估：**全是 GUI/窗口/输入/性能，对当前的 dyld/缓存/初始化器阻塞没有直接帮助**
+
+改动集中在：`libmachook/AppInputBridge.m`、`macwsdisplayd/main.m`、`libmachook/Metal_hooks.x`、
+`include/macws_{text_input,window_configuration,viewport_math,stream_protocol,host_protocol}.h`、
+一堆 `misc/test_*` 与 4 份 `docs/evidence/*-20261001.md`。
+主题：iOS IME→AppKit 焦点、Retina 预设与无界窗口、Electron 滚动卡顿、Chromium 全屏节奏、120 Hz 呈现目标、
+resize 时的直接合成/drawable 归属。
+
+`libmachook/mac_hooks.m` 的 +31 行是**渲染/交互活动文件的 fd 失效 inode 修复**（`macws_shared_descriptor_names_path`），
+也与我们的阻塞无关。
+
+### 8.3 唯一有价值的**暗示**（来自 `khanhduytran0/MacWSBootingGuide`，非 macPad）
+
+`3770f6f` 在 `libmachook/objc_hooks.c` 里新增：
+```objc
+// workaround strange SIGTRAPs
+uintptr_t objc_addExceptionHandler_new(void *fn, void *context) { return 0; }
+void objc_removeExceptionHandler_new(uintptr_t token) { }
+DYLD_INTERPOSE(objc_addExceptionHandler_new, objc_addExceptionHandler);
+DYLD_INTERPOSE(objc_removeExceptionHandler_new, objc_removeExceptionHandler);
+```
+⇒ **作者遇到过"奇怪 SIGTRAP"，靠 interpose 老式 `objc_addExceptionHandler` 绕过**。
+这提示：**旧式 libSystem/libobjc 的异常/初始化机制在这个 chroot 环境里确实会出问题**——
+与我们"初始化器阶段出事"的现象属**同一类**。
+
+**已实测的一个推论（被否定）**：作者的所有这类 workaround 都住在 **libmachook** 里，
+而我此前的见证运行**没有插入 libmachook**。于是补做了带 libmachook 的运行：
+```
+DYLD_INSERT_LIBRARIES=/usr/local/lib/libmachook_arm64.dylib  + F1 + 原始缓存
+结果：466 个镜像加载（比不插入时的 409 更多），
+      最后一条初始化器仍是 /private/preboot/…/dopamine-…（ElleKit），
+      仍然没有 HI ⇒ 插入 libmachook 不改变结局。
+```
+
+其它 khanhduytran0 提交（`3436ab8` 加 `com.apple.private.domain-extension` entitlement、
+`loadtc`；`14e1850` 把 WS plist 的 `CA_DISABLE_SWAP_ICC` 删掉、把 Metal XPC 注册改回 dict 方式）
+**都与我们的阻塞无关**。
+
+### 8.4 结论
+
+上游新代码**不能**直接解决我们的问题；但 §8.3 那个 `objc_addExceptionHandler` 暗示值得在
+"查 `exit(90)` 成因"时一并考虑（例如：让 ElleKit 的初始化器不走老式异常注册路径，或看它是否因此 trap 后自尽）。
