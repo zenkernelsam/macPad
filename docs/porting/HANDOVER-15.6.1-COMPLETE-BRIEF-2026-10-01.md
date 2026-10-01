@@ -354,3 +354,76 @@ A/B/C 三轮 stderr 都有那个二进制块（tag：`DF/AN/FL/TD/F2/HG/HA`）�
 **这是 15.6.1 是否还有机会的关键未知**（§6.4/§7-S1）。若那条失败仍可归因于布局，
 则需要"更小的缓存"（B，缺工具）或"更大的区域"（E1，text 写）；
 若那条失败是**别的原因**，15.6.1 可能还有路。
+
+---
+
+## 10. S1 / S2 实测结果（**含对我此前结论的两处更正**，2026-10-01 16:20）
+
+### 10.1 S2：`DYLD_SHARED_CACHE_DIR` 指向空目录 —— **不阻塞，但结论不充分**
+
+在 chroot 里设 `DYLD_SHARED_CACHE_DIR=/tmp/dsc_none`（空目录，rootfs 内已建）后 `execve /bin/echo`：
+- 那个 blob **依旧是 7 条**，`HG = 0x2ac75c000` **照样出现** ⇒ **dyld 仍然映射了缓存**（没被 env 劝退）。
+- 但 `DF` 记录的**值从 3 变成 4** ⇒ 该 env **确实被读到了**（只是不足以让它放弃缓存）。
+- `DYLD_PRINT_LIBRARIES=1` **完全没有输出** ⇒ 说明**这类 `DYLD_PRINT_*` 在平台二进制上被剪掉/忽略**。
+
+⇒ **对 D③ 的判定仍然不可靠**：因为 `DYLD_*` 可能被 AMFI 剪除，**用 env 探针无法证明"dyld 不会被劝退"**。
+若要真正判 D③，得用**不依赖 env** 的手段（例如把缓存文件真的移走，看 dyld 是报
+`no shared cache file` 还是 `re-using existing`）——**尚未做**。
+
+### 10.2 S1：那个 blob 的真实身份 —— **两点更正**
+
+**更正 1：blob 不是 libmachook 写的。**
+不注入 `DYLD_INSERT_LIBRARIES`（mode=noinsert）复跑，blob **逐字节相同** ⇒ 与 libmachook 无关。
+
+**更正 2（重要）：blob 不是"守卫绕过后的失败标记"。**
+跑**项目自己的 sanity 路径** `run_bash.sh -c "echo hi"`（走 `launchdchrootexec`）：
+```
+chdir: No such file or directory
+[launchdchrootexec] target=/bin/bash arch=arm64 insert=/usr/local/lib/libmachook_arm64.dylib
+DF…  （同一个 blob，同样 7 条，HG=0x2ac75c000 / HA=0x2ac760000）
+```
+⇒ **blob 在"正常"的 chroot exec 上也会出现**，是通用的早期启动诊断，**与守卫、与 E2 无关**。
+⇒ 因此我在 §6.4 里据 blob 的 `HG/HA` 推断"绕过守卫后撞上布局越界"——**这条推断没有证据支持，予以撤回**。
+（`launchdchrootexec/main.m` 只打文本 banner，不是它。）
+
+### 10.3 ⚠️ 新发现的**设备状态事实**（会改变所有 A/B 的解释）
+
+**项目自己的 sanity 路径当前也是失败的**：
+```
+run_bash.sh -c "echo hi"  →  EXIT=90，stdout 为空（没有 "hi"）
+```
+⇒ **当前设备状态下，任何 chroot exec 都返回 `EXIT=90` 且无输出。**
+这与 §4.1 里 E2 的"`137 → 90`"**必须合起来读**：
+- `137 → 90` **确实证明守卫不再杀进程**（这是 E2 的有效性证据，成立）；
+- **但 `90` 并不代表成功**——它就是"当前所有 chroot exec 都失败"的那个码。
+⇒ **E2 的结论应修正为**："清守卫后，失败模式从'被守卫 SIGKILL'变成'与普通失败路径相同的 90'"，
+而不能说"进程前进到了下一个失败点"。
+
+**⇒ 结论：E2 之后到底卡在哪，目前**仍然未知**；而`EXIT=90` 这个通用失败码的成因
+（是 dyld 的？bash 的？还是内核的？）也**没有查清**。这两条是**下一步最该查的**。
+
+### 10.4 未识别项清单（交接给下一个 AI）
+
+| 项 | 现状 | 可用线索 |
+|---|---|---|
+| 112~238 字节的 stderr blob（7 条 16 字节记录，tag `DF/AN/FL/TD/F2/HG/HA`） | **未识别**；已知：非 libmachook、非 launchdchrootexec、每次 chroot exec 都有 | 设备 `/var/mobile/triage.py`（读内核 kdebug triage ring）；或对设备 dyld（SHA `99569152…`，1,239,616 B，**非** F1）做 xref |
+| `EXIT=90` 的成因 | **未识别**；已知：项目 sanity 路径也返回它 | 同上；或对比"能跑通的状态"下的退出码 |
+| `HG=0x2ac75c000 / HA=0x2ac760000` 的语义 | **未识别**（已撤回"= 布局失败"的推断） | 同上 |
+
+---
+
+## 11. 交接建议（给下一个 AI）
+
+**先做这三件（都不贵、都能推翻我）**：
+
+1. **搞清 `EXIT=90` 与那个 blob**：它们出现在**每次** chroot exec 上，是当前失败的**共同症状**。
+   建议先在设备上找一个**能跑通的**参照点（例如 pristine dyld + 原始缓存、或 `/usr/bin/true`），
+   看它的退出码与 stderr 长什么样，再与失败态对比。
+2. **不用 env 重测 D③**：把 rootfs 里的缓存文件**改名移走**（可逆），跑 `/bin/echo`，
+   看 dyld 报 `no shared cache file`（D③ 活）还是 `re-using existing`（D③ 死）。
+3. **复核 B**：用**旧 SDK**（或把 SLC 裁掉/造桩）再尝试编 `dyld_shared_cache_builder`。
+   我只在 Xcode 26.3 / SDK 26.2 上失败过一次。
+
+**我对 15.6.1 的当前立场**：**不确定**。根因（布局超区）是硬的，但"绕过守卫之后的失败"我没查清，
+且我据以判断"E2 不解决根因"的那条证据（blob 里的 `0x2ac75c000`）**已被我自己撤回**。
+所以**15.6.1 仍有可能是通的**——需要上面第 1、2 条来判定。
