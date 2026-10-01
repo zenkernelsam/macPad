@@ -369,6 +369,55 @@ VERDICT: WRITE OK
 **原因已定位**：exec 重建 task，补丁丢失（7.5.4）——**不是"守卫不是凶手"**。
 （该 80 字节块的作用**未定**：本地源码里搜不到这些 tag；设备上有 `triage.py` 可读内核 kdebug triage ring，下一步可用它对照。）
 
+#### 7.5.7 ⭐ E2 实测：**守卫确实被绕过，但立刻撞上更根本的布局问题**（2026-10-01）
+
+**① slide 求法（修正了项目脚本的缺陷）**
+`kfind_slide.py` 找的是 `IDAmemset(0xfffffe0007f18000)` 处的 16 字节序言，且**步长 0x200000**——
+而本 boot 的 slide `0x1a874000` **不是 2 MB 对齐**，因此必然漏掉。
+改用 **`vm_shared_region_create`（`0xfffffe0008060FD0`）的真实序言**
+`7f2303d5 ff0303d1 e923056d fc6f06a9` 作 needle、**步长 0x1000**，一次命中：
+
+```
+SLIDE = 0x1a874000
+  vm_shared_region_create rt = 0xfffffe00228d4fd0
+  task_exc_guard_default  rt = 0xfffffe002526ebe0   value = 0x00000099   (平台 0x99 / 第三方 0x00)
+```
+
+**② 施加与结果对比**
+
+| 运行 | 动作 | 结果 |
+|---|---|---|
+| A(baseline) | `chroot`+`execve /bin/echo` | **`EXIT=137`**（SIGKILL，守卫致命）｜stderr 80 B（5 条记录） |
+| B(patch own task) | 清自身 `task+0x5C4` 后同样 exec | **同 A**（`137`）—— 因 exec 重建 task，补丁丢失（§7.5.4） |
+| **C(改全局)** | `kwrite32(task_exc_guard_default, 0x90)` 后同样 exec | **`EXIT=90`**（不再是被守卫杀死）｜stderr **112 B（7 条记录）** |
+
+**③ C 的 stderr 多出的两条记录 = 下一个失败点**
+
+```
+… 前 5 条与 baseline 相同 …
+48 47 ("HG")  = 0x00000002ac75c000      ← .01 子缓存最后一个映射（m6）的末端
+48 41 ("HA")  = 0x00000002ac760000      ← 同址按 16 KB 页对齐（0x2ac75c000 -> 0x2ac760000）
+```
+
+**`0x2ac75c000` 正是主文档 §0 里那个"越界/异常地址"**：`.01` 的 m6 = `0x288dcc000 + 0x23990000`。
+⇒ **守卫被绕过之后，进程前进到"缓存布局超出共享区"这个更根本的失败点上。**
+
+带 `DYLD_PRINT_SEGMENTS/LIBRARIES/INITIALIZERS` 复跑（运行 D）：stderr **一条 dyld 文本都没有**
+⇒ dyld 死在它自己的日志之前。
+
+### 7.6 E2 的结论
+
+- **机制层面：成立。** 清掉 `task_exc_guard` 的 `VM_FATAL|VM_DELIVER`（全局默认 `0x99 → 0x90`）
+  确实让 `DEALLOC_GAP` 不再致命，进程**不再被 SIGKILL**。
+- **但它不足以让 15.6.1 跑起来**：紧接着撞上 `0x2ac75c000`——即**缓存 4.77 GB 超出共享区 4 GB** 的**根因**。
+  ⇒ **E2 只是揭掉了最外层的症状，没有解决根因**（这与"守卫不是根因、布局才是"的判断一致）。
+- **仍未定**：112 字节 stderr blob 的性质（标签 `DF/AN/FL/TD/F2/HG/HA`，本地源码里搜不到；
+  设备有 `triage.py` 可读内核 kdebug triage ring，可用来对照）。
+- **已恢复**：全局改回 `0x99`；rootfs 的 dyld 未被改动。
+- **对 15.6.1 的总判断**：B 死（无 builder）、D③ 死（`reuseExistingCache`）、`private` 死（T4）、
+  E1 死（text 写）、E2 机制成立但**不解决根因** ⇒ **15.6.1 无路可走**，
+  除非能拿到 ≤4 GB 的缓存（= B，无工具）或改缓存布局（= 同上）。**出路是路线 C**。
+
 ### 7.6 调用点与守卫函数：做到哪一步
 
 - **`vm_shared_region_enter`（`sub_FFFFFE0008063720`，沿用项目既有标注）只有 1 个 code xref**：
