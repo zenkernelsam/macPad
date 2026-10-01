@@ -936,3 +936,86 @@ UUID 两者均为 3247E185-CED2-36FF-9E29-47A77C23E004
   ⚠️ 但此结论是基于**15.6.1 的 dyld 源码**读出的（`version != 5` 那道门控）；
   须用 **13.2.1 自己的 dyld**（dyld-1042.1 系）复核——线索：22D68 缓存里
   `__map_with_linking_np` 字符串**只出现 1 次**（15.6.1 是 3 次）。
+
+---
+
+## 18. ⛔ D③ 判定：**在 iOS 上走不通**；但 `forcePrivate` 重新打开一扇门（2026-10-01）
+
+> 级别：`RE-confirmed`（dyld 源码 + 宿主实测）。这一节**推翻了 §17 的乐观预期**。
+
+### 18.1 决定性证据：`reuseExistingCache` 是**快路径**
+
+`dyld/SharedCacheRuntime.cpp:1476-1500`：
+
+```cpp
+bool loadDyldCache(const SharedCacheOptions& options, SharedCacheLoadInfo* results)
+{
+    if ( options.forcePrivate ) {
+        success = mapSplitCachePrivate(options, results);      // 私有 mmap，不进共享区
+    }
+    else {
+        // fast path: when cache is already mapped into shared region
+        if ( reuseExistingCache(options, results) ) {
+            bool hasError = (results->errorMessage != nullptr);
+            success = !hasError;
+        } else {
+            // slow path: this is first process to load cache
+            success = mapSplitCacheSystemWide(options, results);   // ← 只有这里才 preflight 缓存文件
+        }
+    }
+    return success;
+}
+```
+
+**只有 slow path 会去 preflight 缓存文件**（`preflightMainCacheFile` → 文件缺失才报 `no shared cache file`，
+进而 `loadAddress==nullptr` → 退化为 `JustInTimeLoader` 从磁盘加载，见 §17.1）。
+
+⇒ **只要本 boot 的共享区已经系统级建立，dyld 就永远走快路径复用，永远不会去看磁盘。**
+要触发"无缓存"必须是**本 boot 第一个加载缓存的进程**——这个窗口在 iOS 上（首个 exec）远早于越狱拿到控制权。
+
+### 18.2 宿主实测佐证
+
+```
+$ DYLD_SHARED_CACHE_DIR=/tmp/emptycache DYLD_PRINT_LIBRARIES=1 /tmp/echo_t HI
+dyld[7926]: re-using existing shared cache ((null)):
+dyld[7926]:         0x199D48000->0x201CA3FFF init=5, max=5 __TEXT
+...
+HI
+```
+把缓存目录指向**空目录**也无效 —— dyld 报 **"re-using existing shared cache"**，直接复用已存在的区域。
+（顺带说明 `DYLD_SHARED_CACHE_DIR` 确实被支持，见 `DyldProcessConfig.cpp:1149`，但它管不了"复用已有区域"这条。）
+
+### 18.3 有用的副产品（三个确定性结论）
+
+| 结论 | 证据 |
+|---|---|
+| `DYLD_SHARED_CACHE_DIR` **被支持**（可换缓存目录） | `DyldProcessConfig.cpp:1149-1156`；`dyldMain.cpp:439` |
+| **iOS-only** 哨兵 `enable-dylibs-to-override-cache` → 切到 `.development` 缓存变体 | `SharedCacheRuntime.cpp:502-518`（整段在 `#endif //!TARGET_OS_OSX` 之内）；`DYLD_SHARED_CACHE_DEVELOPMENT_EXT=".development"`；哨兵须 < 1024 B（`ENABLE_DYLIBS_TO_OVERRIDE_CACHE_SIZE`） |
+| `DYLD_SHARED_REGION=avoid` 仅模拟器有效 | `DyldProcessConfig.cpp:1394-1396` 注释原文 `// only support DYLD_SHARED_REGION=avoid on simulator` |
+
+### 18.4 ⭐ 因此转向：`forcePrivate` 才是那条门
+
+`loadDyldCache` 的第一个分支就是它：`options.forcePrivate → mapSplitCachePrivate()` —— **把缓存私有 mmap 进本进程，不进共享区**。
+那样 **4 GB 共享区限制根本不存在**，15.6.1 的 4.77 GB 缓存可以直接私有映射。
+
+而 `forcePrivate` 的来源（`DyldProcessConfig.cpp:1350`）：
+```cpp
+opts.forcePrivate = security.allowEnvVarsSharedCache && (cacheMode != nullptr) && (strcmp(cacheMode,"private")==0);
+```
+即 `DYLD_SHARED_REGION=private` + `security.allowEnvVarsSharedCache`，
+后者 = `amfiFlags & AMFI_DYLD_OUTPUT_ALLOW_CUSTOM_SHARED_CACHE`（`:938`）。
+
+**与早期 T4/T5 结论的差别**：当时记的是"被 AMFI 拦"。但本轮确认门禁只是**一个 AMFI policy 位**，
+而 AMFI 的 env 剪除（`pruneEnvVars`，`:1025-1052`）在**越狱环境**下会被绕过
+⇒ **这条值得用一次设备实验重新判定**，而不是继续按"已否证"处理。
+
+### 18.5 连带：D 路线的工具修复进展（仍是资产）
+
+- 重建了 `/tmp` 被重启清空的工具链；`misc/uncache-slideinfo5.patch` 现在**同时包含** v5 支持与一处**新修复**：
+  `uncache.py` 原来用 `in_img(rt)` 当守卫，但目标可能"落在段范围内、却不在 `amap` 映射表里" ⇒ `amap(rt)` 返回 `None` 崩溃。
+  改为 `amap(rt) is not None` 后才安全回退到 bind 路径。
+- 复测 `Accelerate`：崩溃消失，变成可诊断的 `unresolved bind 0x18151878b (no symbol name)`。
+  查证该地址**是合法目标**（指向 libBLAS 里的字符串 `"v16@?0Q8"`，非法符号名），
+  即"目标是指向字符串/数据内部的非符号地址"。**修法方向**：把"解析出的名字不是合法标识符"也归入 `unnamed`→`localize` 路径。
+- ⚠️ 但既然 §18.1 判定 D③ 不可行，**这套工具的价值主要转为**：一旦 `forcePrivate` 成立就不需要它；
+  若仍需"无缓存"路线，则它仍是必需的。

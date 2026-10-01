@@ -1,13 +1,17 @@
-# uncache.py (VirtualMacOniPad): add slide info v5 support
+# uncache.py (VirtualMacOniPad): slide info v5 support + out-of-image rebase fix
 #
 #   - import dyld_cache_slide_pointer5
 #   - add a C5 collector alongside C, using the v5 pointer encoding
 #     (vm-offset from the cache base + keyIsData/addrDiv instead of a 2-bit
 #     ptrauth key), mirroring dyld SharedCacheRuntime.cpp:767-792
 #   - dispatch on slideInfo.version == 5 as well as 3
+#   - FIX: guard the rebase path on "amap(rt) is not None" instead of
+#     "in_img(rt)". amap() returns None for a target that lies inside a
+#     segment range but outside the relayout address map, which crashed with
+#     "TypeError: unsupported operand type(s) for -: 'NoneType' and 'int'".
+#     Falling through to the bind path is the intended behaviour there.
 #
-# Companion to misc/dyldextractor-2.2.2-slideinfo5.patch - uncache.py consumes
-# DyldExtractor's extraction context, so v5 must be supported in both.
+# Companion to misc/dyldextractor-2.2.2-slideinfo5.patch.
 #
 # Apply against the fork root with:
 #   patch -p1 -d <VirtualMacOniPad-root> < this-file
@@ -26,16 +30,12 @@
  from DyldExtractor.macho.macho_structs import mach_header_64
  from DyldExtractor.converter import slide_info
  
-@@ -1300,11 +1303,36 @@
+@@ -1321,11 +1324,30 @@
                                  v = li.plain.pointerValue
                                  t = ((v & 0x0007F80000000000) << 13) | (v & 0x000007FFFFFFFFFF)
                                  fx.append([a, t, 0, 0, 0, 0])
 +                        if delta == 0:
 +                            break
-+            # v5 analogue of C.  Same output tuple, but the v5 pointer stores a
-+            # vm-offset from the shared cache base and encodes auth metadata with
-+            # keyIsData/addrDiv instead of a 2-bit ptrauth key.
-+            # Cf. dyld SharedCacheRuntime.cpp:767-792.
 +            class C5(slide_info._V5Rebaser):
 +                def _rebasePage(self, ctx, pageOffset, delta):
 +                    loc = pageOffset
@@ -47,10 +47,8 @@
 +                        if in_img(a):
 +                            t = self.slideInfo.value_add + li.regular.runtimeOffset
 +                            if li.auth.auth:
-+                                # 0 -> IA (ptrauth_key_asia), 1 -> DA (ptrauth_key_asda)
 +                                k = 2 if li.auth.keyIsData else 0
-+                                fx.append([a, t, 1, k, int(li.auth.diversity),
-+                                           int(li.auth.addrDiv)])
++                                fx.append([a, t, 1, k, int(li.auth.diversity), int(li.auth.addrDiv)])
 +                            else:
 +                                fx.append([a, t | (li.regular.high8 << 56), 0, 0, 0, 0])
                          if delta == 0:
@@ -63,3 +61,18 @@
          finally:
              for sf in subs:
                  sf.close()
+@@ -1520,8 +1542,12 @@
+         rt = real_t(t, auth)
+         if os.environ.get("VZ_DBG_PROTOREF") and addr == int(os.environ["VZ_DBG_PROTOREF"], 16):
+             print(f"  PROTOREF fx: addr={addr:#x} t={t:#x} auth={auth} rt={rt:#x} in_img={in_img(rt)} sym={sym_map.get(rt)}")
+-        if in_img(rt):
+-            entries[nloc] = ("rebase", amap(rt)-nbase, auth, key, div, ad, high8); nreb += 1
++        # amap() can return None even when in_img() is True (target falls inside a
++        # segment range but outside the relayout address map). Treat that as an
++        # external reference so the bind path below handles it instead of crashing.
++        rt_new = amap(rt) if in_img(rt) else None
++        if rt_new is not None:
++            entries[nloc] = ("rebase", rt_new-nbase, auth, key, div, ad, high8); nreb += 1
+         elif rt in localize:
+             entries[nloc] = ("rebase", localize[rt]-nbase, auth, key, div, ad, high8); nreb += 1
+         else:
