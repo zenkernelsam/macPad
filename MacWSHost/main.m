@@ -45,6 +45,7 @@
 #include "macws_control_protocol.h"
 #include "macws_catalyst_drawable_protocol.h"
 #include "macws_host_protocol.h"
+#include "macws_text_input.h"
 #include "macws_touch_policy.h"
 #include "macws_viewport_math.h"
 #include "macws_window_configuration.h"
@@ -1511,8 +1512,10 @@ typedef void (^MacWSCompactMenuSelection)(MacWSMenuItem *item);
     UIButton *_keyboardButton;
     UIButton *_retryStartupButton;
     UITextField *_keyboardProxy;
+    BOOL _keyboardProxyResetting;
     UIView *_softwareKeyBar;
     NSLayoutConstraint *_softwareKeyBarHeightConstraint;
+    NSLayoutConstraint *_softwareKeyBarTrailingConstraint;
     UITextField *_appSearchField;
     NSArray<UIButton *> *_softModifierButtons;
     uint32_t _softModifiers;
@@ -1555,6 +1558,7 @@ typedef void (^MacWSCompactMenuSelection)(MacWSMenuItem *item);
     CGSize _appliedSceneRestrictionMinimumSize;
     CGSize _appliedSceneRestrictionMaximumSize;
     int32_t _fullscreenCatalogRetainedInputPID;
+    BOOL _fullscreenInputTargetDeferredForActiveTransaction;
     uint32_t _fullscreenActivatedInputWindowID;
     int32_t _fullscreenActivatedInputOwnerPID;
     uint32_t _pendingFullscreenActivationWindowID;
@@ -1894,9 +1898,18 @@ static UILabel *MacWSMakeLabel(NSString *text, UIFont *font, UIColor *color) {
     scroll.showsHorizontalScrollIndicator = NO;
     [scroll addSubview:stack];
     [input addSubview:scroll];
+    UILayoutGuide *inputSafe = input.safeAreaLayoutGuide;
+    _softwareKeyBarTrailingConstraint =
+        [scroll.trailingAnchor constraintEqualToAnchor:inputSafe.trailingAnchor
+                                               constant:-72];
     [NSLayoutConstraint activateConstraints:@[
-        [scroll.leadingAnchor constraintEqualToAnchor:input.leadingAnchor],
-        [scroll.trailingAnchor constraintEqualToAnchor:input.trailingAnchor],
+        [scroll.leadingAnchor constraintEqualToAnchor:inputSafe.leadingAnchor],
+        // iPadOS keeps its hardware-keyboard/input-method switcher in the
+        // bottom-trailing corner. That system-owned control does not always
+        // contribute a safe-area inset, so leave a bounded lane for it. The
+        // MacWS keys remain horizontally scrollable in narrow Stage Manager
+        // windows instead of becoming unreachable underneath the switcher.
+        _softwareKeyBarTrailingConstraint,
         [scroll.topAnchor constraintEqualToAnchor:input.topAnchor],
         [scroll.bottomAnchor constraintEqualToAnchor:input.bottomAnchor],
         [stack.leadingAnchor constraintEqualToAnchor:scroll.contentLayoutGuide.leadingAnchor constant:8],
@@ -2499,6 +2512,9 @@ static UILabel *MacWSMakeLabel(NSString *text, UIFont *font, UIColor *color) {
     [NSNotificationCenter.defaultCenter addObserver:self
         selector:@selector(nativeSceneOcclusionDidChange:)
         name:MacWSSceneOcclusionChangedNotification object:nil];
+    [NSNotificationCenter.defaultCenter addObserver:self
+        selector:@selector(systemKeyboardFrameDidChange:)
+        name:UIKeyboardWillChangeFrameNotification object:nil];
 
     _metalView = [[MacWSMetalView alloc] initWithFrame:CGRectZero];
     _metalView.translatesAutoresizingMaskIntoConstraints = NO;
@@ -2746,12 +2762,16 @@ static UILabel *MacWSMakeLabel(NSString *text, UIFont *font, UIColor *color) {
     _keyboardProxy.translatesAutoresizingMaskIntoConstraints = NO;
     _keyboardProxy.delegate = self;
     _keyboardProxy.text = @" ";
-    _keyboardProxy.autocorrectionType = UITextAutocorrectionTypeNo;
+    _keyboardProxy.keyboardType = UIKeyboardTypeDefault;
+    _keyboardProxy.autocorrectionType = UITextAutocorrectionTypeDefault;
     _keyboardProxy.autocapitalizationType = UITextAutocapitalizationTypeNone;
     _keyboardProxy.smartDashesType = UITextSmartDashesTypeNo;
     _keyboardProxy.smartQuotesType = UITextSmartQuotesTypeNo;
     _keyboardProxy.spellCheckingType = UITextSpellCheckingTypeNo;
     _keyboardProxy.alpha = 0.01;
+    [_keyboardProxy addTarget:self
+                       action:@selector(keyboardProxyEditingChanged:)
+             forControlEvents:UIControlEventEditingChanged];
     [root addSubview:_keyboardProxy];
     // The modifier row belongs to the MacWS window layout, not to the floating
     // iPad keyboard. Giving it an explicit 52-point region prevents it from
@@ -3034,10 +3054,10 @@ static UILabel *MacWSMakeLabel(NSString *text, UIFont *font, UIColor *color) {
                 forControlEvents:UIControlEventValueChanged];
 
     _densityControl = [[UISegmentedControl alloc]
-        initWithItems:@[@"像素匹配", @"舒适 125%", @"舒适 150%"]];
+        initWithItems:@[@"Retina 标准", @"Retina 放大"]];
     _densityControl.selectedSegmentIndex =
-        _metalView.displayDensity == MacWSHostDisplayDensityComfort150 ? 2 :
-        (_metalView.displayDensity == MacWSHostDisplayDensityComfort125 ? 1 : 0);
+        _metalView.displayDensity == MacWSHostDisplayDensityRetinaLarger
+            ? 1 : 0;
     [_densityControl addTarget:self action:@selector(densityChanged:)
                forControlEvents:UIControlEventValueChanged];
 
@@ -3276,8 +3296,8 @@ static UILabel *MacWSMakeLabel(NSString *text, UIFont *font, UIColor *color) {
     [_inputModeControl setTitle:(english ? @"Precision Trackpad" : @"精确触控板")
               forSegmentAtIndex:1];
     NSArray *density = english
-        ? @[@"Pixel Match", @"Larger 125%", @"Larger 150%"]
-        : @[@"像素匹配", @"舒适 125%", @"舒适 150%"];
+        ? @[@"Retina Standard", @"Retina Larger"]
+        : @[@"Retina 标准", @"Retina 放大"];
     NSArray *presentationResolution = english
         ? @[@"Auto Sharp", @"Always Sharp", @"Performance"]
         : @[@"自动清晰", @"始终清晰", @"性能优先"];
@@ -3286,9 +3306,10 @@ static UILabel *MacWSMakeLabel(NSString *text, UIFont *font, UIColor *color) {
     NSArray *zoom = english ? @[@"Two-Finger Double-Tap 1.5×",
                                 @"Two-Finger Double-Tap 2.0×"]
                             : @[@"双指双击 1.5×", @"双指双击 2.0×"];
-    for (NSInteger index = 0; index < 3; index++) {
+    for (NSInteger index = 0; index < 2; index++)
         [_densityControl setTitle:density[(NSUInteger)index]
                 forSegmentAtIndex:index];
+    for (NSInteger index = 0; index < 3; index++) {
         [_performanceHUDControl setTitle:hud[(NSUInteger)index]
                 forSegmentAtIndex:index];
         [_presentationResolutionControl
@@ -3980,13 +4001,71 @@ static UILabel *MacWSMakeLabel(NSString *text, UIFont *font, UIColor *color) {
     }];
 }
 
+- (void)resetKeyboardProxyBuffer {
+    if (!_keyboardProxy) return;
+    _keyboardProxyResetting = YES;
+    _keyboardProxy.text = @" ";
+    UITextPosition *end = _keyboardProxy.endOfDocument;
+    if (end) {
+        _keyboardProxy.selectedTextRange =
+            [_keyboardProxy textRangeFromPosition:end toPosition:end];
+    }
+    _keyboardProxyResetting = NO;
+}
+
+- (void)systemKeyboardFrameDidChange:(NSNotification *)notification {
+    if (!_softwareKeyBarTrailingConstraint || !self.isViewLoaded) return;
+    NSValue *frameValue = notification.userInfo[UIKeyboardFrameEndUserInfoKey];
+    if (![frameValue isKindOfClass:NSValue.class]) return;
+    CGRect keyboardFrame = [frameValue CGRectValue];
+    CGRect localFrame = [self.view convertRect:keyboardFrame fromView:nil];
+    CGRect overlap = CGRectIntersection(self.view.bounds, localFrame);
+    BOOL fullWidthSoftwareKeyboard = !CGRectIsNull(overlap) &&
+        !CGRectIsEmpty(overlap) && overlap.size.height > 100.0 &&
+        overlap.size.width >= self.view.bounds.size.width * 0.75;
+    // A docked software keyboard already owns the complete lower edge. With
+    // Magic Keyboard (or a floating keyboard), iPadOS instead leaves its
+    // compact input-method control over the bottom-right of the app window.
+    // Reserve only that trailing lane; keeping the bar itself pinned to the
+    // root bottom avoids introducing a visible strip below macOS content.
+    _softwareKeyBarTrailingConstraint.constant =
+        fullWidthSoftwareKeyboard ? 0.0 : -72.0;
+}
+
+- (void)keyboardProxyEditingChanged:(UITextField *)textField {
+    if (textField != _keyboardProxy || _keyboardProxyResetting) return;
+    NSString *buffer = textField.text ?: @"";
+    BOOL beginsWithSentinel = [buffer hasPrefix:@" "];
+    BOOL hasMarkedText = textField.markedTextRange != nil;
+    MacWSKeyboardProxyEditAction action = MacWSClassifyKeyboardProxyEdit(
+        buffer.length, beginsWithSentinel, hasMarkedText);
+    if (action == MacWSKeyboardProxyEditAwaitingComposition ||
+        action == MacWSKeyboardProxyEditIdle) return;
+    if (action == MacWSKeyboardProxyEditCommitText) {
+        NSString *committed = beginsWithSentinel
+            ? [buffer substringFromIndex:1] : buffer;
+        if (committed.length) {
+            [_metalView emitSoftwareText:committed modifiers:_softModifiers];
+            MacWSDiagnosticLog(@"software-text-commit utf16=%lu target=%d "
+                "window=%u input-mode=%@",
+                (unsigned long)committed.length, _windowOwnerPID, _windowID,
+                textField.textInputMode.primaryLanguage ?: @"unknown");
+        }
+    }
+    [self resetKeyboardProxyBuffer];
+}
+
 - (void)keyboardAction {
     if (_keyboardProxy.isFirstResponder) {
+        if (_keyboardProxy.markedTextRange) {
+            [_keyboardProxy unmarkText];
+            [self keyboardProxyEditingChanged:_keyboardProxy];
+        }
         [_keyboardProxy resignFirstResponder];
         [self setButton:_keyboardButton title:@"打开虚拟键盘"
                    image:@"keyboard"];
     } else {
-        _keyboardProxy.text = @" ";
+        [self resetKeyboardProxyBuffer];
         if ([_keyboardProxy becomeFirstResponder]) {
             _metalView.softwareKeyboardActive = YES;
             [self setButton:_keyboardButton title:@"收起虚拟键盘"
@@ -3997,6 +4076,12 @@ static UILabel *MacWSMakeLabel(NSString *text, UIFont *font, UIColor *color) {
 
 - (void)textFieldDidBeginEditing:(UITextField *)textField {
     if (textField != _keyboardProxy) return;
+    if (MacWSClassifyKeyboardProxyEdit(
+            textField.text.length, [textField.text hasPrefix:@" "],
+            textField.markedTextRange != nil) ==
+            MacWSKeyboardProxyEditRestoreSentinel) {
+        [self resetKeyboardProxyBuffer];
+    }
     _metalView.softwareKeyboardActive = YES;
     _softwareKeyBar.hidden = NO;
     _softwareKeyBarHeightConstraint.constant = 52;
@@ -4009,6 +4094,8 @@ static UILabel *MacWSMakeLabel(NSString *text, UIFont *font, UIColor *color) {
 
 - (void)textFieldDidEndEditing:(UITextField *)textField {
     if (textField != _keyboardProxy) return;
+    if (textField.markedTextRange) [textField unmarkText];
+    [self keyboardProxyEditingChanged:textField];
     _metalView.softwareKeyboardActive = NO;
     _softwareKeyBarHeightConstraint.constant = 0;
     [UIView animateWithDuration:0.20 animations:^{
@@ -4048,15 +4135,28 @@ static UILabel *MacWSMakeLabel(NSString *text, UIFont *font, UIColor *color) {
                 replacementString:(NSString *)string {
     (void)range;
     if (textField != _keyboardProxy) return YES;
-    if (string.length == 0)
+    if (textField.markedTextRange) return YES;
+    BOOL deletesSentinel = string.length == 0 &&
+        [textField.text isEqualToString:@" "] &&
+        range.location == 0 && range.length == 1;
+    if (deletesSentinel) {
         [_metalView emitSoftwareKeySym:0xff08 modifiers:_softModifiers];
-    else
-        [_metalView emitSoftwareText:string modifiers:_softModifiers];
-    return NO;
+        return NO;
+    }
+    // Let UIKit mutate its real text-input client. While a Chinese/Japanese
+    // IME owns markedTextRange, editingChanged waits without forwarding the
+    // composing Latin letters. Once the candidate is committed and the marked
+    // range disappears, keyboardProxyEditingChanged: forwards only the final
+    // text to the exact AppKit window/caret and restores the sentinel.
+    return YES;
 }
 
 - (BOOL)textFieldShouldReturn:(UITextField *)textField {
     if (textField == _keyboardProxy) {
+        if (textField.markedTextRange) {
+            [textField unmarkText];
+            [self keyboardProxyEditingChanged:textField];
+        }
         [_metalView emitSoftwareKeySym:0xff0d modifiers:_softModifiers];
         return NO;
     }
@@ -4130,22 +4230,20 @@ static UILabel *MacWSMakeLabel(NSString *text, UIFont *font, UIColor *color) {
 }
 
 - (void)densityChanged:(UISegmentedControl *)sender {
-    MacWSHostDisplayDensity density = sender.selectedSegmentIndex == 2
-        ? MacWSHostDisplayDensityComfort150
-        : (sender.selectedSegmentIndex == 1
-            ? MacWSHostDisplayDensityComfort125
-            : MacWSHostDisplayDensityTouchComfort);
+    MacWSHostDisplayDensity density = sender.selectedSegmentIndex == 1
+        ? MacWSHostDisplayDensityRetinaLarger
+        : MacWSHostDisplayDensityRetinaStandard;
     _metalView.displayDensity = density;
     [NSUserDefaults.standardUserDefaults setInteger:density
                                               forKey:@"MacWSDisplayDensity"];
-    if (density != MacWSHostDisplayDensityTouchComfort) {
-        _inputLabel.text = [NSString stringWithFormat:
-            MacWSLocalized(@"显示：舒适放大 %.0f%% · 保留源 Retina 像素；逐像素显示请选择像素匹配",
-                @"Display: larger %.0f%% · preserves source Retina pixels; choose Pixel Match for exact mapping"),
-            MacWSDensityModeFactor(density) * 100.0];
+    if (density == MacWSHostDisplayDensityRetinaLarger) {
+        _inputLabel.text = MacWSLocalized(
+            @"显示：Retina 放大 · 原生 2× iPad drawable，由 Metal 高质量放大 macOS Retina 源",
+            @"Display: Retina Larger · native 2x iPad drawable with quality Metal scaling of the macOS Retina source");
     } else {
-        _inputLabel.text = MacWSLocalized(@"显示：像素匹配 Retina · macOS 与 iPadOS 逻辑尺寸 1:1",
-            @"Display: Pixel Match Retina · macOS and iPadOS logical size 1:1");
+        _inputLabel.text = MacWSLocalized(
+            @"显示：Retina 标准 · macOS backing 像素与 iPad drawable 逐像素匹配",
+            @"Display: Retina Standard · macOS backing pixels match the iPad drawable one for one");
     }
 }
 
@@ -6067,6 +6165,15 @@ static UILabel *MacWSMakeLabel(NSString *text, UIFont *font, UIColor *color) {
         [self repairDesktopAction];
     } else if ([action isEqualToString:@"capture"]) {
         [self captureAction];
+    } else if ([action isEqualToString:@"retina-standard"] ||
+               [action isEqualToString:@"retina-larger"]) {
+        _densityControl.selectedSegmentIndex =
+            [action isEqualToString:@"retina-larger"] ? 1 : 0;
+        [self densityChanged:_densityControl];
+        [self setNotice:[action isEqualToString:@"retina-larger"]
+            ? MacWSLocalized(@"已切换 Retina 放大", @"Retina Larger enabled")
+            : MacWSLocalized(@"已切换 Retina 标准", @"Retina Standard enabled")
+                 success:YES];
     } else if ([action isEqualToString:@"test-open-file"]) {
         [self performSemanticShortcutForDiagnostics:@"⌘O"];
     } else if ([action isEqualToString:@"test-quit"]) {
@@ -7024,6 +7131,9 @@ static UILabel *MacWSMakeLabel(NSString *text, UIFont *font, UIColor *color) {
         }
         int32_t previousPID = _metalView.targetPID;
         int32_t catalogFallbackPID = visualPID;
+        BOOL retainedActiveInputTransaction =
+            visualPID != previousPID && previousPID > 1 &&
+            _metalView.fullscreenInputTransactionActive;
         BOOL retainedPreviousTarget =
             visualPID != previousPID && previousPID > 1 &&
             MacWSAppInputEndpointReady(previousPID) &&
@@ -7049,8 +7159,23 @@ static UILabel *MacWSMakeLabel(NSString *text, UIFont *font, UIColor *color) {
             visualPID != previousPID && previousPID > 1 &&
             _fullscreenActivatedInputOwnerPID == previousPID &&
             [_metalView hasCompletedFullscreenDrawableForPID:previousPID];
-        if (retainedPreviousTarget || activatedFullscreenCanvasPresent ||
-            retainedCompletedFullscreen) {
+        if (retainedActiveInputTransaction) {
+            // Window moves/resizes can change retained layer order before
+            // WindowServer has published the matching catalog generation.
+            // Never replace targetPID while the physical button is held:
+            // setTargetPID: clears the direct-drawable join, and subsequent
+            // global movement can then appear to hit the exposed window
+            // underneath. TouchDown already selected the semantic owner; the
+            // matching Up/Cancel requests a bounded catalog refresh.
+            visualPID = previousPID;
+            frontmost = nil;
+            if (!_fullscreenInputTargetDeferredForActiveTransaction) {
+                _fullscreenInputTargetDeferredForActiveTransaction = YES;
+                MacWSLog(@"fullscreen-input-target retained-active-transaction pid=%d rejected-catalog-fallback-pid=%d",
+                         previousPID, catalogFallbackPID);
+            }
+        } else if (retainedPreviousTarget || activatedFullscreenCanvasPresent ||
+                   retainedCompletedFullscreen) {
             // A fullscreen Metal application may stop publishing its AppKit
             // catalog window while its process-local input endpoint and the
             // full-display stream remain live.  The next ordinary overlay in
@@ -7081,6 +7206,8 @@ static UILabel *MacWSMakeLabel(NSString *text, UIFont *font, UIColor *color) {
         } else {
             _fullscreenCatalogRetainedInputPID = 0;
         }
+        if (!retainedActiveInputTransaction)
+            _fullscreenInputTargetDeferredForActiveTransaction = NO;
         MacWSStreamWindow *target = frontmost;
         int32_t targetPID = visualPID;
         if (target) {
@@ -7877,6 +8004,38 @@ static NSUserActivity *MacWSLiveRestorationActivity(UIScene *scene) {
     return scene.session.stateRestorationActivity;
 }
 
+static MacWSViewController *MacWSPerformanceControllerForTargetPID(
+        int32_t targetPID, MacWSViewController *fallback) {
+    if (targetPID <= 1) return fallback;
+    MacWSViewController *fullscreenCandidate = nil;
+    for (UIScene *scene in UIApplication.sharedApplication.connectedScenes) {
+        if (![scene isKindOfClass:UIWindowScene.class] ||
+            scene.activationState == UISceneActivationStateBackground ||
+            scene.activationState == UISceneActivationStateUnattached)
+            continue;
+        MacWSViewController *controller = nil;
+        for (UIWindow *window in ((UIWindowScene *)scene).windows) {
+            if ([window.rootViewController
+                    isKindOfClass:MacWSViewController.class]) {
+                controller = (MacWSViewController *)window.rootViewController;
+                break;
+            }
+        }
+        if (!controller) continue;
+        NSDictionary *binding = controller.streamRestorationActivity.userInfo;
+        if ([binding[@"owner_pid"] intValue] == targetPID)
+            return controller;
+        if ([binding[@"mode"] unsignedIntValue] ==
+                MacWSStreamModeFullscreen && !fullscreenCandidate)
+            fullscreenCandidate = controller;
+    }
+    // A fullscreen workspace can profile any focused child process and does
+    // not have a fixed owner_pid binding. Prefer that visible controller when
+    // no exact per-window Scene exists; otherwise preserve the URL receiver's
+    // historical behavior.
+    return fullscreenCandidate ?: fallback;
+}
+
 static void MacWSPruneDeadWindowSceneSessions(void) {
     UIApplication *application = UIApplication.sharedApplication;
     if (!MacWSSceneSessionsPreservingMacWindow)
@@ -8266,8 +8425,31 @@ static void MacWSDeduplicateWindowScenes(void) {
 }
 
 - (void)sceneDidDisconnect:(UIScene *)scene {
+    MacWSViewController *controller =
+        [self.window.rootViewController
+            isKindOfClass:MacWSViewController.class]
+        ? (MacWSViewController *)self.window.rootViewController : nil;
+    uint32_t disconnectedWindowID =
+        [controller.streamRestorationActivity.userInfo[@"window_id"]
+            unsignedIntValue];
+    // A disconnected Scene has no presentation authority even when its
+    // AppKit window is deliberately preserved for a replacement Scene.
+    // Stop it synchronously: the Catalyst drawable receiver is process-global
+    // and each delivery carries one transferable IOSurface use count, so a
+    // retained controller with an admitted stream can otherwise claim every
+    // frame before the visible replacement window. Runtime-confirmed on
+    // 2026-10-01: after the fullscreen Scene disconnected, displayd kept
+    // validating owner 63374/layer 497 as mode=fullscreen-layer while the
+    // visible mode=2/window=497 profile received zero direct frames.
+    [controller suspendSceneStream];
+    MacWSLog(@"runtime-confirmed scene-disconnect stream-suspended id=%@ window=%u",
+             scene.session.persistentIdentifier,
+             disconnectedWindowID);
     // Disconnect alone can be ordinary resource reclamation. Close only after
     // UIKit has actually removed the persistent session from openSessions.
+    // Stream ownership and AppKit-window lifetime are separate invariants:
+    // suspending above releases presentation resources but does not close the
+    // preserved macOS window.
     UISceneSession *session = scene.session;
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 600 * NSEC_PER_MSEC),
                    dispatch_get_main_queue(), ^{
@@ -8566,9 +8748,33 @@ static void MacWSDeduplicateWindowScenes(void) {
                     break;
                 }
             }
+            MacWSViewController *fallback =
+                [self.window.rootViewController
+                    isKindOfClass:MacWSViewController.class]
+                ? (MacWSViewController *)self.window.rootViewController : nil;
             MacWSViewController *controller =
-                (MacWSViewController *)self.window.rootViewController;
+                MacWSPerformanceControllerForTargetPID(targetPID, fallback);
             [controller resetPerformanceMeasurementForTargetPID:targetPID];
+            break;
+        }
+        if ([host isEqualToString:@"performance-snapshot"]) {
+            int32_t targetPID = 0;
+            NSURLComponents *components = [NSURLComponents
+                componentsWithURL:context.URL resolvingAgainstBaseURL:NO];
+            for (NSURLQueryItem *item in components.queryItems) {
+                if ([item.name isEqualToString:@"pid"] &&
+                    item.value.intValue > 1) {
+                    targetPID = item.value.intValue;
+                    break;
+                }
+            }
+            MacWSViewController *fallback =
+                [self.window.rootViewController
+                    isKindOfClass:MacWSViewController.class]
+                ? (MacWSViewController *)self.window.rootViewController : nil;
+            MacWSViewController *controller =
+                MacWSPerformanceControllerForTargetPID(targetPID, fallback);
+            [controller performURLAction:@"performance-snapshot"];
             break;
         }
         if ([@[@"status", @"start", @"start-experimental", @"stop",
@@ -8577,6 +8783,7 @@ static void MacWSDeduplicateWindowScenes(void) {
                @"amadine", @"word", @"excel",
                @"powerpoint", @"asphalt",
                @"recover", @"repair", @"repair-desktop", @"capture",
+               @"retina-standard", @"retina-larger",
                @"test-open-file", @"test-quit", @"test-pasteboard-write",
                @"test-pasteboard-abstract-text",
                @"test-pasteboard-read", @"test-drag-snapshot",
@@ -8594,6 +8801,7 @@ static void MacWSDeduplicateWindowScenes(void) {
                @"performance-gesture-right-tap",
                @"performance-gesture-hover",
                @"performance-gesture-drag",
+               @"performance-gesture-window-drag",
                @"performance-gesture-long-drag",
                @"performance-gesture-scroll",
                @"performance-gesture-scroll-momentum",

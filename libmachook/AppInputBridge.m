@@ -34,6 +34,8 @@
 #import "macws_power_lifecycle.h"
 #import "macws_menu_protocol.h"
 #import "macws_stream_protocol.h"
+#import "macws_text_input.h"
+#import "macws_window_configuration.h"
 #import "MacWSCatalystInputPolicy.h"
 #import "MacWSInputLatency.h"
 
@@ -137,6 +139,7 @@ static uint64_t MacWSWindowMetricsGeneration;
 static id MacWSWindowGeometryObserverInstance;
 static BOOL MacWSWindowMetricsEventPublishPending;
 static char MacWSWindowConfigureAckKey;
+static char MacWSWindowScreenConstraintPolicyKey;
 static void MacWSPublishWindowMetrics(void);
 static void MacWSEnqueueAppInputRecord(MacWSInputRecord record);
 extern void MacWSInstallPreviewCoreImageRendererAdapter(void);
@@ -154,10 +157,27 @@ static void MacWSLogUnityNGUIInputState(const char *phase);
 static BOOL MacWSWindowPresentationIsOnScreen(id window,
                                               BOOL *knownOut);
 static id MacWSPresentingWindow(id window, id application);
+static char MacWSTransientWindowAssociationKey;
 static id MacWSRootPresentingWindow(id window, id application);
 static BOOL MacWSRuntimeDiagnosticsEnabled(void);
 static int MacWSWorkspaceWillSleepToken = -1;
 static int MacWSWorkspaceDidWakeToken = -1;
+
+// Main-thread-only dynamic scope around one Host ConfigureWindow setter. The
+// application maximum, aspect, increments and windowWillResize: response have
+// already been applied before this scope begins. It lets the existing
+// constrainFrameRect: hook distinguish AppKit's virtual-screen placement cap
+// from an application-authored size cap without changing global AppKit policy.
+typedef struct {
+    id window;
+    CGRect applicationConstrainedFrame;
+    CGSize screenExtent;
+    BOOL unboundedWidth;
+    BOOL unboundedHeight;
+} MacWSHostConfigureFrameContext;
+static __thread MacWSHostConfigureFrameContext
+    MacWSCurrentHostConfigureFrameContext;
+static __thread uint8_t MacWSLoggedHostConfigureScreenConstraintScopes;
 
 static void MacWSPostWorkspacePowerNotification(BOOL sleeping) {
     dispatch_async(dispatch_get_main_queue(), ^{
@@ -473,6 +493,91 @@ static CGRect MacWSAppInputConstrainFrameRect(id self, SEL selector,
     CGRect constrained = MacWSOriginalConstrainFrameRect
         ? MacWSOriginalConstrainFrameRect(self, selector, requested, screen)
         : requested;
+    MacWSHostConfigureFrameContext context =
+        MacWSCurrentHostConfigureFrameContext;
+    BOOL configureTransaction = context.window == self;
+    CGRect applicationConstrainedFrame = context.applicationConstrainedFrame;
+    CGSize screenExtent = context.screenExtent;
+    BOOL unboundedWidth = context.unboundedWidth;
+    BOOL unboundedHeight = context.unboundedHeight;
+    if (!configureTransaction) {
+        NSNumber *policyNumber = objc_getAssociatedObject(
+            self, &MacWSWindowScreenConstraintPolicyKey);
+        uint8_t policy = policyNumber
+            ? (uint8_t)[policyNumber unsignedCharValue]
+            : MacWSWindowScreenConstraintPolicyNone;
+        if (policy != MacWSWindowScreenConstraintPolicyNone) {
+            id effectiveScreen = screen ?: ((MacWSMsgID)objc_msgSend)(
+                self, sel_registerName("screen"));
+            CGRect screenFrame = effectiveScreen
+                ? ((MacWSMsgRect)objc_msgSend)(
+                    effectiveScreen, sel_registerName("frame"))
+                : CGRectZero;
+            applicationConstrainedFrame = requested;
+            screenExtent = screenFrame.size;
+            unboundedWidth =
+                (policy & MacWSWindowScreenConstraintPolicyUnboundedWidth) != 0;
+            unboundedHeight =
+                (policy & MacWSWindowScreenConstraintPolicyUnboundedHeight) != 0;
+        }
+    }
+    BOOL sceneOwnedConstraint = configureTransaction ||
+        unboundedWidth || unboundedHeight;
+    if (sceneOwnedConstraint) {
+        CGRect screenConstrained = constrained;
+        BOOL restoreWidth = MacWSWindowAxisScreenConstraintShouldBeRestored(
+            applicationConstrainedFrame.size.width,
+            constrained.size.width, screenExtent.width,
+            unboundedWidth);
+        BOOL restoreHeight = MacWSWindowAxisScreenConstraintShouldBeRestored(
+            applicationConstrainedFrame.size.height,
+            constrained.size.height, screenExtent.height,
+            unboundedHeight);
+        constrained.origin.x = MacWSWindowAxisValueAfterScreenConstraint(
+            applicationConstrainedFrame.origin.x,
+            constrained.origin.x, restoreWidth);
+        constrained.size.width = MacWSWindowAxisValueAfterScreenConstraint(
+            applicationConstrainedFrame.size.width,
+            constrained.size.width, restoreWidth);
+        constrained.origin.y = MacWSWindowAxisValueAfterScreenConstraint(
+            applicationConstrainedFrame.origin.y,
+            constrained.origin.y, restoreHeight);
+        constrained.size.height = MacWSWindowAxisValueAfterScreenConstraint(
+            applicationConstrainedFrame.size.height,
+            constrained.size.height, restoreHeight);
+        BOOL restoredScreenConstraint =
+            fabs(screenConstrained.origin.x - constrained.origin.x) > 0.25 ||
+            fabs(screenConstrained.origin.y - constrained.origin.y) > 0.25 ||
+            fabs(screenConstrained.size.width - constrained.size.width) > 0.25 ||
+            fabs(screenConstrained.size.height - constrained.size.height) > 0.25;
+        uint8_t scope = configureTransaction ? 1u : 2u;
+        if (restoredScreenConstraint &&
+            ((MacWSLoggedHostConfigureScreenConstraintScopes & scope) == 0 ||
+             MacWSRuntimeDiagnosticsEnabled())) {
+            fprintf(stderr,
+                "#### APP-INPUT CONFIGURE-SCREEN-CONSTRAINT pid=%d "
+                "scope=%s "
+                "window=%ld requested=(%.1f,%.1f %.1fx%.1f) "
+                "screen=(%.1f,%.1f %.1fx%.1f) "
+                "restored=(%.1f,%.1f %.1fx%.1f) unbounded=%s x %s\n",
+                getpid(),
+                configureTransaction ? "transaction" : "scene-owned",
+                (long)((MacWSMsgInteger)objc_msgSend)(
+                    self, sel_registerName("windowNumber")),
+                applicationConstrainedFrame.origin.x,
+                applicationConstrainedFrame.origin.y,
+                applicationConstrainedFrame.size.width,
+                applicationConstrainedFrame.size.height,
+                screenConstrained.origin.x, screenConstrained.origin.y,
+                screenConstrained.size.width, screenConstrained.size.height,
+                constrained.origin.x, constrained.origin.y,
+                constrained.size.width, constrained.size.height,
+                unboundedWidth ? "YES" : "NO",
+                unboundedHeight ? "YES" : "NO");
+            fflush(stderr);
+            MacWSLoggedHostConfigureScreenConstraintScopes |= scope;
+        }
+    }
     Class applicationClass = objc_getClass("NSApplication");
     id application = applicationClass &&
         class_respondsToSelector(object_getClass(applicationClass),
@@ -6215,7 +6320,12 @@ static BOOL MacWSPostKeyRecord(MacWSInputRecord record, id application,
     // Ordinary typing retains the established CG-backed path.
     BOOL commandKeyEquivalent = (modifiers & 0x100000u) != 0;
     BOOL controlModified = (modifiers & 0x40000u) != 0;
+    BOOL exactSoftwareUnicode =
+        record.source == MacWSInputSourceSoftwareKeyboard &&
+        MacWSKeySymIsEncodedUnicode(keySym) &&
+        !MacWSSoftwareKeyRequiresNativeProxy(keySym, (uint32_t)modifiers);
     BOOL canWrapCGEvent = keySym != 0xff1bu && !commandKeyEquivalent &&
+        !exactSoftwareUnicode &&
         createKeyboardCGEvent && setCGEventFlags &&
         class_respondsToSelector(object_getClass(eventClass),
                                  eventWithCGEvent);
@@ -8116,27 +8226,86 @@ static void MacWSHandleOpenDocuments(MacWSInputRecord record,
 }
 
 static void MacWSHandlePerformQuit(id application) {
-    // RE-confirmed via the live Ventura 13.4 AppKit image on the target:
-    // -[NSApplication(NSAppleEventHandling) _handleAEQuit] is the no-argument
-    // method at unslid 0x183a34b78. Its control flow asks
-    // NSAppleEventManager for the current event, resolves targetForAction:,
-    // calls _shouldTerminate, and schedules
-    // _terminateFromSender:askIfShouldTerminate:saveWindows:. Entering here
-    // restores the exact AppKit lifecycle that Dock's failed aevt/quit would
-    // have delivered; it does not force a disabled NSMenuItem or signal the
-    // process. A nil current AppleEvent takes AppKit's ordinary default quit
-    // reason while preserving delegate/document cancellation.
-    SEL handleQuit = sel_registerName("_handleAEQuit");
+    // PerformQuit is already the semantic replacement for a menu/Dock quit
+    // command which could not cross the chroot AppleEvent boundary.  Do not
+    // enter AppKit's private _handleAEQuit without a current AppleEvent:
+    // runtime-confirmed with Maps on iPad13,6, that path returned without
+    // terminating even though the record reached this process.  The public
+    // NSApplication action is the normal cooperative lifecycle entry and
+    // still preserves delegate/document save and cancellation decisions.
+    // It is also the same route proven by the last-window close fallback.
+    SEL terminate = sel_registerName("terminate:");
     BOOL supported = application && ((MacWSMsgBoolSEL)objc_msgSend)(
-        application, sel_registerName("respondsToSelector:"), handleQuit);
-    int16_t status = supported
-        ? ((int16_t (*)(id, SEL))objc_msgSend)(application, handleQuit)
-        : INT16_MIN;
+        application, sel_registerName("respondsToSelector:"), terminate);
+    // Remember only a transient which existed before the quit request. Maps'
+    // first-run What's New panel is application-modal; Ventura's public
+    // terminate: waits for that panel indefinitely in this chroot, so both
+    // menu-bar and Dock quit appear to do nothing. Never select a primary
+    // document window or a save panel created by the termination attempt.
+    // performClose: remains delegate-vetoable, and we retry quit only after
+    // AppKit confirms that exact auxiliary window is no longer visible.
+    SEL modalWindowSelector = sel_registerName("modalWindow");
+    id auxiliaryWindow = application && ((MacWSMsgBoolSEL)objc_msgSend)(
+        application, sel_registerName("respondsToSelector:"),
+        modalWindowSelector)
+        ? ((MacWSMsgID)objc_msgSend)(application, modalWindowSelector) : nil;
+    if (auxiliaryWindow && !((MacWSMsgBool)objc_msgSend)(
+            auxiliaryWindow, sel_registerName("isVisible")))
+        auxiliaryWindow = nil;
+    id keyWindow = application ? ((MacWSMsgID)objc_msgSend)(
+        application, sel_registerName("keyWindow")) : nil;
+    NSArray *windows = application ? ((MacWSMsgID)objc_msgSend)(
+        application, sel_registerName("windows")) : nil;
+    for (id candidate in (auxiliaryWindow ? @[] : windows)) {
+        BOOL visible = ((MacWSMsgBool)objc_msgSend)(
+            candidate, sel_registerName("isVisible"));
+        NSNumber *publishedTransient = objc_getAssociatedObject(
+            candidate, &MacWSTransientWindowAssociationKey);
+        if (!visible ||
+            (!publishedTransient.boolValue &&
+             !MacWSPresentingWindow(candidate, application)))
+            continue;
+        auxiliaryWindow = candidate;
+        if (candidate == keyWindow) break;
+    }
+    // Close a preexisting application-modal panel before entering terminate:.
+    // Calling terminate: first can enter a nested loop which services neither
+    // this endpoint nor main-queue recovery work. The two public AppKit
+    // actions in this order are runtime-proven with Maps; either delegate may
+    // still veto, and a primary/document window is never touched.
+    if (supported && auxiliaryWindow) {
+        SEL performClose = sel_registerName("performClose:");
+        BOOL canClose = ((MacWSMsgBoolSEL)objc_msgSend)(
+            auxiliaryWindow, sel_registerName("respondsToSelector:"),
+            performClose);
+        if (!canClose) return;
+        ((MacWSMsgVoidID)objc_msgSend)(
+            auxiliaryWindow, performClose, nil);
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW,
+                                     150 * NSEC_PER_MSEC),
+                       dispatch_get_main_queue(), ^{
+            BOOL closeCommitted = !((MacWSMsgBool)objc_msgSend)(
+                auxiliaryWindow, sel_registerName("isVisible"));
+            fprintf(stderr,
+                "#### APP-INPUT PERFORM-QUIT-AUXILIARY pid=%d "
+                "class=%s close-committed=%s retry=%s\n",
+                getpid(), object_getClassName(auxiliaryWindow),
+                closeCommitted ? "YES" : "NO",
+                closeCommitted ? "YES" : "NO");
+            fflush(stderr);
+            if (closeCommitted)
+                ((MacWSMsgVoidID)objc_msgSend)(
+                    application, terminate, nil);
+        });
+        return;
+    }
     fprintf(stderr,
-        "#### APP-INPUT PERFORM-QUIT pid=%d route=AppKit-AE "
-        "supported=%s status=%d\n",
-        getpid(), supported ? "YES" : "NO", status);
+        "#### APP-INPUT PERFORM-QUIT pid=%d "
+        "route=NSApplication.terminate supported=%s\n",
+        getpid(), supported ? "YES" : "NO");
     fflush(stderr);
+    if (supported)
+        ((MacWSMsgVoidID)objc_msgSend)(application, terminate, nil);
 }
 
 static void MacWSPostInputOnMainThread(MacWSInputRecord record) {
@@ -8840,12 +9009,25 @@ static void MacWSPostInputOnMainThread(MacWSInputRecord record) {
         CGRect oldFrame = ((MacWSMsgRect)objc_msgSend)(
             window, sel_registerName("frame"));
         BOOL resizable = NO;
+        CGSize applicationMaximum = CGSizeZero;
         CGSize minimum = MacWSEffectiveMinimumFrameSize(
-            window, oldFrame, &resizable, NULL);
+            window, oldFrame, &resizable, &applicationMaximum);
+        BOOL unboundedWidth = MacWSWindowAxisMaximumIsUnbounded(
+            applicationMaximum.width, MACWS_STREAM_MAX_DIMENSION);
+        BOOL unboundedHeight = MacWSWindowAxisMaximumIsUnbounded(
+            applicationMaximum.height, MACWS_STREAM_MAX_DIMENSION);
         BOOL anchorTopLeft =
             (record.flags & MacWSInputFlagConfigureAnchorTopLeft) != 0;
         BOOL anchorTopRight =
             (record.flags & MacWSInputFlagConfigureAnchorTopRight) != 0;
+        uint8_t screenConstraintPolicy = MacWSWindowScreenConstraintPolicy(
+            anchorTopLeft || anchorTopRight,
+            unboundedWidth, unboundedHeight);
+        objc_setAssociatedObject(window,
+            &MacWSWindowScreenConstraintPolicyKey,
+            screenConstraintPolicy == MacWSWindowScreenConstraintPolicyNone
+                ? nil : [NSNumber numberWithUnsignedChar:screenConstraintPolicy],
+            OBJC_ASSOCIATION_RETAIN_NONATOMIC);
         id windowScreen = ((MacWSMsgID)objc_msgSend)(
             window, sel_registerName("screen"));
         CGRect targetScreen = ((MacWSMsgRect)objc_msgSend)(
@@ -8856,15 +9038,15 @@ static void MacWSPostInputOnMainThread(MacWSInputRecord record) {
         if ((anchorTopLeft || anchorTopRight) &&
             targetScreen.size.width > 0.0 && targetScreen.size.height > 0.0) {
             // An iPad Scene can be wider than the virtual macOS display (Stage
-            // Manager is one concrete case). Anchoring such a frame produced a
-            // 1242-pt VSCode window on a 1194-pt screen, permanently clipping a
-            // title-bar strip and constraining native dragging. Host-owned
-            // anchored windows must remain representable by the desktop; manual
-            // macOS resizes and native zoom retain AppKit's normal policy.
-            hostRequested.width = fmin(hostRequested.width,
-                                       targetScreen.size.width);
-            hostRequested.height = fmin(hostRequested.height,
-                                        targetScreen.size.height);
+            // Manager is one concrete case). Preserve an application's real
+            // maximum, but do not mistake NSScreen for that maximum when the
+            // application published the transport's unbounded sentinel.
+            hostRequested.width = MacWSWindowAxisRequestRespectingScreen(
+                hostRequested.width, targetScreen.size.width,
+                applicationMaximum.width, MACWS_STREAM_MAX_DIMENSION);
+            hostRequested.height = MacWSWindowAxisRequestRespectingScreen(
+                hostRequested.height, targetScreen.size.height,
+                applicationMaximum.height, MACWS_STREAM_MAX_DIMENSION);
         }
         CGSize maximum = oldFrame.size;
         CGSize aspect = CGSizeZero;
@@ -8878,8 +9060,9 @@ static void MacWSPostInputOnMainThread(MacWSInputRecord record) {
         newFrame.size = requested;
         if (anchorTopLeft || anchorTopRight) {
             newFrame.origin.x = anchorTopRight
-                ? targetScreen.origin.x + targetScreen.size.width -
-                    requested.width
+                ? MacWSWindowTrailingAnchorOrigin(
+                    targetScreen.origin.x, targetScreen.size.width,
+                    requested.width, unboundedWidth)
                 : targetScreen.origin.x;
             newFrame.origin.y = targetScreen.origin.y +
                 targetScreen.size.height - requested.height;
@@ -8889,8 +9072,21 @@ static void MacWSPostInputOnMainThread(MacWSInputRecord record) {
         SEL setter = sel_registerName("setFrame:display:animate:");
         if (!((MacWSMsgBoolSEL)objc_msgSend)(window,
                 sel_registerName("respondsToSelector:"), setter)) return;
+        MacWSHostConfigureFrameContext previousConfigureContext =
+            MacWSCurrentHostConfigureFrameContext;
+        MacWSCurrentHostConfigureFrameContext =
+            (MacWSHostConfigureFrameContext){
+                .window = window,
+                .applicationConstrainedFrame = newFrame,
+                .screenExtent = targetScreen.size,
+                .unboundedWidth = (anchorTopLeft || anchorTopRight) &&
+                    unboundedWidth,
+                .unboundedHeight = (anchorTopLeft || anchorTopRight) &&
+                    unboundedHeight,
+            };
         ((MacWSMsgVoidRectBoolBool)objc_msgSend)(
             window, setter, newFrame, YES, NO);
+        MacWSCurrentHostConfigureFrameContext = previousConfigureContext;
         // Complete AppKit's pending layout before recording accepted geometry.
         // RE-confirmed layoutIfNeeded at 0x184112454: updateConstraintsIfNeeded,
         // performPendingChangeNotifications, _changeWindowFrameFromConstraints
@@ -8916,8 +9112,9 @@ static void MacWSPostInputOnMainThread(MacWSInputRecord record) {
             // it were 400 points wide, placing 45 points beyond the desktop.
             CGRect correctedFrame = appliedFrame;
             correctedFrame.origin.x = anchorTopRight
-                ? targetScreen.origin.x + targetScreen.size.width -
-                    appliedFrame.size.width
+                ? MacWSWindowTrailingAnchorOrigin(
+                    targetScreen.origin.x, targetScreen.size.width,
+                    appliedFrame.size.width, unboundedWidth)
                 : targetScreen.origin.x;
             correctedFrame.origin.y = targetScreen.origin.y +
                 targetScreen.size.height - appliedFrame.size.height;
@@ -9065,6 +9262,34 @@ static void MacWSPostInputOnMainThread(MacWSInputRecord record) {
         }
         if (!keyWindow) keyWindow = ((MacWSMsgID)objc_msgSend)(
             application, sel_registerName("mainWindow"));
+        BOOL exactSoftwareUnicode =
+            record.source == MacWSInputSourceSoftwareKeyboard &&
+            MacWSKeySymIsEncodedUnicode(record.contactID) &&
+            !MacWSSoftwareKeyRequiresNativeProxy(
+                record.contactID,
+                MacWSInputModifiersForScene(record.sceneID));
+        if (exactSoftwareUnicode && keyWindow) {
+            id currentKeyWindow = ((MacWSMsgID)objc_msgSend)(
+                application, sel_registerName("keyWindow"));
+            if (currentKeyWindow != keyWindow &&
+                ((MacWSMsgBool)objc_msgSend)(
+                    keyWindow, sel_registerName("canBecomeKeyWindow"))) {
+                ((MacWSMsgVoid)objc_msgSend)(
+                    keyWindow, sel_registerName("makeKeyWindow"));
+            }
+            if (MacWSRuntimeDiagnosticsEnabled() &&
+                record.kind == MacWSInputKindKeyDown) {
+                id firstResponder = ((MacWSMsgID)objc_msgSend)(
+                    keyWindow, sel_registerName("firstResponder"));
+                fprintf(stderr,
+                    "#### APP-INPUT TEXT-FOCUS pid=%d window=%u "
+                    "first-responder=%s keysym=%#x\n",
+                    getpid(), requestedWindowNumber,
+                    firstResponder ? object_getClassName(firstResponder) : "nil",
+                    record.contactID);
+                fflush(stderr);
+            }
+        }
         NSInteger keyWindowNumber = keyWindow
             ? ((MacWSMsgInteger)objc_msgSend)(
                 keyWindow, sel_registerName("windowNumber")) : 0;
@@ -9547,6 +9772,15 @@ static void MacWSPostInputOnMainThread(MacWSInputRecord record) {
         systemMenuWindowClass && ((MacWSMsgBoolID)objc_msgSend)(
             window, sel_registerName("isKindOfClass:"),
             (id)systemMenuWindowClass);
+    BOOL exactPointerStart = record.kind == MacWSInputKindTouchDown ||
+        record.kind == MacWSInputKindTap ||
+        record.kind == MacWSInputKindSecondaryTap;
+    BOOL processLocalPreciseScroll = record.kind == MacWSInputKindScroll &&
+        MacWSWindowPointUsesProcessLocalPreciseScroll(window, windowPoint);
+    BOOL beginsSystemScroll = record.kind == MacWSInputKindScroll &&
+        (record.flags & MacWSInputFlagScrollBegan) != 0 &&
+        !processLocalPreciseScroll &&
+        record.source != MacWSInputSourceVNC;
     // A title bar or other native frame region is intentionally outside the
     // content view. Process-local NSApplication.sendEvent: reaches neither
     // WindowServer's move/resize tracker nor its traffic-light tracking path;
@@ -9559,7 +9793,18 @@ static void MacWSPostInputOnMainThread(MacWSInputRecord record) {
     Class nativeWindowClass = objc_getClass("NSWindow");
     SEL globalHitSelector = sel_registerName(
         "windowNumberAtPoint:belowWindowWithWindowNumber:");
-    if (nativeWindowClass && class_respondsToSelector(
+    // The synchronous AppKit global hit test crosses into WindowServer. It is
+    // an ownership proof for a new system pointer stream and for the first
+    // native CGPostScrollWheelEvent, but no consumer below reads it for an
+    // Electron/Catalyst precise scroll or for later phases of an already
+    // admitted native scroll. Runtime sample of VSCode pid 23141 on
+    // 2026-10-01 found 664/2087 main-thread samples blocked in
+    // SLSCopyWindowRoutingRecordsForScreenLocation while processing only 29
+    // coalesced scroll records; _latchViewForScrollEvent: and sendEvent: each
+    // accounted for one sample. Preserve the exact-window invariant at the
+    // transaction boundary without repeating that synchronous IPC at 120 Hz.
+    BOOL needsGlobalWindowHit = exactPointerStart || beginsSystemScroll;
+    if (needsGlobalWindowHit && nativeWindowClass && class_respondsToSelector(
             object_getClass(nativeWindowClass), globalHitSelector)) {
         globalWindowNumber = ((MacWSMsgIntegerPointInteger)objc_msgSend)(
             (id)nativeWindowClass, globalHitSelector, screenPoint, 0);
@@ -9570,9 +9815,6 @@ static void MacWSPostInputOnMainThread(MacWSInputRecord record) {
         MacWSClearDeferredRFBMoveEvents();
         return;
     }
-    BOOL exactPointerStart = record.kind == MacWSInputKindTouchDown ||
-        record.kind == MacWSInputKindTap ||
-        record.kind == MacWSInputKindSecondaryTap;
     BOOL catalystContentInput =
         MacWSCatalystWindowUsesProcessLocalInputAtPoint(window, windowPoint);
     id exactContentView = ((MacWSMsgID)objc_msgSend)(
@@ -9727,9 +9969,6 @@ static void MacWSPostInputOnMainThread(MacWSInputRecord record) {
         return;
     }
     if (record.kind == MacWSInputKindScroll) {
-        BOOL processLocalPreciseScroll =
-            MacWSWindowPointUsesProcessLocalPreciseScroll(
-                window, windowPoint);
         if (record.source == MacWSInputSourceFinger &&
             MacWSWindowUsesElectronPreciseScroll(window) &&
             (record.flags & MacWSInputFlagScrollChanged)) {
@@ -11375,6 +11614,56 @@ static void *MacWSAppInputThread(void *unused) {
                 0.0, (MacWSInputUptimeSeconds() - record.timestamp) * 1.0e6);
             record.reserved = (uint32_t)fmin(transportUS, UINT32_MAX);
         }
+        // A semantic quit can arrive while an application is inside an
+        // application-modal panel loop. Runtime evidence from Maps' first-run
+        // What's New panel showed that a CFRunLoopPerformBlock token queued in
+        // the background thread's snapshot of the main-loop mode remained
+        // pending indefinitely: RX completed, but the unconditional
+        // PERFORM-QUIT main-thread witness never appeared. libdispatch's main
+        // queue is serviced by AppKit in that nested loop (and is already the
+        // proven route for accepted menu actions), so deliver this one
+        // application-scoped control command there directly. Do not also put
+        // it in the input FIFO; pointer/key ordering is irrelevant once the
+        // user has requested application termination, and duplicate delivery
+        // could run termination delegates twice.
+        if (record.kind == MacWSInputKindPerformQuit) {
+            CFRunLoopRef mainRunLoop = CFRunLoopGetMain();
+            __block BOOL delivered = NO;
+            void (^deliverOnce)(void) = ^{
+                if (delivered) return;
+                delivered = YES;
+                @autoreleasepool {
+                    MacWSPostInputOnMainThread(record);
+                }
+            };
+            dispatch_async(dispatch_get_main_queue(), deliverOnce);
+            // NSApplication's application-modal and native event-tracking
+            // loops are deliberately not members of the default/common mode
+            // sets on every macOS release. Register the same guarded block in
+            // those documented AppKit modes. Every copy executes on the main
+            // thread and shares delivered, so at most one lifecycle request
+            // reaches the application even if several modes subsequently run.
+            if (mainRunLoop) {
+                CFStringRef activeMode =
+                    CFRunLoopCopyCurrentMode(mainRunLoop);
+                if (activeMode)
+                    CFRunLoopPerformBlock(
+                        mainRunLoop, activeMode, deliverOnce);
+                CFRunLoopPerformBlock(
+                    mainRunLoop, kCFRunLoopDefaultMode, deliverOnce);
+                CFRunLoopPerformBlock(
+                    mainRunLoop, kCFRunLoopCommonModes, deliverOnce);
+                CFRunLoopPerformBlock(
+                    mainRunLoop, CFSTR("NSModalPanelRunLoopMode"),
+                    deliverOnce);
+                CFRunLoopPerformBlock(
+                    mainRunLoop, CFSTR("NSEventTrackingRunLoopMode"),
+                    deliverOnce);
+                if (activeMode) CFRelease(activeMode);
+                CFRunLoopWakeUp(mainRunLoop);
+            }
+            continue;
+        }
         // During a real NSControl tracking loop the main thread is synchronous
         // inside sendEvent(mouseDown), and that private tracker does not run
         // our CFRunLoop common-mode drain. NSApplication documents subthread
@@ -11735,6 +12024,16 @@ static void MacWSPublishWindowMetrics(void) {
         BOOL visible = orderedVisible && windowLevel == 0;
         id presentingWindow = MacWSPresentingWindow(window, application);
         BOOL transient = presentingWindow != nil;
+        // Retain the exact object-level classification used by the published
+        // catalog. During an application-modal loop AppKit can temporarily
+        // change mainWindow/modalWindow before a semantic quit is drained;
+        // recomputing then made Maps' already-published transient look like a
+        // primary window and entered terminate:'s non-returning modal path.
+        // Associations die with the NSWindow and are refreshed on every
+        // metrics generation, so no PID/title/geometry guess is involved.
+        objc_setAssociatedObject(
+            window, &MacWSTransientWindowAssociationKey,
+            transient ? @YES : nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
         SEL hasShadowSelector = sel_registerName("hasShadow");
         BOOL hasShadow = visible &&
             ((MacWSMsgBoolSEL)objc_msgSend)(

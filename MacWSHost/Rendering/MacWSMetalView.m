@@ -330,6 +330,12 @@ typedef NS_ENUM(uint8_t, MacWSDirectTouchState) {
     int32_t _reportedFullscreenCanvasPID;
     uint32_t _reportedFullscreenCanvasWindowID;
     CGRect _reportedFullscreenCanvasPixels;
+    // Chromium has no application-declared FullscreenCanvas capability. It
+    // may still become an exact native-fullscreen canvas after its descendant
+    // IOSurface has independently joined the focused catalog window at the
+    // complete final-composite extent. Keep that runtime proof distinct so a
+    // later window-sized drawable can revoke only the inferred capability.
+    BOOL _inferredDescendantFullscreenCanvas;
     NSSet<NSNumber *> *_shadowWindowIDs;
     BOOL _directTouchUsesPrimaryDrag;
     uint64_t _surfaceTextureImports;
@@ -341,6 +347,14 @@ typedef NS_ENUM(uint8_t, MacWSDirectTouchState) {
     CFTimeInterval _lastDirectDrawableHeartbeatTime;
     int32_t _directDrawableHeartbeatPID;
     uint32_t _directDrawableHeartbeatLayerID;
+    uint32_t _directDrawableHeartbeatWidth;
+    uint32_t _directDrawableHeartbeatHeight;
+    // A final-composite/direct fusion is valid only after the retained base
+    // was completed at or after the latest direct-layer geometry transaction.
+    // This prevents old-position desktop pixels and new-position direct
+    // pixels from appearing in the same Host drawable during move/resize.
+    uint64_t _directDrawableGeometryBarrierTime;
+    CFTimeInterval _lastDirectDrawableCatalogRefreshTime;
     BOOL _reportedDirectDrawableJoinMiss;
     BOOL _reportedDirectDrawableExactLayerSuppression;
     BOOL _reportedDirectDrawableBaseElision;
@@ -464,6 +478,7 @@ typedef NS_ENUM(uint8_t, MacWSDirectTouchState) {
     int32_t _fullscreenLastTapRoutePID;
     uint32_t _fullscreenLastTapRouteWindowID;
     MacWSStreamFrameDescriptor _fullscreenLastTapRouteDescriptor;
+    BOOL _fullscreenGlobalPointerRouteActive;
     int32_t _fullscreenGlobalPointerPresentationPID;
     uint32_t _fullscreenGlobalPointerPresentationContactID;
     BOOL _acceptsCatalystDrawables;
@@ -517,7 +532,7 @@ typedef NS_ENUM(uint8_t, MacWSDirectTouchState) {
     self.multipleTouchEnabled = YES;
     self.inputMode = MacWSHostInputModeDirect;
     self.fixedZoomScale = 1.5;
-    self.displayDensity = MacWSHostDisplayDensityTouchComfort;
+    self.displayDensity = MacWSHostDisplayDensityRetinaStandard;
     // Status polling enables interaction only after WindowServer, the input
     // socket and an exact-PID acknowledged frame are all present.  A stale
     // screenshot must never look like a live, touchable workspace.
@@ -951,9 +966,18 @@ typedef NS_ENUM(uint8_t, MacWSDirectTouchState) {
             MacWSStreamWindowFullscreenCanvas) != 0;
         MacWSStreamWindowFlags ordinaryRequired =
             MacWSStreamWindowVisible | MacWSStreamWindowOnScreen;
+        MacWSStreamWindowFlags spaceTransitionRequired =
+            MacWSStreamWindowFocused | MacWSStreamWindowVisible |
+            MacWSStreamWindowFrontmostApplication;
+        BOOL focusedSpaceTransition = descendantProducer &&
+            !fullscreenCanvas && self.targetPID == logicalOwnerPID &&
+            self.targetWindowID == 0 && [self hasFinalCompositeFrame] &&
+            (descriptor.flags & spaceTransitionRequired) ==
+                spaceTransitionRequired;
         if (!fullscreenCanvas &&
             (!descendantProducer ||
-             (descriptor.flags & ordinaryRequired) != ordinaryRequired))
+             ((descriptor.flags & ordinaryRequired) != ordinaryRequired &&
+              !focusedSpaceTransition)))
             continue;
         if (descendantProducer && !fullscreenCanvas) {
             uint64_t widthDifference = direct.width > descriptor.pixelWidth
@@ -962,9 +986,16 @@ typedef NS_ENUM(uint8_t, MacWSDirectTouchState) {
             uint64_t heightDifference = direct.height > descriptor.pixelHeight
                 ? direct.height - descriptor.pixelHeight
                 : descriptor.pixelHeight - direct.height;
+            // A descendant Chromium drawable is the exact client IOSurface,
+            // not a scalable preview.  The old 20% tolerance joined a new
+            // resize generation to stale window geometry and let retained
+            // pixels overwrite a correct final composite.  Only tolerate
+            // the bounded backing-scale rounding shared with displayd.
             if (descriptor.pixelWidth == 0 || descriptor.pixelHeight == 0 ||
-                widthDifference * 5u > descriptor.pixelWidth ||
-                heightDifference * 5u > descriptor.pixelHeight) continue;
+                widthDifference >
+                    MACWS_DIRECT_DRAWABLE_GEOMETRY_TOLERANCE_PIXELS ||
+                heightDifference >
+                    MACWS_DIRECT_DRAWABLE_GEOMETRY_TOLERANCE_PIXELS) continue;
         }
         uint64_t score = (uint64_t)descriptor.pixelWidth *
             (uint64_t)descriptor.pixelHeight;
@@ -999,16 +1030,95 @@ typedef NS_ENUM(uint8_t, MacWSDirectTouchState) {
         _reportedFullscreenCanvasPixels =
             CGRectMake(0, 0, canvasWidth, canvasHeight);
     }
+    uint64_t canvasWidthDifference = direct.width > canvasWidth
+        ? direct.width - canvasWidth : canvasWidth - direct.width;
+    uint64_t canvasHeightDifference = direct.height > canvasHeight
+        ? direct.height - canvasHeight : canvasHeight - direct.height;
+    BOOL inferredDescendantFullscreenCanvas = descendantProducer &&
+        matchedWindowID != 0 && logicalOwnerPID == self.targetPID &&
+        self.targetWindowID == 0 && [self hasFinalCompositeFrame] &&
+        MacWSAppInputEndpointReady(logicalOwnerPID) &&
+        [identitySource isEqualToString:
+            @"focused-descendant-layer-catalog"] &&
+        canvasWidth != 0 && canvasHeight != 0 &&
+        canvasWidthDifference <=
+            MACWS_DIRECT_DRAWABLE_GEOMETRY_TOLERANCE_PIXELS &&
+        canvasHeightDifference <=
+            MACWS_DIRECT_DRAWABLE_GEOMETRY_TOLERANCE_PIXELS;
+    if (inferredDescendantFullscreenCanvas) {
+        if (!_inferredDescendantFullscreenCanvas ||
+            _reportedFullscreenCanvasPID != logicalOwnerPID ||
+            _reportedFullscreenCanvasWindowID != matchedWindowID) {
+            MacWSLog(@"runtime-confirmed descendant-fullscreen-canvas "
+                     "pid=%d window=%u drawable=%ux%u canvas=%ux%u "
+                     "source=strict-focused-catalog-join",
+                     logicalOwnerPID, matchedWindowID,
+                     direct.width, direct.height, canvasWidth, canvasHeight);
+        }
+        _inferredDescendantFullscreenCanvas = YES;
+        NSMutableSet<NSNumber *> *capabilities =
+            [_fullscreenCanvasPIDs mutableCopy] ?: [NSMutableSet set];
+        [capabilities addObject:@(logicalOwnerPID)];
+        _fullscreenCanvasPIDs = [capabilities copy];
+        _reportedFullscreenCanvasPID = logicalOwnerPID;
+        _reportedFullscreenCanvasWindowID = matchedWindowID;
+        _reportedFullscreenCanvasPixels =
+            CGRectMake(0, 0, canvasWidth, canvasHeight);
+    } else if (_inferredDescendantFullscreenCanvas &&
+               logicalOwnerPID == self.targetPID) {
+        BOOL explicitFullscreenCapability = NO;
+        for (MacWSStreamWindow *window in _latestWindows) {
+            MacWSStreamWindowDescriptor descriptor = window.descriptor;
+            if (descriptor.ownerPID == logicalOwnerPID &&
+                (descriptor.flags & MacWSStreamWindowFullscreenCanvas) != 0) {
+                explicitFullscreenCapability = YES;
+                break;
+            }
+        }
+        _inferredDescendantFullscreenCanvas = NO;
+        if (!explicitFullscreenCapability) {
+            NSMutableSet<NSNumber *> *capabilities =
+                [_fullscreenCanvasPIDs mutableCopy] ?: [NSMutableSet set];
+            [capabilities removeObject:@(logicalOwnerPID)];
+            _fullscreenCanvasPIDs = [capabilities copy];
+            if (_reportedFullscreenCanvasPID == logicalOwnerPID) {
+                _reportedFullscreenCanvasPID = 0;
+                _reportedFullscreenCanvasWindowID = 0;
+                _reportedFullscreenCanvasPixels = CGRectZero;
+            }
+        }
+        MacWSLog(@"descendant-fullscreen-canvas cleared pid=%d "
+                 "drawable=%ux%u canvas=%ux%u explicit=%@",
+                 logicalOwnerPID, direct.width, direct.height,
+                 canvasWidth, canvasHeight,
+                 explicitFullscreenCapability ? @"YES" : @"NO");
+    }
     if (matchedWindowID != 0 && canvasWidth != 0 && canvasHeight != 0) {
         CFTimeInterval now = CACurrentMediaTime();
         BOOL identityChanged =
             _directDrawableHeartbeatPID != logicalOwnerPID ||
             _directDrawableHeartbeatLayerID != matchedWindowID;
-        if (identityChanged || now - _lastDirectDrawableHeartbeatTime >= 0.25) {
+        BOOL geometryChanged =
+            _directDrawableHeartbeatWidth != direct.width ||
+            _directDrawableHeartbeatHeight != direct.height;
+        if (identityChanged || geometryChanged ||
+            now - _lastDirectDrawableHeartbeatTime >= 0.25) {
             _lastDirectDrawableHeartbeatTime = now;
             _directDrawableHeartbeatPID = logicalOwnerPID;
             _directDrawableHeartbeatLayerID = matchedWindowID;
-            if (identityChanged) {
+            _directDrawableHeartbeatWidth = direct.width;
+            _directDrawableHeartbeatHeight = direct.height;
+            if (identityChanged || geometryChanged) {
+                _directDrawableGeometryBarrierTime = MAX(
+                    _directDrawableGeometryBarrierTime, directReceiptTime);
+            }
+            // A CAMetalLayer resize can leave completed old-size records in
+            // the bounded presentation FIFO. They remain valid IOSurfaces,
+            // but no longer belong to this geometry generation. Drop a
+            // selected predecessor now; the scheduler below also filters the
+            // remaining FIFO by the newly joined heartbeat dimensions.
+            if (geometryChanged) _scheduledCatalystDrawableFrame = nil;
+            if (identityChanged || geometryChanged) {
                 MacWSLog(@"direct-drawable-heartbeat pid=%d layer=%u "
                          "drawable=%ux%u canvas=%ux%u "
                          "identity=%@",
@@ -1021,21 +1131,58 @@ typedef NS_ENUM(uint8_t, MacWSDirectTouchState) {
                                                    width:direct.width
                                                   height:direct.height];
         }
-    } else if (!_reportedDirectDrawableJoinMiss) {
-        _reportedDirectDrawableJoinMiss = YES;
-        NSMutableArray<NSString *> *candidates = [NSMutableArray array];
-        for (MacWSStreamWindow *window in _latestWindows) {
-            MacWSStreamWindowDescriptor descriptor = window.descriptor;
-            if (descriptor.ownerPID != logicalOwnerPID) continue;
-            [candidates addObject:[NSString stringWithFormat:
-                @"%u:flags=0x%x/%ux%u", descriptor.windowID,
-                descriptor.flags, descriptor.pixelWidth,
-                descriptor.pixelHeight]];
+        _reportedDirectDrawableJoinMiss = NO;
+        _lastDirectDrawableCatalogRefreshTime = 0.0;
+    } else {
+        if (!_reportedDirectDrawableJoinMiss) {
+            _reportedDirectDrawableJoinMiss = YES;
+            NSMutableArray<NSString *> *candidates = [NSMutableArray array];
+            for (MacWSStreamWindow *window in _latestWindows) {
+                MacWSStreamWindowDescriptor descriptor = window.descriptor;
+                if (descriptor.ownerPID != logicalOwnerPID) continue;
+                [candidates addObject:[NSString stringWithFormat:
+                    @"%u:flags=0x%x/%ux%u", descriptor.windowID,
+                    descriptor.flags, descriptor.pixelWidth,
+                    descriptor.pixelHeight]];
+            }
+            MacWSLog(@"direct-drawable-join-miss pid=%d drawable=%ux%u "
+                     "canvas=%ux%u catalog-candidates=%@",
+                     logicalOwnerPID, direct.width, direct.height,
+                     canvasWidth, canvasHeight, candidates);
         }
-        MacWSLog(@"direct-drawable-join-miss pid=%d drawable=%ux%u "
-                 "canvas=%ux%u catalog-candidates=%@",
-                 logicalOwnerPID, direct.width, direct.height,
-                 canvasWidth, canvasHeight, candidates);
+        // A drawable resize can precede both the unsolicited AppKit catalog
+        // broadcast and fullscreen layer reconciliation. The exact geometry
+        // join must remain fail-closed, but the completed new-size drawable
+        // is itself a bounded reason to refresh those authorities. Without
+        // this barrier the Host retained a 1700x1040 catalog indefinitely
+        // while Chromium was already publishing 1600x1000, so no activity
+        // heartbeat could reach displayd and the direct path could never
+        // recover. Coalesce producer-rate notifications to at most 4 Hz.
+        CFTimeInterval refreshTime = CACurrentMediaTime();
+        if (logicalOwnerPID == self.targetPID &&
+            refreshTime - _lastDirectDrawableCatalogRefreshTime >= 0.25) {
+            _lastDirectDrawableCatalogRefreshTime = refreshTime;
+            [_streamClient requestWindowList];
+        }
+        if (_directDrawableHeartbeatPID == logicalOwnerPID) {
+            MacWSLog(@"direct-drawable-authority-cleared pid=%d layer=%u "
+                     "reason=join-miss",
+                     logicalOwnerPID, _directDrawableHeartbeatLayerID);
+            [_streamClient clearDirectDrawableActivity];
+            _lastDirectDrawableHeartbeatTime = 0.0;
+            _directDrawableHeartbeatPID = 0;
+            _directDrawableHeartbeatLayerID = 0;
+            _directDrawableHeartbeatWidth = 0;
+            _directDrawableHeartbeatHeight = 0;
+            _scheduledCatalystDrawableFrame = nil;
+            if (_directDrawableContinuousPacing) {
+                _directDrawableContinuousPacing = NO;
+                self.paused = YES;
+                MacWSClearMTKDisplayLinkHighFrameRateReason(self);
+                self.enableSetNeedsDisplay = YES;
+                ((CAMetalLayer *)self.layer).maximumDrawableCount = 2;
+            }
+        }
     }
     // Runtime-confirmed by aquarium-1k-focused-direct-v3.json on
     // 2026-09-30: the authenticated producer delivered 1,402 unique frames
@@ -1142,6 +1289,9 @@ typedef NS_ENUM(uint8_t, MacWSDirectTouchState) {
     _fullscreenGestureRoutePID = 0;
     _fullscreenGestureRouteWindowID = 0;
     _fullscreenGestureRouteDescriptor = (MacWSStreamFrameDescriptor){0};
+    _fullscreenGlobalPointerRouteActive = NO;
+    _fullscreenGlobalPointerPresentationPID = 0;
+    _fullscreenGlobalPointerPresentationContactID = 0;
     _threeFingerSystemGestureActive = NO;
     _threeFingerSystemGestureAxis = 0;
     _threeFingerSystemGestureReferenceDistance = 0.0;
@@ -1160,6 +1310,10 @@ typedef NS_ENUM(uint8_t, MacWSDirectTouchState) {
     _lastDirectDrawableHeartbeatTime = 0;
     _directDrawableHeartbeatPID = 0;
     _directDrawableHeartbeatLayerID = 0;
+    _directDrawableHeartbeatWidth = 0;
+    _directDrawableHeartbeatHeight = 0;
+    _directDrawableGeometryBarrierTime = 0;
+    _lastDirectDrawableCatalogRefreshTime = 0;
     _reportedDirectDrawableJoinMiss = NO;
     _reportedDirectDrawableExactLayerSuppression = NO;
     _reportedDirectDrawableBaseElision = NO;
@@ -1217,6 +1371,10 @@ typedef NS_ENUM(uint8_t, MacWSDirectTouchState) {
     _lastDirectDrawableHeartbeatTime = 0;
     _directDrawableHeartbeatPID = 0;
     _directDrawableHeartbeatLayerID = 0;
+    _directDrawableHeartbeatWidth = 0;
+    _directDrawableHeartbeatHeight = 0;
+    _directDrawableGeometryBarrierTime = 0;
+    _lastDirectDrawableCatalogRefreshTime = 0;
     _reportedDirectDrawableJoinMiss = NO;
     _reportedDirectDrawableExactLayerSuppression = NO;
     _reportedDirectDrawableBaseElision = NO;
@@ -1326,6 +1484,10 @@ typedef NS_ENUM(uint8_t, MacWSDirectTouchState) {
         (_surfaceFrame.descriptor.flags & MacWSStreamFrameFinalComposite) != 0;
 }
 - (BOOL)streamServiceConnected { return _streamClient.isConnected; }
+- (BOOL)fullscreenInputTransactionActive {
+    return _fullscreenGlobalPointerRouteActive ||
+        _fullscreenGestureRouteActive;
+}
 
 - (void)requestRenderedDrawableSnapshotToPath:(NSString *)path {
     if (path.length == 0) return;
@@ -1349,6 +1511,9 @@ typedef NS_ENUM(uint8_t, MacWSDirectTouchState) {
     _lastDirectDrawableHeartbeatTime = 0;
     _directDrawableHeartbeatPID = 0;
     _directDrawableHeartbeatLayerID = 0;
+    _directDrawableHeartbeatWidth = 0;
+    _directDrawableHeartbeatHeight = 0;
+    _lastDirectDrawableCatalogRefreshTime = 0;
     _reportedDirectDrawableJoinMiss = NO;
     _reportedDirectDrawableExactLayerSuppression = NO;
     _reportedDirectDrawableBaseElision = NO;
@@ -1364,6 +1529,7 @@ typedef NS_ENUM(uint8_t, MacWSDirectTouchState) {
     _scheduledCatalystDrawableFrame = nil;
     [_catalystDrawableCompositor removeAllFrames];
     _lastDirectDrawableReceiptTime = 0.0;
+    _inferredDescendantFullscreenCanvas = NO;
     if (_directDrawableContinuousPacing) {
         _directDrawableContinuousPacing = NO;
         self.paused = YES;
@@ -1426,8 +1592,13 @@ typedef NS_ENUM(uint8_t, MacWSDirectTouchState) {
 }
 
 - (void)setDisplayDensity:(MacWSHostDisplayDensity)displayDensity {
+    MacWSHostDisplayDensity previous = _displayDensity;
     _displayDensity = MacWSNormalizedDisplayDensity(displayDensity);
     _lastRequestedWindowSize = CGSizeZero;
+    _submittedPresentWitness = NO;
+    MacWSLog(@"display-density changed previous=%u next=%u factor=%.2f",
+             (unsigned)previous, (unsigned)_displayDensity,
+             MacWSDisplayDensityFactor(_displayDensity));
     [self resetViewportZoom];
     [self geometryDidChange];
 }
@@ -1637,13 +1808,12 @@ typedef NS_ENUM(uint8_t, MacWSDirectTouchState) {
     self.userInteractionEnabled = _macWSInputEnabled && !_windowTooSmall;
     if (_windowTooSmall) {
         NSString *densityName = self.displayDensity ==
-            MacWSHostDisplayDensityComfort150 ? @"舒适放大 150%" :
-            (self.displayDensity == MacWSHostDisplayDensityComfort125
-                ? @"舒适放大 125%" : @"像素匹配 Retina");
+            MacWSHostDisplayDensityRetinaLarger
+                ? @"Retina 放大" : @"Retina 标准";
         _tooSmallLabel.text = [NSString stringWithFormat:
             @"窗口太小\n\n此 macOS 应用至少需要 %.0f × %.0f 点\n"
              "当前 %@ 模式需要约 %.0f × %.0f iPad 点\n\n"
-             "请放大 iPadOS 窗口，或切换到像素匹配模式。",
+             "请放大 iPadOS 窗口，或切换到 Retina 标准。",
             self.minimumLogicalSize.width,
             self.minimumLogicalSize.height,
             densityName, requiredWidth, requiredHeight];
@@ -2550,25 +2720,41 @@ typedef NS_ENUM(uint8_t, MacWSDirectTouchState) {
          "  VOut o; o.position = float4(vertices[vid].xy, 0.0, 1.0);\n"
          "  o.uv = vertices[vid].zw; return o;\n"
          "}\n"
-         "fragment half4 macws_fragment(VOut in [[stage_in]],\n"
-         "    texture2d<half> image [[texture(0)]]) {\n"
+         "half4 macws_quality_sample(texture2d<half> image, float2 uv) {\n"
          "  constexpr sampler s(coord::normalized, address::clamp_to_edge,\n"
          "                      filter::linear);\n"
-         "  return image.sample(s, in.uv);\n"
+         "  half4 center = image.sample(s, uv);\n"
+         "  float2 size = float2(image.get_width(), image.get_height());\n"
+         "  float2 dx = dfdx(uv) * size;\n"
+         "  float2 dy = dfdy(uv) * size;\n"
+         "  float sourcePerPixelX = length(float2(dx.x, dy.x));\n"
+         "  float sourcePerPixelY = length(float2(dx.y, dy.y));\n"
+         "  if (sourcePerPixelX >= 0.995f && sourcePerPixelY >= 0.995f)\n"
+         "    return center;\n"
+         "  float2 texel = 1.0f / size;\n"
+         "  half3 left = image.sample(s, uv - float2(texel.x, 0.0f)).rgb;\n"
+         "  half3 right = image.sample(s, uv + float2(texel.x, 0.0f)).rgb;\n"
+         "  half3 up = image.sample(s, uv - float2(0.0f, texel.y)).rgb;\n"
+         "  half3 down = image.sample(s, uv + float2(0.0f, texel.y)).rgb;\n"
+         "  half3 low = min(center.rgb, min(min(left, right), min(up, down)));\n"
+         "  half3 high = max(center.rgb, max(max(left, right), max(up, down)));\n"
+         "  half3 sharpened = center.rgb * 1.4h\n"
+         "      - (left + right + up + down) * 0.1h;\n"
+         "  return half4(clamp(sharpened, low, high), center.a);\n"
+         "}\n"
+         "fragment half4 macws_fragment(VOut in [[stage_in]],\n"
+         "    texture2d<half> image [[texture(0)]]) {\n"
+         "  return macws_quality_sample(image, in.uv);\n"
          "}\n"
          "fragment half4 macws_fragment_opaque(VOut in [[stage_in]],\n"
          "    texture2d<half> image [[texture(0)]]) {\n"
-         "  constexpr sampler s(coord::normalized, address::clamp_to_edge,\n"
-         "                      filter::linear);\n"
-         "  half4 pixel = image.sample(s, in.uv);\n"
+         "  half4 pixel = macws_quality_sample(image, in.uv);\n"
          "  return half4(pixel.rgb, 1.0h);\n"
          "}\n"
          "fragment half4 macws_direct_composite(VOut in [[stage_in]],\n"
          "    texture2d<half> desktop [[texture(0)]],\n"
          "    texture2d<half> direct [[texture(1)]],\n"
          "    constant float4 *geometry [[buffer(0)]]) {\n"
-         "  constexpr sampler s(coord::normalized, address::clamp_to_edge,\n"
-         "                      filter::linear);\n"
          "  float4 destination = geometry[0];\n"
          "  if (in.uv.x >= destination.x && in.uv.x <= destination.z &&\n"
          "      in.uv.y >= destination.y && in.uv.y <= destination.w) {\n"
@@ -2576,12 +2762,12 @@ typedef NS_ENUM(uint8_t, MacWSDirectTouchState) {
          "        (destination.zw - destination.xy);\n"
          "    float4 source = geometry[1];\n"
          "    float2 directUV = mix(source.xy, source.zw, fraction);\n"
-         "    half4 foreground = direct.sample(s, directUV);\n"
+         "    half4 foreground = macws_quality_sample(direct, directUV);\n"
          "    if (foreground.a >= 0.999h) return foreground;\n"
-         "    half4 background = desktop.sample(s, in.uv);\n"
+         "    half4 background = macws_quality_sample(desktop, in.uv);\n"
          "    return foreground + background * (1.0h - foreground.a);\n"
          "  }\n"
-         "  return desktop.sample(s, in.uv);\n"
+         "  return macws_quality_sample(desktop, in.uv);\n"
          "}\n"
          "fragment half4 macws_shadow(VOut in [[stage_in]],\n"
          "    constant float4 *geometry [[buffer(0)]]) {\n"
@@ -3090,18 +3276,46 @@ typedef NS_ENUM(uint8_t, MacWSDirectTouchState) {
         _scheduledCatalystDrawableFrame.record.ownerPID == self.targetPID
             ? _scheduledCatalystDrawableFrame
             : [_catalystDrawableCompositor frameForOwnerPID:self.targetPID];
-    return frame.texture ? frame : nil;
+    BOOL geometryMatchesHeartbeat = frame &&
+        frame.record.width == _directDrawableHeartbeatWidth &&
+        frame.record.height == _directDrawableHeartbeatHeight;
+    return frame.texture && geometryMatchesHeartbeat ? frame : nil;
 }
 
 - (void)drawInMTKView:(MTKView *)view {
     if (!_pipeline || !_commandQueue) return;
+    BOOL directSchedulerCandidate = NO;
+    MacWSDirectDrawableScheduleOutcome directScheduleOutcome =
+        MacWSDirectDrawableScheduleOutcomeUnknown;
     if (_directDrawableContinuousPacing) {
         if (!_scheduledCatalystDrawableFrame) {
-            _scheduledCatalystDrawableFrame =
-                [_catalystDrawableCompositor dequeueFrameForOwnerPID:
-                    self.targetPID];
+            // Resize does not invalidate already-completed drawable records.
+            // Consume and release predecessors until the FIFO reaches the
+            // geometry generation independently joined to the focused
+            // window. Otherwise an old-size record can remain selected
+            // forever: it is correctly refused by the renderer, but was
+            // previously cleared only after a successful submission.
+            for (;;) {
+                MacWSCatalystDrawableFrame *candidate =
+                    [_catalystDrawableCompositor dequeueFrameForOwnerPID:
+                        self.targetPID];
+                if (!candidate) break;
+                BOOL joinedGeometry =
+                    _directDrawableHeartbeatPID == self.targetPID &&
+                    _directDrawableHeartbeatWidth != 0 &&
+                    _directDrawableHeartbeatHeight != 0;
+                if (!joinedGeometry ||
+                    (candidate.record.width ==
+                         _directDrawableHeartbeatWidth &&
+                     candidate.record.height ==
+                         _directDrawableHeartbeatHeight)) {
+                    _scheduledCatalystDrawableFrame = candidate;
+                    break;
+                }
+            }
         }
         BOOL hasScheduledFrame = _scheduledCatalystDrawableFrame != nil;
+        directSchedulerCandidate = hasScheduledFrame;
         [_performanceMonitor
             recordDirectDrawableSchedulerTickWithFrame:hasScheduledFrame];
         if (!_reportedDirectDrawableTickWitness) {
@@ -3174,31 +3388,61 @@ typedef NS_ENUM(uint8_t, MacWSDirectTouchState) {
         baseCatalystFrame.record.ownerPID == self.targetPID &&
         baseCatalystFrame.record.producerPID !=
             baseCatalystFrame.record.ownerPID;
+    BOOL focusedDirectAuthorityLive = focusedLayerDirect &&
+        baseCatalystFrame.texture && self.targetPID > 1 &&
+        _directDrawableHeartbeatPID == self.targetPID &&
+        _directDrawableHeartbeatLayerID != 0 &&
+        _directDrawableHeartbeatWidth != 0 &&
+        _directDrawableHeartbeatHeight != 0 &&
+        baseCatalystFrame.record.width == _directDrawableHeartbeatWidth &&
+        baseCatalystFrame.record.height == _directDrawableHeartbeatHeight &&
+        _lastDirectDrawableHeartbeatTime > 0.0 &&
+        directHeartbeatAge >= 0.0 && directHeartbeatAge <= 3.0;
+    BOOL focusedDirectBaseGenerationReady = !finalComposite ||
+        _directDrawableGeometryBarrierTime == 0 ||
+        (_surfaceFrame.descriptor.displayTime != 0 &&
+         _surfaceFrame.descriptor.displayTime >=
+            _directDrawableGeometryBarrierTime);
+    if (focusedDirectBaseGenerationReady && finalComposite &&
+        _directDrawableGeometryBarrierTime != 0) {
+        _directDrawableGeometryBarrierTime = 0;
+    }
+    if (directSchedulerCandidate) {
+        if (!directSurface)
+            directScheduleOutcome =
+                MacWSDirectDrawableScheduleOutcomeNoBaseSurface;
+        else if (!focusedLayerDirect)
+            directScheduleOutcome =
+                MacWSDirectDrawableScheduleOutcomeNotDescendantDrawable;
+        else if (!focusedDirectAuthorityLive)
+            directScheduleOutcome =
+                MacWSDirectDrawableScheduleOutcomeHeartbeatMismatch;
+    }
     // Window-mode Chromium publishes the exact focused client IOSurface. If
     // it matches the retained base frame pixel-for-pixel and the independently
     // joined PID/window heartbeat is fresh, that drawable completely replaces
     // the captured base. Sampling the old DisplayStream texture first only to
     // overdraw every pixel doubled Host's full-resolution fragment work.
     BOOL focusedWindowDirectAuthoritative = directSurface && !finalComposite &&
-        focusedLayerDirect && self.targetWindowID != 0 &&
-        _directDrawableHeartbeatPID == self.targetPID &&
+        focusedDirectAuthorityLive && self.targetWindowID != 0 &&
         _directDrawableHeartbeatLayerID == self.targetWindowID &&
-        _lastDirectDrawableHeartbeatTime > 0.0 &&
-        directHeartbeatAge >= 0.0 && directHeartbeatAge <= 3.0 &&
         baseCatalystFrame.record.width ==
             _surfaceFrame.descriptor.contentWidth &&
         baseCatalystFrame.record.height ==
             _surfaceFrame.descriptor.contentHeight;
-    // A catalog-validated fullscreen canvas has no AppKit title bar to
-    // preserve. A descendant Chromium/Electron producer likewise publishes
-    // the client IOSurface for the exact focused layer rather than an AppKit
-    // frame with a title bar.
+    // A catalog-validated fullscreen canvas has no AppKit title bar. Every
+    // ordinary window does: runtime snapshots at 1790785175 showed the
+    // descendant Chromium texture contained the title-bar background but not
+    // AppKit's traffic lights. Preserve that 24-point/48-pixel strip from the
+    // WindowServer authority instead of letting direct pixels erase it.
     CGFloat catalystTitlebarHeightPixels =
-        ([_fullscreenCanvasPIDs containsObject:@(self.targetPID)] ||
-         focusedLayerDirect) ? 0.0 : 48.0;
+        [_fullscreenCanvasPIDs containsObject:@(self.targetPID)]
+            ? 0.0 : 48.0;
     MacWSSurfaceFrame *focusedDirectCompositeLayer = nil;
+    BOOL focusedDirectCompositeIdentitySeen = NO;
     if (finalComposite && focusedLayerDirect &&
         _directCompositePipeline &&
+        focusedDirectBaseGenerationReady &&
         _directDrawableHeartbeatPID == self.targetPID &&
         _directDrawableHeartbeatLayerID != 0 &&
         _lastDirectDrawableHeartbeatTime > 0.0 &&
@@ -3208,9 +3452,35 @@ typedef NS_ENUM(uint8_t, MacWSDirectTouchState) {
             if (descriptor.layerOwnerPID == self.targetPID &&
                 descriptor.layerWindowID ==
                     _directDrawableHeartbeatLayerID) {
+                focusedDirectCompositeIdentitySeen = YES;
+                if (fabs(descriptor.destinationWidth -
+                         baseCatalystFrame.record.width) >
+                        MACWS_DIRECT_DRAWABLE_GEOMETRY_TOLERANCE_PIXELS ||
+                    fabs(descriptor.destinationHeight -
+                         baseCatalystFrame.record.height) >
+                        MACWS_DIRECT_DRAWABLE_GEOMETRY_TOLERANCE_PIXELS)
+                    continue;
                 focusedDirectCompositeLayer = candidate;
                 break;
             }
+        }
+    }
+    if (directSchedulerCandidate && focusedDirectAuthorityLive &&
+        directScheduleOutcome == MacWSDirectDrawableScheduleOutcomeUnknown) {
+        if (finalComposite) {
+            if (!_directCompositePipeline)
+                directScheduleOutcome =
+                    MacWSDirectDrawableScheduleOutcomeCompositePipelineMissing;
+            else if (!focusedDirectBaseGenerationReady)
+                directScheduleOutcome =
+                    MacWSDirectDrawableScheduleOutcomeBaseGenerationPending;
+            else if (!focusedDirectCompositeLayer)
+                directScheduleOutcome = focusedDirectCompositeIdentitySeen
+                    ? MacWSDirectDrawableScheduleOutcomeLayerGeometryMismatch
+                    : MacWSDirectDrawableScheduleOutcomeLayerMissing;
+        } else if (!focusedWindowDirectAuthoritative) {
+            directScheduleOutcome =
+                MacWSDirectDrawableScheduleOutcomeWindowBaseMismatch;
         }
     }
     if (directSurface) {
@@ -3272,10 +3542,10 @@ typedef NS_ENUM(uint8_t, MacWSDirectTouchState) {
     MTLRenderPassDescriptor *pass = view.currentRenderPassDescriptor;
     id<CAMetalDrawable> drawable = view.currentDrawable;
     if (!pass || !drawable) return;
-    if (fullscreenDirectAuthoritative || focusedWindowDirectAuthoritative) {
-        // The exact direct drawable will cover the semantic game/window
-        // canvas. Clear any area outside it and do not shade the retained
-        // base underneath a layer that is already authoritative.
+    if (fullscreenDirectAuthoritative) {
+        // The exact direct drawable covers the complete semantic game canvas.
+        // Ordinary windows still need their WindowServer title bar, so only a
+        // true FullscreenCanvas may clear/elide the base.
         pass.colorAttachments[0].loadAction = MTLLoadActionClear;
         pass.colorAttachments[0].clearColor =
             MTLClearColorMake(0.0, 0.0, 0.0, 1.0);
@@ -3297,17 +3567,42 @@ typedef NS_ENUM(uint8_t, MacWSDirectTouchState) {
         }
     }
     BOOL fusedFocusedDirect = NO;
-    if (!fullscreenDirectAuthoritative &&
-        !focusedWindowDirectAuthoritative) {
+    if (!fullscreenDirectAuthoritative) {
         [encoder setVertexBytes:vertices length:sizeof(vertices) atIndex:0];
         [encoder setFragmentTexture:_sourceTexture atIndex:0];
-        if (focusedDirectCompositeLayer) {
+        if (focusedWindowDirectAuthoritative && _directCompositePipeline) {
+            MacWSStreamFrameDescriptor base = _surfaceFrame.descriptor;
+            float left = base.contentX / (float)base.width;
+            float top = (base.contentY + catalystTitlebarHeightPixels) /
+                (float)base.height;
+            float right = (base.contentX + base.contentWidth) /
+                (float)base.width;
+            float bottom = (base.contentY + base.contentHeight) /
+                (float)base.height;
+            float directTop = catalystTitlebarHeightPixels /
+                (float)baseCatalystFrame.record.height;
+            simd_float4 geometry[2] = {
+                {left, top, right, bottom},
+                {0.0f, directTop, 1.0f, 1.0f},
+            };
+            [encoder setRenderPipelineState:_directCompositePipeline];
+            [encoder setFragmentTexture:baseCatalystFrame.texture atIndex:1];
+            [encoder setFragmentBytes:geometry
+                                length:sizeof(geometry) atIndex:0];
+            [encoder drawPrimitives:MTLPrimitiveTypeTriangleStrip
+                        vertexStart:0 vertexCount:4];
+            fusedFocusedDirect = YES;
+            drewCatalystDrawable = YES;
+            catalystWitnessFrame = baseCatalystFrame;
+            [submittedCatalystFrames addObject:baseCatalystFrame];
+        } else if (focusedDirectCompositeLayer) {
             MacWSStreamFrameDescriptor base = _surfaceFrame.descriptor;
             MacWSStreamFrameDescriptor direct =
                 focusedDirectCompositeLayer.descriptor;
             float left = (base.contentX + direct.destinationX) /
                 (float)base.width;
-            float top = (base.contentY + direct.destinationY) /
+            float top = (base.contentY + direct.destinationY +
+                catalystTitlebarHeightPixels) /
                 (float)base.height;
             float right = (base.contentX + direct.destinationX +
                 direct.destinationWidth) / (float)base.width;
@@ -3320,7 +3615,10 @@ typedef NS_ENUM(uint8_t, MacWSDirectTouchState) {
             if (geometryValid) {
                 simd_float4 geometry[2] = {
                     {left, top, right, bottom},
-                    {0.0f, 0.0f, 1.0f, 1.0f},
+                    {0.0f,
+                     catalystTitlebarHeightPixels /
+                         (float)baseCatalystFrame.record.height,
+                     1.0f, 1.0f},
                 };
                 [encoder setRenderPipelineState:_directCompositePipeline];
                 [encoder setFragmentTexture:baseCatalystFrame.texture
@@ -3351,6 +3649,9 @@ typedef NS_ENUM(uint8_t, MacWSDirectTouchState) {
                              desktopArea > 0.0
                                 ? directArea / desktopArea * 100.0 : 0.0);
                 }
+            } else if (directSchedulerCandidate) {
+                directScheduleOutcome =
+                    MacWSDirectDrawableScheduleOutcomeDestinationInvalid;
             }
         }
         if (!fusedFocusedDirect) {
@@ -3374,7 +3675,8 @@ typedef NS_ENUM(uint8_t, MacWSDirectTouchState) {
     // completed producer IOSurface over only the content portion, preserving
     // the captured traffic lights/title bar and the exact existing viewport.
     if (directSurface && !finalComposite &&
-        !fullscreenDirectAuthoritative && baseCatalystFrame.texture) {
+        !fullscreenDirectAuthoritative &&
+        focusedWindowDirectAuthoritative && !fusedFocusedDirect) {
         // The base-elision path above intentionally skips its texture draw,
         // including the pipeline binding which that draw used to establish
         // for this encoder. MacWSEncodeCatalystDrawable only supplies the
@@ -3694,6 +3996,7 @@ typedef NS_ENUM(uint8_t, MacWSDirectTouchState) {
         }
     }
     if (directSurface && finalComposite && _overlayFrames.count &&
+        focusedDirectAuthorityLive &&
         !fusedFocusedDirect &&
         ![_fullscreenCanvasPIDs containsObject:@(self.targetPID)]) {
         // Final-composite is authoritative for native SkyLight effects, but a
@@ -3726,6 +4029,12 @@ typedef NS_ENUM(uint8_t, MacWSDirectTouchState) {
             CGRect destination = CGRectMake(
                 overlay.destinationX, overlay.destinationY,
                 overlay.destinationWidth, overlay.destinationHeight);
+            BOOL geometryMatches =
+                fabs(destination.size.width - focusedFrame.record.width) <=
+                    2.0 &&
+                fabs(destination.size.height - focusedFrame.record.height) <=
+                    2.0;
+            if (!geometryMatches) continue;
             BOOL opaqueDirect = focusedFrame &&
                 (focusedFrame.record.flags &
                     MacWSCatalystDrawableOpaque) != 0 &&
@@ -3760,8 +4069,11 @@ typedef NS_ENUM(uint8_t, MacWSDirectTouchState) {
         MacWSLog(@"rendered-drawable-authority target=%d authoritative=%@ "
                  "final=%@ capability=%@ controller-identity=%@ "
                  "layer=%@ retained=%@ heartbeat-pid=%d "
-                 "heartbeat-window=%u heartbeat-age-ms=%.1f "
-                 "direct-sequence=%llu endpoint=%@",
+                 "heartbeat-window=%u heartbeat-size=%ux%u "
+                 "heartbeat-age-ms=%.1f base-stream=%llu "
+                 "base-sequence=%llu focused-direct-sequence=%llu "
+                 "focused-direct-size=%ux%u focused-destination=%d,%d/%ux%u "
+                 "endpoint=%@",
                  self.targetPID,
                  fullscreenDirectAuthoritative ? @"YES" : @"NO",
                  finalComposite ? @"YES" : @"NO",
@@ -3782,8 +4094,18 @@ typedef NS_ENUM(uint8_t, MacWSDirectTouchState) {
                     ? @"YES" : @"NO",
                  _directDrawableHeartbeatPID,
                  _directDrawableHeartbeatLayerID,
+                 _directDrawableHeartbeatWidth,
+                 _directDrawableHeartbeatHeight,
                  directHeartbeatAge * 1000.0,
-                 (unsigned long long)fullscreenDirectFrame.record.sequence,
+                 (unsigned long long)_surfaceFrame.descriptor.streamID,
+                 (unsigned long long)_surfaceFrame.descriptor.sequence,
+                 (unsigned long long)baseCatalystFrame.record.sequence,
+                 baseCatalystFrame.record.width,
+                 baseCatalystFrame.record.height,
+                 focusedDirectCompositeLayer.descriptor.destinationX,
+                 focusedDirectCompositeLayer.descriptor.destinationY,
+                 focusedDirectCompositeLayer.descriptor.destinationWidth,
+                 focusedDirectCompositeLayer.descriptor.destinationHeight,
                  MacWSAppInputEndpointReady(self.targetPID)
                     ? @"YES" : @"NO");
     }
@@ -3879,6 +4201,23 @@ typedef NS_ENUM(uint8_t, MacWSDirectTouchState) {
                                    focusedWindowDirectAuthoritative)
         commandBuffer:commandBuffer drawable:drawable];
     [commandBuffer presentDrawable:drawable];
+    if (directSchedulerCandidate) {
+        if ([submittedCatalystFrames containsObject:
+                _scheduledCatalystDrawableFrame]) {
+            directScheduleOutcome =
+                MacWSDirectDrawableScheduleOutcomeSubmitted;
+        }
+        [_performanceMonitor recordDirectDrawableScheduleOutcome:
+            directScheduleOutcome];
+        if (directScheduleOutcome ==
+                MacWSDirectDrawableScheduleOutcomeBaseGenerationPending) {
+            // Do not pin the first producer frame seen at the new geometry
+            // while waiting for WindowServer's base to catch up. The bounded
+            // FIFO then presents the newest completed content as soon as the
+            // generation barrier opens.
+            _scheduledCatalystDrawableFrame = nil;
+        }
+    }
     if (_scheduledCatalystDrawableFrame &&
         [submittedCatalystFrames containsObject:
             _scheduledCatalystDrawableFrame]) {
@@ -4175,22 +4514,40 @@ typedef NS_ENUM(uint8_t, MacWSDirectTouchState) {
             !MacWSAppInputEndpointReady(descriptor.ownerPID)) continue;
         return descriptor.ownerPID;
     }
-    // The workspace layer graph carries displayd's current on-screen ordering
-    // as layerLevel. It remains the z-order authority even while an independent
-    // FinalComposite supplies the pixels: CopyCatalogWindowInfo's OptionAll
-    // catalog is an identity/lifecycle list and is not reordered by every
-    // activation on this chroot. Runtime-confirmed on 2026-08-30 after bringing
-    // Settings window 320 forward: retained layer levels were Activity=4,
-    // Terminal=5, Settings=6 (matching the rendered snapshot), while
-    // _latestWindows remained Activity, Terminal, Settings. Selecting the
-    // catalog first therefore reset keyboard targetPID to the covered Activity
-    // Monitor immediately after the correct pointer activation.
-    //
-    // A nonempty catalog still constrains eligible identities. An empty catalog
-    // is a real fullscreen-game state (runtime: Stray PID 22119 kept layer 67
-    // and its input endpoint while publishing no AppKit catalog item), so the
-    // same live layer graph remains authoritative there as well.
     BOOL restrictToCatalogPIDs = pids.count != 0;
+    if ([self hasFinalCompositeFrame] && _streamConnected) {
+        // FinalComposite is the live desktop generation. displayd builds the
+        // matching catalog from CGWindowListCopyWindowInfo(OnScreenOnly), in
+        // the same front-to-back order as those pixels. Exact layer captures
+        // are intentionally suspended once FinalComposite is authoritative;
+        // their retained layerLevel values can consequently be minutes old.
+        // Runtime-confirmed by the 2026-09-30 TestUFO profile: selecting that
+        // retired graph oscillated the target Code -> Terminal -> Activity
+        // Monitor and repeatedly revoked Code's valid direct-drawable lease.
+        // Use the catalog from the live composite generation before consulting
+        // retained fallback layers. The unique LaunchServices frontmost flag
+        // above remains the first choice when it is available.
+        for (MacWSStreamWindow *window in _latestWindows) {
+            MacWSStreamWindowDescriptor descriptor = window.descriptor;
+            MacWSStreamWindowFlags required =
+                MacWSStreamWindowVisible | MacWSStreamWindowOnScreen;
+            if (descriptor.ownerPID <= 1 || descriptor.windowID == 0 ||
+                (restrictToCatalogPIDs &&
+                 ![pids containsObject:@(descriptor.ownerPID)]) ||
+                (descriptor.flags & required) != required ||
+                !MacWSAppInputEndpointReady(descriptor.ownerPID)) continue;
+            MacWSLog(@"fullscreen-frontmost route=final-composite-live-"
+                     "catalog pid=%d window=%u flags=%#x",
+                     descriptor.ownerPID, descriptor.windowID,
+                     descriptor.flags);
+            return descriptor.ownerPID;
+        }
+    }
+    // Without a live final composite, the exact layer graph is the pixels Host
+    // actually draws and its layerLevel order is the correct fallback. An
+    // empty catalog is also a real fullscreen-game state (runtime: Stray PID
+    // 22119 kept layer 67 and its input endpoint while publishing no AppKit
+    // catalog item), so do not require a catalog identity in that case.
     for (NSNumber *key in [[self overlayKeysBackToFront]
             reverseObjectEnumerator]) {
         MacWSSurfaceFrame *frame = _overlayFrames[key];
@@ -4203,23 +4560,6 @@ typedef NS_ENUM(uint8_t, MacWSDirectTouchState) {
             (descriptor.flags & MacWSStreamFrameInputPassthrough) != 0 ||
             !MacWSAppInputEndpointReady(descriptor.layerOwnerPID)) continue;
         return descriptor.layerOwnerPID;
-    }
-    if ([self hasFinalCompositeFrame] && _streamConnected) {
-        for (MacWSStreamWindow *window in _latestWindows) {
-            MacWSStreamWindowDescriptor descriptor = window.descriptor;
-            MacWSStreamWindowFlags required =
-                MacWSStreamWindowVisible | MacWSStreamWindowOnScreen;
-            if (descriptor.ownerPID <= 1 || descriptor.windowID == 0 ||
-                (restrictToCatalogPIDs &&
-                 ![pids containsObject:@(descriptor.ownerPID)]) ||
-                (descriptor.flags & required) != required ||
-                !MacWSAppInputEndpointReady(descriptor.ownerPID)) continue;
-            MacWSLog(@"fullscreen-frontmost route=final-composite-catalog-"
-                     "fallback pid=%d window=%u flags=%#x",
-                     descriptor.ownerPID, descriptor.windowID,
-                     descriptor.flags);
-            return descriptor.ownerPID;
-        }
     }
     return 0;
 }
@@ -4623,6 +4963,58 @@ typedef NS_ENUM(uint8_t, MacWSDirectTouchState) {
     return NO;
 }
 
+- (BOOL)performanceTitlebarPointForTargetPID:(int32_t)targetPID
+                                       point:(CGPoint *)point {
+    if (targetPID <= 1 || _streamClient.mode != MacWSStreamModeFullscreen)
+        return NO;
+    for (MacWSStreamWindow *window in _latestWindows) {
+        MacWSStreamWindowDescriptor candidate = window.descriptor;
+        MacWSStreamWindowFlags required =
+            MacWSStreamWindowVisible | MacWSStreamWindowOnScreen;
+        if (candidate.ownerPID != targetPID || candidate.windowID == 0 ||
+            (candidate.flags & required) != required ||
+            !isfinite(candidate.logicalX) ||
+            !isfinite(candidate.logicalY) ||
+            !isfinite(candidate.logicalWidth) ||
+            !isfinite(candidate.logicalHeight) ||
+            !isfinite(candidate.backingScale) ||
+            candidate.logicalWidth <= 80.0 ||
+            candidate.logicalHeight <= 40.0 ||
+            candidate.backingScale < 0.5 ||
+            candidate.backingScale > 8.0) continue;
+        CGFloat scale = candidate.backingScale;
+        CGRect destination = CGRectMake(
+            candidate.logicalX * scale, candidate.logicalY * scale,
+            candidate.logicalWidth * scale,
+            candidate.logicalHeight * scale);
+        // Standard AppKit traffic lights occupy the leading edge, while
+        // Electron's command center occupies the middle/right. One quarter
+        // width and 18 logical points below the top is a stable draggable
+        // title-bar region for both without relying on application-specific
+        // controls. Confirm the point against the currently composited layer
+        // so an overlapping window can never receive this diagnostic drag.
+        CGPoint candidatePoint = CGPointMake(
+            CGRectGetMinX(destination) + CGRectGetWidth(destination) * 0.25,
+            CGRectGetMinY(destination) + 18.0 * scale);
+        int32_t resolvedPID = 0;
+        uint32_t resolvedWindowID = 0;
+        if (![self resolveFullscreenLayerAtPoint:candidatePoint
+                                             pid:&resolvedPID
+                                        windowID:&resolvedWindowID
+                                      descriptor:NULL] ||
+            resolvedPID != targetPID ||
+            resolvedWindowID != candidate.windowID) continue;
+        if (point) *point = candidatePoint;
+        MacWSLog(@"performance-window-titlebar pid=%d window=%u point=(%.1f,%.1f) destination=(%.1f,%.1f %.1fx%.1f)",
+                 targetPID, candidate.windowID, candidatePoint.x,
+                 candidatePoint.y, destination.origin.x,
+                 destination.origin.y, destination.size.width,
+                 destination.size.height);
+        return YES;
+    }
+    return NO;
+}
+
 - (BOOL)routeFullscreenInputRecord:(MacWSInputRecord *)record
              presentationTargetPID:(int32_t *)presentationTargetPID {
     if (!record || _streamClient.mode != MacWSStreamModeFullscreen)
@@ -4661,7 +5053,7 @@ typedef NS_ENUM(uint8_t, MacWSDirectTouchState) {
                 record->kind == MacWSInputKindTouchUp ||
                 record->kind == MacWSInputKindTouchCancel;
             if (continuesGlobalDrag &&
-                _fullscreenGlobalPointerPresentationPID > 1 &&
+                _fullscreenGlobalPointerRouteActive &&
                 record->contactID ==
                     _fullscreenGlobalPointerPresentationContactID) {
                 visualPID = _fullscreenGlobalPointerPresentationPID;
@@ -4671,6 +5063,7 @@ typedef NS_ENUM(uint8_t, MacWSDirectTouchState) {
                     windowID:&visualWindowID descriptor:NULL];
             }
             if (beginsGlobalDrag) {
+                _fullscreenGlobalPointerRouteActive = YES;
                 _fullscreenGlobalPointerPresentationPID = visualPID;
                 _fullscreenGlobalPointerPresentationContactID =
                     record->contactID;
@@ -4731,9 +5124,22 @@ typedef NS_ENUM(uint8_t, MacWSDirectTouchState) {
             // regression sample additionally carries Host's already-resolved
             // CGWindowID as a correlation key; Dock still posts the same
             // global CGPostMouseEvent and does not route by this identity.
+            // A held button must remain one OSXvnc/WindowServer transaction.
+            // Encoding an exact window only on diagnostic TouchDown made
+            // inputd choose its exact-system-surface route for Down, then the
+            // window-zero global proxy for Move/Up. That split owner produced
+            // the same apparent mid-drag release this profiler is meant to
+            // detect. presentationTargetPID already provides correlation, so
+            // keep every sustained pointer edge on the production global
+            // route; atomic taps may still carry a diagnostic window key.
+            BOOL sustainedPointer =
+                record->kind == MacWSInputKindTouchDown ||
+                record->kind == MacWSInputKindTouchMove ||
+                record->kind == MacWSInputKindTouchUp ||
+                record->kind == MacWSInputKindTouchCancel;
             uint32_t diagnosticWindowID =
-                (record->flags & MacWSInputFlagLatencyDiagnostic)
-                    ? visualWindowID : 0;
+                (record->flags & MacWSInputFlagLatencyDiagnostic) &&
+                !sustainedPointer ? visualWindowID : 0;
             record->sceneID = MacWSInputSceneForWindow(
                 diagnosticWindowID, modifiers);
             record->flags |= MacWSInputFlagGlobalSystemSurface;
@@ -4750,6 +5156,7 @@ typedef NS_ENUM(uint8_t, MacWSDirectTouchState) {
                  record->kind == MacWSInputKindTouchCancel) &&
                 record->contactID ==
                     _fullscreenGlobalPointerPresentationContactID) {
+                _fullscreenGlobalPointerRouteActive = NO;
                 _fullscreenGlobalPointerPresentationPID = 0;
                 _fullscreenGlobalPointerPresentationContactID = 0;
             }
@@ -7012,11 +7419,19 @@ typedef NS_ENUM(uint8_t, MacWSDirectTouchState) {
     CGPoint center = CGPointMake(width * 0.5, height * 0.5);
     BOOL systemScenario = [scenario hasPrefix:@"three-"] ||
         [scenario isEqualToString:@"mission-select"];
-    if (!systemScenario && _streamClient.mode == MacWSStreamModeFullscreen &&
-        ![self performanceVisiblePointForTargetPID:self.targetPID
-                                             point:&center]) {
-        finish(NO, @"目标应用当前没有可见、可命中的性能测试区域");
-        return;
+    if (!systemScenario && _streamClient.mode == MacWSStreamModeFullscreen) {
+        BOOL resolvedPerformancePoint =
+            [scenario isEqualToString:@"window-drag"]
+                ? [self performanceTitlebarPointForTargetPID:self.targetPID
+                                                       point:&center]
+                : [self performanceVisiblePointForTargetPID:self.targetPID
+                                                      point:&center];
+        if (!resolvedPerformancePoint) {
+            finish(NO, [scenario isEqualToString:@"window-drag"]
+                ? @"当前目标没有可验证的可见标题栏"
+                : @"目标应用当前没有可见、可命中的性能测试区域");
+            return;
+        }
     }
 
     MacWSPerformanceGestureScenario *adapter =
@@ -7615,6 +8030,21 @@ typedef NS_ENUM(uint8_t, MacWSDirectTouchState) {
         MacWSStreamFrameDescriptor current = frame.descriptor;
         if (!MacWSStreamLayerGeometrySupersedesFrame(
                 geometry, &current)) continue;
+        BOOL directLayerPresentationChanged =
+            geometry->layerOwnerPID == self.targetPID &&
+            geometry->layerWindowID == _directDrawableHeartbeatLayerID &&
+            _directDrawableHeartbeatPID == self.targetPID &&
+            (current.layerLevel != geometry->layerLevel ||
+             current.destinationX != geometry->destinationX ||
+             current.destinationY != geometry->destinationY ||
+             current.destinationWidth != geometry->destinationWidth ||
+             current.destinationHeight != geometry->destinationHeight);
+        if (directLayerPresentationChanged) {
+            uint64_t barrier = geometry->displayTime ?: receiptTime;
+            _directDrawableGeometryBarrierTime = MAX(
+                _directDrawableGeometryBarrierTime, barrier);
+            _scheduledCatalystDrawableFrame = nil;
+        }
         MacWSStreamFrameDescriptor descriptor = current;
         BOOL levelChanged = descriptor.layerLevel != geometry->layerLevel;
         descriptor.sequence = geometry->sequence;

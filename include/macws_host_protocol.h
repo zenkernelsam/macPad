@@ -315,13 +315,19 @@ enum {
 
 typedef uint16_t MacWSHostDisplayDensity;
 enum {
-    // One AppKit logical point maps to one UIKit Scene point. Retina backing
-    // scale is applied only while allocating/presenting drawable pixels and
-    // never feeds back into native Scene geometry.
-    MacWSHostDisplayDensityTouchComfort = 1,
-    // Retained persisted values, no longer selectable. More-space migrates
-    // to pixel matching; the old mild enlargement migrates to 125 percent.
-    MacWSHostDisplayDensityKeyboard = 2,
+    // Both selectable modes keep AppKit's real 2x Retina backing. Standard
+    // maps that source to the iPad drawable without resampling. Larger keeps
+    // the iPad drawable at its native screen scale and performs the required
+    // macOS-style HiDPI enlargement in MacWSHost's Metal presentation pass.
+    MacWSHostDisplayDensityRetinaStandard = 1,
+    MacWSHostDisplayDensityRetinaLarger = 2,
+    // Source-compatible names retained for older clients/producers.
+    MacWSHostDisplayDensityTouchComfort =
+        MacWSHostDisplayDensityRetinaStandard,
+    MacWSHostDisplayDensityKeyboard =
+        MacWSHostDisplayDensityRetinaLarger,
+    // Persisted non-Retina enlargement modes. They are intentionally no
+    // longer selectable and normalize to Retina Standard on upgrade.
     MacWSHostDisplayDensityComfort = 3,
     MacWSHostDisplayDensityComfort125 = 4,
     MacWSHostDisplayDensityComfort150 = 5,
@@ -329,19 +335,15 @@ enum {
 
 static inline MacWSHostDisplayDensity MacWSNormalizedDisplayDensity(
         MacWSHostDisplayDensity density) {
-    if (density == MacWSHostDisplayDensityComfort ||
-        density == MacWSHostDisplayDensityComfort125)
-        return MacWSHostDisplayDensityComfort125;
-    if (density == MacWSHostDisplayDensityComfort150)
-        return MacWSHostDisplayDensityComfort150;
-    return MacWSHostDisplayDensityTouchComfort;
+    if (density == MacWSHostDisplayDensityRetinaLarger)
+        return MacWSHostDisplayDensityRetinaLarger;
+    return MacWSHostDisplayDensityRetinaStandard;
 }
 
 static inline double MacWSDisplayDensityFactor(
         MacWSHostDisplayDensity density) {
     density = MacWSNormalizedDisplayDensity(density);
-    if (density == MacWSHostDisplayDensityComfort125) return 1.25;
-    if (density == MacWSHostDisplayDensityComfort150) return 1.50;
+    if (density == MacWSHostDisplayDensityRetinaLarger) return 1.25;
     return 1.0;
 }
 
@@ -406,10 +408,10 @@ enum {
     // makes AppKit constrain popovers against the same screen edge that bounds
     // the Scene capture instead of an arbitrary restored desktop position.
     MacWSInputFlagConfigureAnchorTopLeft = 1u << 13,
-    // Keep the captured window's upper-right corner on the real NSScreen edge.
-    // AppKit constrains popup-menu windows to NSScreen, not to their owner's
-    // frame; right anchoring therefore keeps a right-edge popup inside the
-    // exact-window DisplayStream instead of clipping it past the Scene edge.
+    // Keep an ordinary captured window's upper-right corner on the real
+    // NSScreen edge. If an application has no real maximum and its Scene grows
+    // wider than NSScreen, AppInput instead keeps the leading title-bar edge
+    // reachable; exact-window capture still represents the complete surface.
     MacWSInputFlagConfigureAnchorTopRight = 1u << 14,
     // Bounded lab probes may request latency aggregation at the receiving
     // AppInput endpoint. Production UIKit/VNC producers leave this clear.
