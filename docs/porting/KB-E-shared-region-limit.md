@@ -269,17 +269,63 @@ uint32_t task_exc_guard_default = _TASK_EXC_GUARD_ALL_FATAL;
 （`osfmk/kern/task.c:923-929`）⇒ **release 内核上无法用 boot-arg 改**，`_TASK_EXC_GUARD_ALL_FATAL`
 （=0x88）是硬编码默认。
 
-### 7.5 仍未解：`task->task_exc_guard` 的字节偏移
+### 7.5 ~~仍未解~~ → **已解：`task->task_exc_guard` = `task + 0x5C4`**（2026-10-01 设备实测）
+
+> 下面保留当初"未解"的记录与失败线索；**结论在 7.5.1**。
+
+<details>
+<summary>当初的未解记录</summary>
 
 - `type_inspect("task")` 返回 size 异常、无成员 ⇒ IDB 无可用 `struct task` 类型。
 - 尝试经 `kern.task_exc_guard_default` 的 sysctl oid
   （字符串 @ `0xfffffe0007ed97c6` → oid @ `0xfffffe0007991618`）反查全局变量**未成功**：
   该 oid 各指针解引用后**没有**任何一处等于 `0x88`/`0x08`/`0x99`，其 `+0x28`
   指向 `0xfffffe00079df180`，而那是个自指的链表结构（不是默认值本身）。**该线索判定为不通。**
-- **下一步（未做）**：改用设备侧扫描——在 `proc_task(p)` 得到的 task 结构里搜
-  "低字节 = 0x88 且是 4 字节对齐"的字（平台二进制默认值），并用"改一个已知进程的该字段、
-  观察 guard 是否变非致命"来闭环验证。
-- ⚠️ 附加风险：若该字段被 PAC 保护或位于只读区，E2 的"数据写"路线也要重估（见 §4 反证表）。
+</details>
+
+#### 7.5.1 定位方法（设备侧只读扫描，已验证）
+
+用设备上的 Dopamine KRW（`/var/jb/basebin/libjailbreak.dylib` + `kread64/kread32`）：
+`proc_self()` → `+0x18` = `ro` → `ro+0x8` = `task`（**PAC 需剥离**：`0xffff800000000000 | (v & 0x7FFFFFFFFFFF)`），
+然后在 `task+0x3E8 .. 0x640` 里找 4 字节对齐、值形如 `0x88/0x99/0x89/0x08` 的字。
+脚本：设备 `/var/mobile/texg_scan.py`（只读）。
+
+**结果：全区间只有唯一候选 `task+0x5C4 = 0x00000099`。**
+
+#### 7.5.2 跨进程交叉验证（三个任务，值各不相同且都合理）
+
+| 进程 | `task` | **`task+0x5C4`** | `task+0x3E8`（shared_region） |
+|---|---|---|---|
+| pid 0（kernel_task） | `0xfffffe1300441328` | **`0x00`** | `0x0` |
+| pid 1（launchd） | `0xfffffe1300e59328` | **`0x53`** | `0xfffffe14ccb99540` |
+| 我们的 python3 | — | **`0x99`** | `0xfffffe14ccb99540` |
+
+- `kernel_task` 无共享区、guard 为 0 ✓；`launchd` 与我们的进程**同一个** shared_region 指针 ✓；
+- `0x99` = `MP_DELIVER|MP_FATAL|VM_FATAL|VM_DELIVER` ⇒ **`VM_FATAL(0x08)` 置位**，正是 DEALLOC_GAP 致命的原因；
+- `launchd` 是 `0x53`（**无 FATAL**）——说明该字段确实按任务差异设置，不是常量。
+⇒ **`task+0x5C4` = `task_exc_guard` 定案。**
+
+#### 7.5.3 写路径已验证
+
+`/var/mobile/texg_write.py`：对自己这个任务 `kwrite32(task+0x5C4, 0x99 & ~0x09 = 0x90)`，
+读回确认：
+
+```
+task_exc_guard @+0x5C4: before=0x99  kwrite32 rc=0  after=0x90
+VERDICT: WRITE OK
+```
+（顺带确认：**`kcall` 在本机不可用**（缺 `IOSurfaceRootUserClient` entitlement），
+但 **`kread/kwrite` 可用** —— E2 只需要后者。）
+
+#### 7.5.4 E2 的施加方式（下一步，未执行）
+
+`task_exc_guard` 是**每任务**的，必须在"目标进程 exec 之前、同一个 task 上"改。
+最干净的做法：一个**自己 `chroot()` + `execve()` 的启动器**（python 即可：
+`os.chroot(rootfs)` → `os.execve(...)`），在 exec **之前**把自己的 `task+0x5C4` 改成 `0x90`
+（exec 保留 task，因此目标进程继承）。
+⚠️ 前置：F1 的 dyld 需在 rootfs 中就位（设备当前留的是 **pristine** dyld，需重新部署）。
+⚠️ 注意 `fork()` 后 `task` 是**新建**的（子进程会重新取默认值），所以**不能**靠"打补丁再 fork"。
+（`fork` 继承性本轮未测出结论——子进程里重新初始化 KRW 后无回显，需另法验证。）
 
 ### 7.6 调用点与守卫函数：做到哪一步
 
