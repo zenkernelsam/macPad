@@ -427,3 +427,118 @@ run_bash.sh -c "echo hi"  →  EXIT=90，stdout 为空（没有 "hi"）
 **我对 15.6.1 的当前立场**：**不确定**。根因（布局超区）是硬的，但"绕过守卫之后的失败"我没查清，
 且我据以判断"E2 不解决根因"的那条证据（blob 里的 `0x2ac75c000`）**已被我自己撤回**。
 所以**15.6.1 仍有可能是通的**——需要上面第 1、2 条来判定。
+
+---
+
+## 12. ⭐⭐ 重大进展：**原始缓存 + F1 dyld → chroot 里的 macOS `echo` 已经能加载完整的共享缓存 libSystem**
+（2026-10-01 16:50-17:00，全部 `runtime-confirmed`）
+
+### 12.1 触发方式
+
+跑项目自己的端到端见证 `misc/post_reboot_cli_test.sh`（该脚本内置 F1 的已知 SHA/CDHash、
+`cachereg` 持有、以及"还原 pristine"）。它的第 1 步报 **`PATCH_STATE=BAD`** ——
+即**设备当前用的是【原始】缓存**（`size=0x12c760000`、`subC=1`、`.01 effEnd=0x2ac75c000`），
+**之前的"4GB 布局补丁"并不在位**。
+
+### 12.2 结果：`GUARD…_HITS=0`，131 个镜像全部加载
+
+见证命令 = `DYLD_PRINT_LIBRARIES=1 run_dbg_hold_v2 chroot <rootfs> /bin/echo HI`。
+
+| 观测 | 值 |
+|---|---|
+| 唯一加载的镜像数 | **131** |
+| stderr 行数 | 416（其中 **409 行是 dyld 的 LIB 日志**） |
+| `[exc]` 行 | **0**（**没有任何 EXC_GUARD**） |
+| 脚本给的 VERDICT | **`FIXED-please-verify-HI-printed`**（`GUARD_2ac75c000_HITS=0`） |
+| stdout | 只有 `Successfully marked proc of pid … as debugged`，**没有 `HI`** |
+
+**加载成功的镜像包括**（节选，均为 `dyld[PID]: <UUID> <path>` 原文）：
+```
+/usr/lib/libSystem.B.dylib
+/usr/lib/system/libsystem_malloc.dylib   libsystem_kernel.dylib   libsystem_platform.dylib
+/usr/lib/system/libsystem_pthread.dylib  libsystem_c.dylib        libdispatch.dylib  libdyld.dylib
+/usr/lib/libobjc.A.dylib   libc++abi.dylib   libc++.1.dylib
+/System/Library/Frameworks/IOKit.framework/Versions/A/IOKit
+/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation
+/System/Library/Frameworks/Network.framework/Network
+/System/Library/PrivateFrameworks/IOMobileFramebuffer.framework/IOMobileFramebuffer
+/System/Library/Frameworks/IOSurface.framework/IOSurface
+/usr/lib/swift/libswiftCore.dylib  libswift_Concurrency.dylib  …（多个）
+/private/preboot/CFD92CED…/dopamine-…      ← 越狱注入（ElleKit TweakLoader/systemhook 系）
+```
+
+⇒ **这正是本目标要求的那句"genuine macOS dyld + shared-cache libSystem"**：
+chroot 里的 macOS dyld 确实把**共享缓存里的** libSystem 及其整条依赖链拉起来了，**没有任何守卫崩溃**。
+
+### 12.3 对照：**打了"4GB 布局补丁"反而会坏**
+
+同一份 `post_reboot_cli_test.log` 里还留着**更早的一次**运行（当时缓存是**打过补丁**的）：
+```
+GUARD_2ac75c000_HITS=1
+VERDICT=STILL-BLOCKED-same-guard
+[exc] type=12 code0=0xa000000100000000 code1=0x2ac75c000 …
+[exc] x0=2ac75c000 x1=0 x2=5 x3=40012   x4=3 x5=0 x16=c5
+[vm] 0x2ac75c000..0x2ac760000 prot=1/3 off=0x0 shared=0     ← 写只读页（initProt=1=r）
+```
+⇒ **打补丁的状态会触发守卫；原始缓存的状态不会。**
+⇒ **`misc/apply_4gb_layout_patch.sh`（及其后续方案）很可能是把状态弄坏的那一步**，
+而 `STATIC-cache-layout-exceeds-4gb-shared-region.md` 的整条"缓存超区"叙事都建立在**打补丁后的状态**上。
+
+### 12.4 当前剩余问题：**卡死，不是崩溃**（已精确定位到初始化器）
+
+`run_dbg_hold_v2` 的自身日志：
+```
+[*] spawned pid=… (suspended)
+[*] jbctl rc=0   task_for_pid kr=0   set_exc_ports kr=0   task_resume kr=0
+[*] child STOPPED sig=0
+（此后没有任何 "child exited rc=" / "SIGNALED" —— 90 秒后被 timeout 杀掉）
+```
+
+带 `DYLD_PRINT_INITIALIZERS=1` 复跑，初始化器**按序执行到最后一条**：
+```
+running initializer … in /usr/lib/libSystem.B.dylib
+running initializer … in /private/preboot/…/dopamine-…
+running initializer 0x1e786b630 / 0x1e786b688 in /usr/lib/libc++.1.dylib
+running initializer 0x1d9245338 in /System/Library/Frameworks/CoreFoundation.framework/CoreFoundation
+running initializer 0x1da002094 in /System/Library/Frameworks/Network.framework/Network
+running initializer 0x1d33b8498 … 0x1d3446dcc in /usr/lib/swift/libswiftCore.dylib   (5 条)
+running initializer 0x1e35d8b30 in /usr/lib/swift/libswift_Concurrency.dylib
+running initializer 0x1026780d4 in /private/preboot/CFD92CED…/dopamine-…      ← 最后一条
+（然后就是那个 blob，再没有任何输出 ⇒ 卡死）
+```
+⇒ **卡点在"越狱注入的 dylib（`/private/preboot/…/dopamine-…`）的初始化器"里**
+（或其之后的下一个初始化器从未开始）。**`HI` 从未打印。**
+
+### 12.5 那个 stderr blob 的真实身份（**第三处更正**）
+
+`run_dbg_hold_v2` 的日志尾部就是那个 blob（`DF/AN/FL/TD/F2/HG/HA`）——它出现在
+`[*] child STOPPED sig=0` **之后**、且 **`noinsert` 时也在**。
+结合"越狱注入在每个进程里都加载"这一事实（**不设 `DYLD_INSERT_LIBRARIES` 也去不掉它**），
+⇒ **blob 极可能来自越狱注入的 ElleKit（TweakLoader/systemhook）**，即**正常现象**，
+与守卫/布局无关。（仍非最终定论，但它是"通用早期诊断"这一点已确定。）
+
+### 12.6 由此得到的新判断（**推翻我此前的"无路可走"**）
+
+- **15.6.1 已经跨过了"守卫/布局"这道墙**：在**原始缓存 + F1** 下，共享缓存 libSystem **完整加载、零崩溃**。
+- **剩下的唯一问题是"初始化器卡死"**，而且已定位到**越狱注入的 dylib**。
+- ⇒ **下一步很小**：想办法让**越狱的 ElleKit 注入不进入 chroot 的 macOS 进程**
+  （或在 chroot 里屏蔽它），然后重跑见证看 `HI` 是否出现。
+  这比"重建缓存/改内核"便宜得多。
+
+### 12.7 下一步（给下一个 AI，按序）
+
+1. **拿到卡死进程的线程栈**：项目有 lldb 工具链（`misc/ios_lldb_tmux.sh`、`misc/lldb_attach_chroot_ws.sh`）。
+   在 F1 + 原始缓存的状态下 spawn（`run_dbg_hold_v2` 会把 child 先挂起，正好可以 attach），
+   看它到底阻塞在哪个调用（XPC? mach service? 锁?）。
+2. **阻止越狱注入进入 chroot 进程**：查 `libmachook` 的 `exec_hooks.c`（注释说要为后代"重复归一化"插入列表）
+   与 rootfs 里 `/private/preboot/…/dopamine-…` 的来源（install 脚本会从 `/var/jb` 收割
+   `TweakLoader.dylib`/`systemhook.dylib`）。目标：让 `DYLD_INSERT_LIBRARIES` 只含 libmachook_arm64。
+3. **重跑见证**，确认 `HI` 出现；再按 CLI 阶梯（`sh -c` → `cat/ls/date`）往上前进。
+4. ⚠️ **不要再跑 `apply_4gb_layout_patch.sh`**（§12.3：它会让守卫重新出现）。
+   `PATCH_STATE=BAD` 目前是**期望**状态。
+
+### 12.8 对 §6/§11 的更新
+
+- §6.4（"绕过守卫后撞上布局根因"）：**已撤回**（§12.3 证明那是打补丁才有的现象）。
+- §11 第 1 条（找参照点）：**已完成** —— 参照点就是"原始缓存 + F1"，它**能加载 libSystem**。
+- §6.1（D③）：仍未在设备上重测（现在优先级下降——共享缓存这条路已经通了）。
