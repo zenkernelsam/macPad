@@ -317,15 +317,57 @@ VERDICT: WRITE OK
 （顺带确认：**`kcall` 在本机不可用**（缺 `IOSurfaceRootUserClient` entitlement），
 但 **`kread/kwrite` 可用** —— E2 只需要后者。）
 
-#### 7.5.4 E2 的施加方式（下一步，未执行）
+#### 7.5.4 E2 的施加方式（**已实测修正**）
 
-`task_exc_guard` 是**每任务**的，必须在"目标进程 exec 之前、同一个 task 上"改。
-最干净的做法：一个**自己 `chroot()` + `execve()` 的启动器**（python 即可：
-`os.chroot(rootfs)` → `os.execve(...)`），在 exec **之前**把自己的 `task+0x5C4` 改成 `0x90`
-（exec 保留 task，因此目标进程继承）。
-⚠️ 前置：F1 的 dyld 需在 rootfs 中就位（设备当前留的是 **pristine** dyld，需重新部署）。
-⚠️ 注意 `fork()` 后 `task` 是**新建**的（子进程会重新取默认值），所以**不能**靠"打补丁再 fork"。
-（`fork` 继承性本轮未测出结论——子进程里重新初始化 KRW 后无回显，需另法验证。）
+~~原以为"exec 保留 task，所以可先改自己再 exec"。**实测否定**：~~
+
+```
+[e2] reexec pid=3774 task=0xfffffe13018769f8 guard 0x99 - rc0 -> 0x90
+[e2] check  pid=3774 task=0xfffffe13018800c8 guard=0x99     ← 同一 pid，task 变了，值回到 0x99
+```
+
+**`execve()` 会重建 task**（pid 不变但 task 指针改变）⇒ 对 task 字段的补丁在 exec 瞬间丢失。
+⇒ **只能改"新任务的默认值"**（见 7.5.5）。
+
+> 另更正：**`fork()` 是"从父任务复制"**（`sub_FFFFFE0007FA31B4` 内
+> `LDR W8,[X22,#0x5C4]` → `STR W8,[X19,#0x5C4]`，且对 `kernel_task` 特判置 0），
+> 而 **`exec` 是"按默认值重建"**。此前"fork 会重新取默认值"的说法作废。
+
+#### 7.5.5 ⭐ `task_exc_guard_default` = `0xFFFFFE000A9FABE0`（IDA 静态地址）
+
+反编译设置新任务 guard 的函数（`sub_FFFFFE0007FAF0D8`）：
+
+```asm
+0xfffffe0007faf160  ADRP  X10, #dword_FFFFFE000A9FABE0
+0xfffffe0007faf164  LDR   W10, [X10, #dword_FFFFFE000A9FABE0@PAGEOFF]   ; = task_exc_guard_default
+0xfffffe0007faf168  LDRB  W11, [X1,#0x79]
+0xfffffe0007faf16c  TBNZ  W11, #2, loc_FFFFFE0007FAF1C8                  ; 平台分支
+0xfffffe0007faf170  UBFX  W10, W10, #8, #8        ; 第三方 = (default >> 8) & 0xFF   ← 源码 SHIFT 0x8
+0xfffffe0007faf174  STR   W10, [X19,#0x5C4]       ; task->task_exc_guard
+...
+0xfffffe0007faf1c8  AND   W10, W10, #0xFF         ; 平台 = default & 0xFF
+0xfffffe0007faf1cc  STR   W10, [X19,#0x5C4]
+0xfffffe0007faf210  MOV   W10, #0x53 ; 'S'        ; ← 与实测 launchd=0x53 对上
+0xfffffe0007faf214  STR   W10, [X19,#0x5C4]
+```
+
+**与源码逐条吻合**（`osfmk/mach/task_info.h:566` `TASK_EXC_GUARD_THIRD_PARTY_DEFAULT_SHIFT 0x8`；
+平台取低字节；第三方取次字节）。观察到的平台值 `0x99` ⇒ 该全局低字节 = `0x99`。
+
+**⇒ E2 的正确做法（未执行）**：把 `task_exc_guard_default` 的**低字节** `0x99` 改成 `0x90`
+（清 `VM_DELIVER|VM_FATAL`）。这是**一次 4 字节内核数据写**，且**没有时序问题**——
+之后任何新 exec 的平台进程都会拿到 `0x90`。
+⚠️ 施加前必须：① 用运行时 slide 把 `0xFFFFFE000A9FABE0` 换算成运行时地址
+（**不得**直接用 IDB 地址；先用 KRW 读回确认低字节 == `0x99` 再写）；
+② 改回或重启即可回滚（纯数据字段，可逆）。
+
+#### 7.5.6 E2 首轮实测：**清自己的 task 位无效**（已做，判定为"施加方式错"）
+
+`/var/mobile/e2_launch.py` 的 `patch` 模式（清自身 `task+0x5C4` 的 `0x09` 后再 `chroot+execve`）
+与 `baseline` 模式**结果逐字节相同**：`EXIT=137`，stderr 都是同一段 80 字节二进制块
+（`44 46 …/41 4e …/46 4c …/54 44 …/46 32 …`，每 16 字节 = 8 字节 tag + 8 字节值）。
+**原因已定位**：exec 重建 task，补丁丢失（7.5.4）——**不是"守卫不是凶手"**。
+（该 80 字节块的作用**未定**：本地源码里搜不到这些 tag；设备上有 `triage.py` 可读内核 kdebug triage ring，下一步可用它对照。）
 
 ### 7.6 调用点与守卫函数：做到哪一步
 
