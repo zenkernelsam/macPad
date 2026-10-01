@@ -1199,12 +1199,150 @@ P["xpI7"]=(0x34e6c, _le("528012e052800030d4001001"), "exit(0x8a) @priv $_0 block
 #   BL site @0x345ac -> cave@0x47290 (60B dead region): write(2,{x0..x5},48)
 #   then tail `b _mmap` — BL sets x30=0x345b0 so _mmap ret lands back at the
 #   real call site. Dumps {VA,size,prot,flags,fd,foff}; last record = kill pt.
-#   Cave body assembled+verified: b _mmap @cave+0x30=0x472c0 -> 0x4f44 =17ef721.
+#   Cave body assembled+verified: b _mmap @cave+0x30=0x472c0 -> 0x4f44 =0x143ef721
+#   (imm26=(0x4f44-0x472c0)/4=-0x108df => 0x143ef721; the earlier "17ef721"
+#   was an unrelocated .o imm field = UNDEFINED insn = the SIGILL we chased).
 P["mdumpentry"]=(0x345ac, bytes.fromhex("394b0094"), "@0x345ac bl 0x47290 (mmap arg dump)")
-P["mdumpcave"] =(0x47290, _le("a9bc07e0a9010fe2a90217e4910003e1d2800040d2800602"
-                             "d2800090d4001001a94007e0a9410fe2a94217e4910103ff"
-                             "017ef721"),
-               "cave@0x47290: write(2,mmap_args,48); b _mmap(0x4f44)")
+# v2: inline the mmap svc INSIDE the cave (x16=197, flags|MAP_UNIX03) and
+# branch straight back to 0x345b0. The earlier `b _mmap` tail hit a genuinely
+# absent dyld text page (EXC_BAD_ACCESS KERN_INVALID_ADDRESS at base+0x4f44,
+# exception-port confirmed) — likely an iOS lazy-/partial-map artifact.
+P["mdumpcave"] =(0x47290, _le("d10103ffa90007e0a9010fe2a90217e4910003e152800602"
+                             "52800040d2800090d4001001f94003e0910103ffb26e0063"
+                             "d28018b0d400100117ffb4ba"),
+               "cave@0x47290(60B): write(2,mmap_args,48); x16=197 svc; b 0x345b0")
+
+# DIAGNOSTIC: shared-region state probe. Replaces PACIBSP @0x342dc
+# (mapSplitCachePrivate entry) with BL -> cave@0x47290. Cave calls
+# shared_region_check_np (svc 294) with a stack slot, writes
+# {start_address, retval} = 16B to fd2, re-execs PACIBSP, ret->0x342e0.
+# Answers: does this proc have a shared-region object at private-map time?
+#   ret=0 -> region exists w/ start; ENOMEM -> empty region; EINVAL -> none.
+# Cave occupancy conflict: shares 0x47290 with mdumpcave — never combine.
+P["chknpentry"]=(0x342dc, bytes.fromhex("ed4b0094"), "@0x342dc bl 0x47290 (shared_region_check_np probe)")
+P["chknpcave"] =(0x47290, _le("d100c3ff910003e0d28024d0d4001001f90007e052800040"
+                             "910003e152800202d2800090d40010019100c3ffd503237f"
+                             "d65f03c0"),
+               "cave@0x47290: check_np(&slot); write(2,{slot,ret},16); pacibsp; ret")
+
+# HISTORICAL DIAGNOSTIC (not a fix): deallocateExistingSharedCache's
+# `cbnz w0` at 0x34228 skips check_np(NULL) teardown on ENOMEM (12).
+# NOP forces teardown for ALL nonzero results, including EINVAL (22).
+# Earlier tests did not establish successful file mmap with this patch.
+# Use emptysr_e + emptysr_c to change only the empty-region case.
+P["deallocnp"]=(0x34228, bytes.fromhex("1f2003d5"),
+               "@0x34228 nop cbnz w0 -> always call check_np(NULL) teardown")
+
+P["emptysr_e"]=(0x34228, bytes.fromhex("40830935"),
+                "@0x34228 cbnz w0 -> 0x47290; zero ret keeps original path")
+P["emptysr_c"]=(0x47290, bytes.fromhex("1f300071017df654e5b3ff17"),
+                "cave@0x47290: ret==ENOMEM(12) -> teardown@0x3422c, else epilogue@0x34234")
+
+# HISTORICAL DIAGNOSTIC: the old stopcave uses signal 19=SIGCONT,
+# NOT SIGSTOP=17, so it cannot provide a valid suspended VM snapshot.
+# Use srpair_c for corrected SIGSTOP; do not infer state from this cave.
+# Shares 0x47290 cave slot — never combine with mdump/chknp caves.
+P["stopentry"]=(0x342dc, bytes.fromhex("ed4b0094"), "@0x342dc bl 0x47290 (historical invalid stop19 probe)")
+P["stopcave"] =(0x47290, _le("d10043ffa90007e0d2800290d4001001d2800261d28004b0"
+                             "d4001001a94007e0910043ffd503237fd65f03c0"),
+               "cave@0x47290: getpid; kill(pid,19); pacibsp; ret")
+
+# DIAGNOSTIC: post-_mmap return probe. Patches `cmn x0,#1` @0x345b0 -> bl cave.
+# Cave @0x3b394 (60B dead zone): write(2,{x0},8) then re-exec `cmn x0,#1`,
+# ret -> 0x345b4 (flags preserved: cmn runs last, ret doesn't touch flags).
+# 8-byte record distinguishes from mdump's 48-byte records. If arg record
+# appears but no ret record -> died INSIDE the mmap syscall; if ret record
+# appears with MAP_FAILED -> error path; with success -> died in iter advance.
+P["rpostentry"]=(0x345b0, bytes.fromhex("791b0094"), "@0x345b0 bl 0x3b394 (mmap ret dump; LR=0x345b4)")
+P["rpostcave"] =(0x3b394, _le("d100c3ffa90007e0a9017be2f90013e052800040910083e1"
+                             "52800102d2800090d4001001a94007e0a9417be29100c3ff"
+                             "b100041fd65f03c0"),
+               "cave@0x3b394: write(2,{x0},8); cmn x0,#1; ret")
+
+
+# DIAGNOSTIC: check_np(NULL) + self-SIGSTOP at mapSplitCachePrivate entry.
+# Direct svc 294 (x0=0) inside the cave — does NOT rely on dyld's
+# deallocateExistingSharedCache stub. Tests whether the syscall alone
+# removes the permanent submap entry in a process where 536 never ran.
+P["stopnpcave"] =(0x47290, _le("d2800000d28024d0d4001001d2800290d4001001"
+                              "d2800261d28004b0d4001001d503237fd65f03c0"),
+               "cave@0x47290: check_np(NULL); getpid; kill(pid,19); pacibsp; ret")
+
+
+# DIAGNOSTIC v2: like stopnpcave but encodes check_np(NULL) ret into the
+# stop signal: ret==0 -> kill(pid,19 SIGSTOP); ret!=0 -> kill(pid,30 SIGUSR1).
+P["stopnp2cave"] =(0x47290, _le("d2800000d28024d0d40010012a0003e9d2800290"
+                               "d4001001d28002617100013f54000061d28003c1"
+                               "d28004b0d4001001d503237fd65f03c0"),
+               "cave@0x47290: cknp0; getpid; w9=ret?19:30 -> kill; pacibsp; ret")
+
+
+# DIAGNOSTIC v3: dual check_np probe at mapSplitCachePrivate entry (0x342dc).
+# cave1 @0x47290: check_np(&sp) ret->[sp+8]; check_np(NULL) ret->[sp+12];
+#   write(2,sp,16) => fd2 record: [0:8]=base, [8:12]=ret1, [12:16]=ret2;
+#   b 0x3b394 -> cave2: getpid; kill(19); add sp; ret.
+P["np2dump1"] =(0x47290, _le("d10103ff910003e8aa0803e0d28024d0d4001001"
+                            "b9000900d2800000d28024d0d4001001b9000d00"
+                            "d2800040aa0803e1d2800202d2800080d4001001"
+                            "17ffd033"),
+               "cave1@0x47290: x0=sp;cknp(&buf);cknp(0);write(2,sp,16);b 0x3b394")
+P["np2dump2"] =(0x3b394, _le("d2800290d4001001d2800261d28004b0d4001001"
+                            "14000000"),
+               "cave2@0x3b394: getpid; kill(19); b . (spin until stopped)")
+
+
+
+# DIAGNOSTIC: same entrycave probe relocated to loadDyldCache entry 0x34240
+P["ldprobe"]=(0x34240, bytes.fromhex("144c0014"), "@0x34240 b 0x47290 (probe @loadDyldCache entry)")
+
+
+P["privprobe"]=(0x342dc, bytes.fromhex("ed4b0014"), "@0x342dc b 0x47290 (probe @private entry)")
+
+P["chkbasecave"]=(0x47290, _le("d10083ff5297dde872bbd5a8f90003e8910003e0d28024d0"
+    "d4001001f94003e100000000"), "cave: chk_np(&buf) -> x0=ret x1=base; udf")
+
+P["highreserve_e"]=(0x342dc, bytes.fromhex("a531ff17"), "@0x342dc b 0x970 (high-VA hint reservation probe)")
+P["highreserve_c"]=(0x970, _le("d10183ffa90007e0a9010fe2a90217e4"
+                               "a90327e8f90023f0d2c00040f2b00000"
+                               "d2a58ec1d2800002d282004392800004"
+                               "d2800005d28018b0d400100154000202"
+                               "d2c00049f2b00009eb09001f54000121"
+                               "f94023f0a94327e8a94217e4a9410fe2"
+                               "a94007e0910183ffd503237f1400ce41"
+                               "d2a58ec1d2800930d4001001d2800ae0"
+                               "d2800030d400100114000000"),
+                   "cave@0x970: hint mmap 0x280000000+0x2c760000; require exact VA, else exit(87); replay PACIBSP")
+
+P["srpair_e"]=(0x342dc, bytes.fromhex("a531ff17"), "@0x342dc b 0x970 (two-phase shared-region probe)")
+P["srpair_c"]=(0x970, _le("d2800290d4001001d2800221d28004b0d4001001"
+                          "d2800000d28024d0d4001001d10043fff90003e0"
+                          "d2800040910003e1d2800102d2800090d4001001"
+                          "910043ffd2800290d4001001d2800221d28004b0"
+                          "d400100114000000"),
+                "cave@0x970: stop; check_np(NULL); write(2,ret,8); stop; spin")
+
+P["mmprobe_e"]=(0x342dc, bytes.fromhex("a531ff17"), "@0x342dc b 0x970 (mmap matrix probe)")
+P["mmprobe_c"]=(0x970, bytes.fromhex("ff0301d1a00f0010010080d2b00080d2011000d4e80300aa89c88852e90300f9e80700f9400080d2e1030091020280d2900080d2011000d4000080d20003c0f2010088d2620080d2430282d28300a0f204008092050080d2b01880d2011000d4e90300aa2ac88952ea0300f9e90700f9400080d2e1030091020280d2900080d2011000d4000088d20003c0f2010088d2a20080d2430280d28300a0f2e40308aa050080d2b01880d2011000d4e90300aaca888952ea0300f9e90700f9400080d2e1030091020280d2900080d2011000d4000080d2d02480d2011000d4e90300aa8a8a8852ea0300f9e90700f9400080d2e1030091020280d2900080d2011000d4000090d20003c0f2010088d2a20080d2430280d28300a0f2e40308aa050080d2b01880d2011000d4e90300aaca488652ea0300f9e90700f9400080d2e1030091020280d2900080d2011000d4000098d2a08eb5f24000c0f2010088d2a20080d2430280d28300a0f2e40308aa050080d2b01880d2011000d4e90300aa0ae98852ea0300f9e90700f9400080d2e1030091020280d2900080d2011000d4000080d2c08eb5f24000c0f2010088d2620080d2430282d28300a0f204008092050080d2b01880d2011000d4e90300aa0a298852ea0300f9e90700f9400080d2e1030091020280d2900080d2011000d4400b80d2300080d2011000d42f53797374656d2f4c6962726172792f64796c642f64796c645f7368617265645f63616368655f61726d36346500"), "big cave: open+anon/file FIXED+teardown+highVA matrix -> fd2")
+
+# DIAGNOSTIC v4: check_np state probe at DYLD ENTRY (0x47c0 = LC_UNIXTHREAD pc).
+# Determines whether task->shared_region is NULL *since exec* (ret=EINVAL/22),
+# empty (ENOMEM/12), or already valid (0) — i.e. BEFORE any dyld logic runs.
+# cave writes 16B to fd2: [0:8]=check_np base out, [8:12]=ret. Then exit(0x55).
+P["entryprobe"]=(0x47c0, bytes.fromhex("b40a0114"), "@0x47c0 b 0x47290 (dyld entry probe)")
+P["entrycave"] =(0x47290, _le("d10103ff910003e0d28024d0d4001001b9000be0"
+                            "d2800040910003e1d2800202d2800080d4001001"
+                            "17ffd037"),
+               "cave@0x47290: cknp(&sp)->[sp],ret->[sp+8];write(2,sp,16);b exit")
+P["entryexit"] =(0x3b394, _le("d2800aa0d2800030d4001001"),
+               "cave2@0x3b394: exit(0x55)")
+
+
+# DIAGNOSTIC v5: exit(check_np(NULL)) — return value -> child exit code.
+# rc=0 => sr existed & was removed; rc=22/EINVAL => sr==NULL already;
+# other => unexpected. Cave is one-way (never returns to dyld).
+P["retcave2"]=(0x47290, _le("d2800000d28024d0d4001001d2800030"
+                           "d4001001"),
+               "cave@0x47290: x0=0;svc294;exit(w0)")
 
 # DEFAULT: original-preflight clean build (no injected blob).
 DEFAULT = ["crossarch", "hasexisting", "prereuse", "filescount1",
@@ -1239,7 +1377,41 @@ def main():
         sys.exit(1)
     out_name = sys.argv[1]
     keys = sys.argv[2:] or DEFAULT
+    if "srpair_e" in keys or "srpair_c" in keys:
+        if not {"srpair_e", "srpair_c"}.issubset(keys) or "deallocnp" in keys:
+            sys.exit("srpair requires both keys and cannot be combined with deallocnp")
+        for k in keys:
+            if k in ("srpair_e", "srpair_c", "dearm64e") or k not in P:
+                continue
+            off, data, _ = P[k]
+            if any(off < site + len(blob) and site < off + len(data)
+                   for site, blob, _ in (P["srpair_e"], P["srpair_c"])):
+                sys.exit(f"srpair conflicts with {k}")
+    if "highreserve_e" in keys or "highreserve_c" in keys:
+        if not {"highreserve_e", "highreserve_c", "emptysr_e", "emptysr_c"}.issubset(keys):
+            sys.exit("highreserve requires both keys and the emptysr pair")
+        for k in keys:
+            if k in ("highreserve_e", "highreserve_c", "dearm64e") or k not in P:
+                continue
+            off, data, _ = P[k]
+            if any(off < site + len(blob) and site < off + len(data)
+                   for site, blob, _ in (P["highreserve_e"], P["highreserve_c"])):
+                sys.exit(f"highreserve conflicts with {k}")
+    if "emptysr_e" in keys or "emptysr_c" in keys:
+        if not {"emptysr_e", "emptysr_c"}.issubset(keys) or any(
+            k in keys for k in ("deallocnp", "srpair_e", "srpair_c")
+        ):
+            sys.exit("emptysr requires both keys and cannot combine with deallocnp/srpair")
+        for k in keys:
+            if k in ("emptysr_e", "emptysr_c", "dearm64e") or k not in P:
+                continue
+            off, data, _ = P[k]
+            if any(off < site + len(blob) and site < off + len(data)
+                   for site, blob, _ in (P["emptysr_e"], P["emptysr_c"])):
+                sys.exit(f"emptysr conflicts with {k}")
     d = bytearray(open(PRISTINE, "rb").read())
+    if "emptysr_e" in keys and d[0x34228:0x3422c] != bytes.fromhex("60000035"):
+        sys.exit("emptysr original CBNZ word mismatch")
     for k in keys:
         if k == "dearm64e":
             n = _dearm64e(d)
