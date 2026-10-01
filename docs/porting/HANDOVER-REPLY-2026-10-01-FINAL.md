@@ -147,10 +147,26 @@ GUARD_2ac75c000_HITS=1 / VERDICT=STILL-BLOCKED-same-guard
 
 ## 7. 设备状态与纪律
 
-- **当前状态**：dyld = **设备原始那份**（1,239,616 B，SHA `99569152…`）；缓存 = **原始 15.6.1**（未打补丁）；
-  全局 `task_exc_guard_default` = 已复原 `0x99`。**这就是那个"能加载 libSystem"的好状态。**
-- 设备侧我新增的文件：`/var/mobile/{e2_launch,e2_probe,e2_patch_default,e2_slide,e2_thrdump,texg_scan,texg_verify,texg_write,post_reboot_cli_test}.py/sh`
-  （`post_reboot_cli_test.sh` 是项目原有脚本的副本）；rootfs 内建过一个空目录 `/tmp/dsc_none`（无害）。
-- **纪律**：不擅自永久删除（移动而非 `rm`）；内核写前必须运行时定位 + 逐字节核对；
+- **当前状态（我离开时）**：
+  - `/usr/lib/dyld` = **设备原始那份**（**1,239,616 B**，SHA `9956915299c6e3e21c7e650242166bab05dc635da4acac2cbade4e646eec51a1`）
+  - 缓存 = **原始 15.6.1**（主 `2,712,764,416` / `.01` `2,203,500,544`，**未打 4GB 布局补丁**）
+  - 全局 `task_exc_guard_default` = **已复原 `0x99`**
+  - F1 的 dyld 我**没有删**，移到 `/var/mobile/f1_leftovers_20261001/f1_active_dyld`（1,239,648）
+- **复现"好状态"（能加载 libSystem 的那次）的精确命令**：
+  ```bash
+  R=/var/mnt/rootfs
+  cp /var/mobile/dyld_f1_34790.bin "$R/usr/lib/.f1s_x" && chmod 755 "$R/usr/lib/.f1s_x"
+  mv "$R/usr/lib/dyld" "$R/usr/lib/.f1o_x" && mv "$R/usr/lib/.f1s_x" "$R/usr/lib/dyld"
+  DYLD_PRINT_LIBRARIES=1 DYLD_PRINT_INITIALIZERS=1 \
+    timeout 300 /var/mobile/run_dbg_hold_v2 /var/jb/usr/bin/chroot "$R" /bin/echo HI
+  # 还原：mv "$R/usr/lib/dyld" "$R/usr/lib/.f1t_x" && mv "$R/usr/lib/.f1o_x" "$R/usr/lib/dyld"
+  ```
+  ⚠️ `timeout` 要 **> 90 s**，否则看不到结尾的 `[*] child exited rc=90`（会误判成"卡死"）。
+- 设备侧我新增/留下的文件：`/var/mobile/{e2_launch,e2_probe,e2_patch_default,e2_slide,e2_thrdump,texg_scan,texg_verify,texg_write}.py`、
+  `post_reboot_cli_test.sh`（项目原脚本副本）、`f1_leftovers_20261001/`（我移开的 F1 备份）；
+  rootfs 内建过一个空目录 `/tmp/dsc_none`（无害，可删）。
+- **设备上没有 lldb**（`/var/jb/usr/bin/lldb` 不存在，`/usr/bin/lldb*` 也不存在）——要取线程栈得先装。
+- **纪律**：不擅自永久删除（**移动**而非 `rm`）；内核写前必须运行时定位 + 逐字节核对；
   PAC 数据指针需剥（`0xffff800000000000 | (v & 0x7FFFFFFFFFFF)`）；
-  设备 SSH `root@192.168.64.1 -p 2222`（密码 `cisco`，**zsh 不做变量分词**，要用数组）。
+  设备 SSH `root@192.168.64.1 -p 2222`（密码 `cisco`，**zsh 不做变量分词**，命令要放进数组 `S=(sshpass …); "${S[@]}" '…'`）；
+  设备 python 是 procursus 的，**没有 `os.chroot`**，要用 `ctypes.CDLL(None).chroot()`。
