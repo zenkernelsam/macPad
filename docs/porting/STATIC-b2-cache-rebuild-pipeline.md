@@ -1034,3 +1034,67 @@ HI
   即"目标是指向字符串/数据内部的非符号地址"。**修法方向**：把"解析出的名字不是合法标识符"也归入 `unnamed`→`localize` 路径。
 - ⚠️ 但既然 §18.1 判定 D③ 不可行，**这套工具的价值主要转为**：一旦 `forcePrivate` 成立就不需要它；
   若仍需"无缓存"路线，则它仍是必需的。
+
+---
+
+## 19. 路线 C 实操：13.2.1 的 IPSW **能提供完整 rootfs**（2026-10-01）
+
+> 级别：`runtime-confirmed`（本机挂载实测）。这一节**解除了 §17.4 记录的最大未知**。
+
+### 19.1 工具与挂载
+
+`ipsw` 已用 Go 1.27.1 编出并放在**持久位置**（`/tmp` 会被重启清空）：
+`~/Desktop/VirtualMacOniPad/VirtualMac/build/toolchain/bin/ipsw`（102,310,514 B）。
+
+```bash
+$ ipsw mount fs UniversalMac_13.2.1_22D68_Restore.ipsw
+   • Mounted fs DMG 098-26649-067.dmg
+/dev/disk5s1 on /private/tmp/098-26649-067.dmg.mount (apfs, nodev, nosuid, read-only, noowners, mounted by ciscohe)
+```
+**不需要 sudo**（`mounted by ciscohe`）。挂载点：`/tmp/098-26649-067.dmg.mount`。
+
+### 19.2 OS 卷内容（实测）
+
+| 项 | 结果 |
+|---|---|
+| 顶层 | `Applications bin cores dev etc Library opt private sbin System tmp Users usr var Volumes` |
+| `/usr/bin` | 934 项 ✓ |
+| `/usr/lib` | 27 项 ✓ |
+| `/bin`、`/sbin` | 37 / 62 项 ✓ |
+| `/bin/echo` | **真** universal（x86_64 + arm64e），133,952 B ✓ |
+| `SystemVersion.plist` | `ProductVersion 13.2.1`、`ProductBuildVersion **22D68**`，且带 `iOSSupportVersion **16.3**`（与本设备一致） |
+| `/private`、`System/Volumes/Data` | **空**（firmlink 在只读封印卷上未解析） |
+| `System/Library/dyld`、`System/Library/Caches/com.apple.dyld` | **无**（缓存在 cryptex） |
+
+### 19.3 ⭐ 最大未知解除：**Data 卷骨架在 IPSW 里**
+
+`/System/Library/Templates/Data/` **存在且完整**：
+
+```
+Applications cores home Library mnt opt private sw System Users usr Volumes
+  private/{etc,tftpboot,tmp,var}          ← etc 有 75 项
+  Library/{Apple,Application Support,Caches,ColorSync,Compositions,...}
+```
+
+⇒ §17.4 里"IPSW 拿不到 `private/etc`、`Templates/Data`"的顾虑**不成立**：
+OS 卷里的 `/private` 确实是空的，但**骨架就在 `Templates/Data`**，而 `build-rootfs-15.6.1.sh` 第 [4] 步本来就是 rsync 这个目录。
+
+### 19.4 cryptex（`mount sys`）暂时拿不到，但**可绕过**
+
+`ipsw mount sys <IPSW>` 会打印 usage 并 `rc=0`（疑似需要 `--key`，或该 build 的变体处理有问题）。
+**但缓存本来就已经在手**：`~/Desktop/VirtualMacOniPad/VirtualMac/build/inputs/macos/22D68__MacOS/`
+里的 `dyld_shared_cache_arm64e{,.01,:.map,.a2s}` 就是它的内容（且 22D68 是裸 dmg、不需要 AEA 密钥）。
+⇒ **不阻塞路线 C。**
+
+### 19.5 下一步（未做，按序）
+
+1. 写 `misc/build-rootfs-13.2.1.sh`：rsync 源改为
+   `/tmp/098-26649-067.dmg.mount/{System,usr,bin,sbin}` + 该挂载点的 `System/Library/Templates/Data/` + 软链；
+   再把 `22D68__MacOS/dyld_shared_cache_arm64e{,.01}` 放到 13.x 的缓存路径。
+2. 改 `install_rootfs_15.sh` 的校验：`SystemVersion.plist` 期望值 `24G90` → **`22D68`**；
+   缓存路径按 13.x 核（见 §17.4 注）。
+3. **补 `postinst.sh` 的 22D68 分支**：现在缓存 CDHash 表只有 `22F82/22F66/24G90`，22D68 落进 `*` 被跳过
+   ⇒ 用 `misc/cdhash_slices.py` 算 22D68 的 `dyld_shared_cache_arm64e{,.01}` CDHash 并加 case。
+4. `arm64ify` WindowServer / `Installer Progress` / `bash`；`launchservicesd` → `.dylib` 转换。
+5. 装到设备 → 按既有 CLI 阶梯验证 `/bin/echo HI`。
+   **13.2.1 不需要任何内核补丁**（跨度 3.207 GB 不跨界；v3 ⇒ dyld 走进程内 fixup）。
