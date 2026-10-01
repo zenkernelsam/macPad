@@ -1098,3 +1098,27 @@ OS 卷里的 `/private` 确实是空的，但**骨架就在 `Templates/Data`**�
 4. `arm64ify` WindowServer / `Installer Progress` / `bash`；`launchservicesd` → `.dylib` 转换。
 5. 装到设备 → 按既有 CLI 阶梯验证 `/bin/echo HI`。
    **13.2.1 不需要任何内核补丁**（跨度 3.207 GB 不跨界；v3 ⇒ dyld 走进程内 fixup）。
+
+### 19.6 ⚠️ 更正：**IPSW 给不出磁盘上的库桩**，路线 C 不是"零工作"
+
+继续实测后发现 §19.3 的乐观**不完整**。三个卷都查过了：
+
+| 卷 | 挂载点 | 结果 |
+|---|---|---|
+| OS / System 卷（7.28 GB） | `/tmp/098-26649-067.dmg.mount` | 结构完整，但 `System/Library/Frameworks/Foundation.framework/Versions/C` 只有 `_CodeSignature/Resources/XPCServices`，**没有 `Foundation` 二进制**；`/usr/lib` 里**没有 `libSystem.B.dylib`** |
+| cryptex（4.32 GB） | `/private/tmp/098-26709-070.dmg.mount` | 有**真缓存** `System/Library/dyld/dyld_shared_cache_arm64e{,.01}`（1,600,389,120 / 1,719,320,576 B，与 §12.1 逐字节同尺寸）+ `aot_shared_cache.0..4`；`System/Library/Frameworks` 里**只有 2 个 framework**；`usr/lib` 里**没有 `libSystem.B.dylib`** |
+| BaseSystem（1.77 GB） | `/tmp/bs_mnt`（`hdiutil attach`） | `usr/lib` 里同样**没有 `libSystem.B.dylib`** |
+
+**全局 `find` 结果：`libSystem.B.dylib` 在三个卷里一个都没有。**
+
+**原因（macOS 11+ 的设计）**：系统库的**代码只存在于 dyld 共享缓存里**；磁盘上的 `/usr/lib/*.dylib` 与框架二进制要么是"缓存桩"、要么是**只在已安装系统上才解析的 firmlink**。
+⇒ 这也解释了 **15.6.1 的 rootfs 为什么能拿到它们**：那份是从**运行中的宿主 macOS** rsync 的（`build-rootfs-15.6.1.sh`），不是从 IPSW。
+
+**⇒ 路线 C 的真实前提修正为：需要一份"已安装的 macOS 13.2.1"**（最直接 = 用 VirtualMac 起一台 13.2.1 VM，然后跑同一个 rsync 脚本）；
+或者绕道：**用 `dsc_extractor` 从 13.2.1 缓存里生成库文件**铺到磁盘（这恰好与路线 D 的工具重合）。
+
+**仍然成立的部分**（都是资产）：
+- 13.2.1 的 **dyld 缓存**已经拿到（cryptex 里，且我们另有抽取件）——这是路线 C 最关键的一块；
+- **Data 卷骨架**可从 `System/Library/Templates/Data` 获得；
+- `ipsw` 已编好、两个卷都能挂载（免 sudo）；
+- 13.2.1 不需要任何内核补丁。
