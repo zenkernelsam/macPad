@@ -864,3 +864,75 @@ RESULT zlibVersion = b'1.2.12'
 
 **结论**：在可正常验证的样本上 **8/8 通过**，规模从 14 到 1810 个 rebase 都覆盖到了；
 剩下的 `libobjc` 是抽取器限制（可绕过：换工具或单独处理），`libSystem.B` 需要另设验证方法。
+
+---
+
+## 17. 路线 D 第③步（无共享缓存运行 dyld）：调研结论与可执行实验（2026-10-01）
+
+> 触发：用户"都做"。级别：`RE-confirmed`（dyld 源码 + 宿主实测字节）。
+
+### 17.1 结论：**条件可行**，且比预想的便宜
+
+| 问题 | 结论 | 证据 |
+|---|---|---|
+| 有没有"无缓存"路径？ | **有，但非模拟器没有 env 开关** | `DyldProcessConfig.cpp:1322` 起那段 "Luckily, simulators…" 整段被 `#if TARGET_OS_SIMULATOR && __arm64__` 包住；`:1394-1396` 注释明写 `// only support DYLD_SHARED_REGION=avoid on simulator`，非模拟器**无条件**走 `syscall.getDyldCache()` |
+| 那怎么触发？ | **缓存文件真的不存在时**，隐式退化为 JIT 加载器 | 缓存缺失 → `SharedCacheRuntime.cpp:564/612` 报 `no shared cache file` → `loadInfo.loadAddress==nullptr` → `dyldMain.cpp:683-693` 用 `JustInTimeLoader::makeLaunchLoader` **从磁盘加载** |
+| `DYLD_SHARED_REGION` 呢？ | 非模拟器上只等于 `forcePrivate`（换私有缓存），**不是"不用缓存"** | `DyldProcessConfig.cpp:1350` |
+| env 门禁在哪？ | 在 **AMFI**，不在 dyld | `:938` `allowEnvVarsSharedCache = amfiFlags & AMFI_DYLD_OUTPUT_ALLOW_CUSTOM_SHARED_CACHE`；stock 平台二进制会在 `pruneEnvVars`（`:1025-1052`）里**删掉全部 `DYLD_*`**；越狱绕过 AMFI 后可用 |
+| dyld 自己是不是桩？ | **不是**（见 §17.2） | 宿主 `/usr/lib/dyld` 是真 Mach-O |
+| 无缓存时缺什么？ | 缓存内的 PrebuiltLoaderSet / objc / swift 表**会自动跳过**；必须由磁盘提供：**主程序、`libSystem.B.dylib`、`libdyld.dylib`、三个 libsystem wrapper**，以及 dyld 自带 libc（`glue.c` 内建） | `DyldRuntimeState.cpp:441-468`、`DyldProcessConfig.h:486`、`DyldRuntimeState.cpp:2746/2780-2796` |
+
+**最大的未知**：iOS 内核对"**非 Apple 签名的 dyld 作为 dylinker**"的接受度（AMFI/签名 + chroot 下 dylinker 路径解析）。
+
+### 17.2 ⭐ 不需要自建 dyld —— 项目里已有的那份就是系统用的那份
+
+```
+$ lipo -thin arm64e /usr/lib/dyld -output /tmp/dyld_disk_arm64e
+-rwxr-xr-x  1240752 B
+$ shasum -a 256 /tmp/dyld_disk_arm64e  analysis/dyld_15.6.1_arm64e_thin
+12dc97d541939a8e05d58f265f62eaef93fbce63740d7eefaee434cea7acbac5   ← 两者完全相同
+UUID 两者均为 3247E185-CED2-36FF-9E29-47A77C23E004
+```
+
+- 宿主 `/usr/lib/dyld` = **2,289,328 B fat（x86_64 + arm64e）**，是**真二进制**，不是桩。
+- 其 arm64e 切片与**缓存里抽出来的那份逐字节相同** ⇒ `analysis/dyld_15.6.1_arm64e_thin`
+  可以直接当"磁盘 dyld"用。
+- 且 `dyldMain.cpp:1172/1175-1209` 明确支持"**磁盘 dyld 与缓存内 dyld UUID 不同就用磁盘那份**"，
+  所以"放一份 dyld 到磁盘"是被支持的配置，不是 hack。
+
+（附：自建 `dyld` 目标在当前 Xcode 26.3 / SDK 26.2 下**编不过**，报
+`include/mach-o/dyld.h:122` 一带 `__API_AVAILABLE(...)` 后 "expected ','" ——
+与 `DYLD_DRIVERKIT_UNAVAILABLE` 在 `#ifdef __DRIVERKIT_19_0` 下的展开有关。
+**既然已有可用的 dyld，此路不必修。**）
+
+### 17.3 可执行实验（全部在 rootfs 层，**可逆、不碰内核**）
+
+1. 在 chroot rootfs 里把 `System/Library/dyld/dyld_shared_cache_arm64e{,.01}` **挪走**（改名，不删）。
+2. 把 route D ① 产出的**可加载 dylib** 铺到它们的 install path（`System/Volumes/Preboot/Cryptexes/OS/usr/lib/…` 等）。
+3. 确认 rootfs 的 `/usr/lib/dyld` 是 §17.2 那份（同 SHA）。
+4. 跑最小见证：`/bin/echo HI`。**先只铺 `/bin/echo` 的依赖闭包**，不要一上来铺 564 个。
+
+**失败判据**：dyld 报找不到 `libSystem.B.dylib`（= 铺得不够，属预期内的增量工作）；
+或内核/AMFI 拒绝该 dylinker（= §17.1 的最大未知被证实，D③ 判死）。
+
+### 17.4 路线 C（13.2.1）调研结论
+
+- **IPSW 能拿到**：`/System`、`/usr`、`/bin`、`/sbin`（OS DMG `098-26649-067.dmg` 7.28 GB），
+  以及 cryptex（`Cryptex1,SystemOS` 4.32 GB）—— **22D68 是裸 `.dmg`，不需要 AEA 密钥**。
+- **IPSW 拿不到 / 需另想办法**：`System/Library/Templates/Data`、`/private/etc`、
+  `CoreTypes.bundle/.../Library`（这些是 **Data 卷**内容），IPSW 里**没有独立的 User/Data 镜像**。
+- **`ipsw` 没有"整树导出"子命令**；可行做法是 **`ipsw mount fs|sys|app` + rsync**
+  （源码在 fork 的 `cmd/ipsw/cmd/mount.go`；`extract --files --pattern '^.*$'` 也能匹配全部，
+  但会跟随软链、丢空目录、可能只 walk 到 APFS 卷组的第一个卷）。
+  本机**尚无 `ipsw` 二进制**（需 `go build ./cmd/ipsw`）。
+- **设备侧额外步骤**（照 `misc/install_rootfs_15.sh`）：`chown -R 0:0`；`SystemVersion.plist`
+  的校验值要从 `24G90` 改成 **`22D68`**；`arm64ify` WindowServer/`Installer Progress`/`bash`；
+  `launchservicesd` → `.dylib` 转换；收割 iOS 侧注入；合成 `master.passwd`；跑 `postinst.sh`。
+- ⚠️ **一个具体缺口**：`postinst.sh` 把缓存 CDHash **按 build 硬编码**
+  （`22F82`/`22F66` → 13.4、`24G90` → 15.6.1），**`22D68` 落进 `*` 分支被跳过**
+  ⇒ 必须自己算 22D68 的 `dyld_shared_cache_arm64e{,.01}` CDHash 并补一个 case。
+- **13.2.1 不需要任何内核补丁**：跨度 3.207 GB 不跨界（E1/E2 的触发点根本不存在）；
+  v3 ⇒ dyld 走进程内 fixup。
+  ⚠️ 但此结论是基于**15.6.1 的 dyld 源码**读出的（`version != 5` 那道门控）；
+  须用 **13.2.1 自己的 dyld**（dyld-1042.1 系）复核——线索：22D68 缓存里
+  `__map_with_linking_np` 字符串**只出现 1 次**（15.6.1 是 3 次）。
