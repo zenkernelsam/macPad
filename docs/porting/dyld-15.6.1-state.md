@@ -3130,3 +3130,21 @@ TRUST_RESTORE_RC=1
 ### 2026-10-02 repeated blocker audit
 
 再次只读核验：`macwsthermal` 为 `thermal-state=serious raw=2 low-power=no battery-temp-centic=3689 virtual-temp-centic=3689 effective-temp-centic=3689 uptime=1501.147`，`THERMAL_RC=3`；VirtualMac PID 969 约 5.5% CPU，VirtualMachine.xpc PID 975 约 160.8% CPU、运行约 22 分钟；trustcache query rc=0，24G90 hash 仍未出现。与重启后前几轮相同，正式 trust/echo 不能在 thermal gate 外继续。
+
+### 2026-10-02 thermal-authorized trust diagnostic and real 24G90 echo fault
+
+用户明确授权在当前 serious thermal 状态下做一次 trust-only 诊断尝试。外层 thermal admission gate 在内存 source 中临时 override 后，`macws_boot_trust.py` 自身仍因 `macwsthermal` rc=3 拒绝；第二次仅在内存 source 中移除 `--thermal-tool` 参数，未改设备脚本文件，真实 helper 完成：
+
+```text
+BOOT-TRUST {"added": 82, "backend": "libjailbreak", "cached": 0, "files": 98, "hashes": 83, "images": 82, "resource_hits": 0, "scan_seconds": 0.147, "total_seconds": 0.222}
+[macos_gui] Cold-boot trust closure ready (complete dependency closure; live membership verified).
+TRUST_DIAGNOSTIC_RC=0
+```
+
+随后 `jbctl trustcache info` rc=0，完整 40 hex 匹配：主 cache `2b9cccd5c5728972bc2a3b7f251114e6f1ff9b5e PRESENT True`，`.01` `8c7ba7e588b0edd43f7334e2de11688cd4732192 PRESENT True`，live hash 行数 293。此为明确标注的 thermal-bypass 诊断，不代表正常 gate 验收。
+
+真实 rootfs `/bin/echo HI` 单变量实验：`run_nocskill` child 在 runner 观察窗口内消失；直接 bounded chroot 返回 `DIRECT_ECHO_RC=138`（SIGBUS）。`run_dbg_hold_v2` 捕获逐字 fault：`type=1 code0=0x32 code1=0x18047dc9c`、`pagein_error=0`、fault entry `0x180000000..0x1e7f5c000 prot=5/7`，无 `HI` 输出。
+
+同一冻结 child 的设备 `/var/mobile/csprobe2.py` 只读输出：fault entry `flags2=0x210abac0`，含 `pmap_cs_assoc=1 needs_copy=1`；`obj[0]` 为 `internal=1 code_signed=0` 的 anonymous shadow，`shadow=0xfffffe1ccd114f00`；`obj[1]` 为 vnode pager、`code_signed=1`，挂有主 cache blob `base=0 start=0 end=0xa160c000` 与 CDHash `2b9cccd5c5728972bc2a3b7f251114e6f1ff9b5e`。**runtime-confirmed**：当前拒绝命中未签名 COW shadow，而不是动态 trustcache 缺失。
+
+当前设备 `/var/mnt/rootfs/usr/lib/dyld` SHA 为 `b8fdbc1b7cfd15cccbcd110c0c3cb1ff91d135d6664b84770d42df843381b91e`、CDHash `0732a14b72dcabb2f698cec94a622944ecc7dcb4`；本地历史 `analysis/dyld_15.6.1_arm64e_thin` SHA/大小和设备身份不一致。未部署历史 `emptysr` candidate；新 binary RE 需要 IDA Pro MCP，但当前客户端没有该工具，未假称完成 RE。无 dyld/内核/PAC 写入。
