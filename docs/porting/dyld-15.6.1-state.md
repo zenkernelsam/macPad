@@ -3285,3 +3285,9 @@ NODECOUNT 4
 ### 2026-10-03 `vm.cs_debug=6` 诊断尝试：未取得 kernel log
 
 设备只读/诊断开关 A/B：`sysctl -w vm.cs_debug=6` 成功（0→6），使用 task_for_pid 正常的 `run_dbg_csunkill2` 运行 bounded echo，随后 `sysctl -w vm.cs_debug=0` 成功恢复。runner 仍捕获 `code0=0x32` 后 `type=10 code0=0xa100032`；`oslog --debug` 没有取得可用的 `vm_fault`/`CODE SIGNING` 行，且残留的两个 oslog 诊断进程已显式 TERM 清理。该次没有新增分支证据，不把它当作成功或根因。
+
+### 2026-10-03 当前 kernel 源码路径：页面 hash 成功后仍可能在 `vm_fault_cs_check_violation` 返回 50
+
+本轮只读回溯 XNU `vm_fault.c`/`ubc_subr.c`：`cs_validate_page` 通过 `cs_validate_hash` 对 vnode blob coverage/hash slot 做 hash，成功后只设置 `vmp_cs_validated`；随后 `vm_fault_cs_check_violation` 仍独立检查 `pmap_get_vm_map_cs_enforced(pmap)`、`vm_fault_cs_page_immutable`、`vm_fault_cs_page_nx`、`VMP_CS_TAINTED` 和 `prot`/`vmp_wpmapped`。`vm_fault_cs_handle_violation` 再调用 `cs_invalid_page`，在 `CS_HARD|CS_KILL` 之外也可返回拒绝。
+
+与现场证据对齐：目标页 `validated=0xf tainted=0 nx=0`，PMAP-CS association node 覆盖目标 VA，且 first fault 前 `CS_HARD|CS_KILL` 已清除；因此当前剩余分支需要确认的是 **pmap 的 `vm_map_cs_enforced`/`map_is_switched`/`map_is_switch_protected`/fault prot 与 object lock 状态**，而不是重新做 libSystem 或 hash 注册。没有做 kernel 写入。
