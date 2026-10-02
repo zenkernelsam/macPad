@@ -3417,3 +3417,14 @@ CLEAR ... 0x22802b09 0 0x22802809
 ```
 
 结合 XNU `thread.h`（`thread->map` 字段位于结构尾部、源字段语义为当前线程地址 map）和 `task.h`（`task->map`），**runtime-confirmed** 当前 fault thread map 与 task map 是同一个 `vm_map`，两者 `switch_protect` 等 flags 相同；不存在“task map 与 fault thread map 不同”这一简单解释。第一次 `code0=0x32` 仍在该一致 map 上发生，未改 kernel/dyld/PAC。
+
+### 2026-10-03 T8103 PMAP enter RE：找到代码签名返回 50 的闭源候选路径
+
+13337 IDA 对实际 T8103 kernel 的 `pmap_enter_options_internal` @ `0xfffffe00086a764c` 反编译，及其调用的 `sub_FFFFFE00086A87B8` / `sub_FFFFFE00086A8984` 已完成。`sub_FFFFFE00086A8984`（PPL/PMAP code-sign helper）存在多处明确 `return 50`：
+
+- `0x86a8d48`: signed code-directory flags/high bit检查失败；
+- `0x86a8b50`, `0x86a8bcc`, `0x86a8b54`: `sub_FFFFFE000808D79C`/association/hash/policy 查询失败；
+- `0x86a8d14`: 成功 hash/association处理后，`pmap+194` gate 为 false 时返回 50；
+- hash loop @`0x86a8e98..0x86a9070` 逐页从 code-directory hash表取 hash，并通过 `sub_FFFFFE000869BFC8` 计算/比较，失败时进入 50 路径。
+
+**RE-confirmed via actual binary**：`KERN_CODESIGN_ERROR=50` 并不只来自公开 `vm_fault_cs_check_violation` 的 immutable/NX 分支；T8103 PMAP enter/PPL helper 本身也直接返回 50。这样解释了当前页面 `validated=0xf`、PMAP node/trust/CDHash 对齐后仍失败：页级 UBC hash成功不等于 PMAP enter 的 PPL hash/association/policy成功。下一步应针对 `sub_FFFFFE00086A8984` 的运行时参数（尤其 a1 code-directory object、a2 VA/page, a4 prot/fault type, a5 options, PPL gate byte at a1+194）设计只读捕获；不改 kernel/PAC，不重做 libSystem。
