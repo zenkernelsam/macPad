@@ -3555,3 +3555,5 @@ page validated=0xf tainted=0 nx=0
 具体指令证据为：`0xfffffe0008008bc8 LDP X25,X8,[X29,#arg_8]`、`0xfffffe0008008bcc LDR W12,[X29,#arg_0]`、`0xfffffe0008008c00 LDR W22,[X25,#0x28]`，以及 `0xfffffe0008008c0c..0xfffffe0008008c18` 的 W12/X7 联合条件。该槽位布局已由实际 IDA listing 确认，尚未取得对应设备 runtime 值。
 
 caller 侧进一步对齐：`sub_FFFFFE0008008564` 在 `0x80085d4` 从自己的 `arg_8` 取 fault_info 指针到 X21，在 `0x80085e8` 读取 `[X21+0x2c]`（pmap_options），随后把 X21 写入 outgoing stack 的 `arg_8`，并把计算出的 W10 写入 outgoing `arg_0` 后调用 `sub_8008B8C`。**RE-confirmed**：下一次现场捕获应同时保存 fault_info 指针、`+0x28/+0x2c`、以及 `sub_8008B8C` 的 arg0/arg8；这些比单独读取公开 PMAP 入口寄存器更接近实际 PMAP-CS policy输入。
+
+同一 caller 的入口保存也已核对：`0x8008588..0x800859c` 将 X7→X28、X6→X27、X4→X26、X3→X8、X2→X23、X1→X19、X0→X22；栈 `arg_8`→X21、`arg_18`→X25，`arg_0` 在 `0x80085e0` 装入 W7。随后这些值按实际 stack ABI 重新组织后调用 `sub_8008B8C`。这条记录仍是 **RE-confirmed**，没有设备 runtime 参数。
