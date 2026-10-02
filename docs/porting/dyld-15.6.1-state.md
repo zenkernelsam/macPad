@@ -3275,3 +3275,5 @@ NODECOUNT 4
 目标 node 的 CD object 现场字段继续读到：trust 字段 `+0x1dc=8`、reference count `+0x1e0=1`、CDHash bytes 与主 cache `2b9cccd5c5728972bc2a3b7f251114e6f1ff9b5e` 完全一致。**runtime-confirmed**：PMAP-CS tree 确实有覆盖目标 fault VA 的 node，且 node→code-directory→trust/hash 链完整；先前“root 非空但不知道是否覆盖”的不确定性已收窄。仍未修改 kernel/PAC。
 
 另做只读 `vm.cs_debug=6` 诊断开关 A/B：设备 sysctl 成功从 0 改为 6，bounded `run_nocskill` 因旧 runner `proc not found` 未产生有效 fault witness，随后 sysctl 已恢复 0；没有获取可用 kernel log，不能把该次作为 fault 分支证据。
+
+补充修正 `CSUNKILL_V3` 证据：runner 的 `[unkill] csflags 0xffffffff -> 0x32802809` 发生在第一次 exception 之前，且 `0x32802809 & 0x300 == 0`，实际 unkill 线程没有需要清除的 `CS_HARD|CS_KILL`。因此第一次 `code0=0x32` 确实是在 child proc flags 已无 `0x300` 时发生；随后日志里的 `csops ... flags=0x26803b0d` 不能作为该 runner 的 live `proc_ro->p_csflags` 等价读数（两者在这条 chroot exec 路径上不一致）。这比“写 flags 后仍失败”的前一版 A/B 更强：CS_HARD/KILL 已排除为第一 fault 触发条件。
