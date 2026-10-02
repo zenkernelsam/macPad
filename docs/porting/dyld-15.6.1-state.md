@@ -3520,3 +3520,5 @@ CLEAR ... 0x22802b09 0 0x22802809
 因此此前“CS_HARD/KILL 不是第一 fault 原因”只能保留为“这两个 flag 单独不是充分条件”；不能推广为“整个 invalid-code policy 已排除”。**runtime-confirmed** 旧 A/B 的第一次 fault 仍为 `code0=0x32`；**RE-confirmed** 完整 `cs_allow_invalid` 还包含 PMAP/map gate。没有运行该 bypass，也没有修改现场状态。
 
 公开 `bsd/kern/mach_process.c` 还确认 `cs_allow_invalid()` 只在 `ptrace` 调试路径调用；未跟踪的 `misc/run_dbg.c` 确实执行 `PT_ATTACH`，但只记录 ptrace 返回值和 proc flags，不记录 `cs_allow_invalid` 返回值、entitlement 检查结果或最终 `pmap+0xc2`。因此旧 runner 的“debugged/清 flags”日志不能证明完整 debug policy 已开启，下一次现场捕获应加入 pmap+0xc2 只读值及 `get-task-allow`/`run-unsigned-code` entitlement 见证。
+
+源码路径补充核对：仓库通用 `entitlements.plist` 包含 `get-task-allow`，但 `postinst.sh` 对 rootfs 原版 `/bin/bash`/`/bin/echo` 的冷启动流程只恢复现有 CDHash；通用签名 profile 只用于项目工具及明确列出的第三方/服务二进制。**source-confirmed** 不能据此假设原版 `/bin/echo` 带有 `get-task-allow`，所以普通原版 binary 的 `pmap+0xc2=0` 仍是预期安全状态；这不是设备 runtime 见证，也不构成打开该 gate 的理由。
