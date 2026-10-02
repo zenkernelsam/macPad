@@ -1556,6 +1556,7 @@ application_trust_thermally_safe() {
 
 restore_cold_boot_trust() {
     local path=""
+    local macos_rootfs_build=""
     local boot_trust_helper=/var/jb/usr/macOS/bin/macws_boot_trust.py
     local boot_trust_cache="$ROOTFS/var/db/macws/boot-trust"
     BASE_TRUST_READY=0
@@ -1677,6 +1678,26 @@ restore_cold_boot_trust() {
         "$ROOTFS/Users/root/Library/Application Support/Steam/steamapps/macws-runtime"/*/*.app; do
         [ ! -d "$path/Contents" ] || set -- "$@" "$path/Contents"
     done
+    macos_rootfs_build=$(/var/jb/usr/bin/python3 -c \
+        'import plistlib,sys; print(plistlib.load(open(sys.argv[1],"rb"))["ProductBuildVersion"])' \
+        "$ROOTFS/System/Library/CoreServices/SystemVersion.plist" 2>/dev/null \
+        | tr -d '[:space:]') || macos_rootfs_build=""
+    case "$macos_rootfs_build" in
+        22F82|22F66|"")
+            set -- "$@" \
+                --hash b5da39409492ac85e5a8e8ab618fe77e2d7a2980 \
+                --hash bbb765988e2677b98d47a549d612fa0d4af25f69
+            ;;
+        24G90)
+            set -- "$@" \
+                --hash 2b9cccd5c5728972bc2a3b7f251114e6f1ff9b5e \
+                --hash 8c7ba7e588b0edd43f7334e2de11688cd4732192
+            ;;
+        *)
+            log "ERROR: unsupported macOS rootfs build '$macos_rootfs_build'; refusing cache trust restore."
+            return 1
+            ;;
+    esac
     # Exact Ventura shared-cache CodeDirectories remain required. The native
     # backend uses the same verified libjailbreak API as jbctl, one process,
     # and checks actual live membership after registering missing hashes.
@@ -1684,8 +1705,6 @@ restore_cold_boot_trust() {
         --manifest "$boot_trust_cache/hashes.json" \
         --resource-index "$boot_trust_cache/resources.sqlite" \
         --thermal-tool /var/jb/usr/macOS/bin/macwsthermal \
-        --hash b5da39409492ac85e5a8e8ab618fe77e2d7a2980 \
-        --hash bbb765988e2677b98d47a549d612fa0d4af25f69 \
         "$@" || return 1
     BASE_TRUST_READY=1
     log "Cold-boot trust closure ready (complete dependency closure; live membership verified)."

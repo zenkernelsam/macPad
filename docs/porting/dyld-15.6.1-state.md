@@ -3076,3 +3076,13 @@ IDA MCP Instance1 本轮 `server_health` 输出确认 input_path=`/Users/ciscohe
 交接审查特别标记 `misc/fmt13_patch.py` 为**未验收且不能直接执行**：顶层自动进入写流程，没有真正只读 verify 模式；runtime地址只用 static+slide、CAVE字节序需独立IDA审计、覆盖原2/3/6格式handler影响全局、undo只恢复dispatch而不恢复完整handler。这里只记录源实现风险，不声称运行证明了哪项具体bug。接棒先完成已runtime确认的trust恢复修复，再按单变量推进CLI，不盲目执行旧“设备回来后一把梭”计划。
 
 交接本地验证：`git diff --check` 通过；raw trustcache文件69项。`python3 -m unittest misc.test_restore_boot_contract misc.test_agents_memory_ledger` 共12项，11通过、1失败（exit 1）：`test_package_declares_ios_tools_used_during_postinstall`，实际 `control` 的 `Depends: python3, ldid` 缺测试要求的 `plutil/odcctools/gawk`。`git show HEAD:control` 同样只有这两项，且本轮未改源码/测试；基线不一致原样保留，交接文档§10.1记录完整失败摘要，不能误当成24G90补丁回归。
+
+### 2026-10-02 接棒后 trust build 选择修复（本地，设备尚未部署）
+
+**runtime-confirmed 基线**仍为本文件前一条：rootfs `ProductBuildVersion=24G90`，正式 `macos_gui.sh trust` 返回 0 但只把 Ventura 双 cache CDHash 置入 live trustcache；24G90 双 hash 仍缺失。该证据来自 `docs/evidence/cold-boot-trustcache-20261002.raw` 及交接逐字运行输出。本条没有启动 chroot/WindowServer、没有替换 dyld、没有内核或 PAC 写入。
+
+先在 `misc/test_restore_boot_contract.py` 增加了真实 shell 函数回归。测试通过临时 rootfs plist 和记录 helper 执行参数，实际执行 `restore_cold_boot_trust`，覆盖 `24G90`、`22F82`、`22F66`、空 build；确认对应完整 hash pair、manifest/resource-index 及既有 Mach-O 路径参数保留。未知非空 build `25A100` 在 helper 调用前返回非零，helper 无调用。新增回归两项均通过；完整该模块 10 项中 9 项通过，既存 `test_package_declares_ios_tools_used_during_postinst` 仍失败（`control` 只有 `python3, ldid`，交接基线已记录，未借本修复范围擅改依赖）。`bash -n layout/usr/macOS/bin/macos_gui.sh misc/device_pipeline.sh` 与 `git diff --check` 通过。
+
+实现位于 `layout/usr/macOS/bin/macos_gui.sh::restore_cold_boot_trust`：从 `$ROOTFS/System/Library/CoreServices/SystemVersion.plist` 读取 `ProductBuildVersion`；`24G90` 追加 `2b9cccd5c5728972bc2a3b7f251114e6f1ff9b5e` 与 `8c7ba7e588b0edd43f7334e2de11688cd4732192`；`22F82|22F66|空值` 保留 Ventura pair；未知非空值记录错误并在 helper 前 `return 1`。hash 以 `set -- "$@"` 追加，保留原扫描路径与 helper 参数。该条是源代码/本地回归事实，不是设备验收；设备部署与两 hash live membership 复核待下一条记录。
+
+设备部署状态：本环境当前没有 `MACWS_DEVICE`、`MACWS_DEVICE_PORT` 或 `MACWS_SUDO_PASSWORD` 环境变量（仅检查变量名是否存在，未读取或打印凭据），因此尚未调用 `misc/device_pipeline.sh --component runtime`，没有虚报 deployment 成功。

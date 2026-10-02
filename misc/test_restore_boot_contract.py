@@ -1,5 +1,8 @@
 """Guard the iOS-side repairs required by a filtered macOS rootfs restore."""
 from pathlib import Path
+import os
+import subprocess
+import tempfile
 import unittest
 
 
@@ -9,9 +12,94 @@ AUTOSIGND = (ROOT / "layout/usr/macOS/bin/restart_autosignd.sh").read_text()
 CONTROL = (ROOT / "control").read_text()
 MAKEFILE = (ROOT / "Makefile").read_text()
 PACKAGE_POSTINST = (ROOT / "layout/DEBIAN/postinst").read_text()
+MACOS_GUI = (ROOT / "layout/usr/macOS/bin/macos_gui.sh").read_text()
 
 
 class RestoreBootContract(unittest.TestCase):
+    def _run_restore(self, build):
+        """Run the real restore function with only its external edges stubbed."""
+        with tempfile.TemporaryDirectory() as td:
+            rootfs = Path(td) / "rootfs"
+            plist = rootfs / "System/Library/CoreServices/SystemVersion.plist"
+            plist.parent.mkdir(parents=True)
+            plist.write_bytes(
+                b"<?xml version='1.0' encoding='UTF-8'?>"
+                b"<plist version='1.0'><dict><key>ProductBuildVersion</key>"
+                + b"<string>" + build.encode() + b"</string>"
+                + b"</dict></plist>"
+            )
+            helper = Path(td) / "helper"
+            helper.write_text(
+                "import os, sys\n"
+                "open(os.environ['MACWS_HELPER_LOG'], 'w').write('\\n'.join(sys.argv[1:]))\n"
+            )
+            source = Path(td) / "macos_gui.sh"
+            # Keep all production definitions, but do not execute the command
+            # dispatch at the end of the script while sourcing the function.
+            source_text = MACOS_GUI.rsplit('\ncase "$CMD" in', 1)[0]
+            source_text = source_text.replace(
+                "ROOTFS=/var/mnt/rootfs", f"ROOTFS='{rootfs}'")
+            source_text = source_text.replace(
+                "/var/jb/usr/macOS/bin/macws_boot_trust.py", str(helper))
+            source_text = source_text.replace(
+                "/var/jb/usr/bin/python3", "python3")
+            source.write_text(source_text + "\n")
+            helper_log = Path(td) / "helper.log"
+            env = os.environ | {
+                "MACWS_ROOTFS": str(rootfs),
+                "MACWS_BOOT_TRUST_HELPER": str(helper),
+                "MACWS_PYTHON": "python3",
+                "MACWS_HELPER_LOG": str(helper_log),
+            }
+            shell = """
+set -e
+source "$MACWS_TEST_SCRIPT"
+application_trust_thermally_safe() { return 0; }
+log() { :; }
+restore_cold_boot_trust "$@"
+"""
+            result = subprocess.run(
+                ["bash", "-c", shell, "bash"],
+                env=env | {"MACWS_TEST_SCRIPT": str(source)},
+                text=True,
+                capture_output=True,
+            )
+            args = helper_log.read_text().splitlines() if helper_log.exists() else []
+            return result, args
+
+    def test_restore_selects_cache_pair_and_preserves_arguments(self):
+        for build, expected in {
+            "24G90": {
+                "2b9cccd5c5728972bc2a3b7f251114e6f1ff9b5e",
+                "8c7ba7e588b0edd43f7334e2de11688cd4732192",
+            },
+            "22F82": {
+                "b5da39409492ac85e5a8e8ab618fe77e2d7a2980",
+                "bbb765988e2677b98d47a549d612fa0d4af25f69",
+            },
+            "22F66": {
+                "b5da39409492ac85e5a8e8ab618fe77e2d7a2980",
+                "bbb765988e2677b98d47a549d612fa0d4af25f69",
+            },
+            "": {
+                "b5da39409492ac85e5a8e8ab618fe77e2d7a2980",
+                "bbb765988e2677b98d47a549d612fa0d4af25f69",
+            },
+        }.items():
+            result, args = self._run_restore(build)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(set(args[i + 1] for i, value in enumerate(args)
+                             if value == "--hash"), expected)
+            self.assertIn("--manifest", args)
+            self.assertIn("--resource-index", args)
+            self.assertGreater(args.index("--hash"), args.index("--resource-index"))
+            self.assertTrue(any(item.endswith("/usr/lib/dyld") for item in args))
+
+    def test_restore_rejects_unknown_nonempty_build_before_helper(self):
+        result, args = self._run_restore("25A100")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(args, [])
+
     def test_bind_probe_uses_the_ios_system_mount_binary(self):
         self.assertIn("system_mount=/sbin/mount", BIND)
         self.assertIn('[ -x "$system_mount" ]', BIND)
