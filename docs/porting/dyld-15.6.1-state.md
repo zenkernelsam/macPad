@@ -2894,3 +2894,19 @@ RESTORED_SHA256=9956915299c6e3e21c7e650242166bab05dc635da4acac2cbade4e646eec51a1
 ```
 
 **和同地址/同文件/同 offset/同长度的原生成功 task 对照**：native `flags=0x3680380d, m3 resident=1 external=1 shadow=1 ref=5, basic offset=0x6c188000`；macOS exec 后 `flags=0x26803b0d, m3 resident=0 external=1 shadow=3 ref=6, basic offset=0`。XNU `osfmk/kern/cs_blobs.h:44-45,71` 确认差额恰好是 native 有 `CS_DEBUGGED=0x10000000`，macOS task 则有 `CS_HARD|CS_KILL=0x300`；`jbctl proc_set_debugged` 作用于 suspended **exec 前**的 `chroot`，跨 macOS exec 没保留在最终 task 的 csflags（runtime-confirmed，不能再把 launcher 的 `jbctl rc=0` 当 target DEBUGGED）。但**这不等于签名必定根因**：开源 `vm_fault.c:2775,2778-2794` 中显式 `cs_invalid_page` 拒绝设 `KERN_CODESIGN_ERROR=50`，而此处实际 `KERN_MEMORY_ERROR=10`。`vm_region_basic_info_64.offset` 来自 VM entry/object offset；shadow 从 1→3 和 offset 从 `0x6c188000`→0 表示映射链不同，但不直接证明 file offset 被改为 0、vnode 不同或零页替代。继续沿 `vm_fault` 的 `VMP_ERROR`/shadow-severed/pager 回报分支定位 10，先查可用的只读 kernel/triage 数据和实际 vnode/UBC 关系，不能仅凭 csflags 去 NOP 签名策略。macOS cached libSystem CLI 尚未成功。
+
+### 2026-10-02 KERN_CODESIGN_ERROR=50 收窄（私有缓存路径，执行页验证）
+
+**背景修正**：之前 `d2400068` 实为 `eor x8,x3,#1`（不是 `movz x8,#3,lsl32`）；正确编码 `d2c00068`。修正后私有路径 15 个 mmap 全部成功（`addr = 0x180000000 + fileoff`），`map_with_linking_np`(syscall 550) 返回成功。崩溃推进到缓存内 `pc=0x18047dc9c`，`code0=0x32=50=KERN_CODESIGN_ERROR`，`pagein_error=0`：数据可读、执行页入被拒。syscall 536 因 iOS arm64 shared region 仅 4GB < macOS 缓存 ~5GB 结构性排除。
+
+**私有路径形态**（源确证）：`map_with_linking_np` 在 `bsd/vm/vm_unix.c:3217` 显式拒绝 `VM_PROT_EXECUTE` region，故 550 只用于需 fixup 的 DATA region；TEXT/exec 页走普通 `mmap`(MAP_PRIVATE|MAP_FIXED) → vnode pager + COW shadow（vmext 示 `external=1 shadow=1`，符合）。
+
+**症状三分支判定**（`osfmk/vm/vm_fault.c:2693/2718` + `bsd/kern/ubc_subr.c:5274`）：exec 被拒只可能因 (a) 页 tainted 或 (b) `!VMP_CS_VALIDATED`。数据读成功排除 tainted（taint 对读也拒）。故页从未 validated：`page_obj->code_signed==FALSE`（`vm_fault_cs_need_validation` 在 2548 直接跳过）或 `cs_validate_hash` 未找到覆盖 blob（`found_hash==FALSE` → `validated=0, tainted=0`，与症状完全一致）。
+
+**已排除**：缓存文件 16K 页 hash 与内嵌 CD 逐槽自洽（SHA-256, pageSize=14）；dyld `fcntl(F_ADDFILESIGS_RETURN)`（`preflightCacheFile` 内 `0x35d64`，经 `preflightMainCacheFile`→私有路径共用）已测返回 0 ⇒ `ubc_cs_blob_add` 成功 + `memory_object_signed(uip->ui_control,TRUE)` 成功（`ubc_subr.c:4473`，否则 fcntl 返回 ENOENT）⇒ vnode VM object 已置 `code_signed`、blob 已挂。注意 `registerSignature`(0x30a2c) 只服务普通 Mach-O/JIT loader，与缓存路径无关。
+
+**待决（二选一）**：(1) exec fault 时 `m` 属主对象非 code_signed（如实际进入 shadow/copy 对象，或 `cs_validate_page` 内 `vnode_pager_lookup_vnode`/`mo_offset` 落偏）；(2) blob `csb_base/start/end` 或 `csb_mem_kaddr` 实际值不覆盖 `page_offset≈0x47c000`。
+
+**已备好的决定性实验**（设备恢复即用）：`RUN_DBG_HOLD=30 run_dbg_hold_v2` 把孩子冻结在 codesign 异常 → `misc/csprobe.py <pid>` 用 libjailbreak KRW 读：proc→fd→vnode(`+0x78`)→ubc_info(`ui_control`@+0x08 即 vm_object、`cs_blobs`@+0x50、`ui_flags`@+0x28)→ `vm_object+0xac`bit8=`code_signed`、`+0x7c`bit16=`internal`、`+0x50`=pager；blob `base/start/end`@+0x28/+0x30/+0x38、`mem_kaddr`@+0x50、`cd`@+0xa0、`csb_pmap_cs_entry`@~+0xe0。slide 由 `libjailbreak.jbinfo_get_serialized()`+`xpc_dictionary_get_uint64("kernelConstant.slide")` 取得（替代硬编码 KSLIDE）。sysctl 变量 IDB 地址：`cs_debug`@`0xfffffe000aa54188`、`cs_debug_unsigned_exec_failures`@`…190`、`cs_debug_unsigned_mmap_failures`@`…194`（运行时+slide；但源码未见递增点，仅辅助）。
+
+**PMAP_CS 注记**：`vm_map_entry.pmap_cs_associated` 在本 xnu 源中只见继承（submap copy），无置位点——关联逻辑在 PPL（dispatch table 0x78e9cf8/0x78e9d00 侧）。私有 mmap 的 entry 该位为 FALSE ⇒ exec 拒绝判定大概率在 xnu `vm_fault_cs_*` 层而非 PPL。
