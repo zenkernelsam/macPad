@@ -3483,3 +3483,7 @@ CLEAR ... 0x22802b09 0 0x22802809
 同一 IDA 实例的 `sub_FFFFFE0008699954` 和 `sub_FFFFFE000869AE38` 进一步确认 normalized 映射：CodeDirectory `hashType=2`（SHA-256）被转换为 normalized type `1`、期望 hashSize `0x20`；`hashType=1`（SHA-1）转换为 normalized type `2`、期望 hashSize `0x14`。`sub_FFFFFE000869AE38` 按 CodeDirectory `hashOffset - hashSize * code_slot` 定位 slot，并用 CodeDirectory 原始 `hashType` 计算摘要后比较。**RE-confirmed via actual T8103 kernel IDA**：现场若只记录“SHA-256”而不记录 normalized type，会把合法的 type=1 误判成 type mismatch；下一次捕获必须同时记录两种编号及 slot 地址。
 
 补充：`sub_FFFFFE0008699954` 还在建立 PMAP code-directory 对象时验证 CodeDirectory magic/version/length、`nCodeSlots`、`codeLimit`、hashOffset 和 page-size 约束；验证失败会在 association 之前返回错误。**RE-confirmed** 当前现场节点已有 trust=8 且已挂接主 cache CDHash，因此“CodeDirectory 头完全未被 parser 接受”不再是首要假设；仍需现场确认 fault 时使用的具体 code slot 与物理页摘要是否一致。
+
+### 2026-10-03 现有现场探针的覆盖边界审计
+
+只读审计了未跟踪的 `misc/pagewalk.py` 与 `misc/csprobe2.py`，没有在设备运行它们。`pagewalk.py` 能从 vnode blob 输出 CodeDirectory 头和 UBC hash slot；`csprobe2.py` 能输出 `pmap_cs_entry` 指针及 dyld pager 元数据。但两者都没有验证 PMAP association tree 的 `start/size/file_offset/code-directory` 节点、PMAP code-directory normalized `hash_type`（`+0x1e4`）、`pmap+0xc2` policy gate，或 `0x86a7d94` enter 调用的实际 `X3/X4`。**runtime/工具审计结论**：它们不能单独证明 PMAP helper 成功，也不能替代下一次 frozen-child 的只读参数捕获；不直接运行未经重新核验的探针。
