@@ -3457,3 +3457,9 @@ CLEAR ... 0x22802b09 0 0x22802809
 本条是 **RE-confirmed**，不是 runtime fault 分支确认。下一步仍是对一个 frozen child 做只读、一次性的现场参数捕获：保存 `a1` PMAP 对象、传入的 code-directory/PV 参数、`a1+0xc2`、`a1+0x98..0xa8`、实际 `a2/a3`、hash type/shift/slot 和 PTE/PV flags，与 `0x18047dc9c` 的 page offset 对齐；在得到分支见证前不修改 kernel/PAC、dyld 或 map flags。
 
 补充的 13337 IDA 交叉核对：`sub_FFFFFE00086A0978`（字符串为 `pmap_cs_associate_internal_options`）把 association 节点写成 `node[2]=vaddr`、`node[3]=vsize`、`node[4]=file_offset`、`node[5]=code_directory`，节点树根是 `pmap+0x98`；code-directory 的 trust 读自 `a2+0x1dc` 附近对应的实际字段，reference count 写在 `a2+0x1e0` 附近对应布局。它还明确使用 `pmap+0xc1`/`pmap+0xc2`：在特殊 `a2=-2` 路径中，`pmap+0xc1` 未置位时返回 0，置位而 `pmap+0xc2` 未置位时返回 5。**RE-confirmed** 这两个 gate 属于 association policy；但当前仍没有 runtime 见证表明 fault 时 `pmap+0xc2` 的值或 helper 命中了该特殊路径。前一段的“现场捕获”要求因此保留，且不把 `a1+0xa0/a1+0xa8` 误称为 code-directory 范围。
+
+### 2026-10-03 PMAP association policy helper继续核对
+
+13337 继续反编译了 `sub_FFFFFE00086A0FC4`、`sub_FFFFFE00086A0730` 与 `sub_FFFFFE00086A12C4`。`sub_FFFFFE00086A0FC4(code_directory_a, code_directory_b)` 对 trust 值 3/4 有专门 policy：trust=3 要求 entitlement `com.apple.private.amfi.can-execute-cdhash`，trust=4 走 OOP-JIT library-validation gate；低 trust 则比较两个 code-directory 的 identifier 字符串，失败返回 8。`sub_FFFFFE00086A0730` 只在 PMAP association tree (`pmap+0x98`) 上做区间查找，`sub_FFFFFE00086A12C4` 是 region allocator bookkeeping，不是 fault hash verifier。
+
+**RE-confirmed via actual T8103 kernel IDA**：PMAP enter 之前的 association policy 可能已经根据 code-directory trust/entitlement 拒绝；但本设备现场已知节点 trust=8、CDHash 对齐，只能排除“明显缺失/低 trust”这一类解释，不能证明 hash helper 的 `a5` policy bits、PTE/PV tags 或 `pmap+0xc2` 在 fault 时满足。仍不做 kernel/PAC 写入。
