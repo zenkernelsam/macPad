@@ -3305,3 +3305,9 @@ NODECOUNT 4
 重建当前原始设备 dyld 的单指令候选（`0x34568: 4c028052 -> 2c028052`，只把 shared-cache mapping flags 的 MOV 改为 `0x11`），签名后 fresh-inode 部署，候选运行 SHA `dc72574c3b98f9307b2b3c2c72bc379a0c1fa844580db6aeff0476aeef5cccfb`。使用 task_for_pid 正常的 `run_dbg_csunkill2`（CDHash 已加入 TC）跑 bounded echo：child 2667 启动/恢复，unkill 观察到 `0x32802809`，随后 child SIGKILL(9)，没有 exception fault、没有 `HI`。该复测不能区分 MAP_SHARED 改变了哪条 kernel 路径，不能宣布成功或根因。
 
 随后立即恢复 `/var/mobile/dyld_mapshared_original_20261003.bin` 到目标，fresh inode/cmp/SHA 核验通过，设备 dyld 回到原 SHA `b8fdbc1b7cfd15cccbcd110c0c3cb1ff91d135d6664b84770d42df843381b91e`。无持久 dyld/kernel/PAC 修改。
+
+### 2026-10-03 pmap enforcement bit runtime alignment
+
+13337 IDA 对 `pmap_set_vm_map_cs_enforced_internal` @ `0xfffffe000869cc80` 反编译直接显示：`*((_BYTE *)pmap + 192) = a2`，即 T8103 pmap 的 `pmap_vm_map_cs_enforced` 字段为 `pmap+0xc0`。此前现场 pmap dump 的 `pmap+0xc0` 原始 64-bit 值为 `0x101000101`，其最低字节为 `0x01`；**runtime-confirmed + RE-confirmed**：目标 pmap 的 VM-map code-sign enforcement 位为开启。现场 map flags word `map+0xb4=0x10090`，按 `vm_map.h` 位域 bit4 `switch_protect=1`，bit14 `cs_enforcement=0`（但 fault code 实际取 pmap enforcement）。
+
+这进一步排除了“pmap enforcement 总开关关闭”。剩余待 runtime 证实的是 `vm_fault` 当时的 `map_is_switched` 与局部 `prot`：源码中 immutable-page 50 分支要求 `pmap_get_vm_map_cs_enforced=1`、switched+switch_protected、validated page、`prot&WRITE`。当前 map switch_protect 与 page validated 已有证据，fault-time switched/prot 仍没有直接寄存器/日志见证；不据此写 kernel 或改变 map flags。
