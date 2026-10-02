@@ -3362,3 +3362,22 @@ return pmap->pmap_vm_map_cs_enforced;
 ### 2026-10-03 `fault_info.pmap_cs_associated` 的 source gap
 
 XNU 源 `vm_map.c:14296-14303` 从 entry bit24 `pmap_cs_associated` 设置 `fault_info->pmap_cs_associated=TRUE`；`vm_object_fault_info` 也明确包含该 bit。但公开源的后续 `rg` 只找到 `memory_object.c` 的 assert 与 map-entry 继承/复制，未出现用户态可见的消费点；消费很可能在 PMAP/PPL 闭源路径或内联宏。目标 entry 现场 `flags2=0x210abac0`（bit24=1）和 PMAP tree node 均存在，故不能用公开源“找不到消费点”推断该 bit未生效。
+
+### 2026-10-03 pre-exec pause + raw proc_ro flags：有效排除 CS_HARD/KILL
+
+为避免 unkill 线程/旧 pointer 的歧义，临时重编 `run_dbg.c` 加入 `RUN_DBG_WAIT_FILE`：child 已 spawn+suspended、exception port 已安装、**resume 前**等待外部 marker。设备外部脚本对 child PID 直接 KRW 读取 `proc_find(pid)->p_proc_ro->p_csflags` 并尝试清除 `0x300`，再 touch marker 让 child exec。
+
+逐字关键输出：
+
+```text
+CHILD=3328
+BEFORE 0x32802809
+WRITE 0 AFTER 0x32802809
+[*] spawned pid=3328 (suspended)
+[*] waiting for resume marker ...
+[exc] type=1 code0=0x32 code1=0x18047dc9c
+[exc] csops ... flags=0x26803b0d
+[topinfo] ... private_res=0 shared_res=11773 share_mode=1
+```
+
+这里 raw `proc_ro` flags 在 exec **之前**就已经是 `0x32802809`，`CS_HARD|CS_KILL` (`0x300`) 不存在，因此写操作是 no-op；child resume 后第一 fault 仍为 `KERN_CODESIGN_ERROR=50`，随后 SIGBUS，无 `HI`。该 A/B 彻底排除 CS_HARD/KILL 作为第一 fault 条件，且不依赖旧 unkill 线程的 proc_ro 轮询。临时 runner 已退出；无持久 dyld/kernel/PAC 修改。
