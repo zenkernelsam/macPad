@@ -3086,3 +3086,16 @@ IDA MCP Instance1 本轮 `server_health` 输出确认 input_path=`/Users/ciscohe
 实现位于 `layout/usr/macOS/bin/macos_gui.sh::restore_cold_boot_trust`：从 `$ROOTFS/System/Library/CoreServices/SystemVersion.plist` 读取 `ProductBuildVersion`；`24G90` 追加 `2b9cccd5c5728972bc2a3b7f251114e6f1ff9b5e` 与 `8c7ba7e588b0edd43f7334e2de11688cd4732192`；`22F82|22F66|空值` 保留 Ventura pair；未知非空值记录错误并在 helper 前 `return 1`。hash 以 `set -- "$@"` 追加，保留原扫描路径与 helper 参数。该条是源代码/本地回归事实，不是设备验收；设备部署与两 hash live membership 复核待下一条记录。
 
 设备部署状态：本环境当前没有 `MACWS_DEVICE`、`MACWS_DEVICE_PORT` 或 `MACWS_SUDO_PASSWORD` 环境变量（仅检查变量名是否存在，未读取或打印凭据），因此尚未调用 `misc/device_pipeline.sh --component runtime`，没有虚报 deployment 成功。
+
+### 2026-10-02 设备部署后 trust 验收被 thermal gate 暂停
+
+设备只读身份再次确认：`uid=0(root)`、`hw.machine=iPad13,11`、`kern.osversion=20D47`，`jbctl trustcache info` 查询 rc=0。设备 rootfs 工程目录原不存在，且远端没有 `rsync` 服务端；pipeline 的同步阶段分别得到 SSH agent `Too many authentication failures` 和远端 `rsync` code 127。未改 pipeline。改用明确 runtime 文件集合的临时 tar staging，逐文件 SHA-256 与本地一致后，按 runtime 部署动作安装脚本/plist；目标 `macos_gui.sh` 等关键脚本 `cmp` 通过，输出 `RUNTIME_INSTALL_VERIFIED`。未部署 dyld、内核、GUI。
+
+正式运行 `/var/jb/usr/bin/bash /var/jb/usr/macOS/bin/macos_gui.sh trust` 的逐字结果：
+
+```text
+[macos_gui] THERMAL-PAUSE: application trust checkpoint preserved; thermal-state=serious raw=2 low-power=no battery-temp-centic=3689 virtual-temp-centic=3689 effective-temp-centic=3689 uptime=9751.785
+TRUST_RESTORE_RC=1
+```
+
+随后只读调用 `macwsthermal` 返回 `thermal-state=serious raw=2 ... battery-temp-centic=3689 ... THERMAL_RC=3`；60 秒后仍为 `thermal-state=serious raw=2 ... battery-temp-centic=3679 ... THERMAL_RC=3`。**runtime-confirmed**：trust helper 尚未执行，不能报告任何 cache hash 已恢复；这不是 24G90 分支失败，也不是设备离线。遵守 gate，未设置绕过变量、未修改 thermal 状态、未启动 chroot/WindowServer。
