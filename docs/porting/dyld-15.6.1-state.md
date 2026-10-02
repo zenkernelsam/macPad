@@ -3403,3 +3403,7 @@ CLEAR ... 0x22802b09 0 0x22802809
 ```
 
 这次明确看到 exec 后 proc_ro 指针发生交换（旧 ro flags `0x32802809` → 新 ro flags `0x22802b09`），并在新 ro 上成功清除 `CS_HARD|CS_KILL` 为 `0x22802809`，**早于第一次 fault**。第一次 fault 仍是 `KERN_CODESIGN_ERROR=50`，随后 SIGBUS，无 `HI`。这是可靠的 runtime-confirmed A/B：CS_HARD/KILL 不是当前第一 fault 原因。无持久 kernel/PAC/dyld 修改。
+
+### 2026-10-03 页面 fault 诊断边界
+
+13337 IDA `vm_fault` caller disassembly确认 `sub_FFFFFE0008008564` 从 fault args 保存 `caller_prot`/fault type，调用 `sub_FFFFFE0008008B8C` 返回 `w27` 后再进入 `sub_FFFFFE000800AAB0`；公开源码对应 `vm_fault_validate_cs` 与 `vm_fault_enter`。当前尚未获取 fault-time `prot`/`caller_prot` 寄存器的直接 runtime 值，因此不再把 immutable-page分支当事实。T8103 board config (`ARM64_BOARD_CONFIG_T8103`) 确实启用 `PMAP_CS`, `PMAP_CS_ENABLE`, `XNU_MONITOR`；这只说明闭源 PMAP/PPL 路径存在，不证明具体返回50分支。
