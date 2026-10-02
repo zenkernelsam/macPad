@@ -3553,3 +3553,5 @@ page validated=0xf tainted=0 nx=0
 13337 对实际 T8103 `sub_FFFFFE0008008B8C` 的 prologue disasm 进一步确认：该函数从超出 X7 的栈参数取一个指针（反编译为 `arg_8`→X25），随后读取 `X25+0x28`；同时从另一栈参数（反编译 `arg_0`→W12）取 32-bit policy 值，并在 `0x8008c0c..0x8008c18` 与 X7 bit1 联合分支。**RE-confirmed**：fault_info/pmap-CS 扩展确实通过扩展栈 ABI进入 T8103 闭源路径；下一次现场捕获应保存该 call frame 的 stack args 与 helper X3/X4，不能只看公开 8 参数寄存器。
 
 具体指令证据为：`0xfffffe0008008bc8 LDP X25,X8,[X29,#arg_8]`、`0xfffffe0008008bcc LDR W12,[X29,#arg_0]`、`0xfffffe0008008c00 LDR W22,[X25,#0x28]`，以及 `0xfffffe0008008c0c..0xfffffe0008008c18` 的 W12/X7 联合条件。该槽位布局已由实际 IDA listing 确认，尚未取得对应设备 runtime 值。
+
+caller 侧进一步对齐：`sub_FFFFFE0008008564` 在 `0x80085d4` 从自己的 `arg_8` 取 fault_info 指针到 X21，在 `0x80085e8` 读取 `[X21+0x2c]`（pmap_options），随后把 X21 写入 outgoing stack 的 `arg_8`，并把计算出的 W10 写入 outgoing `arg_0` 后调用 `sub_8008B8C`。**RE-confirmed**：下一次现场捕获应同时保存 fault_info 指针、`+0x28/+0x2c`、以及 `sub_8008B8C` 的 arg0/arg8；这些比单独读取公开 PMAP 入口寄存器更接近实际 PMAP-CS policy输入。
