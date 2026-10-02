@@ -3206,3 +3206,7 @@ PAGE ... off=0x47c000 flags=0x3c00cc
 2. **当前剩余门槛是执行页的 PMAP-CS/代码签名关联路径**：真实 fault page 已由 pagewalk 读到 `validated=0xf tainted=0 nx=0`，owner 为已签名 vnode backing object，目标 hash slot 可读；随后 kernel 仍返回 `KERN_CODESIGN_ERROR=50`，原版 `/bin/echo HI` 尚未输出。13337 IDA 的 `vm_fault` caller/return 路径已核对，尚未证明现场 `cs_blob` 的 `csb_pmap_cs_entry` 偏移或运行时关联对象。
 
 后续文档与实验必须保持这两个门槛分开记录，不再把“4GB cache 边界”作为当前唯一根因，也不把页面 validated 事实夸大成 CLI 成功。
+
+### 2026-10-03 PMAP 指针只读核验：PAC 解码不足，未升级结论
+
+在 frozen echo child 上复制 `csprobe2.py` 做只读 `vm_map`/pmap 邻域 dump。fault map `0xfffffe1ccc870e80` 的 entry list/header 可读；map+0x40 值为 `0xb9857df15652c438`，带 PAC/平台指针编码。现有脚本的 47-bit `unpac()` 将其变成非 kernel 地址 `0x1f15652c438`，不能当作真实 pmap 指针；本轮不猜测 ptrauth 格式、不把 map+0x40 邻域输出解释成 PMAP-CS tree。该实验没有修改设备、没有写 kernel/PAC，不能证明 association 存在或缺失。
