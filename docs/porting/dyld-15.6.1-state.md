@@ -3099,3 +3099,5 @@ TRUST_RESTORE_RC=1
 ```
 
 随后只读调用 `macwsthermal` 返回 `thermal-state=serious raw=2 ... battery-temp-centic=3689 ... THERMAL_RC=3`；60 秒后仍为 `thermal-state=serious raw=2 ... battery-temp-centic=3679 ... THERMAL_RC=3`。**runtime-confirmed**：trust helper 尚未执行，不能报告任何 cache hash 已恢复；这不是 24G90 分支失败，也不是设备离线。遵守 gate，未设置绕过变量、未修改 thermal 状态、未启动 chroot/WindowServer。
+
+追加轮询：在前次记录后等待 120 秒，只读 `macwsthermal` 仍返回 `thermal-state=serious raw=2 low-power=no battery-temp-centic=3689 virtual-temp-centic=3689 effective-temp-centic=3689 uptime=10050.086`，`THERMAL_RC=3`。未调用底层 trust helper 绕过 gate；24G90 live membership 仍待 nominal 窗口验收。
