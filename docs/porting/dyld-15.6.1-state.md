@@ -3311,3 +3311,14 @@ NODECOUNT 4
 13337 IDA 对 `pmap_set_vm_map_cs_enforced_internal` @ `0xfffffe000869cc80` 反编译直接显示：`*((_BYTE *)pmap + 192) = a2`，即 T8103 pmap 的 `pmap_vm_map_cs_enforced` 字段为 `pmap+0xc0`。此前现场 pmap dump 的 `pmap+0xc0` 原始 64-bit 值为 `0x101000101`，其最低字节为 `0x01`；**runtime-confirmed + RE-confirmed**：目标 pmap 的 VM-map code-sign enforcement 位为开启。现场 map flags word `map+0xb4=0x10090`，按 `vm_map.h` 位域 bit4 `switch_protect=1`，bit14 `cs_enforcement=0`（但 fault code 实际取 pmap enforcement）。
 
 这进一步排除了“pmap enforcement 总开关关闭”。剩余待 runtime 证实的是 `vm_fault` 当时的 `map_is_switched` 与局部 `prot`：源码中 immutable-page 50 分支要求 `pmap_get_vm_map_cs_enforced=1`、switched+switch_protected、validated page、`prot&WRITE`。当前 map switch_protect 与 page validated 已有证据，fault-time switched/prot 仍没有直接寄存器/日志见证；不据此写 kernel 或改变 map flags。
+
+### 2026-10-03 child-scoped `switch_protect` A/B：清除 map bit4 仍保留 `KERN_CODESIGN_ERROR=50`
+
+按 `vm_map.h` 源布局，现场 `vm_map+0xb4` 是 map flags；原值 `0x90090`/`0x10090` 均含 bit4 `switch_protect`。在一个 frozen child 上用 arm64e `ptrauth_strip` 解 `task->map` 后，只对该 child 的 map flags 做可逆 KRW 写：
+
+```text
+TASKMAP raw=... map=0xfffffe1ccc871900 flags=0x90090
+WRITE_RC=0 AFTER=0x90080
+```
+
+随后同一 child 的第一次异常仍逐字为 `type=1 code0=0x32 code1=0x18047dc9c`，再回复后 SIGBUS；没有 `HI`。该 child-only A/B 没有改 dyld/kernel text/PAC，全局设备状态不持久。**runtime-confirmed**：单独清除 map `switch_protect` bit4 不能消除当前第一 fault，因此“immutable 分支只由这个 map flag 触发”被排除；仍不能直接确定 fault-time `map_is_switched`/局部 `prot` 或 `cs_invalid_page` 的实际参数。
