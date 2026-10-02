@@ -3167,3 +3167,25 @@ TRUST_DIAGNOSTIC_RC=0
 13337 kernel IDA 对实际 T8103 IDB 的 RE-confirmed 结果：`sub_FFFFFE0008008B8C` 在 `0x8009ff8` 的分支最终 `return 50`；该函数的 `LABEL_93` 路径在页状态/代码签名状态检查失败后构造诊断对象并返回 `50`。同一 IDB 的 `pmap_cs_associate_internal_options` @ `0xfffffe00086a0978` 校验 `vaddr/vsize/offset` 均为 `0x4000` 对齐后登记 code-directory association；`pmap_cs_lookup_internal` @ `0xfffffe00086a07d8` 从关联树返回 `{vaddr,size,code-directory}`。这些是实际 kernel binary 的反编译证据，不是对 runtime 参数的猜测；本轮没有写 kernel/PAC。
 
 因此当前结论仍是：24G90 trust 已可诊断恢复且 cache blob 存在，但 echo fault 发生在 kernel page validation 返回 `KERN_CODESIGN_ERROR=50`；设备正在运行的 empty-SR/highreserve candidate 已被排除为充分修复。下一步必须把现场 dyld 文件以相同身份加载到 IDA，或取得 fault 函数的完整 runtime 参数/页状态，再设计一个上游、可验证的 mapping/association 修复；不直接改 `mmap` flags、不部署新的猜测性 NOP。
+
+### 2026-10-03 pagewalk 修正：KERN_CODESIGN_ERROR 不是“未签名 shadow 页”
+
+在当前设备 dyld 变体（24G90 trust 已诊断恢复）上再次冻结真实 `/bin/echo HI` child，运行设备已有 `/var/mobile/pagewalk.py <pid> 0x18047dc9c`。逐字关键输出：
+
+```text
+entry_obj=0xfffffe1ccbca2a00
+obj[0]=0xfffffe1ccbca2a00 resident=0 code_signed=0 pager=0x0
+obj[1]=0xfffffe1ccd114f00 resident=6351 code_signed=1 pager=0xfffffe1dffcacd60
+blob ... base=0x0 start=0x0 end=0xa160c000 ... pageshift=14
+slot[287] ... = f38ff0ae98de07e517e663c01edba6148dc127bcb420cd5fd43a94c000218e65
+PAGE ... off=0x47c000 flags=0x3c00cc
+  pmapped=1 xpmapped=1 wpmapped=0 error=0 dirty=0 absent=0
+  validated=0xf tainted=0x0 nx=0x0
+  packed_obj=... -> obj=0xfffffe1ccd114f00
+```
+
+**runtime-confirmed**：fault page 的 `packed_obj` 指向已签名 vnode backing object（`obj[1]`），页面已经 `validated=0xf` 且 `tainted=0`；主 cache blob 覆盖范围 `[0,a160c000)`，目标 page offset `0x47c000` 的 SHA-256 slot 可读。此前本条文档把 `obj[0] code_signed=0` 直接归因成 fault 根因，现明确更正为过强结论：entry 仍有 anonymous `needs_copy=1` shadow，但实际 fault page owner/validation 证据指向 backing object。
+
+结合 13337 IDA 对 T8103 kernel `sub_FFFFFE0008008B8C` 的反编译，`0x8009ff8` 的 `return 50` 位于页验证后续的 PMAP-CS/代码签名区域检查路径；13337 同一 IDB 的 `pmap_cs_associate_internal_options` @ `0xfffffe00086a0978` 与 `pmap_cs_lookup_internal` @ `0xfffffe00086a07d8` 负责 region/code-directory association。当前最稳妥归因是 **THEORY**：已验证页在 PMAP-CS association/region lookup 阶段不满足当前 task 的关联条件；要确认还需把现场 `cs_blob` 当前 kernel layout（尤其 `csb_pmap_cs_entry`）和 fault 函数运行参数逐项对齐。禁止把这一 THEORY 当作 kernel patch 理由。
+
+本轮没有修改设备文件、没有写 kernel/PAC、没有改 mmap flags；原先的 empty-SR/highreserve 变体仍保持现场状态，echo 仍未输出 `HI`。
