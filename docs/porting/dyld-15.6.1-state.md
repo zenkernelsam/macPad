@@ -3428,3 +3428,30 @@ CLEAR ... 0x22802b09 0 0x22802809
 - hash loop @`0x86a8e98..0x86a9070` 逐页从 code-directory hash表取 hash，并通过 `sub_FFFFFE000869BFC8` 计算/比较，失败时进入 50 路径。
 
 **RE-confirmed via actual binary**：`KERN_CODESIGN_ERROR=50` 并不只来自公开 `vm_fault_cs_check_violation` 的 immutable/NX 分支；T8103 PMAP enter/PPL helper 本身也直接返回 50。这样解释了当前页面 `validated=0xf`、PMAP node/trust/CDHash 对齐后仍失败：页级 UBC hash成功不等于 PMAP enter 的 PPL hash/association/policy成功。下一步应针对 `sub_FFFFFE00086A8984` 的运行时参数（尤其 a1 code-directory object、a2 VA/page, a4 prot/fault type, a5 options, PPL gate byte at a1+194）设计只读捕获；不改 kernel/PAC，不重做 libSystem。
+
+### 2026-10-03 IDA MCP 四实例重核与 PMAP helper 参数语义收窄
+
+本轮先通过 MCP `tools/list`，再逐个调用 `server_health`；没有用本地 Python/otool/strings 做二进制 RE。当前绑定为：
+
+```text
+13337  status=ok  input=/Users/ciscohe/Desktop/macPad/analysis/kc_raw_16.3_T8112.bin
+       imagebase=0xfffffe0007004000  auto_analysis_ready=true  hexrays_ready=true
+13338  status=ok  input=/Users/ciscohe/Desktop/macPad/analysis/dyld_15.6.1_arm64e_thin
+       imagebase=0x0  auto_analysis_ready=true  hexrays_ready=true
+13339  status=ok  input=/Users/ciscohe/Desktop/macPad/analysis/dyldwork/amfid_bin
+       imagebase=0x100000000  auto_analysis_ready=true  hexrays_ready=true
+13340  status=ok  input=/Users/ciscohe/Desktop/VirtualMacOniPad/VMGPU/Frameworks/ParavirtualizedGraphics.framework/ParavirtualizedGraphics
+       imagebase=0x100000000  auto_analysis_ready=true  hexrays_ready=true
+```
+
+13337 对实际 T8103 kernel 的 `sub_FFFFFE00086A8984`、`sub_FFFFFE000808D79C`、`sub_FFFFFE000808DABC`、`sub_FFFFFE00086A0924`、`sub_FFFFFE000869BFC8`、`sub_FFFFFE00086A6C90` 和 `pmap_enter_options_internal` 做了 decompile/disasm。关键实际调用点是 `0xfffffe00086a7d94 BL sub_FFFFFE00086A8984`；调用前寄存器为 `X0=X19`、`X1=X22`、`X2=X20`，`X3/X4` 从当前栈帧的两个局部参数装载，不能把它们未经现场捕获直接命名成 prot 或 fault type。
+
+**RE-confirmed via actual T8103 kernel IDA**：
+
+- `sub_FFFFFE00086A0924(a1,a2,&out)` 以 `a1+0x60/a1+0x68` 做范围判断；命中时返回相对偏移，并可能把 `out` 换成 `a1+0x58` 的父 code-directory 对象。
+- `sub_FFFFFE000869BFC8(hash_type,out,len,page)` 对 type 1 调 SHA-1、对 type 2 调 SHA-256；未知类型直接 panic。
+- `sub_FFFFFE000808D79C(a1,pv_entry,a3,a4,a5)` 遍历 PV head。PV tagged pointer 的 bit 2、所属 PTD 的 `+0x4c` 字段、以及 PTE 的 writable/access bits 会导致返回 50 或设置输出 bit 1/2/4；`sub_FFFFFE000808DABC` 对同一 PV 链递归执行该检查，特殊全局对象直接返回 50。
+- `sub_FFFFFE00086A8984(a1,a2,a3,a4,a5)` 先检查 `*(_BYTE *)(*(_QWORD *)(a1+0x20)+0x4c)` 和 PTE 高位；在 `a5` 的相应位允许时，按 `a1+0x98..0xa8` 的 code-directory 范围计算页偏移，读取 code-directory hash type/size/page-shift，逐页对 `ml_static_ptovirt(a4<<14)+offset` 做 hash，并与主 hash 表及可选 fallback 表比较。失败分支包括 `0x86a8b50/0x86a8bcc/0x86a8b54/0x86a8d14`，均可返回 50；hash 成功后还会再次检查 `a1+0xc2`（反编译字段 `a1+194`）gate。
+- `pmap_enter_options_internal` 对该 helper 的唯一 xref 位于 `0x86a7d94`，说明 helper 确实在 enter 路径执行；当前 IDA 结果没有证明现场 `X3/X4` 的最终语义，也没有证明是哪条 50 分支被命中。
+
+本条是 **RE-confirmed**，不是 runtime fault 分支确认。下一步仍是对一个 frozen child 做只读、一次性的现场参数捕获：保存 `a1` code-directory 对象、`a1+0xc2`、`a1+0x98..0xa8`、实际 `a2/a3`、hash type/shift/slot 和 PTE/PV flags，与 `0x18047dc9c` 的 page offset 对齐；在得到分支见证前不修改 kernel/PAC、dyld 或 map flags。
