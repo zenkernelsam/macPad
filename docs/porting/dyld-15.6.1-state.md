@@ -3109,3 +3109,16 @@ TRUST_RESTORE_RC=1
 ### 2026-10-02 thermal blocker persists under VirtualMac load
 
 新一轮只读核验：`macwsthermal` 为 `thermal-state=serious raw=2 low-power=no battery-temp-centic=3679 virtual-temp-centic=3679 effective-temp-centic=3679 uptime=10253.799`，`THERMAL_RC=3`；trustcache query rc=0，24G90 两枚完整 hash 仍无匹配。`VirtualMachine.xpc` PID 1712 CPU 约 222.9%，父进程 VirtualMac PID 1711 约 5.7%。连续有界轮询未恢复 nominal；未绕过 gate、未停止用户 VirtualMac、未运行底层 helper。后续 trust/echo 需要 thermal 外部状态先改变。
+
+### 2026-10-02 重启/重新越狱后冷启动复核
+
+用户报告前一轮 VirtualMac 卡死后重启 iPad、重新越狱并再次启动 VirtualMac。本轮只读核验：`hw.machine=iPad13,11`、`kern.osversion=20D47`、`kern.boottime=Fri Oct 2 22:44:48 2026`；rootfs plist SHA `9af8c8d66fb9e5f022d93f46481c8834b787c2ec61e96da6d4a33965640ce2b2`，`ProductBuildVersion=24G90`；部署后的 `macos_gui.sh` SHA `61e7143f0c314f4ca3a4ad4b15776a06813697290d498be54421a298253773fa`，`macws_boot_trust.py` SHA `2c727c302a55b15470f9bc1cf4ec8c45e87091e8b448974d866e8ca1dd955135`。
+
+冷启动 `jbctl trustcache info` 查询 rc=0，24G90 两枚完整 hash 均 `PRESENT False`。直接执行 thermal 工具（不是 bash 解释）返回：`thermal-state=serious raw=2 low-power=no battery-temp-centic=3629 virtual-temp-centic=3629 effective-temp-centic=3629 uptime=390.449`，`THERMAL_RC=3`。等待 60 秒后仍为 serious，VirtualMachine.xpc PID 975 CPU 343.9%，父 VirtualMac PID 969 CPU 2.5%。正式 `/var/jb/usr/bin/bash /var/jb/usr/macOS/bin/macos_gui.sh trust` 逐字结果：
+
+```text
+[macos_gui] THERMAL-PAUSE: application trust checkpoint preserved; thermal-state=serious raw=2 low-power=no battery-temp-centic=3639 virtual-temp-centic=3639 effective-temp-centic=3639 uptime=511.115
+TRUST_RESTORE_RC=1
+```
+
+**runtime-confirmed**：重启已清除上一 boot 的动态 trustcache，24G90 hash 重新缺失；部署脚本仍为目标版本；正式 trust 尚未进入 build/hash helper。未停止用户 VirtualMac，未绕过 thermal gate，未启动 chroot/WindowServer、未运行 echo。
