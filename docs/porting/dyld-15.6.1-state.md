@@ -3506,3 +3506,9 @@ CLEAR ... 0x22802b09 0 0x22802809
 **RE-confirmed**：pmap 构造路径把 `pmap+0xc2` 初始化为零，相关 T8103 pmap text 未见非零直接写入。**THEORY**：若现场 pmap 仍为普通新建对象、且 helper 落入这些 gate 分支，`pmap+0xc2=0` 可能解释首个 50；但尚未 runtime-confirm pmap 对象来源、外部 PPL 写入或实际命中分支，不能据此修改该字段或 kernel。下一次只读捕获应同时读取 pmap+0xc1/+0xc2，并记录 helper 分支条件。
 
 补充的覆盖审计：同一代码区间内对 `STR[HWDQ].*#0xC0` 与 `STR[HWDQ].*#0xC1` 的 IDA regex 搜索均无命中，未发现通过半字/字宽 store 间接覆盖 `pmap+0xc2` 的路径。该结果仍是静态证据，不能替代设备现场读取。
+
+### 2026-10-03 `pmap+0xc2` 的实际 policy 语义
+
+13337 对 `sub_FFFFFE000869C590` 的反编译显示其字符串为 `pmap_cs_allow_invalid_internal`。该函数要求当前线程 pmap 与 TTBR0 匹配，取得 pmap exclusive lock 后：只有全局 debug/开发开关 `byte_FFFFFE000A9E7E08&1` 开启，且当前 pmap 具备 `get-task-allow` 或 `run-unsigned-code` entitlement，或该字节原先已为 1 时，才执行 `*(_BYTE *)(pmap+0xc2)=1` 并返回 0；否则返回 5 或 53。**RE-confirmed via actual T8103 kernel IDA**：`pmap+0xc2` 是 allow-invalid/开发策略位，不是普通 24G90 cache trust 的必需初始化位。
+
+这解释了普通 pmap 构造后的 `+0xc2=0`，也解释了为什么不能通过 KRW 把它置 1 来“修复” echo：那会绕过 PMAP 的无效代码策略。当前 **THEORY** 是 fault 路径可能错误地进入了只对 allow-invalid 场景开放的 helper 分支；需要现场分支参数和 entitlement/pmap 状态来证实，保持不改 gate、不改 kernel。
