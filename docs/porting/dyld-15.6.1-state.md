@@ -3479,3 +3479,5 @@ CLEAR ... 0x22802b09 0 0x22802809
 ```
 
 结合 `sub_FFFFFE00086A8984` 的实际访问，PMAP helper 用 `byte[3 * normalized_hash_type + 1]` 检查 CodeDirectory 的 `hashSize`，并从 CodeDirectory 头偏移 `+0x24/+0x25/+0x27` 读取 `hashSize/hashType/pageSize`；PMAP code-directory 对象的 normalized `hash_type` 位于反编译访问的 `+0x1e4`。随后 `sub_FFFFFE000869BFC8` 按 CodeDirectory `hashType` 选择 SHA-1 或 SHA-256，对 `ml_static_ptovirt(page_index << 14) + page_offset` 计算摘要，再比较主表与 fallback 表。**RE-confirmed via actual IDA binary**：下一次现场捕获必须同时记录 normalized hash type、CodeDirectory 三个头字段、page index、page shift、主/备用 hash slot；只读页内容正确本身不足以证明这个 PMAP hash lookup 成功。
+
+同一 IDA 实例的 `sub_FFFFFE0008699954` 和 `sub_FFFFFE000869AE38` 进一步确认 normalized 映射：CodeDirectory `hashType=2`（SHA-256）被转换为 normalized type `1`、期望 hashSize `0x20`；`hashType=1`（SHA-1）转换为 normalized type `2`、期望 hashSize `0x14`。`sub_FFFFFE000869AE38` 按 CodeDirectory `hashOffset - hashSize * code_slot` 定位 slot，并用 CodeDirectory 原始 `hashType` 计算摘要后比较。**RE-confirmed via actual T8103 kernel IDA**：现场若只记录“SHA-256”而不记录 normalized type，会把合法的 type=1 误判成 type mismatch；下一次捕获必须同时记录两种编号及 slot 地址。
