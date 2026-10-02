@@ -3541,3 +3541,5 @@ page validated=0xf tainted=0 nx=0
 公开源 `vm_fault_cs_need_validation()` 在 `page_obj->code_signed == false` 时直接跳过 `cs_validate_page`；`vm_fault_cs_handle_violation()` 在非 switched map 中再把当前 object/page 状态交给 `cs_invalid_page`。**runtime-confirmed + source-confirmed**：底层 vnode 的 CodeDirectory/hash 正确，不等价于 fault 时顶层 COW shadow 的 code-signing 状态正确。
 
 **THEORY**：24G90 shared-cache text 的 `needs_copy` shadow 可能没有继承 signed backing 的 PMAP-CS/code-signed 状态，导致后续 PMAP enter/PPL helper 按 invalid/unsigned mapping 路径返回 50；这比直接打开 `pmap+0xc2` 更符合上游 invariant。尚未 runtime-confirm shadow propagation、fault-time `prot` 或 helper 分支，因此不作修复、不写 kernel/PAC。
+
+补充排除：现场 `flags2=0x210abac0` 的 bit29 (`vme_no_copy_on_read`) 已置位；公开 `vm_shared_region.c:1763` 对 shared-cache binary mapping 也明确设置 `vmkf_no_copy_on_read=1`。**runtime-confirmed + source-confirmed**：当前不能把 fault 归因为 shared-region mapping 忘记 no-copy flag；`needs_copy=1` 的 shadow 仍可能只是结构性 COW 链，是否实际复制了 fault page 必须由 page owner/offset 与 fault-time copy 状态继续确认。
