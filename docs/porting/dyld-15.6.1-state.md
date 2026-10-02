@@ -3470,4 +3470,4 @@ CLEAR ... 0x22802b09 0 0x22802809
 
 **runtime-confirmed + source/RE cross-check**：该 code-directory 在当前诊断 fault 前已被 PMAP 关联为 loaded-trust-cache 等级；这进一步排除“动态 trustcache 完全没有进入 PMAP code-directory”这一解释，但不等价于 `pmap_enter` 的 hash/PV/policy 参数全部正确。下一次设备捕获应保留该 trust 值，并增加 `code-directory+0x1e4` hash type、`cd`/hash slot、association node `start/size/offset` 与 enter 调用的 page index/flags 对齐。
 
-13337 的 `pmap_enter_options_internal` 入口寄存器也已按实际调用约定重新对齐：`X19=pmap`、`X20=vaddr`、`X28=pa`、`X22=pte`；在 `0x86a7d84..0x86a7d94` 调用 PMAP helper 时，`X0=pmap`、`X1=pte`、`X2=vaddr`，`X3` 来自当前栈帧的 page-index 局部值，`X4` 来自相邻 policy/fault 参数槽。**RE-confirmed** 这条调用不是把 code-directory 指针直接当成第一个参数，且 `a4/a5` 不能仅凭 Hex-Rays 形参名解释成 prot；必须在设备 fault 时读取实际寄存器/栈槽。该校正会约束下一次 runner 只读捕获范围，未修改任何二进制或设备状态。
+13337 的 `pmap_enter_options_internal` 入口寄存器也已按实际调用约定重新对齐：`X19=pmap`、`X20=vaddr`、`X28=pa`、`X22=pte`；在 `0x86a7d84..0x86a7d94` 调用 PMAP helper 时，`X0=pmap`、`X1=pte`、`X2=vaddr`，而 `X3/X4` 是当前栈帧 `var_D0` 邻近槽的值。它们可能对应 page-index 与 policy/fault 参数，但当前 IDA 证据还不能证明具体语义。**RE-confirmed** 这条调用不是把 code-directory 指针直接当成第一个参数，且 `a4/a5` 不能仅凭 Hex-Rays 形参名解释成 prot；必须在设备 fault 时读取实际寄存器/栈槽。该校正会约束下一次 runner 只读捕获范围，未修改任何二进制或设备状态。
