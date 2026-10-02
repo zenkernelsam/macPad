@@ -3148,3 +3148,22 @@ TRUST_DIAGNOSTIC_RC=0
 同一冻结 child 的设备 `/var/mobile/csprobe2.py` 只读输出：fault entry `flags2=0x210abac0`，含 `pmap_cs_assoc=1 needs_copy=1`；`obj[0]` 为 `internal=1 code_signed=0` 的 anonymous shadow，`shadow=0xfffffe1ccd114f00`；`obj[1]` 为 vnode pager、`code_signed=1`，挂有主 cache blob `base=0 start=0 end=0xa160c000` 与 CDHash `2b9cccd5c5728972bc2a3b7f251114e6f1ff9b5e`。**runtime-confirmed**：当前拒绝命中未签名 COW shadow，而不是动态 trustcache 缺失。
 
 当前设备 `/var/mnt/rootfs/usr/lib/dyld` SHA 为 `b8fdbc1b7cfd15cccbcd110c0c3cb1ff91d135d6664b84770d42df843381b91e`、CDHash `0732a14b72dcabb2f698cec94a622944ecc7dcb4`；本地历史 `analysis/dyld_15.6.1_arm64e_thin` SHA/大小和设备身份不一致。未部署历史 `emptysr` candidate；新 binary RE 需要 IDA Pro MCP，但当前客户端没有该工具，未假称完成 RE。无 dyld/内核/PAC 写入。
+
+### 2026-10-03 IDA MCP 恢复后：核对设备当前 dyld 变体与 kernel codesign 返回路径
+
+用户重新启动 IDA Pro MCP 后，逐实例 `tools/list` + `server_health` 完成核验：13337 绑定 `/Users/ciscohe/Desktop/macPad/analysis/kc_raw_16.3_T8112.bin`，imagebase `0xfffffe0007004000`；13338 绑定 `analysis/dyld_15.6.1_arm64e_thin`，imagebase `0x0`；13339 绑定 `analysis/dyldwork/amfid_bin`，imagebase `0x100000000`；13340 绑定 `VirtualMacOniPad/VMGPU/Frameworks/ParavirtualizedGraphics.framework/ParavirtualizedGraphics`，imagebase `0x100000000`。13338 当前 IDB 仍是本地历史 thin，**不是**设备当前带签名文件；因此后续 device-specific patch 仍需先做现场 bytes precondition，不能把 IDB hash 当设备 hash。
+
+设备当前 `/var/mnt/rootfs/usr/lib/dyld`：SHA-256 `b8fdbc1b7cfd15cccbcd110c0c3cb1ff91d135d6664b84770d42df843381b91e`，大小 1,239,632，arm64e CDHash `0732a14b72dcabb2f698cec94a622944ecc7dcb4`。只读复制到 host 后，现场 bytes 在以下地址与 builder 生成的 `emptysr_e + emptysr_c + highreserve_e + highreserve_c` 组合逐项相同：
+
+- `0x34228`: `40 83 09 35`（条件跳到 `0x47290`）
+- `0x47290`: `1f 30 00 71 01 7d f6 54 e5 b3 ff 17`
+- `0x342dc`: `a5 31 ff 17`（跳到 `0x970`）
+- `0x970`: high-VA PROT_NONE hint candidate cave 起始字节相同
+
+**runtime-confirmed**：设备当前已包含历史 empty-SR 条件 teardown 与 highreserve 诊断 scaffold；本轮没有重复部署它们。该变体之前的现场 echo 仍在 fault `code0=0x32`，所以这组变体不是当前 CLI 成功修复。
+
+13338 IDA 对 `dyld3::mapSplitCachePrivate` @ `0x342dc` 的当前 IDB 反编译确认：在 `0x344ec` 调 `deallocateExistingSharedCache` 后，私有 cache mapping 循环从 `0x3454c` 经 `_mmap` @ `0x345ac` 建立文件映射；`0x34568` 的 `MOV W12,#0x80012` 与 `0x34570/0x3457c` 的 CSEL 共同选择 mapping flags。这个语义只来自本地 IDB；现场 bytes 已核对该窗口与 IDB 相同，但尚未将整份设备文件加载进 IDA。
+
+13337 kernel IDA 对实际 T8103 IDB 的 RE-confirmed 结果：`sub_FFFFFE0008008B8C` 在 `0x8009ff8` 的分支最终 `return 50`；该函数的 `LABEL_93` 路径在页状态/代码签名状态检查失败后构造诊断对象并返回 `50`。同一 IDB 的 `pmap_cs_associate_internal_options` @ `0xfffffe00086a0978` 校验 `vaddr/vsize/offset` 均为 `0x4000` 对齐后登记 code-directory association；`pmap_cs_lookup_internal` @ `0xfffffe00086a07d8` 从关联树返回 `{vaddr,size,code-directory}`。这些是实际 kernel binary 的反编译证据，不是对 runtime 参数的猜测；本轮没有写 kernel/PAC。
+
+因此当前结论仍是：24G90 trust 已可诊断恢复且 cache blob 存在，但 echo fault 发生在 kernel page validation 返回 `KERN_CODESIGN_ERROR=50`；设备正在运行的 empty-SR/highreserve candidate 已被排除为充分修复。下一步必须把现场 dyld 文件以相同身份加载到 IDA，或取得 fault 函数的完整 runtime 参数/页状态，再设计一个上游、可验证的 mapping/association 修复；不直接改 `mmap` flags、不部署新的猜测性 NOP。
