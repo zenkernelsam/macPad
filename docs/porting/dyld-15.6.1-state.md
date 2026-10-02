@@ -3524,3 +3524,5 @@ CLEAR ... 0x22802b09 0 0x22802809
 源码路径补充核对：仓库通用 `entitlements.plist` 包含 `get-task-allow`，但 `postinst.sh` 对 rootfs 原版 `/bin/bash`/`/bin/echo` 的冷启动流程只恢复现有 CDHash；通用签名 profile 只用于项目工具及明确列出的第三方/服务二进制。**source-confirmed** 不能据此假设原版 `/bin/echo` 带有 `get-task-allow`，所以普通原版 binary 的 `pmap+0xc2=0` 仍是预期安全状态；这不是设备 runtime 见证，也不构成打开该 gate 的理由。
 
 校正：同一 `postinst.sh` 在安装阶段明确执行 `sign_and_trustcache "$ROOTFS/bin/echo"`。当 echo 的现有各架构 CDHash 尚未全部 trusted 时，该函数用通用 `entitlements.plist` 重签；该 profile 含 `get-task-allow`。重启后的 `restore_cold_boot_trust` 只恢复持久 CDHash，不改变已经安装的签名。因此当前设备 echo 是否带 `get-task-allow` 不能靠“原版 Apple binary”推断，必须对设备实际 CodeDirectory/entitlements 做只读核验；前一段的绝对表述撤回。
+
+13337 `py_eval` 读取到 `byte_FFFFFE000A9E7E08` 在 kernel image 中的初始 8 字节为 `0000000000000000`。**RE-confirmed static only**：默认 debug/allow-invalid 开关在镜像中为零；这不是设备 runtime 值，不能据此断言 `PT_ATTACH` 后的最终 `pmap+0xc2`。
