@@ -3387,3 +3387,19 @@ WRITE 0 AFTER 0x32802809
 独立设备 Python `procflags_probe.py`（不经过 runner 的 unkill 线程）在 child exec 后直接读取 `proc_find(pid)->p_proc_ro->p_csflags` 与 `csops`：示例 `FLAGS_KRW=0x22802b0d`、`CSOPS=0x26803b0d`；后者仅额外 OR platform/enforcement 状态，原始 flags 仍含 `CS_HARD|CS_KILL`。此前 runner 的 unkill 日志 `0x32802809` 与独立 KRW 读值不一致，不能当作有效清 flag 证据；其 proc_ro 轮询/exec 交换语义仍未解释。`RUN_DBG_WAIT_FILE` 版本在 resume 前读到 `0x32802809` 也不能替代独立对照，故不再宣称 CS_HARD/KILL 已被有效清除。
 
 当前可靠结论：map switch_protect child A/B 仍未改变 50；global process enforcement 在 T8103 binary 中恒为 1；页面/hash/PMAP node 证据完整。要继续，需先修正 runner/独立 KRW 对同一 proc_ro 的一致性，再做任何 CS flags 结论。
+
+### 2026-10-03 最终有效 CS_HARD/KILL A/B：exec 后 proc_ro 交换被正确处理
+
+为解决 runner unkill race，使用 `run_dbg_wait` 在 resume 前等待 marker，并启动独立高速 `procflags_loop.py` 轮询同一 PID 的 raw `proc_find()->p_proc_ro->p_csflags`。现场逐字输出：
+
+```text
+CHILD=3398
+LOOP ... 0x32802809
+LOOP ... 0x22802b09
+CLEAR ... 0x22802b09 0 0x22802809
+[exc] type=1 code0=0x32 code1=0x18047dc9c
+[exc] csops ... flags=0x26803b0d
+[exc] type=10 code0=0xa100032 code1=0x18047dc9c
+```
+
+这次明确看到 exec 后 proc_ro 指针发生交换（旧 ro flags `0x32802809` → 新 ro flags `0x22802b09`），并在新 ro 上成功清除 `CS_HARD|CS_KILL` 为 `0x22802809`，**早于第一次 fault**。第一次 fault 仍是 `KERN_CODESIGN_ERROR=50`，随后 SIGBUS，无 `HI`。这是可靠的 runtime-confirmed A/B：CS_HARD/KILL 不是当前第一 fault 原因。无持久 kernel/PAC/dyld 修改。
