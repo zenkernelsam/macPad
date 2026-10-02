@@ -3526,3 +3526,18 @@ CLEAR ... 0x22802b09 0 0x22802809
 校正：同一 `postinst.sh` 在安装阶段明确执行 `sign_and_trustcache "$ROOTFS/bin/echo"`。当 echo 的现有各架构 CDHash 尚未全部 trusted 时，该函数用通用 `entitlements.plist` 重签；该 profile 含 `get-task-allow`。重启后的 `restore_cold_boot_trust` 只恢复持久 CDHash，不改变已经安装的签名。因此当前设备 echo 是否带 `get-task-allow` 不能靠“原版 Apple binary”推断，必须对设备实际 CodeDirectory/entitlements 做只读核验；前一段的绝对表述撤回。
 
 13337 `py_eval` 读取到 `byte_FFFFFE000A9E7E08` 在 kernel image 中的初始 8 字节为 `0000000000000000`。**RE-confirmed static only**：默认 debug/allow-invalid 开关在镜像中为零；这不是设备 runtime 值，不能据此断言 `PT_ATTACH` 后的最终 `pmap+0xc2`。
+
+### 2026-10-03 signed backing 与 COW shadow 的上游候选
+
+把已有设备现场与 XNU `vm_fault.c` 对齐：
+
+```text
+entry flags2=0x210abac0       -> pmap_cs_assoc=1, needs_copy=1
+obj[0] internal=1 code_signed=0  -> anonymous shadow
+obj[1] code_signed=1            -> vnode backing object
+page validated=0xf tainted=0 nx=0
+```
+
+公开源 `vm_fault_cs_need_validation()` 在 `page_obj->code_signed == false` 时直接跳过 `cs_validate_page`；`vm_fault_cs_handle_violation()` 在非 switched map 中再把当前 object/page 状态交给 `cs_invalid_page`。**runtime-confirmed + source-confirmed**：底层 vnode 的 CodeDirectory/hash 正确，不等价于 fault 时顶层 COW shadow 的 code-signing 状态正确。
+
+**THEORY**：24G90 shared-cache text 的 `needs_copy` shadow 可能没有继承 signed backing 的 PMAP-CS/code-signed 状态，导致后续 PMAP enter/PPL helper 按 invalid/unsigned mapping 路径返回 50；这比直接打开 `pmap+0xc2` 更符合上游 invariant。尚未 runtime-confirm shadow propagation、fault-time `prot` 或 helper 分支，因此不作修复、不写 kernel/PAC。
