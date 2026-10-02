@@ -3299,3 +3299,9 @@ NODECOUNT 4
 结合 `vm_map.h` 实际结构布局，现场 `vm_map` 字段已可按结构解释：`map+0xb0` 为 `map_refcnt`，`map+0xb4` 为 flags bitfield，`map+0xb8` 为 timestamp。一个现场 dump 的 flags 为 `0x10090`：bit4 (`switch_protect`)=1，bit7 (`holelistenabled`)=1，bit14 (`cs_enforcement`)=0，bit15 (`cs_debugged`)=0。目标 map 的 `switch_protect` 已 runtime-read 为开启。13337 IDA/source 对 `vm_fault_cs_check_violation` 显示，`KERN_CODESIGN_ERROR=50` 的早期返回分支来自 `cs_enforcement_enabled && map_is_switched && map_is_switch_protected && vm_fault_cs_page_immutable(...) && (prot & VM_PROT_WRITE)`，而页面已 `validated=0xf`。
 
 这使 **THEORY** 收窄为：真实 cache text fault 可能在 switched/protected map 中以带 WRITE 的内部 fault protection 进入 immutable-page rejection；`vm_region` 的最终 `prot=5` 不能证明 `vm_fault` 当时的局部 `prot` 没有 WRITE。尚未 runtime-confirm `map_is_switched` 或 fault-time `prot`，也没有写 map flag；不把它当成已证实根因。下一步应先用只读/现有诊断捕获这两个参数，再决定是否需要一个明确获准的、child-scoped reversible A/B。
+
+### 2026-10-03 MAP_SHARED 候选复测：正确 runner 下仍被 SIGKILL，未产生 fault witness
+
+重建当前原始设备 dyld 的单指令候选（`0x34568: 4c028052 -> 2c028052`，只把 shared-cache mapping flags 的 MOV 改为 `0x11`），签名后 fresh-inode 部署，候选运行 SHA `dc72574c3b98f9307b2b3c2c72bc379a0c1fa844580db6aeff0476aeef5cccfb`。使用 task_for_pid 正常的 `run_dbg_csunkill2`（CDHash 已加入 TC）跑 bounded echo：child 2667 启动/恢复，unkill 观察到 `0x32802809`，随后 child SIGKILL(9)，没有 exception fault、没有 `HI`。该复测不能区分 MAP_SHARED 改变了哪条 kernel 路径，不能宣布成功或根因。
+
+随后立即恢复 `/var/mobile/dyld_mapshared_original_20261003.bin` 到目标，fresh inode/cmp/SHA 核验通过，设备 dyld 回到原 SHA `b8fdbc1b7cfd15cccbcd110c0c3cb1ff91d135d6664b84770d42df843381b91e`。无持久 dyld/kernel/PAC 修改。
