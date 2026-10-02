@@ -3277,3 +3277,7 @@ NODECOUNT 4
 另做只读 `vm.cs_debug=6` 诊断开关 A/B：设备 sysctl 成功从 0 改为 6，bounded `run_nocskill` 因旧 runner `proc not found` 未产生有效 fault witness，随后 sysctl 已恢复 0；没有获取可用 kernel log，不能把该次作为 fault 分支证据。
 
 补充修正 `CSUNKILL_V3` 证据：runner 的 `[unkill] csflags 0xffffffff -> 0x32802809` 发生在第一次 exception 之前，且 `0x32802809 & 0x300 == 0`，实际 unkill 线程没有需要清除的 `CS_HARD|CS_KILL`。因此第一次 `code0=0x32` 确实是在 child proc flags 已无 `0x300` 时发生；随后日志里的 `csops ... flags=0x26803b0d` 不能作为该 runner 的 live `proc_ro->p_csflags` 等价读数（两者在这条 chroot exec 路径上不一致）。这比“写 flags 后仍失败”的前一版 A/B 更强：CS_HARD/KILL 已排除为第一 fault 触发条件。
+
+### 2026-10-03 cs_blob→PMAP code-directory pointer对齐
+
+对主 cache `cs_blob` 的完整字段 dump 显示，`blob+0xb8 = 0xfffffdf079343230`；这与 PMAP-CS tree target node 的 `v8[5]` CD pointer `0xfffffdf079343230` 完全相同。旧 `csprobe.py/csprobe2.py` 把 `+0xa0` 或 `+0xe0` 当作 `csb_pmap_cs_entry` 的读法不适用于现场布局；本条以现场指针相等和 13337 IDA node comparator/field访问为准。**runtime-confirmed**：主 cache vnode blob 已连接到覆盖 `[0x180000000,0x1e7f5c000)` 的 PMAP-CS code-directory node，trust/ref/CDHash 均对齐。当前 fault 仍不能归因为 blob→PMAP association 缺失。
