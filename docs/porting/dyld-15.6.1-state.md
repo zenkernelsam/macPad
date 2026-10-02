@@ -3522,3 +3522,5 @@ CLEAR ... 0x22802b09 0 0x22802809
 公开 `bsd/kern/mach_process.c` 还确认 `cs_allow_invalid()` 只在 `ptrace` 调试路径调用；未跟踪的 `misc/run_dbg.c` 确实执行 `PT_ATTACH`，但只记录 ptrace 返回值和 proc flags，不记录 `cs_allow_invalid` 返回值、entitlement 检查结果或最终 `pmap+0xc2`。因此旧 runner 的“debugged/清 flags”日志不能证明完整 debug policy 已开启，下一次现场捕获应加入 pmap+0xc2 只读值及 `get-task-allow`/`run-unsigned-code` entitlement 见证。
 
 源码路径补充核对：仓库通用 `entitlements.plist` 包含 `get-task-allow`，但 `postinst.sh` 对 rootfs 原版 `/bin/bash`/`/bin/echo` 的冷启动流程只恢复现有 CDHash；通用签名 profile 只用于项目工具及明确列出的第三方/服务二进制。**source-confirmed** 不能据此假设原版 `/bin/echo` 带有 `get-task-allow`，所以普通原版 binary 的 `pmap+0xc2=0` 仍是预期安全状态；这不是设备 runtime 见证，也不构成打开该 gate 的理由。
+
+校正：同一 `postinst.sh` 在安装阶段明确执行 `sign_and_trustcache "$ROOTFS/bin/echo"`。当 echo 的现有各架构 CDHash 尚未全部 trusted 时，该函数用通用 `entitlements.plist` 重签；该 profile 含 `get-task-allow`。重启后的 `restore_cold_boot_trust` 只恢复持久 CDHash，不改变已经安装的签名。因此当前设备 echo 是否带 `get-task-allow` 不能靠“原版 Apple binary”推断，必须对设备实际 CodeDirectory/entitlements 做只读核验；前一段的绝对表述撤回。
