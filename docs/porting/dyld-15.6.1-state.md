@@ -3291,3 +3291,11 @@ NODECOUNT 4
 本轮只读回溯 XNU `vm_fault.c`/`ubc_subr.c`：`cs_validate_page` 通过 `cs_validate_hash` 对 vnode blob coverage/hash slot 做 hash，成功后只设置 `vmp_cs_validated`；随后 `vm_fault_cs_check_violation` 仍独立检查 `pmap_get_vm_map_cs_enforced(pmap)`、`vm_fault_cs_page_immutable`、`vm_fault_cs_page_nx`、`VMP_CS_TAINTED` 和 `prot`/`vmp_wpmapped`。`vm_fault_cs_handle_violation` 再调用 `cs_invalid_page`，在 `CS_HARD|CS_KILL` 之外也可返回拒绝。
 
 与现场证据对齐：目标页 `validated=0xf tainted=0 nx=0`，PMAP-CS association node 覆盖目标 VA，且 first fault 前 `CS_HARD|CS_KILL` 已清除；因此当前剩余分支需要确认的是 **pmap 的 `vm_map_cs_enforced`/`map_is_switched`/`map_is_switch_protected`/fault prot 与 object lock 状态**，而不是重新做 libSystem 或 hash 注册。没有做 kernel 写入。
+
+### 2026-10-03 `vm.cs_debug` counters与 map flags：当前 50 更像 immutable/protection 分支
+
+设备只读计数 A/B：`vm.cs_debug_unsigned_exec_failures` 和 `vm.cs_debug_unsigned_mmap_failures` 在 bounded echo 前后均为 0；这次不是普通“unsigned exec”计数路径。`vm.cs_debug=6` 的实时日志仍未提供 kernel fault 文本，但 sysctl 已恢复 0。
+
+结合 `vm_map.h` 实际结构布局，现场 `vm_map` 字段已可按结构解释：`map+0xb0` 为 `map_refcnt`，`map+0xb4` 为 flags bitfield，`map+0xb8` 为 timestamp。一个现场 dump 的 flags 为 `0x10090`：bit4 (`switch_protect`)=1，bit7 (`holelistenabled`)=1，bit14 (`cs_enforcement`)=0，bit15 (`cs_debugged`)=0。目标 map 的 `switch_protect` 已 runtime-read 为开启。13337 IDA/source 对 `vm_fault_cs_check_violation` 显示，`KERN_CODESIGN_ERROR=50` 的早期返回分支来自 `cs_enforcement_enabled && map_is_switched && map_is_switch_protected && vm_fault_cs_page_immutable(...) && (prot & VM_PROT_WRITE)`，而页面已 `validated=0xf`。
+
+这使 **THEORY** 收窄为：真实 cache text fault 可能在 switched/protected map 中以带 WRITE 的内部 fault protection 进入 immutable-page rejection；`vm_region` 的最终 `prot=5` 不能证明 `vm_fault` 当时的局部 `prot` 没有 WRITE。尚未 runtime-confirm `map_is_switched` 或 fault-time `prot`，也没有写 map flag；不把它当成已证实根因。下一步应先用只读/现有诊断捕获这两个参数，再决定是否需要一个明确获准的、child-scoped reversible A/B。
