@@ -3549,3 +3549,5 @@ page validated=0xf tainted=0 nx=0
 公开 `vm_fault_attempt_pmap_enter()` 还明确通过 `PMAP_ENTER_OPTIONS` 传入实际 page、`prot`、`fault_type`、`fault_phys_offset` 和 `fault_info.pmap_options`；`fault_info.pmap_cs_associated` 在可见源中没有直接出现在这组参数里，消费很可能位于 T8103 闭源 PMAP/PPL 层。**source-confirmed + RE-confirmed**：现场 entry bit24=`pmap_cs_assoc=1` 不能直接推出 helper 的 X3/X4 或 policy bits，下一次必须读取实际 helper 调用寄存器/栈槽。
 
 公开 `vm_object_fault_info` 结构还同时包含 `pmap_cs_associated`、`no_copy_on_read` 和 `pmap_options`；`vm_map.c` 从 entry bit24/bit29 生成前两个状态。**source-confirmed**：当前现场 entry 的 `pmap_cs_assoc=1`、`no_copy_rd=1` 与 fault_info 结构一致；T8103 helper 从 `var_D0` 邻近槽装载的 X3/X4 可能承载 PMAP-CS 扩展 ABI，但仍需 runtime 寄存器捕获，不能凭公开宏补猜参数。
+
+13337 对实际 T8103 `sub_FFFFFE0008008B8C` 的 prologue disasm 进一步确认：该函数从超出 X7 的栈参数取一个指针（反编译为 `arg_8`→X25），随后读取 `X25+0x28`；同时从另一栈参数（反编译 `arg_0`→W12）取 32-bit policy 值，并在 `0x8008c0c..0x8008c18` 与 X7 bit1 联合分支。**RE-confirmed**：fault_info/pmap-CS 扩展确实通过扩展栈 ABI进入 T8103 闭源路径；下一次现场捕获应保存该 call frame 的 stack args 与 helper X3/X4，不能只看公开 8 参数寄存器。
