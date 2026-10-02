@@ -3101,3 +3101,7 @@ TRUST_RESTORE_RC=1
 随后只读调用 `macwsthermal` 返回 `thermal-state=serious raw=2 ... battery-temp-centic=3689 ... THERMAL_RC=3`；60 秒后仍为 `thermal-state=serious raw=2 ... battery-temp-centic=3679 ... THERMAL_RC=3`。**runtime-confirmed**：trust helper 尚未执行，不能报告任何 cache hash 已恢复；这不是 24G90 分支失败，也不是设备离线。遵守 gate，未设置绕过变量、未修改 thermal 状态、未启动 chroot/WindowServer。
 
 追加轮询：在前次记录后等待 120 秒，只读 `macwsthermal` 仍返回 `thermal-state=serious raw=2 low-power=no battery-temp-centic=3689 virtual-temp-centic=3689 effective-temp-centic=3689 uptime=10050.086`，`THERMAL_RC=3`。未调用底层 trust helper 绕过 gate；24G90 live membership 仍待 nominal 窗口验收。
+
+### 2026-10-02 后续设备轮询：thermal gate 仍阻塞 trust
+
+再次只读核验：`macwsthermal` 输出 `thermal-state=serious raw=2 low-power=no battery-temp-centic=3679 virtual-temp-centic=3679 effective-temp-centic=3679 uptime=10149.592`，`THERMAL_RC=3`；`jbctl trustcache info` 查询 rc=0，完整 24G90 两枚 hash 仍未匹配。进程核验显示 `/var/root/VirtualMac/payload/VirtualMachine.xpc/Contents/MacOS/com.apple.Virtualization.VirtualMachine`（PID 1712，mobile，运行约 01:29:43）CPU 约 158%，其父进程为 VirtualMac PID 1711。高负载与 thermal serious 的因果仍标为 THEORY；未停止该用户进程、未绕过 gate、未运行底层 trust helper。
