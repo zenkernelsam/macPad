@@ -73,6 +73,18 @@ static NSMutableDictionary<NSString *, NSDictionary *> *
 // or the first observed model after this SpringBoard generation starts.
 static NSMutableDictionary<NSString *, NSValue *> *
     MacWSStableModelSizeByScene;
+// Native floating-Dock behavior assertions retained only while an exact Host
+// Scene cannot fit between the standard Stage Manager margins and the Dock.
+// The assertion object owns registration/invalidation with
+// SBFloatingDockController; keys are FBS Scene identifiers.
+static NSMutableDictionary<NSString *, id> *MacWSDockYieldAssertionByScene;
+// Geometry from the last pass where SpringBoard reported a visible Dock.
+// Once our assertion wins, subsequent passes report a zero Dock height; retain
+// the former exclusion so a later shrink can release the assertion exactly
+// when the full native Dock + margins fit again. Bounds are stored too so a
+// rotation never reuses stale portrait/landscape geometry.
+static NSMutableDictionary<NSString *, NSDictionary *> *
+    MacWSDockYieldGeometryByScene;
 // Presentation owns whether AppKit geometry applies. A workspace still uses
 // the same iPadOS Scene, but no longer presents one fixed AppKit window.
 // Keep the transition timestamp so delayed window requests cannot reattach
@@ -159,6 +171,20 @@ static CGSize MacWSMessageSize(id receiver, SEL selector) {
     if (!receiver || ![receiver respondsToSelector:selector])
         return CGSizeZero;
     return ((CGSize (*)(id, SEL))objc_msgSend)(receiver, selector);
+}
+
+static CGPoint MacWSMessagePoint(id receiver, SEL selector) {
+    if (!receiver || ![receiver respondsToSelector:selector])
+        return CGPointZero;
+    return ((CGPoint (*)(id, SEL))objc_msgSend)(receiver, selector);
+}
+
+static CGPoint MacWSMessagePointWithRect(id receiver, SEL selector,
+                                         CGRect rect) {
+    if (!receiver || ![receiver respondsToSelector:selector])
+        return CGPointZero;
+    return ((CGPoint (*)(id, SEL, CGRect))objc_msgSend)(
+        receiver, selector, rect);
 }
 
 static CGRect MacWSMessageRect(id receiver, SEL selector) {
@@ -391,6 +417,211 @@ static NSString *MacWSMethodInventory(Class cls, NSArray<NSString *> *needles) {
     }
     free(methods);
     return [names componentsJoinedByString:@" | "];
+}
+
+static id MacWSObjectIvarWithClass(id object, Class expectedClass) {
+    if (!object || !expectedClass) return nil;
+    for (Class cls = object_getClass(object); cls; cls = class_getSuperclass(cls)) {
+        unsigned int count = 0;
+        Ivar *ivars = class_copyIvarList(cls, &count);
+        for (unsigned int index = 0; index < count; index++) {
+            const char *type = ivar_getTypeEncoding(ivars[index]);
+            if (!type || type[0] != '@') continue;
+            id candidate = object_getIvar(object, ivars[index]);
+            if ([candidate isKindOfClass:expectedClass]) {
+                free(ivars);
+                return candidate;
+            }
+        }
+        free(ivars);
+    }
+    return nil;
+}
+
+static id MacWSResolveFloatingDockController(void) {
+    static __weak id cachedController;
+    id cached = cachedController;
+    if (cached) return cached;
+    Class dockWindowClass = NSClassFromString(@"SBFloatingDockWindow");
+    Class oldDockWindowClass = NSClassFromString(@"SBOldFloatingDockWindow");
+    Class dockControllerClass = NSClassFromString(@"SBFloatingDockController");
+    if (!dockControllerClass) return nil;
+    for (UIScene *scene in UIApplication.sharedApplication.connectedScenes) {
+        if (![scene isKindOfClass:UIWindowScene.class]) continue;
+        for (UIWindow *window in ((UIWindowScene *)scene).windows) {
+            if (![window isKindOfClass:dockWindowClass] &&
+                ![window isKindOfClass:oldDockWindowClass]) continue;
+            id root = MacWSMessageObject(
+                window, NSSelectorFromString(@"floatingDockRootViewController"));
+            if (!root) root = window.rootViewController;
+            for (NSString *name in @[@"floatingDockController", @"delegate"]) {
+                id candidate = MacWSMessageObject(
+                    root, NSSelectorFromString(name));
+                if ([candidate isKindOfClass:dockControllerClass]) {
+                    cachedController = candidate;
+                    return candidate;
+                }
+            }
+            id candidate = MacWSObjectIvarWithClass(root, dockControllerClass);
+            if (candidate) {
+                cachedController = candidate;
+                return candidate;
+            }
+        }
+    }
+    return nil;
+}
+
+static BOOL MacWSRequestFloatingDockYield(NSString *sceneIdentifier,
+                                          CGRect frame) {
+    if (!sceneIdentifier.length) return NO;
+    if (MacWSDockYieldAssertionByScene[sceneIdentifier]) return YES;
+    id controller = MacWSResolveFloatingDockController();
+    SEL presentedSelector = NSSelectorFromString(@"isFloatingDockPresented");
+    SEL dismissSelector = NSSelectorFromString(
+        @"dismissFloatingDockIfPresentedAnimated:completionHandler:");
+    if (!controller || ![controller respondsToSelector:presentedSelector] ||
+        ![controller respondsToSelector:dismissSelector] ||
+        !((BOOL (*)(id, SEL))objc_msgSend)(controller, presentedSelector))
+        return NO;
+
+    id activeAssertion = MacWSMessageObject(
+        controller, NSSelectorFromString(@"activeAssertion"));
+    Class assertionClass = NSClassFromString(@"SBFloatingDockBehaviorAssertion");
+    SEL initializerSelector = NSSelectorFromString(
+        @"initWithFloatingDockController:visibleProgress:animated:gesturePossible:atLevel:reason:withCompletion:");
+    Method initializer = assertionClass ? class_getInstanceMethod(
+        assertionClass, initializerSelector) : NULL;
+    NSUInteger activeLevel = activeAssertion && [activeAssertion respondsToSelector:
+        NSSelectorFromString(@"level")]
+        ? ((NSUInteger (*)(id, SEL))objc_msgSend)(
+            activeAssertion, NSSelectorFromString(@"level")) : 0;
+    CGFloat activeProgress = activeAssertion &&
+        [activeAssertion respondsToSelector:NSSelectorFromString(@"progress")]
+        ? ((CGFloat (*)(id, SEL))objc_msgSend)(
+            activeAssertion, NSSelectorFromString(@"progress")) : NAN;
+    MacWSWindowingLogLine([NSString stringWithFormat:
+        @"dock-yield-state scene=%@ active-class=%@ active-level=%lu active-progress=%.3f active=%@ assertion-methods=[%@] init-imp=%p",
+        sceneIdentifier ?: @"nil",
+        activeAssertion ? NSStringFromClass([activeAssertion class]) : @"nil",
+        (unsigned long)activeLevel, activeProgress,
+        activeAssertion ?: @"nil",
+        MacWSMethodInventory(assertionClass,
+            @[@"progress", @"level", @"priority", @"reason", @"gesture",
+              @"animated", @"invalidate"]),
+        initializer ? method_getImplementation(initializer) : NULL]);
+
+    if (initializer) {
+        NSUInteger yieldLevel = activeLevel < NSUIntegerMax
+            ? activeLevel + 1 : activeLevel;
+        __weak id weakController = controller;
+        void (^assertionCompletion)(void) = ^{
+            id strongController = weakController;
+            BOOL stillPresented = strongController &&
+                [strongController respondsToSelector:presentedSelector] &&
+                ((BOOL (*)(id, SEL))objc_msgSend)(
+                    strongController, presentedSelector);
+            MacWSWindowingLogLine([NSString stringWithFormat:
+                @"dock-yield-assertion-ready scene=%@ level=%lu presented=%@",
+                sceneIdentifier, (unsigned long)yieldLevel,
+                stillPresented ? @"YES" : @"NO"]);
+        };
+        id assertion = ((id (*)(id, SEL, id, CGFloat, BOOL, BOOL,
+                                NSUInteger, id, id))objc_msgSend)(
+            [assertionClass alloc], initializerSelector, controller, 0.0,
+            YES, YES, yieldLevel, @"MacWSHost unobscured window",
+            assertionCompletion);
+        if (assertion) {
+            if (!MacWSDockYieldAssertionByScene)
+                MacWSDockYieldAssertionByScene =
+                    [NSMutableDictionary dictionary];
+            MacWSDockYieldAssertionByScene[sceneIdentifier] = assertion;
+            MacWSWindowingLogLine([NSString stringWithFormat:
+                @"dock-yield-request scene=%@ frame=%@ controller=%@ route=native-behavior-assertion level=%lu",
+                sceneIdentifier, NSStringFromCGRect(frame),
+                NSStringFromClass([controller class]),
+                (unsigned long)yieldLevel]);
+            return YES;
+        }
+    }
+
+    // Runtime-confirmed on iPad13,6 / 20D67 at 1790868919.484: the exact
+    // SBFloatingDockController is reachable from the live floating-Dock
+    // window and reports presented=YES. Runtime method metadata at
+    // 1790868828.705 confirms this dismissal selector and its v28@0:8B16@?20
+    // ABI. Ask the native controller to transition; do not hide its UIWindow,
+    // replace its view, or bypass its assertion state machine.
+    __weak id weakController = controller;
+    void (^completion)(void) = ^{
+        id strongController = weakController;
+        BOOL stillPresented = strongController &&
+            [strongController respondsToSelector:presentedSelector] &&
+            ((BOOL (*)(id, SEL))objc_msgSend)(
+                strongController, presentedSelector);
+        MacWSWindowingLogLine([NSString stringWithFormat:
+            @"dock-yield-complete scene=%@ presented=%@ route=native-dismiss",
+            sceneIdentifier ?: @"nil", stillPresented ? @"YES" : @"NO"]);
+    };
+    ((void (*)(id, SEL, BOOL, id))objc_msgSend)(
+        controller, dismissSelector, YES, completion);
+    MacWSWindowingLogLine([NSString stringWithFormat:
+        @"dock-yield-request scene=%@ frame=%@ controller=%@ route=native-dismiss",
+        sceneIdentifier ?: @"nil", NSStringFromCGRect(frame),
+        NSStringFromClass([controller class])]);
+    return YES;
+}
+
+static void MacWSReleaseFloatingDockYield(NSString *sceneIdentifier,
+                                          NSString *reason) {
+    id assertion = MacWSDockYieldAssertionByScene[sceneIdentifier];
+    if (!assertion) return;
+    [MacWSDockYieldAssertionByScene removeObjectForKey:sceneIdentifier];
+    [MacWSDockYieldGeometryByScene removeObjectForKey:sceneIdentifier];
+    SEL selector = NSSelectorFromString(@"invalidateWithCompletion:");
+    if ([assertion respondsToSelector:selector]) {
+        ((void (*)(id, SEL, id))objc_msgSend)(assertion, selector, ^{
+            MacWSWindowingLogLine([NSString stringWithFormat:
+                @"dock-yield-released scene=%@ reason=%@",
+                sceneIdentifier, reason ?: @"unknown"]);
+        });
+    } else if ([assertion respondsToSelector:NSSelectorFromString(@"invalidate")]) {
+        ((void (*)(id, SEL))objc_msgSend)(
+            assertion, NSSelectorFromString(@"invalidate"));
+        MacWSWindowingLogLine([NSString stringWithFormat:
+            @"dock-yield-released scene=%@ reason=%@ completion=unavailable",
+            sceneIdentifier, reason ?: @"unknown"]);
+    }
+}
+
+static void MacWSReleaseDockYieldsOutsideCurrentStage(void) {
+    if (MacWSDockYieldAssertionByScene.count == 0) return;
+    UIApplication *application = UIApplication.sharedApplication;
+    id windowSceneManager = MacWSMessageObject(
+        application, NSSelectorFromString(@"windowSceneManager"));
+    id displayWindowScene = MacWSMessageObject(
+        windowSceneManager,
+        NSSelectorFromString(@"activeDisplayWindowScene"));
+    id switcherController = MacWSMessageObject(
+        displayWindowScene, NSSelectorFromString(@"switcherController"));
+    id currentLayout = MacWSMessageObject(
+        switcherController, NSSelectorFromString(@"_currentMainAppLayout"));
+    // During a switcher transition SpringBoard can temporarily publish no
+    // current layout. Treat that as indeterminate rather than flashing the
+    // Dock back over a still-visible Host window.
+    if (!currentLayout) return;
+    NSMutableSet<NSString *> *visibleScenes = [NSMutableSet set];
+    for (id item in MacWSMessageObject(
+             currentLayout, NSSelectorFromString(@"allItems"))) {
+        if (![MacWSMessageObject(item, NSSelectorFromString(@"bundleIdentifier"))
+                isEqualToString:@"com.macwsguide.host"]) continue;
+        NSString *scene = MacWSMessageObject(
+            item, NSSelectorFromString(@"uniqueIdentifier"));
+        if (scene.length) [visibleScenes addObject:scene];
+    }
+    for (NSString *scene in [MacWSDockYieldAssertionByScene.allKeys copy]) {
+        if (![visibleScenes containsObject:scene])
+            MacWSReleaseFloatingDockYield(scene, @"scene-left-current-stage");
+    }
 }
 
 static NSDictionary *MacWSClaimInitialSizePolicy(id displayItem,
@@ -711,6 +942,8 @@ static void MacWSApplyFullscreenRequest(NSDictionary *request,
         (unsigned long)(attempt + 1)]);
     if (alreadyExpected) {
         if (exactScene && expectedFullscreen) {
+            MacWSReleaseFloatingDockYield(
+                requestedIdentifier, @"entered-fullscreen-workspace");
             if (!MacWSWorkspaceSinceByScene)
                 MacWSWorkspaceSinceByScene = [NSMutableDictionary dictionary];
             MacWSWorkspaceSinceByScene[requestedIdentifier] = @(issuedAt);
@@ -790,6 +1023,8 @@ static void MacWSApplyFullscreenRequest(NSDictionary *request,
     // AppKit frame. Detach only this Scene's window-sizing scope BEFORE the
     // native action. Do not force a frame or bypass Apple's size validation.
     if (expectedFullscreen) {
+        MacWSReleaseFloatingDockYield(
+            requestedIdentifier, @"entering-fullscreen-workspace");
         if (!MacWSWorkspaceSinceByScene)
             MacWSWorkspaceSinceByScene = [NSMutableDictionary dictionary];
         MacWSWorkspaceSinceByScene[requestedIdentifier] = @(issuedAt);
@@ -1865,6 +2100,262 @@ static NSArray<NSNumber *> *MacWSDenseCandidates(NSArray<NSNumber *> *source,
     return ordered.count ? ordered : source;
 }
 
+// Calculate the collision-free frame for one Host model without ever changing
+// its authoritative size. The result is consumed by
+// MacWSAppLayoutByAvoidingFloatingDock below to update the immutable
+// SBDisplayItemLayoutAttributes normalized center. Returning a different frame
+// only from _frameForLayoutRole: is insufficient: runtime logs at
+// 1790873129.927 showed that calculator returning y=24 while the full iPadOS
+// screenshot still showed SpringBoard presenting the original centered model.
+static CGRect MacWSHostFrameAvoidingFloatingDock(
+        CGRect frame, CGRect containerBounds, CGFloat floatingDockHeight,
+        CGFloat screenEdgePadding, CGFloat screenScale,
+        NSString *sceneIdentifier) {
+    if (!sceneIdentifier.length || CGRectIsEmpty(frame) ||
+        CGRectIsEmpty(containerBounds)) return frame;
+
+    BOOL hasYieldAssertion =
+        MacWSDockYieldAssertionByScene[sceneIdentifier] != nil;
+    BOOL dockVisible = isfinite(floatingDockHeight) &&
+        floatingDockHeight > 0.5;
+    if (dockVisible) {
+        if (!MacWSDockYieldGeometryByScene)
+            MacWSDockYieldGeometryByScene = [NSMutableDictionary dictionary];
+        MacWSDockYieldGeometryByScene[sceneIdentifier] = @{
+            @"height": @(floatingDockHeight),
+            @"bounds_width": @(containerBounds.size.width),
+            @"bounds_height": @(containerBounds.size.height),
+        };
+    } else if (hasYieldAssertion) {
+        NSDictionary *geometry =
+            MacWSDockYieldGeometryByScene[sceneIdentifier];
+        BOOL sameBounds = geometry &&
+            fabs([geometry[@"bounds_width"] doubleValue] -
+                 containerBounds.size.width) <= 0.5 &&
+            fabs([geometry[@"bounds_height"] doubleValue] -
+                 containerBounds.size.height) <= 0.5;
+        if (!sameBounds) {
+            MacWSReleaseFloatingDockYield(
+                sceneIdentifier, @"container-geometry-changed");
+            return frame;
+        }
+        floatingDockHeight = [geometry[@"height"] doubleValue];
+    } else {
+        return frame;
+    }
+    if (!isfinite(floatingDockHeight) || floatingDockHeight <= 0.5)
+        return frame;
+
+    CGFloat dockTop = CGRectGetMaxY(containerBounds) - floatingDockHeight;
+    if (!isfinite(dockTop)) return frame;
+
+    // Preserve the user's authoritative Scene size. Runtime screenshots from
+    // the first candidate proved that shortening only this returned frame did
+    // not resize the Scene, while the subsequent upstream model ceiling made
+    // the native resize gesture unable to grow. A frame that fits above the
+    // Dock can satisfy both invariants by translation alone.
+    CGFloat padding = isfinite(screenEdgePadding) &&
+        screenEdgePadding > 0.0 ? screenEdgePadding : 0.0;
+    CGFloat topBoundary = CGRectGetMinY(containerBounds) + padding;
+    // Runtime-confirmed on iPad13,6/20D67 at 1790870982.200: Files receives
+    // frame {{106,24.5},{1177,807}} with dockTop=855.5 and the native 24pt
+    // edge padding. The former Host rule required that full 24pt even for a
+    // slightly taller 824pt frame, so it hid the Dock although 7.5pt of real
+    // separation remained. Preserve the full native gap whenever possible,
+    // then compress only that gap down to eight physical pixels. Never allow
+    // the zero-gap contact that was visibly reported as overlap, and never
+    // shrink the user's authoritative frame.
+    CGFloat effectiveScale = isfinite(screenScale) && screenScale > 0.0
+        ? screenScale : UIScreen.mainScreen.scale;
+    if (!isfinite(effectiveScale) || effectiveScale <= 0.0)
+        effectiveScale = 2.0;
+    CGFloat minimumDockGap = 8.0 / effectiveScale;
+    CGFloat availableDockGap =
+        dockTop - topBoundary - frame.size.height;
+    BOOL canFitWithDock = availableDockGap + 0.5 >= minimumDockGap;
+    if (hasYieldAssertion) {
+        // While the assertion is active the live Dock height is normally 0.
+        // Keep the user's frame untouched. Once their resized height can fit
+        // with the remembered native exclusion, release the assertion and
+        // let SpringBoard's next stock pass place the now-visible Dock.
+        if (canFitWithDock)
+            MacWSReleaseFloatingDockYield(
+                sceneIdentifier, @"window-fits-dock-safe-region");
+        return frame;
+    }
+
+    CGFloat safeBottom = dockTop - minimumDockGap;
+    if (CGRectGetMaxY(frame) <= safeBottom + 0.5) return frame;
+    if (canFitWithDock) {
+        CGFloat dockGap = MIN(padding, MAX(minimumDockGap,
+                                           availableDockGap));
+        CGFloat translatedY = dockTop - dockGap - frame.size.height;
+        frame.origin.y = translatedY;
+    } else {
+        // The requested size cannot fit between the native top margin and the
+        // visible Dock. Preserve that size and let the real Dock controller
+        // yield. The following layout pass receives the system's updated Dock
+        // state; no artificial maximum is written into AppKit/Scene policy.
+        MacWSRequestFloatingDockYield(sceneIdentifier, frame);
+    }
+    return frame;
+}
+
+// Runtime-confirmed on iPad13,6 / 20D67 at 1790873129.927:
+// normalizedCenter={0.5,0.5} resolves through -centerInBounds: to
+// {694.5,485} in {{0,0},{1389,970}}. Modifying only normalized y to
+// 0.44587628865979378 resolves through the same SpringBoard method to
+// {694.5,432.5}, the exact center of the desired unchanged 1171x817 frame at
+// y=24. Publish that center through Apple's immutable attributes/AppLayout
+// model; do not mutate a UIWindow, private ivar, or the user's size policy.
+static id MacWSAppLayoutByAvoidingFloatingDock(
+        id appLayout, CGRect containerBounds, id chamoisLayoutAttributes,
+        CGFloat floatingDockHeight, CGFloat screenScale) {
+    if (!appLayout || CGRectIsEmpty(containerBounds) ||
+        containerBounds.size.width <= 0.0 ||
+        containerBounds.size.height <= 0.0)
+        return appLayout;
+
+    NSArray *items = MacWSMessageObject(
+        appLayout, NSSelectorFromString(@"allItems"));
+    SEL attributesSelector =
+        NSSelectorFromString(@"layoutAttributesForItem:");
+    SEL normalizedSelector = NSSelectorFromString(@"normalizedCenter");
+    SEL centerSelector = NSSelectorFromString(@"centerInBounds:");
+    SEL modifyCenterSelector = NSSelectorFromString(
+        @"attributesByModifyingNormalizedCenter:");
+    SEL modifyLayoutSelector = NSSelectorFromString(
+        @"appLayoutByModifyingLayoutAttributes:forItem:");
+    CGSize defaultSize = MacWSMessageSize(
+        chamoisLayoutAttributes,
+        NSSelectorFromString(@"defaultWindowSize"));
+    CGFloat screenEdgePadding = MacWSMessageFloat(
+        chamoisLayoutAttributes,
+        NSSelectorFromString(@"screenEdgePadding"));
+    if (![items isKindOfClass:NSArray.class] ||
+        ![appLayout respondsToSelector:attributesSelector] ||
+        ![appLayout respondsToSelector:modifyLayoutSelector] ||
+        CGSizeEqualToSize(defaultSize, CGSizeZero))
+        return appLayout;
+
+    id adjustedLayout = appLayout;
+    for (id item in items) {
+        NSString *bundle = MacWSMessageObject(
+            item, NSSelectorFromString(@"bundleIdentifier"));
+        NSString *scene = MacWSMessageObject(
+            item, NSSelectorFromString(@"uniqueIdentifier"));
+        if (![bundle isEqualToString:@"com.macwsguide.host"] ||
+            scene.length == 0 || MacWSWorkspaceSinceByScene[scene])
+            continue;
+
+        id attributes = ((id (*)(id, SEL, id))objc_msgSend)(
+            adjustedLayout, attributesSelector, item);
+        if (![attributes respondsToSelector:normalizedSelector] ||
+            ![attributes respondsToSelector:centerSelector] ||
+            ![attributes respondsToSelector:modifyCenterSelector])
+            continue;
+
+        CGSize size = CGSizeZero;
+        if (!MacWSResolvedLayoutAttributesSize(
+                attributes, containerBounds, defaultSize,
+                screenEdgePadding, &size))
+            continue;
+        CGPoint center = MacWSMessagePointWithRect(
+            attributes, centerSelector, containerBounds);
+        if (!isfinite(center.x) || !isfinite(center.y)) continue;
+        CGRect originalFrame = CGRectMake(
+            center.x - size.width * 0.5,
+            center.y - size.height * 0.5,
+            size.width, size.height);
+        CGRect targetFrame = MacWSHostFrameAvoidingFloatingDock(
+            originalFrame, containerBounds, floatingDockHeight,
+            screenEdgePadding, screenScale, scene);
+        if (fabs(targetFrame.origin.x - originalFrame.origin.x) <= 0.25 &&
+            fabs(targetFrame.origin.y - originalFrame.origin.y) <= 0.25)
+            continue;
+
+        CGPoint normalizedCenter = MacWSMessagePoint(
+            attributes, normalizedSelector);
+        CGPoint targetCenter = CGPointMake(
+            CGRectGetMidX(targetFrame), CGRectGetMidY(targetFrame));
+        CGPoint targetNormalizedCenter = CGPointMake(
+            normalizedCenter.x +
+                (targetCenter.x - center.x) / containerBounds.size.width,
+            normalizedCenter.y +
+                (targetCenter.y - center.y) / containerBounds.size.height);
+        if (!isfinite(targetNormalizedCenter.x) ||
+            !isfinite(targetNormalizedCenter.y))
+            continue;
+
+        id adjustedAttributes =
+            ((id (*)(id, SEL, CGPoint))objc_msgSend)(
+                attributes, modifyCenterSelector, targetNormalizedCenter);
+        CGPoint resolvedTargetCenter = MacWSMessagePointWithRect(
+            adjustedAttributes, centerSelector, containerBounds);
+        CGSize resolvedTargetSize = CGSizeZero;
+        BOOL sizePreserved = MacWSResolvedLayoutAttributesSize(
+            adjustedAttributes, containerBounds, defaultSize,
+            screenEdgePadding, &resolvedTargetSize) &&
+            fabs(resolvedTargetSize.width - size.width) <= 0.25 &&
+            fabs(resolvedTargetSize.height - size.height) <= 0.25;
+        BOOL centerResolved =
+            fabs(resolvedTargetCenter.x - targetCenter.x) <= 0.25 &&
+            fabs(resolvedTargetCenter.y - targetCenter.y) <= 0.25;
+        if (!adjustedAttributes || !sizePreserved || !centerResolved) {
+            if (MacWSWindowingDiagnosticsEnabled()) {
+                static NSMutableDictionary<NSString *, NSString *> *lastRejected;
+                if (!lastRejected)
+                    lastRejected = [NSMutableDictionary dictionary];
+                NSString *signature = [NSString stringWithFormat:
+                    @"%@/%@/%@/%@/%@", NSStringFromCGRect(originalFrame),
+                    NSStringFromCGRect(targetFrame),
+                    NSStringFromCGPoint(resolvedTargetCenter),
+                    NSStringFromCGSize(resolvedTargetSize),
+                    centerResolved ? @"center" : @"no-center"];
+                if (![lastRejected[scene] isEqualToString:signature]) {
+                    lastRejected[scene] = signature;
+                    MacWSWindowingLogLine([NSString stringWithFormat:
+                        @"dock-center-rejected scene=%@ original=%@ target=%@ normalized=%@ resolved-center=%@ resolved-size=%@ size-preserved=%@ center-resolved=%@",
+                        scene, NSStringFromCGRect(originalFrame),
+                        NSStringFromCGRect(targetFrame),
+                        NSStringFromCGPoint(targetNormalizedCenter),
+                        NSStringFromCGPoint(resolvedTargetCenter),
+                        NSStringFromCGSize(resolvedTargetSize),
+                        sizePreserved ? @"YES" : @"NO",
+                        centerResolved ? @"YES" : @"NO"]);
+                }
+            }
+            continue;
+        }
+
+        id candidateLayout = ((id (*)(id, SEL, id, id))objc_msgSend)(
+            adjustedLayout, modifyLayoutSelector, adjustedAttributes, item);
+        if (!candidateLayout) continue;
+        adjustedLayout = candidateLayout;
+        if (MacWSWindowingDiagnosticsEnabled()) {
+            static NSMutableDictionary<NSString *, NSString *> *lastAdjusted;
+            if (!lastAdjusted)
+                lastAdjusted = [NSMutableDictionary dictionary];
+            NSString *signature = [NSString stringWithFormat:
+                @"%@/%@/%@", NSStringFromCGRect(containerBounds),
+                NSStringFromCGRect(originalFrame),
+                NSStringFromCGRect(targetFrame)];
+            if (![lastAdjusted[scene] isEqualToString:signature]) {
+                lastAdjusted[scene] = signature;
+                MacWSWindowingLogLine([NSString stringWithFormat:
+                    @"dock-center-adjusted scene=%@ dock-height=%.1f container=%@ original=%@ target=%@ normalized=%@ resolved-center=%@ size-preserved=YES route=immutable-app-layout",
+                    scene, floatingDockHeight,
+                    NSStringFromCGRect(containerBounds),
+                    NSStringFromCGRect(originalFrame),
+                    NSStringFromCGRect(targetFrame),
+                    NSStringFromCGPoint(targetNormalizedCenter),
+                    NSStringFromCGPoint(resolvedTargetCenter)]);
+            }
+        }
+    }
+    return adjustedLayout;
+}
+
 %hook SBHomeGestureToSwitcherSwitcherModifier
 - (id)adjustedAppLayoutsForAppLayouts:(id)layouts {
     NSArray *adjusted = %orig(layouts);
@@ -1911,6 +2402,7 @@ overlappingModelBeforeDragging:(id)overlappingModelBeforeDragging
                       bounds:(CGRect)bounds
           prefersStripHidden:(BOOL)prefersStripHidden
            prefersDockHidden:(BOOL)prefersDockHidden {
+    MacWSReleaseDockYieldsOutsideCurrentStage();
     // RE-confirmed in the target cache: this method's first grid call
     // (0x1c78b527c) calculates the stage-wide maximum, then its item loop
     // clamps every window against that value (0x1c78b54b8..54d8).
@@ -1936,11 +2428,13 @@ overlappingModelBeforeDragging:(id)overlappingModelBeforeDragging
     MacWSActiveLayoutSceneIdentifier = nil;
     MacWSInitialGridObserved = NO;
     MacWSGroupLayoutScopeDepth++;
+    id laidOutAppLayout = nil;
     @try {
-        return %orig(appLayout, containerOrientation, chamoisLayoutAttributes,
-                     floatingDockHeight, screenScale, draggingItem,
-                     overlappingModelBeforeDragging, bounds,
-                     prefersStripHidden, prefersDockHidden);
+        laidOutAppLayout = %orig(
+            appLayout, containerOrientation, chamoisLayoutAttributes,
+            floatingDockHeight, screenScale, draggingItem,
+            overlappingModelBeforeDragging, bounds,
+            prefersStripHidden, prefersDockHidden);
     } @finally {
         MacWSGroupLayoutScopeDepth--;
         MacWSInitialGridObserved = previousInitialGridObserved;
@@ -1953,6 +2447,9 @@ overlappingModelBeforeDragging:(id)overlappingModelBeforeDragging
         MacWSActiveResizeGestureModifier = previousModifier;
         MacWSGroupResizeGestureModifier = previousGroupModifier;
     }
+    return MacWSAppLayoutByAvoidingFloatingDock(
+        laidOutAppLayout, bounds, chamoisLayoutAttributes,
+        floatingDockHeight, screenScale);
 }
 
 - (CGRect)_frameForLayoutRole:(NSInteger)layoutRole
@@ -2049,6 +2546,7 @@ overlappingModelBeforeDragging:(id)overlappingModelBeforeDragging
         if (!itemPolicy) itemPolicy = @{
             @"scene_identifier": scene, @"macws_host": @YES,
         };
+
     }
 
     NSDictionary *previousPolicy = MacWSActiveDenseGridPolicy;
