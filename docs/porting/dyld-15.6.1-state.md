@@ -3210,3 +3210,9 @@ PAGE ... off=0x47c000 flags=0x3c00cc
 ### 2026-10-03 PMAP 指针只读核验：PAC 解码不足，未升级结论
 
 在 frozen echo child 上复制 `csprobe2.py` 做只读 `vm_map`/pmap 邻域 dump。fault map `0xfffffe1ccc870e80` 的 entry list/header 可读；map+0x40 值为 `0xb9857df15652c438`，带 PAC/平台指针编码。现有脚本的 47-bit `unpac()` 将其变成非 kernel 地址 `0x1f15652c438`，不能当作真实 pmap 指针；本轮不猜测 ptrauth 格式、不把 map+0x40 邻域输出解释成 PMAP-CS tree。该实验没有修改设备、没有写 kernel/PAC，不能证明 association 存在或缺失。
+
+### 2026-10-03 CSUNKILL A/B 受控诊断：未改变 fault，v2 runner 未取得 task port
+
+先使用设备已有 `run_dbg_hold_v2` 做 `RUN_DBG_CSUNKILL=1` A/B，结果仍在同一 PC `0x18047dc9c` 抛 `code0=0x32`，`csops flags=0x26803b0d`；没有 `HI`。该旧 runner 的 CSUNKILL 线程未提供可独立确认的清除日志，因此不把它当成有效“flags 已清除”实验。
+
+随后按源码重新编译 `misc/run_dbg.c`（iOS arm64，host SHA 未提交），设备签名并加入 trustcache，临时 CDHash `f7aced98134f251d0db93842b4fcde73bb904767`。同样 bounded `RUN_DBG_CSUNKILL=1` echo 只得到：`[*] spawned pid=1812 (suspended)`、`Successfully marked proc of pid 1812 as debugged`、`[*] jbctl rc=0`、`[*] task_for_pid kr=5 port=0`、`CSUNKILL_V2_ECHO_RC=1`；没有 child fault 数据，说明该 runner 版本未取得 task port，不能据此归因。设备没有持久化 dyld/kernel 改动；未把这次 runner 失败当作 root cause。
