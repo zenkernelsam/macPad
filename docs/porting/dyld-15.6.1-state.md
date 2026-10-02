@@ -3345,3 +3345,5 @@ return pmap->pmap_vm_map_cs_enforced;
 ```
 
 `vm_map.c:20590` 的 `vm_map_cs_enforcement()` 采用同样的 global-first 逻辑。由此解释了不同 child 的 `pmap+0xc0` 低字节（0/1）不能直接决定 fault enforcement；只要 `cs_process_enforcement_enable` 为真，`vm_fault_cs_check_violation` 仍进入 enforcement。13337 IDA/源证据已取代此前把 per-pmap byte 当全局 gate 的过强推断。未改 kernel；后续需在 T8103 IDA/runtime 只读核对 `cs_process_enforcement_enable` 的实际值，以及 immutable/cs_invalid 分支条件。
+
+补充：源码 `kern_cs.c:94-99` 显示 `cs_process_enforcement_enable` 在 `CONFIG_ENFORCE_SIGNED_CODE=1` 配置下默认 1；但本仓库 xnu 源与实际 20D47 kernel binary 配置不自动等价，未把它作为 runtime-confirmed 值。13337 IDA/现场 map flags 只能确认调用路径存在；global enforcement 的最终 runtime 值仍需实际 kernel global 读取或有效 IDA/global 绑定。
