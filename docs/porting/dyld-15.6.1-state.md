@@ -3545,3 +3545,5 @@ page validated=0xf tainted=0 nx=0
 补充排除：现场 `flags2=0x210abac0` 的 bit29 (`vme_no_copy_on_read`) 已置位；公开 `vm_shared_region.c:1763` 对 shared-cache binary mapping 也明确设置 `vmkf_no_copy_on_read=1`。**runtime-confirmed + source-confirmed**：当前不能把 fault 归因为 shared-region mapping 忘记 no-copy flag；`needs_copy=1` 的 shadow 仍可能只是结构性 COW 链，是否实际复制了 fault page 必须由 page owner/offset 与 fault-time copy 状态继续确认。
 
 对上一段 COW 解释再作边界校正：公开 `vm_fault.c` 的 `vm_fault_enter()` 在调用 `PMAP_ENTER_OPTIONS` 前明确执行 `object = VM_PAGE_OBJECT(m)`；PMAP enter 使用的是 fault page 的实际 owner，而不是单纯的顶层 shadow。现场 page owner 已是 `obj[1]` 的 signed vnode backing object。**source-confirmed + runtime-confirmed**：顶层 anonymous shadow 的 `code_signed=0` 单独不足以解释 50；COW 方向只有在进一步证明 page 实际复制、owner/offset 改变或 fault-time `need_copy` 分支命中后才成立。
+
+公开 `vm_fault_attempt_pmap_enter()` 还明确通过 `PMAP_ENTER_OPTIONS` 传入实际 page、`prot`、`fault_type`、`fault_phys_offset` 和 `fault_info.pmap_options`；`fault_info.pmap_cs_associated` 在可见源中没有直接出现在这组参数里，消费很可能位于 T8103 闭源 PMAP/PPL 层。**source-confirmed + RE-confirmed**：现场 entry bit24=`pmap_cs_assoc=1` 不能直接推出 helper 的 X3/X4 或 policy bits，下一次必须读取实际 helper 调用寄存器/栈槽。
