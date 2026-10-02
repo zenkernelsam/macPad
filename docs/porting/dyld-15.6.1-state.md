@@ -3547,3 +3547,5 @@ page validated=0xf tainted=0 nx=0
 对上一段 COW 解释再作边界校正：公开 `vm_fault.c` 的 `vm_fault_enter()` 在调用 `PMAP_ENTER_OPTIONS` 前明确执行 `object = VM_PAGE_OBJECT(m)`；PMAP enter 使用的是 fault page 的实际 owner，而不是单纯的顶层 shadow。现场 page owner 已是 `obj[1]` 的 signed vnode backing object。**source-confirmed + runtime-confirmed**：顶层 anonymous shadow 的 `code_signed=0` 单独不足以解释 50；COW 方向只有在进一步证明 page 实际复制、owner/offset 改变或 fault-time `need_copy` 分支命中后才成立。
 
 公开 `vm_fault_attempt_pmap_enter()` 还明确通过 `PMAP_ENTER_OPTIONS` 传入实际 page、`prot`、`fault_type`、`fault_phys_offset` 和 `fault_info.pmap_options`；`fault_info.pmap_cs_associated` 在可见源中没有直接出现在这组参数里，消费很可能位于 T8103 闭源 PMAP/PPL 层。**source-confirmed + RE-confirmed**：现场 entry bit24=`pmap_cs_assoc=1` 不能直接推出 helper 的 X3/X4 或 policy bits，下一次必须读取实际 helper 调用寄存器/栈槽。
+
+公开 `vm_object_fault_info` 结构还同时包含 `pmap_cs_associated`、`no_copy_on_read` 和 `pmap_options`；`vm_map.c` 从 entry bit24/bit29 生成前两个状态。**source-confirmed**：当前现场 entry 的 `pmap_cs_assoc=1`、`no_copy_rd=1` 与 fault_info 结构一致；T8103 helper 从 `var_D0` 邻近槽装载的 X3/X4 可能承载 PMAP-CS 扩展 ABI，但仍需 runtime 寄存器捕获，不能凭公开宏补猜参数。
