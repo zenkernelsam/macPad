@@ -3487,3 +3487,7 @@ CLEAR ... 0x22802b09 0 0x22802809
 ### 2026-10-03 现有现场探针的覆盖边界审计
 
 只读审计了未跟踪的 `misc/pagewalk.py` 与 `misc/csprobe2.py`，没有在设备运行它们。`pagewalk.py` 能从 vnode blob 输出 CodeDirectory 头和 UBC hash slot；`csprobe2.py` 能输出 `pmap_cs_entry` 指针及 dyld pager 元数据。但两者都没有验证 PMAP association tree 的 `start/size/file_offset/code-directory` 节点、PMAP code-directory normalized `hash_type`（`+0x1e4`）、`pmap+0xc2` policy gate，或 `0x86a7d94` enter 调用的实际 `X3/X4`。**runtime/工具审计结论**：它们不能单独证明 PMAP helper 成功，也不能替代下一次 frozen-child 的只读参数捕获；不直接运行未经重新核验的探针。
+
+### 2026-10-03 公开 PMAP_ENTER 参数契约与 T8103 binary 的差异
+
+公开 XNU `osfmk/vm/pmap.h` 的 `PMAP_ENTER` 宏把 `pmap_enter_options_addr` 参数按 `pmap, vaddr, pa, protection, fault_type, flags, wired, options, NULL` 传递；这只能说明源级 API 契约。实际 T8103 `pmap_enter_options_internal` 在 `0x86a7d84..0x86a7d94` 调 PMAP helper 时，`X3/X4` 来自 `var_D0` 邻近栈槽，而当前 IDA frame 没有证明这些槽的写入来源。**RE-confirmed + source cross-check**：不能用公开源把这两个实际 helper 参数直接命名成 `prot/fault_type`，必须等设备 fault-time 寄存器/栈捕获；在此之前不做 map/PTE/kernel 修改。
