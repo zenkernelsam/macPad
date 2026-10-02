@@ -3471,3 +3471,11 @@ CLEAR ... 0x22802b09 0 0x22802809
 **runtime-confirmed + source/RE cross-check**：该 code-directory 在当前诊断 fault 前已被 PMAP 关联为 loaded-trust-cache 等级；这进一步排除“动态 trustcache 完全没有进入 PMAP code-directory”这一解释，但不等价于 `pmap_enter` 的 hash/PV/policy 参数全部正确。下一次设备捕获应保留该 trust 值，并增加 `code-directory+0x1e4` hash type、`cd`/hash slot、association node `start/size/offset` 与 enter 调用的 page index/flags 对齐。
 
 13337 的 `pmap_enter_options_internal` 入口寄存器也已按实际调用约定重新对齐：`X19=pmap`、`X20=vaddr`、`X28=pa`、`X22=pte`；在 `0x86a7d84..0x86a7d94` 调用 PMAP helper 时，`X0=pmap`、`X1=pte`、`X2=vaddr`，而 `X3/X4` 是当前栈帧 `var_D0` 邻近槽的值。它们可能对应 page-index 与 policy/fault 参数，但当前 IDA 证据还不能证明具体语义。**RE-confirmed** 这条调用不是把 code-directory 指针直接当成第一个参数，且 `a4/a5` 不能仅凭 Hex-Rays 形参名解释成 prot；必须在设备 fault 时读取实际寄存器/栈槽。该校正会约束下一次 runner 只读捕获范围，未修改任何二进制或设备状态。
+
+13337 `py_eval` 对实际 T8103 kernel 的 `byte_FFFFFE0007E65270` 读取到 24 字节：
+
+```text
+0000000220010114010000000000000050726f766973696f
+```
+
+结合 `sub_FFFFFE00086A8984` 的实际访问，PMAP helper 用 `byte[3 * normalized_hash_type + 1]` 检查 CodeDirectory 的 `hashSize`，并从 CodeDirectory 头偏移 `+0x24/+0x25/+0x27` 读取 `hashSize/hashType/pageSize`；PMAP code-directory 对象的 normalized `hash_type` 位于反编译访问的 `+0x1e4`。随后 `sub_FFFFFE000869BFC8` 按 CodeDirectory `hashType` 选择 SHA-1 或 SHA-256，对 `ml_static_ptovirt(page_index << 14) + page_offset` 计算摘要，再比较主表与 fallback 表。**RE-confirmed via actual IDA binary**：下一次现场捕获必须同时记录 normalized hash type、CodeDirectory 三个头字段、page index、page shift、主/备用 hash slot；只读页内容正确本身不足以证明这个 PMAP hash lookup 成功。
