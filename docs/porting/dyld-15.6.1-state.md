@@ -2910,3 +2910,39 @@ RESTORED_SHA256=9956915299c6e3e21c7e650242166bab05dc635da4acac2cbade4e646eec51a1
 **已备好的决定性实验**（设备恢复即用）：`RUN_DBG_HOLD=30 run_dbg_hold_v2` 把孩子冻结在 codesign 异常 → `misc/csprobe.py <pid>` 用 libjailbreak KRW 读：proc→fd→vnode(`+0x78`)→ubc_info(`ui_control`@+0x08 即 vm_object、`cs_blobs`@+0x50、`ui_flags`@+0x28)→ `vm_object+0xac`bit8=`code_signed`、`+0x7c`bit16=`internal`、`+0x50`=pager；blob `base/start/end`@+0x28/+0x30/+0x38、`mem_kaddr`@+0x50、`cd`@+0xa0、`csb_pmap_cs_entry`@~+0xe0。slide 由 `libjailbreak.jbinfo_get_serialized()`+`xpc_dictionary_get_uint64("kernelConstant.slide")` 取得（替代硬编码 KSLIDE）。sysctl 变量 IDB 地址：`cs_debug`@`0xfffffe000aa54188`、`cs_debug_unsigned_exec_failures`@`…190`、`cs_debug_unsigned_mmap_failures`@`…194`（运行时+slide；但源码未见递增点，仅辅助）。
 
 **PMAP_CS 注记**：`vm_map_entry.pmap_cs_associated` 在本 xnu 源中只见继承（submap copy），无置位点——关联逻辑在 PPL（dispatch table 0x78e9cf8/0x78e9d00 侧）。私有 mmap 的 entry 该位为 FALSE ⇒ exec 拒绝判定大概率在 xnu `vm_fault_cs_*` 层而非 PPL。
+
+### 2026-10-02 深夜 RE 收紧：exec 拒绝路径收敛到 pmap_cs/PPL + 空 SR submap 残留模型
+
+**本轮新增的 RE/源码证据（全部本地完成，设备离线中）：**
+
+1. `vm_map_entry` 布局核实（RE-confirmed via `libkern/tree.h:354`）：xnu 的 `RB_ENTRY` 仅 3 指针（24B，color 编码在 parent 低位）⇒ entry 布局：links@0x00(32B)、store@0x20(24B)、union(object/submap)@0x38(8B)、flags1(alias:12|vme_offset:52)@0x40、flags2(32 bools)@0x48。⇒ csprobe2 读的 `+0x48` **确实是 flags2**，`0x210abac0` 的 bit24=`pmap_cs_associated`=1 **成立**（此前"私有 mmap 该位恒 FALSE"的推断作废——那是非 PPL build 的 assert，本机 PPL 使能）。
+
+2. `pmap_cs_associated` 置位点在公开源码全部缺席（`vm_map_entry_copy_pmap_cs_assoc` @vm_map.c:438 是空壳，`CONFIG_PMAP_CS` 裁掉真实现）⇒ 该位只能由 PPL build 的闭源代码或 submap clip 继承（vm_map.c:14066 fault-COW 路径 / :17321 remap 路径）。
+
+3. **空 SR submap 残留模型（THEORY，证据链闭合、待设备验证）**：
+   - echo exec → `vm_shared_region_enter`(fsroot=chroot) 创建**空 SR** 并把 4GB submap 嵌进 map(0x180000000-0x280000000)，submap entry 带 `vme_permanent`(`vmkf_permanent`,vm_shared_region.c:~2280)。
+   - 状态文档已实测：孩子内 `check_np=12`(ENOMEM=SR 存在但空)。
+   - dyld `deallocateExistingSharedCache`(0x3420c)：`check_np(&base)` 返 12≠0 → `CBNZ W0 @0x34228` **跳过** `check_np(NULL)` → submap 残留。
+   - dyld 私有 `mmap(MAP_FIXED|MAP_PRIVATE)`(SharedCacheRuntime.cpp:975)覆盖 submap 区间 → 用户态 overwrite **不能删 permanent submap entry**(vm_map.c:8144→8167 需 `VM_MAP_REMOVE_IMMUTABLE`，用户 mmap 无此 flag；递归删 submap 内部成功后父 entry 才被处理）→ clip/复用路径把 `permanent+pmap_cs_associated+no_copy_on_read+needs_copy` 带进新 file entry（与实测 flags `0x210abac0` 逐项吻合）。
+   - exec fault → `fault_info.pmap_cs_associated=1`(vm_map.c:14298)→ PPL 层按 VA 查 CD 关联 → 我们的私有映射从未经 `pmap_cs_associate` 建立关联（PPL dispatch index 37–54 隐藏块）→ 拒绝 → `KERN_CODESIGN_ERROR`。
+   - VM 层页校验本身完好（resident 页 validated=0xf/tainted=0/xpmapped=1；xpmapped 是 `pmap_enter` 前乐观置位，不作成功证据）。
+
+4. `permanent` entry **不可删**（vm_map.c:8630：只能降为 PROT_NONE 留存）——唯有 `vmkf_overwrite_immutable`(=`VM_MAP_REMOVE_IMMUTABLE`，由 `vm_shared_region_remove` 使用，vm_map.c:8150 放行）能真正删除。**这解释了为什么必须用 `check_np(NULL)` 路径而非普通 mmap 覆盖。**
+
+5. dyld 补丁点（RE-confirmed，IDB@Instance2 `deallocateExistingSharedCache`）：
+   ```
+   0x34224: BL __shared_region_check_np   ; check(&base)
+   0x34228: CBNZ W0, 0x34234              ; 空SR(12)/无SR(22) → 跳过 detach ← 病灶
+   0x3422c: MOV X0,#0 / BL check_np       ; teardown
+   0x34234: ret
+   ```
+   **现成 patch key 已存在**：`deallocnp`(0x34228 CBNZ→NOP，无条件 detach——注意 EINVAL(22) 也会 teardown，`shared_region==NULL` 时内核侧 `if (sr!=NULL)` 跳过，安全）与 `emptysr_e/c`（仅 ENOMEM(12) 时 teardown，更保守）。**但历史测试在 mmap 尚未通的阶段做的，结论不可信，须在现配置下重测。**
+
+**设备恢复后的决定性实验（按序）**：
+1. `post_reboot_fmt13.sh` 步骤 1-4（TC + fmt13 补丁）。
+2. **实验 A**：部署 `DEFAULT + deallocnp` 的 dyld 变体 → `run_dbg_hold_v2` 跑 `/bin/echo HI`。若 exec 拒绝消失 → submap 残留模型锤实 + 可能直接达标。
+3. **实验 B**（若 A 仍 `KERN_CODESIGN_ERROR`)：冻结孩子 → csprobe2 **全量走 entry 表**：每条 entry 打 `vme_start/end/is_sub_map(union+0x38 bit1)/object(flags1@0x40 的高位)/flags2@0x48` 全部位域 → 看哪些范围带 pmap_cs 位、是否还有 is_sub_map 残留；读 `map->shared_region` 指针与 SR 的 `sr_first_mapping`。
+4. **实验 C**（若 A 出现新错，如又回到 m3 `KERN_MEMORY_ERROR=10`):m3 entry `shadow=3` 的来源排查（`needs_copy` 继承 vs 正常 COW)；原生对照（shadow=1 resident=1 正常读）已建。
+5. `csprobe2.py` 修正：补 flags2 全位域解码（bit24 pmap_cs、bit19 permanent、bit29 no_copy_on_read、bit10 used_for_tpro、bit6 needs_copy）+ union+0x38 is_sub_map + entry 遍历打印所有带 flag 的 entry 范围。
+
+**对照参考**：iOS 原生进程 mmap 同一缓存页（RW，长度 0x24000,fileoff 0x6c188000）成功读取 ⇒ 文件/页内容/vnode 均正常；差异只在 macOS task 的 map 状态。

@@ -1,0 +1,21 @@
+[*] mode=copy-write pid=6823 csops rc=0 flags=0x26803b0d errno=0
+[*] mapping va=0x57a02c000 len=0x24000 file_off=0x6c188000
+[pre basic] 0x57a02c000..0x57a050000 prot=3/3 off=0x6c188000 shared=0
+[pre ext] 0x57a02c000..0x57a050000 tag=0 resident=9 external=1 shadow=1 mode=1 ref=2
+[*] vm_protect COPY kr=0
+[pre-read basic] 0x57a02c000..0x57a050000 prot=3/3 off=0x0 shared=0
+[pre-read ext] 0x57a02c000..0x57a050000 tag=0 resident=9 external=1 shadow=3 mode=1 ref=2
+[write] storing64 va=0x57a02c000 expected=0x1122334455667788
+[write] readback64 va=0x57a02c000 got=0x1122334455667788
+[page 0] va=0x57a02c000 byte0=0x88
+[page 1] va=0x57a030000 byte0=0x00
+[page 2] va=0x57a034000 byte0=0x00
+[page 3] va=0x57a038000 byte0=0x00
+[page 4] va=0x57a03c000 byte0=0x00
+[page 5] va=0x57a040000 byte0=0x00
+[page 6] va=0x57a044000 byte0=0x00
+[page 7] va=0x57a048000 byte0=0x00
+[page 8] va=0x57a04c000 byte0=0x00
+[post-read basic] 0x57a02c000..0x57a050000 prot=3/3 off=0x0 shared=0
+[post-read ext] 0x57a02c000..0x57a050000 tag=0 resident=9 external=1 shadow=3 mode=1 ref=2
+[*] done mode=copy-write

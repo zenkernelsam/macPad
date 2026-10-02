@@ -1,0 +1,17 @@
+path=/var/mnt/rootfs/private/tmp/dsc/dyld_shared_cache_arm64e
+file_size=0xa1b18000 mappingWithSlideOffset=0x3e8 count=8
+legacy_slide_offset=0x0 legacy_slide_size=0x0
+m0 va=0x180000000 size=0x67f5c000 file_offset=0x0 slide_offset=0x0 slide_size=0x0 flags=0x0 max=0x5 init=0x5
+m1 va=0x1e7f5c000 size=0x1e90000 file_offset=0x67f5c000 slide_offset=0x7ad4d1e6 slide_size=0xf60 flags=0x4 max=0x3 init=0x1
+  slide_version=5 page_size=0x4000 page_count=1956 header24=0500000000400000a4070000000000000000008001000000
+m2 va=0x1ebdec000 size=0x239c000 file_offset=0x69dec000 slide_offset=0x7ad4c000 slide_size=0x11e6 flags=0x0 max=0x3 init=0x3
+  slide_version=5 page_size=0x4000 page_count=2279 header24=0500000000400000e7080000000000000000008001000000
+m3 va=0x1ee188000 size=0x24000 file_offset=0x6c188000 slide_offset=0x7ad4e146 slide_size=0x2a flags=0x44 max=0x3 init=0x1
+  slide_version=5 page_size=0x4000 page_count=9 header24=050000000040000009000000000000000000008001000000
+m4 va=0x1ee1ac000 size=0x1200000 file_offset=0x6c1ac000 slide_offset=0x7ad4e170 slide_size=0x918 flags=0x1 max=0x3 init=0x3
+  slide_version=5 page_size=0x4000 page_count=1152 header24=050000000040000080040000000000000000008001000000
+m5 va=0x1ef3ac000 size=0x7cc4000 file_offset=0x6d3ac000 slide_offset=0x7ad4ea88 slide_size=0x3e7a flags=0x5 max=0x3 init=0x1
+  slide_version=5 page_size=0x4000 page_count=7985 header24=0500000000400000311f0000000000000000008001000000
+m6 va=0x1f9070000 size=0x5cdc000 file_offset=0x75070000 slide_offset=0x0 slide_size=0x0 flags=0x20 max=0x1 init=0x1
+m7 va=0x1fed4c000 size=0x268c0000 file_offset=0x7ad4c000 slide_offset=0x0 slide_size=0x0 flags=0x0 max=0x1 init=0x1
+deployed_dyld_sha256=9956915299c6e3e21c7e650242166bab05dc635da4acac2cbade4e646eec51a1
