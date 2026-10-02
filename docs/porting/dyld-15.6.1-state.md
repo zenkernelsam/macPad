@@ -3189,3 +3189,5 @@ PAGE ... off=0x47c000 flags=0x3c00cc
 结合 13337 IDA 对 T8103 kernel `sub_FFFFFE0008008B8C` 的反编译，`0x8009ff8` 的 `return 50` 位于页验证后续的 PMAP-CS/代码签名区域检查路径；13337 同一 IDB 的 `pmap_cs_associate_internal_options` @ `0xfffffe00086a0978` 与 `pmap_cs_lookup_internal` @ `0xfffffe00086a07d8` 负责 region/code-directory association。当前最稳妥归因是 **THEORY**：已验证页在 PMAP-CS association/region lookup 阶段不满足当前 task 的关联条件；要确认还需把现场 `cs_blob` 当前 kernel layout（尤其 `csb_pmap_cs_entry`）和 fault 函数运行参数逐项对齐。禁止把这一 THEORY 当作 kernel patch 理由。
 
 本轮没有修改设备文件、没有写 kernel/PAC、没有改 mmap flags；原先的 empty-SR/highreserve 变体仍保持现场状态，echo 仍未输出 `HI`。
+
+追加只读核验：在另一冻结 echo child 上，`csprobe.py` 读取同一主 cache vnode object 仍为 `code_signed=1`，blob 覆盖 `[0,a160c000)`、CDHash 正确；脚本按历史布局读取的 `pmap_cs_entry` 数值为 `0x24000003`。该值与 blob flags 相同且不是 kernel pointer，说明当前 `cs_blob` 结构布局/编译配置不能继续用旧脚本偏移直接解释；它**不能**被报告为“entry 缺失”或“entry 存在”。需要用 20D47/T8103 实际 kernel IDA 结构/字段访问 RE 重新定位 `csb_pmap_cs_entry`。pagewalk 的页 owner/validated 证据仍有效。
