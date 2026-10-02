@@ -3191,3 +3191,9 @@ PAGE ... off=0x47c000 flags=0x3c00cc
 本轮没有修改设备文件、没有写 kernel/PAC、没有改 mmap flags；原先的 empty-SR/highreserve 变体仍保持现场状态，echo 仍未输出 `HI`。
 
 追加只读核验：在另一冻结 echo child 上，`csprobe.py` 读取同一主 cache vnode object 仍为 `code_signed=1`，blob 覆盖 `[0,a160c000)`、CDHash 正确；脚本按历史布局读取的 `pmap_cs_entry` 数值为 `0x24000003`。该值与 blob flags 相同且不是 kernel pointer，说明当前 `cs_blob` 结构布局/编译配置不能继续用旧脚本偏移直接解释；它**不能**被报告为“entry 缺失”或“entry 存在”。需要用 20D47/T8103 实际 kernel IDA 结构/字段访问 RE 重新定位 `csb_pmap_cs_entry`。pagewalk 的页 owner/validated 证据仍有效。
+
+### 2026-10-03 MAP_SHARED 单变量诊断候选：未成功，原 dyld 已恢复
+
+基于 IDA 13338 对 `mapSplitCachePrivate` @ `0x34568` 的现场 bytes 核验（原指令 bytes `4c028052`，现场与 IDB 相同），制作临时候选：只将该条 flags 选择改为 `MOV W12,#0x11`（MAP_SHARED|MAP_FIXED），其余当前设备 dyld bytes/empty-SR/highreserve 变体不变。候选 host SHA `1add0b28d9eb78a3424aee7070522c8bca24b441b7ff6c0eb63390b73a41d064`；设备端先保留原文件 backup SHA `b8fdbc1b7cfd15cccbcd110c0c3cb1ff91d135d6664b84770d42df843381b91e`，候选经 ldid 签名并加入 trustcache 后，以 fresh inode 部署。
+
+单次 bounded `run_dbg_hold_v2 ... chroot ... /bin/echo HI` 结果逐字要点：child PID 1666 被启动/恢复后没有 `HI`、没有 exception fault 行，最终 `child SIGNALED 9`，外层 `MAPSHARED_ECHO_RC=0`；这不是 CLI 成功，也不足以把 SIGKILL 归因于某个具体机制。随后立即删除候选 inode、恢复原 backup，`cmp` 与 SHA 核验通过，设备当前 dyld 已回到原 SHA。未启动 GUI、未写 kernel/PAC；该候选保留为诊断失败，不作为修复。
