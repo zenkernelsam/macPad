@@ -3216,3 +3216,11 @@ PAGE ... off=0x47c000 flags=0x3c00cc
 先使用设备已有 `run_dbg_hold_v2` 做 `RUN_DBG_CSUNKILL=1` A/B，结果仍在同一 PC `0x18047dc9c` 抛 `code0=0x32`，`csops flags=0x26803b0d`；没有 `HI`。该旧 runner 的 CSUNKILL 线程未提供可独立确认的清除日志，因此不把它当成有效“flags 已清除”实验。
 
 随后按源码重新编译 `misc/run_dbg.c`（iOS arm64，host SHA 未提交），设备签名并加入 trustcache，临时 CDHash `f7aced98134f251d0db93842b4fcde73bb904767`。同样 bounded `RUN_DBG_CSUNKILL=1` echo 只得到：`[*] spawned pid=1812 (suspended)`、`Successfully marked proc of pid 1812 as debugged`、`[*] jbctl rc=0`、`[*] task_for_pid kr=5 port=0`、`CSUNKILL_V2_ECHO_RC=1`；没有 child fault 数据，说明该 runner 版本未取得 task port，不能据此归因。设备没有持久化 dyld/kernel 改动；未把这次 runner 失败当作 root cause。
+
+### 2026-10-03 MCP/arm64e PAC 只读进展：pmap CS 根指针非空
+
+用户提醒以后优先使用 IDA Pro MCP；13337–13340 已通过 `server_health` 再次确认，后续 binary RE 使用 MCP 的 `decompile`/`disasm`/`xrefs_to`，不再用本地 Python 代替 binary RE。
+
+为解释 `vm_map.pmap`，先按实际 arm64e 指令在设备上运行只读 `ptrauth_strip` helper（arm64e slice；不是 host 手算 PAC）。对 frozen echo child 的 `vm_map+0x40` raw signed pointer，设备 strip 得到 pmap 地址族 `0xfffffdf15652c...`；直接 KRW 读取该 pmap 对象成功。13337 IDA 的 `pmap_cs_associate_internal_options` 已确认 pmap 内 `+0x90`（144）和 `+0x98`（152）分别是 main/root association 字段；现场读取得到两者均为非空 kernel pointer（示例 root `0xfffffdf2c41f9740`，随 child 分配地址略变）。**runtime-confirmed**：pmap CS 的 main/root 指针不是 NULL，因此不能再把当前 fault 简化为“pmap CS 全局树完全没初始化”。这仍不证明目标 cache region 已在该树中，root 对象字段布局及其与当前 VA 的覆盖关系需要继续用 T8103 IDA/现场指针对齐。
+
+该诊断只读，无 kernel/PAC 写入；设备 dyld 未改变。当前最稳结论继续是：4GB 映射门槛已过，页面 validated/hash/blob 已存在，剩余是特定 cache region 与 pmap CS association/lookup 的覆盖关系。
