@@ -186,6 +186,18 @@ denied`, `KERN_CODESIGN_ERROR=50`).
 - Consequence: it is a **candidate root cause for the post-reboot failures**, and
   absolutely worth a 2-minute on-device check before anything else.
 
+**Why earlier sessions still saw the pair "verified present"** (resolves the tension
+above): a full-tree grep for the four CDHashes shows that, outside `analysis/` and my
+own `misc/post_reboot_cli_test.sh:38`, the only *shipped* registration sites are
+`misc/postinst.sh:973-979` and `layout/usr/macOS/bin/postinst.sh:1070-1076` — both
+have the `24G90` branch. But `analysis/dyldwork/*.sh` (`next_boot.sh`,
+`run_all_cold.sh`, `keeper_start.sh`, `post_reboot_noslide.sh`, `catch_segv.sh`,
+`keeper_test.sh`) each call `$JB trustcache add 2b9cccd5… / 8c7ba7e5…` on every cold
+start. Those were **session scaffolding**, not the shipped runtime path: they masked
+the `macos_gui.sh` gap for every experiment that ran after them. That is exactly why
+the state doc can say the hashes were verified present while the shipped cold-start
+gate still cannot restore them.
+
 ---
 
 ## 5. Proposed next steps (for the device-side/neighbouring session)
