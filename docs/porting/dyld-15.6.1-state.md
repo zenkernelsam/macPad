@@ -3241,3 +3241,22 @@ NODECOUNT 4
 为区分 `cs_invalid_page` 的 `CS_HARD|CS_KILL` 影响，做了一个 bounded 诊断 A/B：冻结 fault child 后只写该 child 的 `proc_ro+0x1c`，将现场读到的 `0x22802b0d` 清除 `0x300` 成 `0x2280280d`，让原 runner 等待 5 秒后正常回复 exception。逐字结果仍为同一 `code0=0x32 code1=0x18047dc9c`，最终 child SIGBUS(10)，没有 `HI`。**runtime-confirmed**：清除 CS_HARD/KILL 不能单独解决本 fault；该诊断写只作用于一个 child 的 flags，未改 kernel text/PAC/全局策略，实验后无持久状态。
 
 结合 `kern_cs.c:248-315` 源码（`CS_KILL/CS_HARD` 会使 `cs_invalid_page` 返回拒绝）与本 A/B，当前剩余问题不是简单的 trustcache、libSystem、4GB 边界、PMAP-CS node 缺失或 CS_HARD/KILL 单项；需要继续核对 `vm_fault_cs_check_violation` 传入的 page/object/prot 状态与 T8103 binary 的实际分支。
+
+### 2026-10-03 有效 CS flags A/B：早于 fault 清除仍不能通过执行页
+
+重新编译 `misc/run_dbg.c` 并使用正确的 `run_nocskill.entitlements.plist`（task_for_pid 成功），设备临时 runner CDHash `9741286d903021add83f0720077c9321356eb617`。`RUN_DBG_CSUNKILL=1 RUN_DBG_HOLD=5` 使 unkill 线程在 child exec 后、首次 fault 前确实观察到并写入：
+
+```text
+[unkill] csflags 0xffffffff -> 0x32802809
+```
+
+它清除了 `0x300` 后，runner 收到的第一次异常仍为：
+
+```text
+[exc] type=1 code0=0x32 code1=0x18047dc9c
+[topinfo] 0x180000000..0x1e7f5c000 private_res=0 shared_res=11765 share_mode=1
+```
+
+随后 runner 回复该异常，child 又收到 `type=10 code0=0xa100032`，最终 SIGBUS；全程没有 `HI`。**runtime-confirmed**：在 fault 前清除 `CS_HARD|CS_KILL` 仍不能消除第一次 `KERN_CODESIGN_ERROR=50`，因此 CS flags 不是当前第一 fault 的充分原因。`topinfo` 还显示 fault region `private_res=0 shared_res=11765 share_mode=1`，不能再把当前 fault 归因于大量 dirty private COW resident 页。runner 诊断进程已退出，无持久 dyld/kernel 修改。
+
+同时，PMAP-CS tree 现场 walk 已找到目标 node `[0x180000000,0x1e7f5c000)`，CD object trust=8/ref=1/CDHash 正确；这组 A/B 将剩余问题进一步收窄到 `vm_fault_cs_check_violation` 的具体 page/object/prot 分支或后续 PMAP enter 语义，而不是 libSystem、trustcache、4GB 边界、缺失 association 或 CS_KILL 单项。
