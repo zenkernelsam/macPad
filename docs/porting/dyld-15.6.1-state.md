@@ -3122,3 +3122,7 @@ TRUST_RESTORE_RC=1
 ```
 
 **runtime-confirmed**：重启已清除上一 boot 的动态 trustcache，24G90 hash 重新缺失；部署脚本仍为目标版本；正式 trust 尚未进入 build/hash helper。未停止用户 VirtualMac，未绕过 thermal gate，未启动 chroot/WindowServer、未运行 echo。
+
+### 2026-10-02 continued post-reboot thermal poll
+
+重启后约 23 分钟再次只读核验：`macwsthermal` 仍为 `thermal-state=serious raw=2 low-power=no battery-temp-centic=3689 virtual-temp-centic=3689 effective-temp-centic=3689 uptime=1386.221`，`THERMAL_RC=3`；VirtualMachine.xpc PID 975 CPU 162.3%，VirtualMac PID 969 CPU 5.0%；trustcache query rc=0，24G90 两枚 hash 均 `PRESENT False`。源码复核显示 `restore_cold_boot_trust` 的 `application_trust_thermally_safe` 仅接受 `nominal`，无可用 bypass；未修改 gate、未停止 VM、未执行 trust helper。
