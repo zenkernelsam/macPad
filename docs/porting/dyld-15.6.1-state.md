@@ -2946,3 +2946,133 @@ RESTORED_SHA256=9956915299c6e3e21c7e650242166bab05dc635da4acac2cbade4e646eec51a1
 5. `csprobe2.py` 修正：补 flags2 全位域解码（bit24 pmap_cs、bit19 permanent、bit29 no_copy_on_read、bit10 used_for_tpro、bit6 needs_copy）+ union+0x38 is_sub_map + entry 遍历打印所有带 flag 的 entry 范围。
 
 **对照参考**：iOS 原生进程 mmap 同一缓存页（RW，长度 0x24000,fileoff 0x6c188000）成功读取 ⇒ 文件/页内容/vnode 均正常；差异只在 macOS task 的 map 状态。
+
+### 2026-10-02 用户确认已重启：冷启动基线检查被 SSH 认证阻塞
+
+用户本轮明确表示 iPad 已重启、可以继续；此前仅凭 SSH 不通推断设备已经重启的说法不成立。重新越狱状态、系统身份及启动时间仍待设备只读输出确认。
+
+本轮未部署、未恢复 trustcache、未启动 chroot、未写内核。优先保留冷启动基线，不执行上一节的 `post_reboot_fmt13.sh` 或 `DEFAULT + deallocnp` 计划；后者包含多项历史诊断，不能直接作为受控单变量修复实验。
+
+本地审查 `misc/post_reboot_tc_probe.sh`：管道会混淆查询失败与无匹配，启动输出仅 `tail -30`，且搜索的启动路径不包含当前约定 `/var/jb/usr/macOS/bin/macos_gui.sh`。暂不执行该脚本。后续先保存 `jbctl trustcache info` 完整输出及返回码，再逐个检查完整 CDHash；查询成功才允许报告缺失。正式启动对照前核验设备实际脚本与 rootfs。
+
+串行只读尝试（连接目标使用占位符记录，不记录凭据）：
+
+```sh
+ssh -o BatchMode=yes -o ConnectTimeout=5 -o ConnectionAttempts=1 \
+  -p "$MACWS_DEVICE_PORT" "$MACWS_DEVICE" \
+  'id; /var/jb/usr/sbin/sysctl hw.machine kern.osversion kern.boottime; /var/jb/basebin/jbctl trustcache info; rc=$?; printf "TRUSTCACHE_QUERY_RC=%s\n" "$rc"; exit "$rc"'
+```
+
+逐字错误正文（SSH 目标前缀省略）：
+
+```text
+Permission denied (publickey,password,keyboard-interactive).
+Exit code: 255
+```
+
+**runtime-confirmed（本轮 SSH 输出）**：SSH 认证失败；远端命令未执行，没有本轮 trustcache 输出。不能据此推断哈希缺失、设备离线或 dyld 根因。按认证纪律停止重试，等待用户确认认证方式；冷启动 trustcache 基线任务仍未完成。
+
+### 2026-10-02 冷启动基线成功：24G90 缓存双哈希缺失，实际部署身份有漂移
+
+用户确认重新越狱和认证方式，授权无人值守继续。认证凭据仅通过临时进程环境传递，不记录到仓库。使用上节相同远端命令，SSH 改为 `sshpass -e ssh -o ConnectTimeout=5 -o ConnectionAttempts=1 -o PubkeyAuthentication=no -o PreferredAuthentications=password -o NumberOfPasswordPrompts=1 -p "$MACWS_DEVICE_PORT" "$MACWS_DEVICE"`。
+
+**runtime-confirmed via `docs/evidence/cold-boot-trustcache-20261002.raw`**：首次完整只读查询返回码 0，原始输出已完整保存（69 项，无截断）：
+
+```text
+uid=0(root) gid=0(wheel) groups=0(wheel)
+hw.machine: iPad13,11
+kern.osversion: 20D47
+kern.boottime: { sec = 1790941117, usec = 852384 } Fri Oct  2 19:38:37 2026
+Jailbreak Trustcache 0 <UUID: 61806465955E435697D48B012193F222> (length: 69)
+TRUSTCACHE_QUERY_RC=0
+```
+
+完整输出未包含 `2b9cccd5c5728972bc2a3b7f251114e6f1ff9b5e` 或 `8c7ba7e588b0edd43f7334e2de11688cd4732192`。这证明本轮查询时两个缓存哈希缺失，不证明旧 codesign fault 的根因。
+
+随后通过 iOS Python `os.path.exists`/文件读取/`hashlib.sha256`/`plistlib.loads` 核验已知路径（未启动 chroot）：
+
+```text
+PATH /var/mnt/rootfs/System/Library/CoreServices/SystemVersion.plist EXISTS True
+SIZE 603 SHA256 9af8c8d66fb9e5f022d93f46481c8834b787c2ec61e96da6d4a33965640ce2b2
+VERSION {'BuildID': 'A9352A4E-7AC8-11F0-9D2D-B731BA1D3D59', 'ProductBuildVersion': '24G90', 'ProductCopyright': '1983-2025 Apple Inc.', 'ProductName': 'macOS', 'ProductUserVisibleVersion': '15.6.1', 'ProductVersion': '15.6.1', 'iOSSupportVersion': '18.6'}
+PATH /var/jb/usr/macOS/bin/macos_gui.sh EXISTS True
+SIZE 264670 SHA256 af9b213980fe679fd02f43ec82e72906ec3ac77dd9d8ad3f923c2a8a2492021b
+PATH /var/mnt/rootfs/usr/macOS/bin/macos_gui.sh EXISTS False
+PATH /var/jb/usr/macOS/bin/macws_boot_trust.py EXISTS True
+SIZE 19206 SHA256 2c727c302a55b15470f9bc1cf4ec8c45e87091e8b448974d866e8ca1dd955135
+PATH /var/mnt/rootfs/usr/lib/dyld EXISTS True
+SIZE 1239632 SHA256 b8fdbc1b7cfd15cccbcd110c0c3cb1ff91d135d6664b84770d42df843381b91e
+PATH /var/mobile/run_dbg_hold_v2 EXISTS True
+SIZE 53072 SHA256 5af5df15f95d5b1e80809ad9c89e512b2cb8cfc05469e03717f937537b873ff5
+```
+
+设备实际 `macos_gui.sh:1675-1681` 读取的 hash 参数仍是 Ventura 对：
+
+```text
+1675:     /var/jb/usr/bin/python3 "$boot_trust_helper" \
+1676:         --manifest "$boot_trust_cache/hashes.json" \
+1677:         --resource-index "$boot_trust_cache/resources.sqlite" \
+1678:         --thermal-tool /var/jb/usr/macOS/bin/macwsthermal \
+1679:         --hash b5da39409492ac85e5a8e8ab618fe77e2d7a2980 \
+1680:         --hash bbb765988e2677b98d47a549d612fa0d4af25f69 \
+1681:         "$@" || return 1
+```
+
+**runtime-confirmed（文件读取）**：设备脚本行号与本地不同，dyld SHA 也不等于历史恢复 SHA；不直接替换成旧实验变体。第一轮进程查询用错路径，返回 `FileNotFoundError: [Errno 2] No such file or directory: '/var/jb/usr/bin/ps'`，脚本 exit 1；仅中断进程查询，不撤销上述已成功读取数据。改用 `/bin/ps -axo pid,comm` 后：
+
+```text
+PS_PATH /bin/ps
+PROCESS_QUERY_RC 0
+  372 /var/jb/usr/macOS/bin/macwshostd
+```
+
+筛选目标为 WindowServer/launchdchrootexec/autosignd/macwshostd/run_dbg/restore_env；未观察到前三者或 runner，不据此断言历史上从未启动过 chroot。
+
+设备脚本 `5472-5477` 提供 `trust` 子命令，调用与 production 相同的 `restore_cold_boot_trust`，不启动/停止 GUI。完整 production 路径含删除旧诊断文件、修改 launch jobs 等额外动作，不适合作为无人值守的最小对照。接下来改用正式 `trust` 子命令隔离共同的恢复函数，保留完整返回码和日志；**这不是 production 全流程验收**。若热状态或 helper 阻塞，不能把未完成的恢复误判成哈希分支运行见证。
+
+### 2026-10-02 共同 trust 恢复路径运行见证：成功恢复错误版本的缓存对
+
+SSH 认证参数沿用上节（临时环境凭据）；在 iOS Python 中运行：
+
+```python
+cmd = ['/var/jb/usr/bin/bash', '/var/jb/usr/macOS/bin/macos_gui.sh', 'trust']
+r = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                   text=True, timeout=180)
+print(r.stdout, end='')
+print('TRUST_RESTORE_RC', r.returncode)
+r = subprocess.run(['/var/jb/basebin/jbctl', 'trustcache', 'info'],
+                   text=True, capture_output=True, timeout=15)
+hashes = set(re.findall(r'\b[0-9a-fA-F]{40}\b', r.stdout.lower()))
+```
+
+对每个完整 CDHash 查询 membership（仅 query rc=0 时做真假判定），逐字输出：
+
+```text
+COMMAND /var/jb/usr/bin/bash /var/jb/usr/macOS/bin/macos_gui.sh trust
+BOOT-TRUST progress files=0 images=0
+BOOT-TRUST {"added": 77, "backend": "libjailbreak", "cached": 0, "files": 93, "hashes": 78, "images": 77, "resource_hits": 0, "scan_seconds": 0.142, "total_seconds": 0.181}
+[macos_gui] Cold-boot trust closure ready (complete dependency closure; live membership verified).
+TRUST_RESTORE_RC 0
+TRUSTCACHE_QUERY_RC 0
+HASH 2b9cccd5c5728972bc2a3b7f251114e6f1ff9b5e PRESENT False
+HASH 8c7ba7e588b0edd43f7334e2de11688cd4732192 PRESENT False
+HASH b5da39409492ac85e5a8e8ab618fe77e2d7a2980 PRESENT True
+HASH bbb765988e2677b98d47a549d612fa0d4af25f69 PRESENT True
+LIVE_HASH_COUNT 178
+```
+
+**runtime-confirmed**：production 与 trust 共用的恢复函数运行成功，并报告 ready，但仍未恢复本 rootfs 的两个 24G90 缓存哈希，恢复的是 Ventura 对。现在满足修改 build→hash 分支的设备见证前提。**未证明**原版 `/bin/echo` 可执行、GUI 可启动或旧 codesign/m3 fault 根因已解决；本轮未运行完整 production、未切换 dyld、未写内核。
+
+最小修复：照 postinst 读取 `SystemVersion.plist` 的 `ProductBuildVersion`，保留 `22F82|22F66|空值` 的历史 Ventura 行为，24G90 选择其原有完整 CDHash 对，未知非空 build 明确失败，不报 trust ready。先添加回归断言及 shell 分支执行测试，再改启动脚本。
+
+### 2026-10-02 跨供应商交接（在 trust 修复动手前暂停）
+
+用户因 Devin 额度请求完整交接，新增 `docs/porting/HANDOVER-DEVIN-TO-EXTERNAL-GPT-2026-10-02.md`（含可复制启动 prompt、实际身份/证据/下一步/工具约束）。**本次仅保存证据和写交接文档，没有修改启动脚本、测试或设备。**
+
+已核验当前聊天 ATIF 文件 `/Users/ciscohe/.local/share/devin/cli/transcripts/coffee-soap.json`，session `coffee-soap`；前序历史 `/Users/ciscohe/.local/share/devin/cli/summaries/history_83dd6af563c64fa6.md` 存在。原始聊天可能含凭据和工具输出截断，不提交仓库。新文档可在同机供另一客户端读取，不等同导入模型内部状态。
+
+IDA MCP Instance1 本轮 `server_health` 输出确认 input_path=`/Users/ciscohe/Desktop/macPad/analysis/kc_raw_16.3_T8112.bin`、imagebase=`0xfffffe0007004000`、status=ok、Hex-Rays ready。其余实例本轮未重核绑定，接棒需再 health。
+
+交接审查特别标记 `misc/fmt13_patch.py` 为**未验收且不能直接执行**：顶层自动进入写流程，没有真正只读 verify 模式；runtime地址只用 static+slide、CAVE字节序需独立IDA审计、覆盖原2/3/6格式handler影响全局、undo只恢复dispatch而不恢复完整handler。这里只记录源实现风险，不声称运行证明了哪项具体bug。接棒先完成已runtime确认的trust恢复修复，再按单变量推进CLI，不盲目执行旧“设备回来后一把梭”计划。
+
+交接本地验证：`git diff --check` 通过；raw trustcache文件69项。`python3 -m unittest misc.test_restore_boot_contract misc.test_agents_memory_ledger` 共12项，11通过、1失败（exit 1）：`test_package_declares_ios_tools_used_during_postinstall`，实际 `control` 的 `Depends: python3, ldid` 缺测试要求的 `plutil/odcctools/gawk`。`git show HEAD:control` 同样只有这两项，且本轮未改源码/测试；基线不一致原样保留，交接文档§10.1记录完整失败摘要，不能误当成24G90补丁回归。
