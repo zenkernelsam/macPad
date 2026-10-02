@@ -3197,3 +3197,12 @@ PAGE ... off=0x47c000 flags=0x3c00cc
 基于 IDA 13338 对 `mapSplitCachePrivate` @ `0x34568` 的现场 bytes 核验（原指令 bytes `4c028052`，现场与 IDB 相同），制作临时候选：只将该条 flags 选择改为 `MOV W12,#0x11`（MAP_SHARED|MAP_FIXED），其余当前设备 dyld bytes/empty-SR/highreserve 变体不变。候选 host SHA `1add0b28d9eb78a3424aee7070522c8bca24b441b7ff6c0eb63390b73a41d064`；设备端先保留原文件 backup SHA `b8fdbc1b7cfd15cccbcd110c0c3cb1ff91d135d6664b84770d42df843381b91e`，候选经 ldid 签名并加入 trustcache 后，以 fresh inode 部署。
 
 单次 bounded `run_dbg_hold_v2 ... chroot ... /bin/echo HI` 结果逐字要点：child PID 1666 被启动/恢复后没有 `HI`、没有 exception fault 行，最终 `child SIGNALED 9`，外层 `MAPSHARED_ECHO_RC=0`；这不是 CLI 成功，也不足以把 SIGKILL 归因于某个具体机制。随后立即删除候选 inode、恢复原 backup，`cmp` 与 SHA 核验通过，设备当前 dyld 已回到原 SHA。未启动 GUI、未写 kernel/PAC；该候选保留为诊断失败，不作为修复。
+
+### 2026-10-03 阶段性摘要：4GB 边界门槛与当前 PMAP-CS 门槛分离
+
+当前证据链应按两个独立门槛理解：
+
+1. **4GB shared-region/高地址映射门槛已基本跨过**：empty-SR 条件 teardown + highreserve 诊断变体运行时不再在 `0x280000000` 顶边界触发此前的 `EXC_GUARD`；映射已推进到真实主 cache 页面。这个结果否证“15.6 cache 大于 iOS 4GB shared region，因此完全不能映射”的旧归因，但 highreserve 仍是诊断 scaffold，不是产品修复。
+2. **当前剩余门槛是执行页的 PMAP-CS/代码签名关联路径**：真实 fault page 已由 pagewalk 读到 `validated=0xf tainted=0 nx=0`，owner 为已签名 vnode backing object，目标 hash slot 可读；随后 kernel 仍返回 `KERN_CODESIGN_ERROR=50`，原版 `/bin/echo HI` 尚未输出。13337 IDA 的 `vm_fault` caller/return 路径已核对，尚未证明现场 `cs_blob` 的 `csb_pmap_cs_entry` 偏移或运行时关联对象。
+
+后续文档与实验必须保持这两个门槛分开记录，不再把“4GB cache 边界”作为当前唯一根因，也不把页面 validated 事实夸大成 CLI 成功。
