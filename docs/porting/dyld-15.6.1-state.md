@@ -3563,3 +3563,5 @@ caller 侧进一步对齐：`sub_FFFFFE0008008564` 在 `0x80085d4` 从自己的 
 公开 `pmap.h` option 常量为：`PMAP_OPTIONS_NOWAIT=0x1`、`NOENTER=0x2`、`INTERNAL=0x8`、`REUSABLE=0x10`、`ALT_ACCT=0x80`、`TRANSLATED_ALLOW_EXECUTE=0x4000`。结合现场 entry 的 `use_pmap=1` 与 fault page owner 为 vnode backing，下一次应把 fault_info `pmap_options` 实际值逐位对照这些常量，而不是只记录一个未解释的十六进制数。
 
 公开 `vm_fault` 初始化路径还显示：普通 fault 先将 `stealth/io_sync/mark_zf_absent/batch_pmap_op` 置 false，再由 map lookup 填充 entry-derived 的 `pmap_cs_associated/no_copy_on_read`；`vm_fault_enter` 从 `fault_info->pmap_options` 开始，只有 `need_retry` 路径才额外 OR `PMAP_OPTIONS_NOWAIT`。**source-confirmed**：现场 `pmap_options` 必须结合 fault stage 解释，不能把单个 bit 直接等同于 PMAP-CS association。
+
+按 `vm_object_fault_info` bitfield 布局和现场 entry `flags2=0x210abac0`，普通 fault 的 `fault_info+0x28` 预期为：`pmap_cs_associated` bit4=1、`no_copy_on_read` bit8=1，其余初始化状态（no_cache/stealth/io_sync/cs_bypass/mark_zf_absent/batch/resilient）为 0，即约 `0x110`。这是 **source-derived expected baseline**，不是设备 runtime 值；下一次捕获可先用它发现 fault_info 构造/传递异常。
