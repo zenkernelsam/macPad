@@ -3358,3 +3358,7 @@ return pmap->pmap_vm_map_cs_enforced;
 ```
 
 **RE-confirmed via actual kernel binary**：global process code-sign enforcement returns constant 1. Therefore `pmap_get_vm_map_cs_enforced()`’s global-first branch is definitely active on this target, regardless of per-child `pmap+0xc0` byte variation. The remaining first-fault 50 must be analyzed within enforcement’s immutable/NX/taint/`cs_invalid_page` paths; no libSystem or trustcache work is indicated.
+
+### 2026-10-03 `fault_info.pmap_cs_associated` 的 source gap
+
+XNU 源 `vm_map.c:14296-14303` 从 entry bit24 `pmap_cs_associated` 设置 `fault_info->pmap_cs_associated=TRUE`；`vm_object_fault_info` 也明确包含该 bit。但公开源的后续 `rg` 只找到 `memory_object.c` 的 assert 与 map-entry 继承/复制，未出现用户态可见的消费点；消费很可能在 PMAP/PPL 闭源路径或内联宏。目标 entry 现场 `flags2=0x210abac0`（bit24=1）和 PMAP tree node 均存在，故不能用公开源“找不到消费点”推断该 bit未生效。
