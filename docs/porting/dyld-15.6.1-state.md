@@ -3260,3 +3260,18 @@ NODECOUNT 4
 随后 runner 回复该异常，child 又收到 `type=10 code0=0xa100032`，最终 SIGBUS；全程没有 `HI`。**runtime-confirmed**：在 fault 前清除 `CS_HARD|CS_KILL` 仍不能消除第一次 `KERN_CODESIGN_ERROR=50`，因此 CS flags 不是当前第一 fault 的充分原因。`topinfo` 还显示 fault region `private_res=0 shared_res=11765 share_mode=1`，不能再把当前 fault 归因于大量 dirty private COW resident 页。runner 诊断进程已退出，无持久 dyld/kernel 修改。
 
 同时，PMAP-CS tree 现场 walk 已找到目标 node `[0x180000000,0x1e7f5c000)`，CD object trust=8/ref=1/CDHash 正确；这组 A/B 将剩余问题进一步收窄到 `vm_fault_cs_check_violation` 的具体 page/object/prot 分支或后续 PMAP enter 语义，而不是 libSystem、trustcache、4GB 边界、缺失 association 或 CS_KILL 单项。
+
+### 2026-10-03 PMAP-CS association tree现场 walk: 目标 node 与 CD object 已对上
+
+修正前一轮脚本中硬编码 pmap/root 地址的错误后，改为每个 child 现场从 `vm_map+0x40` 读取 raw signed pmap，并调用设备 arm64e `ptrauth_strip` helper 动态解码，再读取 `pmap+0x98` tree root。真实 RB node walk 输出：
+
+```text
+PACRAW 0x94d8fdf15652c6c0 PMAP_STRIPPED 0xfffffdf15652c6c0
+TREE 0xfffffdf2c41f8f60
+NODE 0xfffffdf2c41f98f0 0x180000000 0x1e7f5c000 0xfffffdf079343230 HIT True
+NODECOUNT 4
+```
+
+目标 node 的 CD object 现场字段继续读到：trust 字段 `+0x1dc=8`、reference count `+0x1e0=1`、CDHash bytes 与主 cache `2b9cccd5c5728972bc2a3b7f251114e6f1ff9b5e` 完全一致。**runtime-confirmed**：PMAP-CS tree 确实有覆盖目标 fault VA 的 node，且 node→code-directory→trust/hash 链完整；先前“root 非空但不知道是否覆盖”的不确定性已收窄。仍未修改 kernel/PAC。
+
+另做只读 `vm.cs_debug=6` 诊断开关 A/B：设备 sysctl 成功从 0 改为 6，bounded `run_nocskill` 因旧 runner `proc not found` 未产生有效 fault witness，随后 sysctl 已恢复 0；没有获取可用 kernel log，不能把该次作为 fault 分支证据。
