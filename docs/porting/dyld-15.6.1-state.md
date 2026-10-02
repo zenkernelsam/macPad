@@ -3334,3 +3334,14 @@ WRITE_RC=0 AFTER=0x90080
 现场同一 child 的 KRW `proc_ro+0x1c` 与 `csops(CS_OPS_STATUS)` 不同并非 proc pointer 错误：例如 `proc_ro` 为 `0x22802b0d`，`csops` 返回 `0x26803b0d`。13337 对应源码 `kern_proc.c:CS_OPS_STATUS` 明确会在 `proc_getcsflags(pt)` 基础上额外 OR `CS_ENFORCEMENT`（由 `cs_process_enforcement(pt)`）及 platform bits，再 copyout。因此 `csops` 多出的 `0x1000/0x4000000` 是装饰状态；不能用 csops 输出推断 `proc_ro` 原始 hard/kill。该差异已解释，后续以 KRW 直接 `proc_ro+0x1c` 判断 child flags。
 
 补充阶段性校正：同一设备多个 child 的 pmap `+0xc0` 现场值有差异；最近 child 的 `pmapenforce_ab` 读到 `0x1010100`（最低 byte=0），清位写入前后无变化，但 fault 仍为 50。此前另一 child 读到低 byte=1，不能跨 child 泛化。13337 IDA 只确认 setter 写入 `pmap+0xc0`，因此每次 child 必须现场读取该字段；当前证据不足以把 immutable early-return 分支作为唯一根因。
+
+### 2026-10-03 `pmap_get_vm_map_cs_enforced` 源码闭环：global process enforcement 优先
+
+13337 源码 `osfmk/arm/pmap/pmap.c:12086-12093` 已核对：
+
+```c
+if (cs_process_enforcement_enable) return true;
+return pmap->pmap_vm_map_cs_enforced;
+```
+
+`vm_map.c:20590` 的 `vm_map_cs_enforcement()` 采用同样的 global-first 逻辑。由此解释了不同 child 的 `pmap+0xc0` 低字节（0/1）不能直接决定 fault enforcement；只要 `cs_process_enforcement_enable` 为真，`vm_fault_cs_check_violation` 仍进入 enforcement。13337 IDA/源证据已取代此前把 per-pmap byte 当全局 gate 的过强推断。未改 kernel；后续需在 T8103 IDA/runtime 只读核对 `cs_process_enforcement_enable` 的实际值，以及 immutable/cs_invalid 分支条件。
