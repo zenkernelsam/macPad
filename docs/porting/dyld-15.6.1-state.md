@@ -3491,3 +3491,16 @@ CLEAR ... 0x22802b09 0 0x22802809
 ### 2026-10-03 公开 PMAP_ENTER 参数契约与 T8103 binary 的差异
 
 公开 XNU `osfmk/vm/pmap.h` 的 `PMAP_ENTER` 宏把 `pmap_enter_options_addr` 参数按 `pmap, vaddr, pa, protection, fault_type, flags, wired, options, NULL` 传递；这只能说明源级 API 契约。实际 T8103 `pmap_enter_options_internal` 在 `0x86a7d84..0x86a7d94` 调 PMAP helper 时，`X3/X4` 来自 `var_D0` 邻近栈槽，而当前 IDA frame 没有证明这些槽的写入来源。**RE-confirmed + source cross-check**：不能用公开源把这两个实际 helper 参数直接命名成 `prot/fault_type`，必须等设备 fault-time 寄存器/栈捕获；在此之前不做 map/PTE/kernel 修改。
+
+### 2026-10-03 `pmap+0xc2` 初始化写入审计
+
+13337 IDA 对 dispatch table 对应的 pmap 创建函数 `sub_FFFFFE00086A918C` 显示，新 pmap 初始化时明确执行：
+
+```asm
+0xfffffe00086a955c  STRB W?, [X19,#0xC1]   ; 前一字段按 backing page policy 初始化
+0xfffffe00086a9560  STRB WZR, [X19,#0xC2]
+```
+
+在实际 T8103 pmap 代码区间 `0xfffffe00086a0000..0xfffffe00086b0000` 内，IDA 正则搜索 `STR.*#0xC2` 只有 `0x86a9560` 这一条写入；没有发现把该字节置为非零的直接 store。`sub_FFFFFE00086A8984` 在 `0x86a8ac4/0x86a8b18/0x86a8cf4/0x86a8d88` 多次读取同一字节，且若干路径在该字节为零时直接返回 50。
+
+**RE-confirmed**：pmap 构造路径把 `pmap+0xc2` 初始化为零，相关 T8103 pmap text 未见非零直接写入。**THEORY**：若现场 pmap 仍为普通新建对象、且 helper 落入这些 gate 分支，`pmap+0xc2=0` 可能解释首个 50；但尚未 runtime-confirm pmap 对象来源、外部 PPL 写入或实际命中分支，不能据此修改该字段或 kernel。下一次只读捕获应同时读取 pmap+0xc1/+0xc2，并记录 helper 分支条件。
