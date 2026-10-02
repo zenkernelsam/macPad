@@ -3105,3 +3105,7 @@ TRUST_RESTORE_RC=1
 ### 2026-10-02 后续设备轮询：thermal gate 仍阻塞 trust
 
 再次只读核验：`macwsthermal` 输出 `thermal-state=serious raw=2 low-power=no battery-temp-centic=3679 virtual-temp-centic=3679 effective-temp-centic=3679 uptime=10149.592`，`THERMAL_RC=3`；`jbctl trustcache info` 查询 rc=0，完整 24G90 两枚 hash 仍未匹配。进程核验显示 `/var/root/VirtualMac/payload/VirtualMachine.xpc/Contents/MacOS/com.apple.Virtualization.VirtualMachine`（PID 1712，mobile，运行约 01:29:43）CPU 约 158%，其父进程为 VirtualMac PID 1711。高负载与 thermal serious 的因果仍标为 THEORY；未停止该用户进程、未绕过 gate、未运行底层 trust helper。
+
+### 2026-10-02 thermal blocker persists under VirtualMac load
+
+新一轮只读核验：`macwsthermal` 为 `thermal-state=serious raw=2 low-power=no battery-temp-centic=3679 virtual-temp-centic=3679 effective-temp-centic=3679 uptime=10253.799`，`THERMAL_RC=3`；trustcache query rc=0，24G90 两枚完整 hash 仍无匹配。`VirtualMachine.xpc` PID 1712 CPU 约 222.9%，父进程 VirtualMac PID 1711 约 5.7%。连续有界轮询未恢复 nominal；未绕过 gate、未停止用户 VirtualMac、未运行底层 helper。后续 trust/echo 需要 thermal 外部状态先改变。
