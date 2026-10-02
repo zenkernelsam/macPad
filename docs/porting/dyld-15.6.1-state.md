@@ -3381,3 +3381,9 @@ WRITE 0 AFTER 0x32802809
 ```
 
 这里 raw `proc_ro` flags 在 exec **之前**就已经是 `0x32802809`，`CS_HARD|CS_KILL` (`0x300`) 不存在，因此写操作是 no-op；child resume 后第一 fault 仍为 `KERN_CODESIGN_ERROR=50`，随后 SIGBUS，无 `HI`。该 A/B 彻底排除 CS_HARD/KILL 作为第一 fault 条件，且不依赖旧 unkill 线程的 proc_ro 轮询。临时 runner 已退出；无持久 dyld/kernel/PAC 修改。
+
+### 2026-10-03 pre-exec CS flag A/B 校正：runner unkill 读法与独立 KRW 对照
+
+独立设备 Python `procflags_probe.py`（不经过 runner 的 unkill 线程）在 child exec 后直接读取 `proc_find(pid)->p_proc_ro->p_csflags` 与 `csops`：示例 `FLAGS_KRW=0x22802b0d`、`CSOPS=0x26803b0d`；后者仅额外 OR platform/enforcement 状态，原始 flags 仍含 `CS_HARD|CS_KILL`。此前 runner 的 unkill 日志 `0x32802809` 与独立 KRW 读值不一致，不能当作有效清 flag 证据；其 proc_ro 轮询/exec 交换语义仍未解释。`RUN_DBG_WAIT_FILE` 版本在 resume 前读到 `0x32802809` 也不能替代独立对照，故不再宣称 CS_HARD/KILL 已被有效清除。
+
+当前可靠结论：map switch_protect child A/B 仍未改变 50；global process enforcement 在 T8103 binary 中恒为 1；页面/hash/PMAP node 证据完整。要继续，需先修正 runner/独立 KRW 对同一 proc_ro 的一致性，再做任何 CS flags 结论。
