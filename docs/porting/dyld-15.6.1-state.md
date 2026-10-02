@@ -3512,3 +3512,9 @@ CLEAR ... 0x22802b09 0 0x22802809
 13337 对 `sub_FFFFFE000869C590` 的反编译显示其字符串为 `pmap_cs_allow_invalid_internal`。该函数要求当前线程 pmap 与 TTBR0 匹配，取得 pmap exclusive lock 后：只有全局 debug/开发开关 `byte_FFFFFE000A9E7E08&1` 开启，且当前 pmap 具备 `get-task-allow` 或 `run-unsigned-code` entitlement，或该字节原先已为 1 时，才执行 `*(_BYTE *)(pmap+0xc2)=1` 并返回 0；否则返回 5 或 53。**RE-confirmed via actual T8103 kernel IDA**：`pmap+0xc2` 是 allow-invalid/开发策略位，不是普通 24G90 cache trust 的必需初始化位。
 
 这解释了普通 pmap 构造后的 `+0xc2=0`，也解释了为什么不能通过 KRW 把它置 1 来“修复” echo：那会绕过 PMAP 的无效代码策略。当前 **THEORY** 是 fault 路径可能错误地进入了只对 allow-invalid 场景开放的 helper 分支；需要现场分支参数和 entitlement/pmap 状态来证实，保持不改 gate、不改 kernel。
+
+### 2026-10-03 对既有 CS_HARD/KILL A/B 的校正
+
+重新对齐公开 XNU `kern_cs.c:cs_allow_invalid()` 与 13337 的 `sub_FFFFFE000869C590` 后，必须修正此前 A/B 的措辞：旧实验只在 exec 后清除了 `proc_ro->p_csflags` 的 `CS_HARD|CS_KILL`，没有执行完整 invalid-code 流程。完整流程还要通过 entitlement/debug policy 设置 `pmap+0xc2=1`，调用 `vm_map_cs_wx_enable`，并清除 map `switch_protect`、设置 `cs_debugged`。
+
+因此此前“CS_HARD/KILL 不是第一 fault 原因”只能保留为“这两个 flag 单独不是充分条件”；不能推广为“整个 invalid-code policy 已排除”。**runtime-confirmed** 旧 A/B 的第一次 fault 仍为 `code0=0x32`；**RE-confirmed** 完整 `cs_allow_invalid` 还包含 PMAP/map gate。没有运行该 bypass，也没有修改现场状态。
