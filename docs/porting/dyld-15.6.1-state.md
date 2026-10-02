@@ -3281,3 +3281,7 @@ NODECOUNT 4
 ### 2026-10-03 cs_blob→PMAP code-directory pointer对齐
 
 对主 cache `cs_blob` 的完整字段 dump 显示，`blob+0xb8 = 0xfffffdf079343230`；这与 PMAP-CS tree target node 的 `v8[5]` CD pointer `0xfffffdf079343230` 完全相同。旧 `csprobe.py/csprobe2.py` 把 `+0xa0` 或 `+0xe0` 当作 `csb_pmap_cs_entry` 的读法不适用于现场布局；本条以现场指针相等和 13337 IDA node comparator/field访问为准。**runtime-confirmed**：主 cache vnode blob 已连接到覆盖 `[0x180000000,0x1e7f5c000)` 的 PMAP-CS code-directory node，trust/ref/CDHash 均对齐。当前 fault 仍不能归因为 blob→PMAP association 缺失。
+
+### 2026-10-03 `vm.cs_debug=6` 诊断尝试：未取得 kernel log
+
+设备只读/诊断开关 A/B：`sysctl -w vm.cs_debug=6` 成功（0→6），使用 task_for_pid 正常的 `run_dbg_csunkill2` 运行 bounded echo，随后 `sysctl -w vm.cs_debug=0` 成功恢复。runner 仍捕获 `code0=0x32` 后 `type=10 code0=0xa100032`；`oslog --debug` 没有取得可用的 `vm_fault`/`CODE SIGNING` 行，且残留的两个 oslog 诊断进程已显式 TERM 清理。该次没有新增分支证据，不把它当作成功或根因。
