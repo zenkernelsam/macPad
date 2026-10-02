@@ -3463,3 +3463,9 @@ CLEAR ... 0x22802b09 0 0x22802809
 13337 继续反编译了 `sub_FFFFFE00086A0FC4`、`sub_FFFFFE00086A0730` 与 `sub_FFFFFE00086A12C4`。`sub_FFFFFE00086A0FC4(code_directory_a, code_directory_b)` 对 trust 值 3/4 有专门 policy：trust=3 要求 entitlement `com.apple.private.amfi.can-execute-cdhash`，trust=4 走 OOP-JIT library-validation gate；低 trust 则比较两个 code-directory 的 identifier 字符串，失败返回 8。`sub_FFFFFE00086A0730` 只在 PMAP association tree (`pmap+0x98`) 上做区间查找，`sub_FFFFFE00086A12C4` 是 region allocator bookkeeping，不是 fault hash verifier。
 
 **RE-confirmed via actual T8103 kernel IDA**：PMAP enter 之前的 association policy 可能已经根据 code-directory trust/entitlement 拒绝；但本设备现场已知节点 trust=8、CDHash 对齐，只能排除“明显缺失/低 trust”这一类解释，不能证明 hash helper 的 `a5` policy bits、PTE/PV tags 或 `pmap+0xc2` 在 fault 时满足。仍不做 kernel/PAC 写入。
+
+### 2026-10-03 PMAP trust 数值与现场证据对齐
+
+仓库中的 XNU `analysis/xnu-xnu-8792.81.2/osfmk/vm/pmap_cs.h` 定义了有序 trust enum：`0..3` 为 untrusted/retired/preflight/compilation-service，`4..7` 为 OOP-JIT/local/profile/app-store，`8` 为 `PMAP_CS_IN_LOADED_TRUST_CACHE`，`9` 为 static trust cache。此前 frozen child 的现场 node→code-directory 读取到 `trust=8`，同时 CDHash 与 24G90 主 cache 完全一致。
+
+**runtime-confirmed + source/RE cross-check**：该 code-directory 在当前诊断 fault 前已被 PMAP 关联为 loaded-trust-cache 等级；这进一步排除“动态 trustcache 完全没有进入 PMAP code-directory”这一解释，但不等价于 `pmap_enter` 的 hash/PV/policy 参数全部正确。下一次设备捕获应保留该 trust 值，并增加 `code-directory+0x1e4` hash type、`cd`/hash slot、association node `start/size/offset` 与 enter 调用的 page index/flags 对齐。
