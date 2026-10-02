@@ -3407,3 +3407,13 @@ CLEAR ... 0x22802b09 0 0x22802809
 ### 2026-10-03 页面 fault 诊断边界
 
 13337 IDA `vm_fault` caller disassembly确认 `sub_FFFFFE0008008564` 从 fault args 保存 `caller_prot`/fault type，调用 `sub_FFFFFE0008008B8C` 返回 `w27` 后再进入 `sub_FFFFFE000800AAB0`；公开源码对应 `vm_fault_validate_cs` 与 `vm_fault_enter`。当前尚未获取 fault-time `prot`/`caller_prot` 寄存器的直接 runtime 值，因此不再把 immutable-page分支当事实。T8103 board config (`ARM64_BOARD_CONFIG_T8103`) 确实启用 `PMAP_CS`, `PMAP_CS_ENABLE`, `XNU_MONITOR`；这只说明闭源 PMAP/PPL 路径存在，不证明具体返回50分支。
+
+### 2026-10-03 thread/task map一致性 runtime-confirmed
+
+在最新 `run_dbg_mapinfo` exception hook 中，通过真实 task/thread kobjects 读取并 arm64e `ptrauth_strip`：
+
+```text
+[mapprobe] ... taskmap=0xfffffe1ccc871600 flags=0x10090 threadmap=0xfffffe1ccc871600 flags=0x10090
+```
+
+结合 XNU `thread.h`（`thread->map` 字段位于结构尾部、源字段语义为当前线程地址 map）和 `task.h`（`task->map`），**runtime-confirmed** 当前 fault thread map 与 task map 是同一个 `vm_map`，两者 `switch_protect` 等 flags 相同；不存在“task map 与 fault thread map 不同”这一简单解释。第一次 `code0=0x32` 仍在该一致 map 上发生，未改 kernel/dyld/PAC。
