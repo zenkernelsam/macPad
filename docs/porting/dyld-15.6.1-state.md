@@ -3126,3 +3126,7 @@ TRUST_RESTORE_RC=1
 ### 2026-10-02 continued post-reboot thermal poll
 
 重启后约 23 分钟再次只读核验：`macwsthermal` 仍为 `thermal-state=serious raw=2 low-power=no battery-temp-centic=3689 virtual-temp-centic=3689 effective-temp-centic=3689 uptime=1386.221`，`THERMAL_RC=3`；VirtualMachine.xpc PID 975 CPU 162.3%，VirtualMac PID 969 CPU 5.0%；trustcache query rc=0，24G90 两枚 hash 均 `PRESENT False`。源码复核显示 `restore_cold_boot_trust` 的 `application_trust_thermally_safe` 仅接受 `nominal`，无可用 bypass；未修改 gate、未停止 VM、未执行 trust helper。
+
+### 2026-10-02 repeated blocker audit
+
+再次只读核验：`macwsthermal` 为 `thermal-state=serious raw=2 low-power=no battery-temp-centic=3689 virtual-temp-centic=3689 effective-temp-centic=3689 uptime=1501.147`，`THERMAL_RC=3`；VirtualMac PID 969 约 5.5% CPU，VirtualMachine.xpc PID 975 约 160.8% CPU、运行约 22 分钟；trustcache query rc=0，24G90 hash 仍未出现。与重启后前几轮相同，正式 trust/echo 不能在 thermal gate 外继续。
