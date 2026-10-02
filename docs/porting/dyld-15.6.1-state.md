@@ -3328,3 +3328,7 @@ WRITE_RC=0 AFTER=0x90080
 一次新的 child-scoped 只读/可逆 A/B 通过 arm64e `ptrauth_strip` 从 `task->map->pmap` 解析 pmap，并读取 IDA 13337 已确认的 `pmap_set_vm_map_cs_enforced_internal` 写入字段 `pmap+0xc0`。该 child 输出：`PMAP_C0=0x1010100`，即最低 byte（enforcement field）为 0；`WRITE_RC=0 AFTER=0x1010100` 实际没有改变任何 bit。该 child 仍在第一次 fault 收到 `code0=0x32`、无 `HI`。
 
 这说明先前把另一个 child 的 `pmap+0xc0=...01` 直接推广为所有 child 的 enforcement=1 过于强；pmap 对象/布局随 child 状态变化，必须逐次现场核对。当前 `KERN_CODESIGN_ERROR=50` 不能简单归因为 immutable 分支的 `pmap_get_vm_map_cs_enforced=1`；`cs_invalid_page`/proc flags 读取路径和 fault-time `map_is_switched/prot` 仍需分开验证。该实验没有持久修改（写入值与原值相同），未改 dyld/kernel text/PAC。
+
+### 2026-10-03 csops 与 proc_ro flags 差异的源码核对
+
+现场同一 child 的 KRW `proc_ro+0x1c` 与 `csops(CS_OPS_STATUS)` 不同并非 proc pointer 错误：例如 `proc_ro` 为 `0x22802b0d`，`csops` 返回 `0x26803b0d`。13337 对应源码 `kern_proc.c:CS_OPS_STATUS` 明确会在 `proc_getcsflags(pt)` 基础上额外 OR `CS_ENFORCEMENT`（由 `cs_process_enforcement(pt)`）及 platform bits，再 copyout。因此 `csops` 多出的 `0x1000/0x4000000` 是装饰状态；不能用 csops 输出推断 `proc_ro` 原始 hard/kill。该差异已解释，后续以 KRW 直接 `proc_ro+0x1c` 判断 child flags。
