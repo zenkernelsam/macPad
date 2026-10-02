@@ -3504,3 +3504,5 @@ CLEAR ... 0x22802b09 0 0x22802809
 在实际 T8103 pmap 代码区间 `0xfffffe00086a0000..0xfffffe00086b0000` 内，IDA 正则搜索 `STR.*#0xC2` 只有 `0x86a9560` 这一条写入；没有发现把该字节置为非零的直接 store。`sub_FFFFFE00086A8984` 在 `0x86a8ac4/0x86a8b18/0x86a8cf4/0x86a8d88` 多次读取同一字节，且若干路径在该字节为零时直接返回 50。
 
 **RE-confirmed**：pmap 构造路径把 `pmap+0xc2` 初始化为零，相关 T8103 pmap text 未见非零直接写入。**THEORY**：若现场 pmap 仍为普通新建对象、且 helper 落入这些 gate 分支，`pmap+0xc2=0` 可能解释首个 50；但尚未 runtime-confirm pmap 对象来源、外部 PPL 写入或实际命中分支，不能据此修改该字段或 kernel。下一次只读捕获应同时读取 pmap+0xc1/+0xc2，并记录 helper 分支条件。
+
+补充的覆盖审计：同一代码区间内对 `STR[HWDQ].*#0xC0` 与 `STR[HWDQ].*#0xC1` 的 IDA regex 搜索均无命中，未发现通过半字/字宽 store 间接覆盖 `pmap+0xc2` 的路径。该结果仍是静态证据，不能替代设备现场读取。
