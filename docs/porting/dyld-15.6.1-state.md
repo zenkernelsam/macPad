@@ -3554,6 +3554,16 @@ BOOT-TRUST {"added":0,"backend":"already-trusted","cached":81,"files":98,"hashes
 
 按连续小端字节解码，pmap `+0xc0` low byte=`0`、`+0xc1`=`1`、`+0xc2`=`0`、`+0xc3`=`1`；输出中的 unaligned qword 只是相邻字段的读取展示。**runtime-confirmed**：canonical pmap 的 allow-invalid gate `+0xc2` 确实为 0，而 `[0x180000000,0x1e7f5c000)` association node、trust=8、ref=1、CD pointer/hash type 均完整；这不是 pointer-strip 假象。该临时 runner 仅加入 trustcache、只读 KRW，没有写 kernel/PAC/map，未提交源文件。
 
+临时 v4 只读 runner 还开始了实际 pmap page-table walk：
+
+```text
+[ptediag] attr=0xfffffe002d0659c0 li=0xfffffe002d5e1080 root=1 max=3 root_table=0xfffffdf225544000
+[ptediag] level=1 ... slot=0xfffffdf225544000 ent=0xb89a00003
+[ptediag] no static kva for pa=0xb89a00000
+```
+
+**runtime-confirmed partial**：fault pmap 的 geometry/root table 和 L1 entry 可读；当前临时转换器尚未覆盖该 PTE page 的 `ml_static_ptovirt` 区间，因此没有伪造 leaf PTE/PV 结论。v4 runner 已清理，未修改设备持久状态。
+
 ### 2026-10-03 pmap+0xc2 与 prot=5 helper 分支的校正
 
 13337 对实际 T8103 `sub_FFFFFE00086A8984` 的 disasm 进一步确认：echo fault 的 entry `prot=5`（R|X）对应 helper 的 `W4=5`。执行路径为 `0x86a8aa8` 的 WRITE bit 测试 → `0x86a8af8` 的 EXEC bit处理 → `0x86a8b90`，随后固定调用：
