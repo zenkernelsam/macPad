@@ -3750,7 +3750,7 @@ nested pmap root=0x0, nested region=[0x180000000,0x280000000)
 [*] child SIGNALED 10
 ```
 
-**runtime-confirmed**：额外保持两个 cache vnode 的 CodeSignature 不改变 `.01` protection fault；该生命周期候选排除。候选与临时 cachereg 均已退出，当前原始 dyld SHA 仍为 `b8fdbc1b7cfd15cccbcd110c0c3cb1ff91d135d6664b84770d42df843381b91e`。
+**runtime-confirmed**：额外保持两个 cache vnode 的 CodeSignature 不改变 `0x1ee188000` 主-cache pager fault；该生命周期候选排除。候选与临时 cachereg 均已退出，当前原始 dyld SHA 仍为 `b8fdbc1b7cfd15cccbcd110c0c3cb1ff91d135d6664b84770d42df843381b91e`。
 
 又做了一个只变量 dyld A/B：在保留 `emptysr_e/c + highreserve_e/c` 的前提下，只把 `mapSplitCachePrivate` 的 `MAP_TPRO|MAP_PRIVATE|MAP_FIXED` 选择改回 `MAP_PRIVATE|MAP_FIXED`（IDA 13338 `0x34570` 的 `mov w12,w28`），不改其它指令。候选 fresh-inode 部署、签名和 trustcache 均成功；bounded 原版 echo 仍为：
 
@@ -3759,9 +3759,9 @@ nested pmap root=0x0, nested region=[0x180000000,0x280000000)
 [*] child SIGNALED 10
 ```
 
-**runtime-confirmed**：移除 TPRO 不改变 `.01` protection fault；TPRO 不是该故障的充分原因。候选已恢复，当前原始 dyld SHA 仍为 `b8fdbc1b7cfd15cccbcd110c0c3cb1ff91d135d6664b84770d42df843381b91e`。后续应核对 `.01` backing vnode 的 `VSHARED_DYLD`/CS blob 身份与主 cache差异，而不是继续枚举 mmap flag。
+**runtime-confirmed**：移除 TPRO 不改变 `0x1ee188000` 主-cache pager fault；TPRO 不是该故障的充分原因。候选已恢复，当前原始 dyld SHA 仍为 `b8fdbc1b7cfd15cccbcd110c0c3cb1ff91d135d6664b84770d42df843381b91e`。后续应核对 dyld pager backing object 与 `map_with_linking_np` 的 file-control，而不是继续枚举 mmap flag。
 
-随后对 `.01` fault 做了设备 arm64e page-table 与 backing-object 只读核验。异常 ESR 为 `0x92000046`，即写权限 fault；fault entry 仍为 `prot=3/3`、`flags2=0x29980`（`use_pmap=1`, `pmap_cs_assoc=0`），当前/nested pmap 的目标 L3 PTE 均为空。通过 dyld pager `+0x20` 追到 backing vnode 后，读到与主 cache 相同的 vnode：`v_flag=0x84800`（含 `VSHARED_DYLD`）、UBC `ui_flags=0x1f`、主 cache `cs_blob` 链仍存在。**runtime-confirmed**：该 fault 是 `.01` data mapping 的首次写权限 fault，不能归因为未识别 shared-dyld vnode；当前仍最符合“nested pmap 下 subcache entry 没有 PMAP-CS association/正确写保护状态”的上游问题。所有 candidate 与临时探针已恢复/清理，原始 dyld SHA 未变。
+随后对 `0x1ee188000` 主-cache data pager fault 做了设备 arm64e page-table 与 backing-object 只读核验。异常 ESR 为 `0x92000046`，即写权限 fault；fault entry 仍为 `prot=3/3`、`flags2=0x29980`（`use_pmap=1`, `pmap_cs_assoc=0`），当前/nested pmap 的目标 L3 PTE 均为空。通过正确的 dyld pager layout 追到 backing object；其 `VSHARED_DYLD` vnode 与主 cache一致。**runtime-confirmed**：这是主 cache data mapping 的首次写权限 fault，不能归因为未识别 shared-dyld vnode；此前“subcache entry缺少 association”的归因已撤回。所有 candidate 与临时探针已恢复/清理，原始 dyld SHA 未变。
 
 在同一 candidate fault 上直接读取 `vm_map_entry`，得到：
 
@@ -3770,7 +3770,7 @@ ENTRY 0x1ee188000..0x1ee1ac000
 flags2=0x29980 prot=3/3 pmap_cs_assoc=0 needs_copy=0 use_pmap=1
 ```
 
-对照主 cache fault entry 的 `flags2=0x210abac0`（`pmap_cs_assoc=1`），**runtime-confirmed** `.01` 映射本身没有 `pmap_cs_associated`，却仍使用 nested pmap。该事实与 nested pmap association root=0 相互吻合；当前最具体的上游问题是 split-cache subcache 映射创建时没有建立/继承对应 PMAP-CS association，而不是 cache CDHash、页 hash 或 vnode signature 生命周期。任何修复都应在 VM mapping/association producer 层解决，不能把 `pmap_cs_assoc` 位直接写成 1。
+对照主 cache executable fault entry 的 `flags2=0x210abac0`（`pmap_cs_assoc=1`），**runtime-confirmed** `map_with_linking_np` 覆盖的主-cache data entry 没有 `pmap_cs_associated`。该事实不能再解释成 `.01` 问题；它指向 dyld pager data mapping 的 VM/PMAP enter 语义。任何修复都应在 mapping/pager producer 层解决，不能把 `pmap_cs_assoc` 位直接写成 1。
 
 ### 2026-10-03 PMAP 属性 gate 的现场排除
 
@@ -3791,8 +3791,21 @@ pmap_c2 low byte=0
 [vadiff] read 0x1ee188000 kr=1 out=0
 ```
 
-**runtime-confirmed**：`.01` fault page 在该 candidate 下没有成功进入 child task 的可读映射；这不是“页内容已读到但写权限不足”的普通内容 mismatch。结合 `ESR=0x92000046`、当前/nested pmap L3 PTE 均为空、entry `use_pmap=1/pmap_cs_assoc=0`，当前阻塞点进一步收窄到 subcache 首次 page-in 的 PMAP/VM enter 及 association producer；仍不写 PTE、map flag 或 kernel/PAC。
+**runtime-confirmed**：主 cache data fault page 在该 candidate 下没有成功进入 child task 的可读映射；这不是“页内容已读到但写权限不足”的普通内容 mismatch。结合 `ESR=0x92000046`、当前/nested pmap L3 PTE 均为空、entry `use_pmap=1/pmap_cs_assoc=0`，当前阻塞点进一步收窄到 dyld pager 首次 page-in 的 PMAP/VM enter 及 backing-object/file-control 传递；仍不写 PTE、map flag 或 kernel/PAC。
+
+### 2026-10-03 缓存映射地址纠正：`0x1ee188000` 属于主 cache data mapping
+
+重新读取 24G90 两个 cache header 的 mapping 数组后，纠正前一段对 fault 来源的称呼。主 cache 的 mapping 表明确给出：
+
+```text
+main: VA 0x1ee188000 size 0x24000 file_off 0x6c188000
+.01:  first VA 0x22560c000 size 0x54808000 file_off 0x0
+```
+
+因此 frozen/candidate fault `VA=0x1ee188000`、`file_off=0x6c188000` 属于**主 cache 的 data mapping**，不是 `.01` 文件。此前“`.01` entry 缺少 PMAP-CS association”与“`.01` vnode 生命周期”两段措辞均过强，不能继续作为根因；相关 A/B 只证明该 VA 的 pager fault 行为，不证明 `.01` 子缓存失败。
+
+结合 dyld 源 `vm_dyld_pager.c`：`map_with_linking_np` 对滑动 data ranges 建立 dyld pager，`vm_map_enter_mem_object(... copy=TRUE, mwlr_protections)` 覆盖原 mapping；该 object entry 的 `pmap_cs_assoc=0` 是此 pager mapping 的现状。**runtime-confirmed + source-confirmed**：当前剩余问题应重新表述为“主 cache data mapping 的 dyld-pager首次 page-in / VM-PMAP enter 在 `0x1ee188000` 失败”，而不是 subcache association 缺失。主 cache executable page 的 hash/PMAP association 证据仍有效，原始 dyld 已恢复。
 
 同一 candidate 的 nested-pmap page-table walk 进一步确认：当前 pmap 在 `0x1ee188000` 的 L2 为空；nested pmap 的 L1/L2 存在，但 L3 仍为空。**runtime-confirmed**：`.01` 首次 page-in 不是撞上残留只读 PTE，而是在目标页表层没有建立 leaf PTE；VADIFF 的 `kr=1,out=0` 与此一致。候选已恢复、原始 dyld SHA 未变，临时文件已清理。
 
-补充边界：同一 candidate 的 `.01` fault 在异常前后执行 `mach_vm_read_overwrite(0x1ee188000,0x4000)` 都得到 `kr=1, out=0`；因此没有把“页面已经可读、只有写入失败”误报为事实。源码 `vm_dyld_pager_data_request()`（XNU 8792.81.2）显示 dyld pager 会从 `dyld_backing_object` 调 `vm_fault_page()`，再将源页复制到目标 UPL；当前 runtime 在该首次 page-in 阶段即未建立目标 PTE。下一步应对齐 `map_with_linking_np` 每个 subcache 的 file-control/region 与 dyld pager source object，仍不改内核状态。
+补充边界：同一 candidate 的主-cache data fault 在异常前后执行 `mach_vm_read_overwrite(0x1ee188000,0x4000)` 都得到 `kr=1, out=0`；因此没有把“页面已经可读、只有写入失败”误报为事实。源码 `vm_dyld_pager_data_request()`（XNU 8792.81.2）显示 dyld pager 会从 `dyld_backing_object` 调 `vm_fault_page()`，再将源页复制到目标 UPL；当前 runtime 在该首次 page-in 阶段即未建立目标 PTE。下一步应对齐 `map_with_linking_np` 的 `file_control` 与 dyld pager source object，仍不改内核状态。
