@@ -3711,3 +3711,16 @@ page flags: pmapped=1 validated=0xf tainted=0 nx=0
 **runtime-confirmed**：本次 fault 页内容、CodeDirectory slot 与 SHA-256 计算完全一致；COW 改页、错误页偏移、slot 内容损坏、未验证页均已排除。此前把内部 PMAP `hash_type=1` 直接解释成 SHA-1 的措辞也已校正：13337 的 `sub_FFFFFE0008699954` 按 CodeDirectory 原始 `hashType=2` 选择 SHA-256，而 `sub_FFFFFE00086A8984` 使用的 pmap code-directory `hash_type=1` 是内部算法桶索引；现场 association 对象的 `+0x118` 与 vnode CodeDirectory 相同，`trust=8`、`reference_count=2`、内部桶 `1`，与 SHA-256 路径相容。**RE-confirmed + runtime-confirmed**：不能再把 hash 算法或 association node 缺失作为当前 50 根因。
 
 因此当前结论更新为：**THEORY** `KERN_CODESIGN_ERROR=50` 位于页哈希成功之后的 PMAP/VM code-signing policy 分支，或由 `sub_8008B8C` 下游返回；`sub_808D79C` 的 PV 冲突和 hash mismatch 均没有 runtime 证据。下一步应读取/对齐 `vm_fault_cs_*` 的具体拒绝条件（map switched/switch_protect、global enforcement、fault prot 与 object state），不修改 pmap gate、PTE、PAC 或 kernel text。
+
+### 2026-10-03 PMAP 属性 gate 的现场排除
+
+在另一个短时 frozen child 上，用设备 arm64e `ptrauth_strip` 读取真实 pmap 后，补读了 `sub_FFFFFE00086A8984` 入口在 `0x86a8a0c` 使用的 page-table attribute 与特殊范围字段：
+
+```text
+pmap=0xfffffdf15652dcb0
+attr=0xfffffe002d0659c0 attr_4c=0x0
+pmap_a0=0x0 pmap_a8=0x0
+pmap_c2 low byte=0
+```
+
+**runtime-confirmed**：`pmap_pt_attr+0x4c` 的直接 `KERN_CODESIGN_ERROR` gate 未命中，`pmap+0xa0/+0xa8` 也没有活动特殊范围。结合前面的 PVH 单映射、`validated=0xf`、页内容与 SHA-256 slot 完全一致，这些 PMAP 早期拒绝条件均已排除。当前剩余 **THEORY** 是 PMAP helper 后续状态转换或 `vm_fault_cs_*` 的 policy 分支；下一步应捕获 fault_info/pmap enter 的实际返回与 map enforcement 条件，而不是修改任何内核状态。
