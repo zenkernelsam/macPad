@@ -254,3 +254,27 @@ The IMG4 manifest (`IM4M`) remains the original Apple-signed metadata; changing
 the payload therefore does not make this boot-authorized. The candidate is
 kept only in `/tmp`, was not copied to preboot, and was not sent to the device.
 A valid deployment still needs a legitimate signing/boot acceptance path.
+
+## IMG4 manifest digest proof (2026-10-03)
+
+Offline `pyimg4` parsing confirms the original IM4M `krnl` manifest digest is
+SHA-384 over the serialized original IM4P:
+
+```text
+original IM4P SHA-384:
+0c53c865453347cb1320325a8c9f3a1862e4f21701441e05901e3c93f421bc751ec07daaadca9ba1e0b08a5f73133510
+original IM4M krnl DGST: same value
+```
+
+The offline owner-fix IMG4 keeps the original IM4M but changes the IM4P. Its
+serialized IM4P digest is:
+
+```text
+252acc3e5ffbaea2aea5631e58eb4aca9b9a69fc7876eebdccfed6ec7dfb67ea5342969256a679fe0993f97d495d19d0
+```
+
+It therefore fails the manifest digest comparison before considering any
+runtime kernel behavior. Replacing the IM4M would require the platform signing
+key/boot acceptance path, which is not present in the workspace or Dopamine
+runtime. This is a cryptographic boot rejection proof, not a theory about
+filesystem permissions. The candidate was never copied to preboot.
