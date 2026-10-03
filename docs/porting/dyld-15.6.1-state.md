@@ -3876,3 +3876,19 @@ mach_vm_map_kernel(map, &start, size, 0,
 随后 `shared_region_check_np(NULL)` 只调用 `vm_shared_region_remove()` 并清除 task 的 shared-region 引用。公开 `vm_map_clip_unnest()` 的入口则要求原 entry 仍满足 `is_sub_map && use_pmap`，才调用 `pmap_unnest()`。
 
 **source-confirmed + runtime-confirmed**：当前 dyld 的 `emptysr` 路径确实执行了系统设计的 shared-region removal，但该 removal 是 OVERWRITE 成普通 PROT_NONE entry；现场随后 cache entry 也是普通 object，而 top pmap 的 `nested_pmap` 仍存在。这个行为不是 dyld 漏调用普通 `munmap` 的简单问题，而是 overwrite removal 与 nested-pmap unnest producer 之间的语义缺口。用户态重放 `check_np(NULL)` 或继续改 mmap flags 不会自动补上 `pmap_unnest`；需要审阅 XNU `mach_vm_map_kernel` overwrite 路径是否应显式 clip/unnest，或设计等价的上游 kernel fix。当前仍不写 kernel/PAC/PTE，也不部署猜测性 dyld patch。
+
+### 2026-10-03 nested pmap bitmap现场：目标 twig 已 unnest，但 helper 仍按 bounds切到空 nested pmap
+
+在 fresh frozen child 上进一步读取 nested pmap 结构：
+
+```text
+nested_pmap=0xfffffdf011e58000
+nested_region=[0x180000000,0x280000000)
+asid_bitmap=0xfffffdf28f358000
+bitmap word[0]=0xffffffff  (target twig bit=1)
+nested_pmap association-tree root=0
+```
+
+`pmap_unnest_options_internal` 源码定义 bit=1 为该 twig 已被 unnest；现场目标 `0x18047dc9c` 对应 bit 已置位。外层 pmap 仍有 `[0x180000000,0x1e7f5c000)` PMAP-CS node，但 T8103 `sub_86A0924` 的实际 RE 只按 `nested_region_addr/size` bounds 选择 `pmap+0x58`，没有检查 nested-pmap ASID bitmap；于是它把已 unnest 的目标 VA 转给空 nested pmap，后续 PMAP-CS helper 返回 50。
+
+**runtime-confirmed + RE-confirmed**：当前问题已收窄为“shared-region unnest 后，T8103 PMAP-CS owner selection 仍按旧 bounds，而不尊重已置位的 unnest bitmap”。这是比“association producer 不完整”更具体的闭源 kernel 兼容性缺口。安全修复方向应是 owner selection 在 bitmap 已 unnest 时留在外层 pmap，或让 association producer同步 nested pmap；两者都属于 kernel/PPL语义，不能用用户态 trust/PTE/PAC 写入替代。本轮未修改设备状态。
