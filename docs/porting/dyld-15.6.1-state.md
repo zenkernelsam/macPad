@@ -3792,3 +3792,7 @@ pmap_c2 low byte=0
 ```
 
 **runtime-confirmed**：`.01` fault page 在该 candidate 下没有成功进入 child task 的可读映射；这不是“页内容已读到但写权限不足”的普通内容 mismatch。结合 `ESR=0x92000046`、当前/nested pmap L3 PTE 均为空、entry `use_pmap=1/pmap_cs_assoc=0`，当前阻塞点进一步收窄到 subcache 首次 page-in 的 PMAP/VM enter 及 association producer；仍不写 PTE、map flag 或 kernel/PAC。
+
+同一 candidate 的 nested-pmap page-table walk 进一步确认：当前 pmap 在 `0x1ee188000` 的 L2 为空；nested pmap 的 L1/L2 存在，但 L3 仍为空。**runtime-confirmed**：`.01` 首次 page-in 不是撞上残留只读 PTE，而是在目标页表层没有建立 leaf PTE；VADIFF 的 `kr=1,out=0` 与此一致。候选已恢复、原始 dyld SHA 未变，临时文件已清理。
+
+补充边界：同一 candidate 的 `.01` fault 在异常前后执行 `mach_vm_read_overwrite(0x1ee188000,0x4000)` 都得到 `kr=1, out=0`；因此没有把“页面已经可读、只有写入失败”误报为事实。源码 `vm_dyld_pager_data_request()`（XNU 8792.81.2）显示 dyld pager 会从 `dyld_backing_object` 调 `vm_fault_page()`，再将源页复制到目标 UPL；当前 runtime 在该首次 page-in 阶段即未建立目标 PTE。下一步应对齐 `map_with_linking_np` 每个 subcache 的 file-control/region 与 dyld pager source object，仍不改内核状态。
