@@ -3564,6 +3564,8 @@ BOOT-TRUST {"added":0,"backend":"already-trusted","cached":81,"files":98,"hashes
 
 **runtime-confirmed partial**：fault pmap 的 geometry/root table 和 L1 entry 可读；当前临时转换器尚未覆盖该 PTE page 的 `ml_static_ptovirt` 区间，因此没有伪造 leaf PTE/PV 结论。v4 runner 已清理，未修改设备持久状态。
 
+随后 v5 只读 runner 通过 `jbinfo_get_serialized` 读取 kernel slide（`0`），并打印 `ml_static_ptovirt` 相关 IDA globals；这些 globals 在当前 KRW 视图下均为零，L1 entry 物理地址 `0x8d5960000` 仍无法转换到下一层。**runtime-confirmed boundary**：这不是 leaf PTE/PV 缺失证据，而是当前用户态 physical-aperture 转换器无法继续；v5 runner 已清理，未改设备状态。
+
 ### 2026-10-03 pmap+0xc2 与 prot=5 helper 分支的校正
 
 13337 对实际 T8103 `sub_FFFFFE00086A8984` 的 disasm 进一步确认：echo fault 的 entry `prot=5`（R|X）对应 helper 的 `W4=5`。执行路径为 `0x86a8aa8` 的 WRITE bit 测试 → `0x86a8af8` 的 EXEC bit处理 → `0x86a8b90`，随后固定调用：
