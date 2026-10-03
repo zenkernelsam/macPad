@@ -3784,3 +3784,11 @@ pmap_c2 low byte=0
 ```
 
 **runtime-confirmed**：`pmap_pt_attr+0x4c` 的直接 `KERN_CODESIGN_ERROR` gate 未命中，`pmap+0xa0/+0xa8` 也没有活动特殊范围。结合前面的 PVH 单映射、`validated=0xf`、页内容与 SHA-256 slot 完全一致，这些 PMAP 早期拒绝条件均已排除。当前剩余 **THEORY** 是 PMAP helper 后续状态转换或 `vm_fault_cs_*` 的 policy 分支；下一步应捕获 fault_info/pmap enter 的实际返回与 map enforcement 条件，而不是修改任何内核状态。
+
+补充一次 candidate 下的直接页读：对 `.01` 文件 offset `0x6c188000` 与目标 VA `0x1ee188000` 设置 `VADIFF_VA/LEN/FILE/OFF`，异常前后的 `mach_vm_read_overwrite` 均返回：
+
+```text
+[vadiff] read 0x1ee188000 kr=1 out=0
+```
+
+**runtime-confirmed**：`.01` fault page 在该 candidate 下没有成功进入 child task 的可读映射；这不是“页内容已读到但写权限不足”的普通内容 mismatch。结合 `ESR=0x92000046`、当前/nested pmap L3 PTE 均为空、entry `use_pmap=1/pmap_cs_assoc=0`，当前阻塞点进一步收窄到 subcache 首次 page-in 的 PMAP/VM enter 及 association producer；仍不写 PTE、map flag 或 kernel/PAC。
