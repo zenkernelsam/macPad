@@ -3566,6 +3566,18 @@ BOOT-TRUST {"added":0,"backend":"already-trusted","cached":81,"files":98,"hashes
 
 随后 v5 只读 runner 通过 `jbinfo_get_serialized` 读取 kernel slide（`0`），并打印 `ml_static_ptovirt` 相关 IDA globals；这些 globals 在当前 KRW 视图下均为零，L1 entry 物理地址 `0x8d5960000` 仍无法转换到下一层。**runtime-confirmed boundary**：这不是 leaf PTE/PV 缺失证据，而是当前用户态 physical-aperture 转换器无法继续；v5 runner 已清理，未改设备状态。
 
+v6 改用 pmap 自身 `ttep` 与 root-table KVA 的 runtime delta 推导 static aperture，成功 walk 到 fault VA 的 leaf PTE：
+
+```text
+[ptediag] root_table=0xfffffdf3112b4000 ttep=0xb151e0000 delta=0xfffffde7fc0d4000
+[ptediag] L1 ent=0xba2ab0003
+[ptediag] L2 ent=0xb20698003
+[ptediag] L3 slot=0xfffffdf31c76c8f8 ent=0x60000bc0d18ec3
+[ptediag] ppnum=0x2f0346
+```
+
+**runtime-confirmed**：真实 fault VA `0x18047dc9c` 的 leaf PTE 地址/raw value/物理页号已读到；PV-head 全局指针在当前 KRW 视图中仍不可读（显示 0），不能把它解释成 PV 缺失。v6 只读 runner 已清理，没有 kernel/PAC/map 写入。
+
 ### 2026-10-03 pmap+0xc2 与 prot=5 helper 分支的校正
 
 13337 对实际 T8103 `sub_FFFFFE00086A8984` 的 disasm 进一步确认：echo fault 的 entry `prot=5`（R|X）对应 helper 的 `W4=5`。执行路径为 `0x86a8aa8` 的 WRITE bit 测试 → `0x86a8af8` 的 EXEC bit处理 → `0x86a8b90`，随后固定调用：
