@@ -3554,6 +3554,21 @@ BOOT-TRUST {"added":0,"backend":"already-trusted","cached":81,"files":98,"hashes
 
 按连续小端字节解码，pmap `+0xc0` low byte=`0`、`+0xc1`=`1`、`+0xc2`=`0`、`+0xc3`=`1`；输出中的 unaligned qword 只是相邻字段的读取展示。**runtime-confirmed**：canonical pmap 的 allow-invalid gate `+0xc2` 确实为 0，而 `[0x180000000,0x1e7f5c000)` association node、trust=8、ref=1、CD pointer/hash type 均完整；这不是 pointer-strip 假象。该临时 runner 仅加入 trustcache、只读 KRW，没有写 kernel/PAC/map，未提交源文件。
 
+### 2026-10-03 pmap+0xc2 与 prot=5 helper 分支的校正
+
+13337 对实际 T8103 `sub_FFFFFE00086A8984` 的 disasm 进一步确认：echo fault 的 entry `prot=5`（R|X）对应 helper 的 `W4=5`。执行路径为 `0x86a8aa8` 的 WRITE bit 测试 → `0x86a8af8` 的 EXEC bit处理 → `0x86a8b90`，随后固定调用：
+
+```asm
+0xfffffe00086a8bc0  MOV X0, X19
+0xfffffe00086a8bc4  MOV W3, #1
+0xfffffe00086a8bc8  MOV W4, #0
+0xfffffe00086a8bcc  BL  sub_FFFFFE000808D79C
+0xfffffe00086a8bd0  CBNZ W0, loc_FFFFFE00086A8B54
+0xfffffe00086a8b54  MOV W0, #0x32
+```
+
+**RE-confirmed**：对当前 `prot=5`，`pmap+0xc2=0` 本身不是充分解释；首要静态候选是 `sub_FFFFFE000808D79C` 的 PV/PTE association check 返回非零，随后在 `0x86a8bcc` 直接变成 50。前文把 c2=0 近似描述为 prot=5 的直接 50 gate 已校正；c2 仍是后续子路径 policy 输入，但需结合 D79C 返回值和现场 PTE/PV 状态确认。
+
 ### 2026-10-03 `pmap+0xc2` 的实际 policy 语义
 
 13337 对 `sub_FFFFFE000869C590` 的反编译显示其字符串为 `pmap_cs_allow_invalid_internal`。该函数要求当前线程 pmap 与 TTBR0 匹配，取得 pmap exclusive lock 后：只有全局 debug/开发开关 `byte_FFFFFE000A9E7E08&1` 开启，且当前 pmap 具备 `get-task-allow` 或 `run-unsigned-code` entitlement，或该字节原先已为 1 时，才执行 `*(_BYTE *)(pmap+0xc2)=1` 并返回 0；否则返回 5 或 53。**RE-confirmed via actual T8103 kernel IDA**：`pmap+0xc2` 是 allow-invalid/开发策略位，不是普通 24G90 cache trust 的必需初始化位。
