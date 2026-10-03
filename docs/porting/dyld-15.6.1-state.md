@@ -3809,3 +3809,32 @@ main: VA 0x1ee188000 size 0x24000 file_off 0x6c188000
 同一 candidate 的 nested-pmap page-table walk 进一步确认：当前 pmap 在 `0x1ee188000` 的 L2 为空；nested pmap 的 L1/L2 存在，但 L3 仍为空。**runtime-confirmed**：`.01` 首次 page-in 不是撞上残留只读 PTE，而是在目标页表层没有建立 leaf PTE；VADIFF 的 `kr=1,out=0` 与此一致。候选已恢复、原始 dyld SHA 未变，临时文件已清理。
 
 补充边界：同一 candidate 的主-cache data fault 在异常前后执行 `mach_vm_read_overwrite(0x1ee188000,0x4000)` 都得到 `kr=1, out=0`；因此没有把“页面已经可读、只有写入失败”误报为事实。源码 `vm_dyld_pager_data_request()`（XNU 8792.81.2）显示 dyld pager 会从 `dyld_backing_object` 调 `vm_fault_page()`，再将源页复制到目标 UPL；当前 runtime 在该首次 page-in 阶段即未建立目标 PTE。下一步应对齐 `map_with_linking_np` 的 `file_control` 与 dyld pager source object，仍不改内核状态。
+
+### 2026-10-03 PMAP nesting现场闭环：cache association在外层 pmap，fault实际切到空 nested pmap
+
+在当前设备原始 SHA `b8fdbc1b7cfd15cccbcd110c0c3cb1ff91d135d6664b84770d42df843381b91e`、24G90 双 cache trust present 的 fresh frozen `/bin/echo HI` child 上，使用只读 KRW 工具读取 task→map→pmap、PMAP association tree 与 shared-region nesting：
+
+```text
+vm_map=0xfffffe1ccc8731c0
+map flags=0x10090
+entry 0x180000000..0x1e7f5c000
+  flags2=0x210abac0  use_pmap=1 permanent=1 pmap_cs=1 no_copy_on_read=1
+pmap=0xfffffdf11753b450
+  nested_pmap=0xfffffdf15652c798
+  nested_region=[0x180000000,0x280000000)
+```
+
+外层 pmap tree 的 node 覆盖目标 cache：
+
+```text
+NODE range=0x180000000..0x1e7f5c000 off=0 cd=0xfffffdf079343230
+CD trust=8 ref=1 normalized_hash_type=1
+```
+
+目标 fault VA `0x18047dc9c` 在 T8103 IDA `sub_FFFFFE00086A8984` 中经 `sub_FFFFFE00086A0924(pmap, vaddr, &owner)` 命中 shared-region 范围；该函数的 RE-confirmed 语义是：若 `pmap+0xc9 != 3` 且 `pmap+0x60 <= vaddr < pmap+0x60+pmap+0x68`，就把 owner 切换为 `pmap+0x58`（nested pmap），并返回相对 VA。现场读取 nested pmap `0xfffffdf15652c798` 的 `pmap+0x98` association-tree root 为 `0`，而外层 pmap root 非零且有上述 cache node。
+
+**runtime-confirmed + RE-confirmed**：当前 50 不是 cache CDHash、页内容、CodeDirectory slot、外层 PMAP association 或 trustcache 缺失；真实 fault 使用的 nested pmap 没有对应 PMAP-CS association。该结论解释了为何页内容与 slot[287] 完全一致、外层 node/trust=8 完整，仍由 `sub_86A8984` 返回 `KERN_CODESIGN_ERROR=50`。
+
+**THEORY（修复层级）**：iPadOS shared-region nesting 与 macOS 15.6 private cache mapping 的 PMAP-CS association 生产层不匹配。现有 dyld `emptysr/highreserve` 诊断已越过 4GB guard，但没有消除 top pmap 的 nested-pmap 元数据；直接写 nested tree、`pmap+0xc2`、PTE/PAC 或 kernel text 都是绕过安全策略，禁止执行。下一步应先审计可公开调用的 shared-region unnest/映射契约；若只能在 XNU PMAP association producer 修复，必须形成可审阅、可回滚的 kernel-side方案后再另行授权，当前不部署。
+
+本轮没有修改设备文件、kernel/PAC/PTE、dyld 或 trust policy；原版 echo 仍未输出 `HI`。
