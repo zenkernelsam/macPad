@@ -3733,6 +3733,16 @@ bounded 原版命令仍没有输出 `HI`，但故障位置发生了可重复的�
 
 **runtime-confirmed**：该候选不再在主 cache `0x18047dc9c` 首次返回 50，而是推进到 `.01` 子缓存/后续区域并在 `0x1ee188000` 返回 `KERN_PROTECTION_FAILURE=10`。这验证了 empty-SR teardown + 高区预占改变了真实 VM 路径，但不是 CLI 成功。当前新的窄候选是：主 cache association/hash 路径已越过，`.01` 子缓存映射的 PMAP-CS association 或保护属性仍需单独核对；不能把此 A/B 解释成修复，也不保留候选 dyld 作为当前运行版本。
 
+随后在同一 candidate fault 上用设备 arm64e strip 读取 pmap tree：
+
+```text
+fault=0x1ee188000
+current pmap tree: no node covering 0x1ee188000
+nested pmap root=0x0, nested region=[0x180000000,0x280000000)
+```
+
+**runtime-confirmed**：candidate 的新 fault 地址落在当前 pmap association tree 覆盖范围之外，同时实际 nested pmap 的 association root 仍为空；这与 `sub_86A0924` 在 nested region 内切换 lookup pmap 的静态逻辑一致。历史 pagewalk 对该 subcache object 的 vnode/packed-object 解码未形成可靠 CodeDirectory 证据，故不把它报告为签名缺失。原始 dyld 已恢复并核验，candidate 仅保留为离线/回滚证据。
+
 ### 2026-10-03 PMAP 属性 gate 的现场排除
 
 在另一个短时 frozen child 上，用设备 arm64e `ptrauth_strip` 读取真实 pmap 后，补读了 `sub_FFFFFE00086A8984` 入口在 `0x86a8a0c` 使用的 page-table attribute 与特殊范围字段：
