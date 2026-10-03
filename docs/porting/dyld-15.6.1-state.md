@@ -3919,3 +3919,11 @@ bounded `/bin/echo HI` 原文关键结果：
 ```
 
 **runtime-confirmed**：system-wide/main-only 路线改变了故障形态，但在 dynamic-region/`0x100000000` 地址契约处提前失败，没有输出 `HI`；不能把它报告为 nested-pmap 修复，也不能继续扩大为“只映射主 cache”方案。候选、备份和 child 均已清理/恢复；本轮未写 kernel/PTE/PAC。
+
+### 2026-10-03 `vm_shared_region_remove` → `pmap_unnest` 与 owner helper 的最终契约对齐
+
+公开 XNU 8792.81.2 `vm_map.c:vm_map_delete()` 在 `VM_FLAGS_OVERWRITE + vmkf_overwrite_immutable` 删除 nested submap 时，确实会对 `entry->is_sub_map && entry->use_pmap` 调 `pmap_unnest_options()`；`pmap_unnest_options_internal()` 随后把 nested ASID bitmap 的目标 twig 置 1，并清理外层 twig PTE。现场 bitmap `word[0]=0xffffffff` 与此完全一致。
+
+**runtime-confirmed + source-confirmed**：内核已经执行了标准 unnest 操作；问题不是 `check_np(NULL)` 没有触发 unnest，而是后续 T8103 `sub_86A0924` 仍只按 `nested_region_addr/size` 选择 nested owner，不读取已置位的 ASID bitmap。故此前“可能需要额外普通 munmap 才触发 unnest”的假设撤回。
+
+当前真正的兼容性缺口是：`pmap_unnest` 完成后，PMAP-CS owner lookup 必须识别该 VA 已从 nested region 脱离并继续使用外层 pmap；T8103 闭源 helper 没有这样做。这个修复只能在 kernel/PPL owner-selection 层完成，不能通过 dyld mmap 参数、trustcache 或用户态映射顺序可靠替代。
