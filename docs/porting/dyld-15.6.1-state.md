@@ -3861,3 +3861,18 @@ pmap->nested_pmap != NULL
 继续核对公开 XNU `vm_map.c`：`vm_map_clip_unnest()` 首要断言是 `entry->is_sub_map && entry->use_pmap`，随后调用 `pmap_unnest(map->pmap, entry->vme_start, entry->vme_end-entry->vme_start)`；`vm_map_clip_start/end` 也只对仍为 nested submap 的 entry进入该路径。另一方面，fresh echo child 的 cache entry 已 runtime-read 为普通 object（`is_submap=0`）、但 flags 仍是 `use_pmap=1/permanent/pmap_cs`，且 top pmap `nested_pmap` 仍存在。
 
 **source-confirmed + runtime-confirmed**：dyld 先把原 shared-region submap 替换/覆盖为普通 cache object 后，公开 VM clip-unnest producer 已没有 `is_sub_map` entry 可触发 `pmap_unnest`; 因而“普通 mmap 完成后自动清 nested pmap”不是当前内核契约。后续 fault 仍会按 pmap shared-region bounds 进入 nested-pmap owner lookup。这个结果比单纯猜测 `munmap` 或 mmap flag 更具体；下一步要确认的是 shared-region teardown 是否应在覆盖前完整删除/clip 原 submap，或内核是否需为这种 replacement 保留显式 unnest路径。当前不直接 patch syscall、kernel 或 dyld。
+
+### 2026-10-03 `shared_region_check_np(NULL)` 源码闭环：内核明确采用 OVERWRITE，而非 clip-unnest
+
+XNU 8792.81.2 `osfmk/vm/vm_shared_region.c:2484` 的 `vm_shared_region_remove()` 已核对：它对 task map 执行
+
+```c
+mach_vm_map_kernel(map, &start, size, 0,
+    VM_FLAGS_FIXED | VM_FLAGS_OVERWRITE,
+    vmk_flags(vmkf_overwrite_immutable),
+    VM_PROT_NONE, VM_PROT_NONE, ...);
+```
+
+随后 `shared_region_check_np(NULL)` 只调用 `vm_shared_region_remove()` 并清除 task 的 shared-region 引用。公开 `vm_map_clip_unnest()` 的入口则要求原 entry 仍满足 `is_sub_map && use_pmap`，才调用 `pmap_unnest()`。
+
+**source-confirmed + runtime-confirmed**：当前 dyld 的 `emptysr` 路径确实执行了系统设计的 shared-region removal，但该 removal 是 OVERWRITE 成普通 PROT_NONE entry；现场随后 cache entry 也是普通 object，而 top pmap 的 `nested_pmap` 仍存在。这个行为不是 dyld 漏调用普通 `munmap` 的简单问题，而是 overwrite removal 与 nested-pmap unnest producer 之间的语义缺口。用户态重放 `check_np(NULL)` 或继续改 mmap flags 不会自动补上 `pmap_unnest`；需要审阅 XNU `mach_vm_map_kernel` overwrite 路径是否应显式 clip/unnest，或设计等价的上游 kernel fix。当前仍不写 kernel/PAC/PTE，也不部署猜测性 dyld patch。
