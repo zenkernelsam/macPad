@@ -3752,6 +3752,15 @@ nested pmap root=0x0, nested region=[0x180000000,0x280000000)
 
 **runtime-confirmed**：额外保持两个 cache vnode 的 CodeSignature 不改变 `.01` protection fault；该生命周期候选排除。候选与临时 cachereg 均已退出，当前原始 dyld SHA 仍为 `b8fdbc1b7cfd15cccbcd110c0c3cb1ff91d135d6664b84770d42df843381b91e`。
 
+又做了一个只变量 dyld A/B：在保留 `emptysr_e/c + highreserve_e/c` 的前提下，只把 `mapSplitCachePrivate` 的 `MAP_TPRO|MAP_PRIVATE|MAP_FIXED` 选择改回 `MAP_PRIVATE|MAP_FIXED`（IDA 13338 `0x34570` 的 `mov w12,w28`），不改其它指令。候选 fresh-inode 部署、签名和 trustcache 均成功；bounded 原版 echo 仍为：
+
+```text
+[exc] type=1 code0=0xa code1=0x1ee188000
+[*] child SIGNALED 10
+```
+
+**runtime-confirmed**：移除 TPRO 不改变 `.01` protection fault；TPRO 不是该故障的充分原因。候选已恢复，当前原始 dyld SHA 仍为 `b8fdbc1b7cfd15cccbcd110c0c3cb1ff91d135d6664b84770d42df843381b91e`。后续应核对 `.01` backing vnode 的 `VSHARED_DYLD`/CS blob 身份与主 cache差异，而不是继续枚举 mmap flag。
+
 在同一 candidate fault 上直接读取 `vm_map_entry`，得到：
 
 ```text
