@@ -100,3 +100,39 @@ A real fix must insert the bitmap test between the bounds hit and the
 `LDR/STR owner` sequence, while preserving arm64e control-flow integrity and
 all caller ABI/locking assumptions. This listing is an audit precondition,
 not a patch authorization.
+
+## Field/layout manifest for implementation review
+
+The public XNU arm pmap layout used to cross-check the T8103 fields is:
+
+```text
+pmap+0x58  nested_pmap
+pmap+0x60  nested_region_addr
+pmap+0x68  nested_region_size
+pmap+0x70  nested_region_true_start
+pmap+0x78  nested_region_true_end
+pmap+0x80  nested_region_asid_bitmap
+pmap+0x88  nested_region_asid_bitmap_size
+pmap+0xc9  pmap type byte in the T8103 layout
+```
+
+The current runtime sample had `nested_region_addr=0x180000000`,
+`nested_region_size=0x100000000`, bitmap word zero equal to `0xffffffff`,
+and the target VA in twig index zero. The proposed check must use the actual
+T8103 page-table attribute/twig shift, not a hard-coded `24`, before reading
+the bitmap. It must also preserve the existing `pmap+0xc9 == 3` behavior for
+nested pmaps and the current `owner`/relative-VA output ABI.
+
+A review implementation should therefore have these assertions before any
+binary work:
+
+1. Exact T8103 kernel UUID/hash and imagebase match Instance1.
+2. The instruction window at `0xfffffe00086a0928..0xfffffe00086a0974`
+   matches the IDA listing in this document.
+3. The bitmap pointer and twig shift are obtained from the target kernel's
+   layout/IDA, not inferred from the current child alone.
+4. A source-level or emulated unit test covers both bitmap states: bit clear
+   selects nested owner; bit set keeps outer owner.
+5. Deployment remains prohibited until a signed, reversible kernel artifact,
+   recovery image, and child-scoped `/bin/echo HI` acceptance procedure are
+   independently reviewed.
