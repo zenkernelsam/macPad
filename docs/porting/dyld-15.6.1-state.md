@@ -3855,3 +3855,9 @@ pmap->nested_pmap != NULL
 该函数还显示，完整 unnest 不是普通用户态 `mmap` flags 的副作用；它要求专门的 pmap unnest 操作，并会处理 nested PTE/ASID bitmap。**THEORY**：要让真实 24G90 cache 在该地址范围通过 PMAP-CS，修复点可能是 shared-region teardown/unnest producer，或在 association producer 中把 node 正确登记到实际 nested pmap。直接置 `pmap+0xc2`、复制 association node、写 PTE/PAC 或 patch kernel text 都会绕过该契约，当前禁止。
 
 本轮未部署新候选、未写设备或 kernel 状态；原版 dyld SHA 和 trust 状态不变。下一步应继续静态核对 `shared_region` teardown 调用是否能合法触发 `pmap_unnest_options_internal`，以及是否存在已支持的用户态 syscall/flag；没有明确契约前不做设备 patch。
+
+### 2026-10-03 VM map unnest producer核对：unnest只在替换 submap entry 时触发
+
+继续核对公开 XNU `vm_map.c`：`vm_map_clip_unnest()` 首要断言是 `entry->is_sub_map && entry->use_pmap`，随后调用 `pmap_unnest(map->pmap, entry->vme_start, entry->vme_end-entry->vme_start)`；`vm_map_clip_start/end` 也只对仍为 nested submap 的 entry进入该路径。另一方面，fresh echo child 的 cache entry 已 runtime-read 为普通 object（`is_submap=0`）、但 flags 仍是 `use_pmap=1/permanent/pmap_cs`，且 top pmap `nested_pmap` 仍存在。
+
+**source-confirmed + runtime-confirmed**：dyld 先把原 shared-region submap 替换/覆盖为普通 cache object 后，公开 VM clip-unnest producer 已没有 `is_sub_map` entry 可触发 `pmap_unnest`; 因而“普通 mmap 完成后自动清 nested pmap”不是当前内核契约。后续 fault 仍会按 pmap shared-region bounds 进入 nested-pmap owner lookup。这个结果比单纯猜测 `munmap` 或 mmap flag 更具体；下一步要确认的是 shared-region teardown 是否应在覆盖前完整删除/clip 原 submap，或内核是否需为这种 replacement 保留显式 unnest路径。当前不直接 patch syscall、kernel 或 dyld。
