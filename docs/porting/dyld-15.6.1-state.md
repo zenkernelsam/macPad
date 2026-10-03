@@ -3712,6 +3712,27 @@ page flags: pmapped=1 validated=0xf tainted=0 nx=0
 
 因此当前结论更新为：**THEORY** `KERN_CODESIGN_ERROR=50` 位于页哈希成功之后的 PMAP/VM code-signing policy 分支，或由 `sub_8008B8C` 下游返回；`sub_808D79C` 的 PV 冲突和 hash mismatch 均没有 runtime 证据。下一步应读取/对齐 `vm_fault_cs_*` 的具体拒绝条件（map switched/switch_protect、global enforcement、fault prot 与 object state），不修改 pmap gate、PTE、PAC 或 kernel text。
 
+### 2026-10-03 `emptysr + highreserve` dyld 候选的真实设备 A/B
+
+基于已记录的 `check_np(&base)==12` 跳过 teardown 与高区空洞证据，构建器生成并部署了一个可回滚的 dyld 候选，构建键为：
+
+```text
+crossarch plataccept hardpriv emptysr_e emptysr_c highreserve_e highreserve_c
+```
+
+候选使用 fresh inode、项目 entitlement 和临时 trustcache；原始 dyld 在实验前独立保存，实验结束后立即恢复。候选签名后设备 SHA 为 `51a662178336308df0696ba2dc3ae2c92e7eeab2756fb3b3ba97e80135baead5`；当前恢复的原始 dyld 已核验为 inode `246268291`、SHA `b8fdbc1b7cfd15cccbcd110c0c3cb1ff91d135d6664b84770d42df843381b91e`。
+
+bounded 原版命令仍没有输出 `HI`，但故障位置发生了可重复的单变量变化：
+
+```text
+[exc] type=1 code0=0xa code1=0x1ee188000
+[vm] 0x1ee188000..0x1ee1ac000 prot=3/3 off=0x0 shared=0
+[vm] 0x1ee1ac000..0x1ef3ac000 prot=3/3 off=0x6c1ac000
+[*] child SIGNALED 10
+```
+
+**runtime-confirmed**：该候选不再在主 cache `0x18047dc9c` 首次返回 50，而是推进到 `.01` 子缓存/后续区域并在 `0x1ee188000` 返回 `KERN_PROTECTION_FAILURE=10`。这验证了 empty-SR teardown + 高区预占改变了真实 VM 路径，但不是 CLI 成功。当前新的窄候选是：主 cache association/hash 路径已越过，`.01` 子缓存映射的 PMAP-CS association 或保护属性仍需单独核对；不能把此 A/B 解释成修复，也不保留候选 dyld 作为当前运行版本。
+
 ### 2026-10-03 PMAP 属性 gate 的现场排除
 
 在另一个短时 frozen child 上，用设备 arm64e `ptrauth_strip` 读取真实 pmap 后，补读了 `sub_FFFFFE00086A8984` 入口在 `0x86a8a0c` 使用的 page-table attribute 与特殊范围字段：
