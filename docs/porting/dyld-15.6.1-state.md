@@ -3892,3 +3892,30 @@ nested_pmap association-tree root=0
 `pmap_unnest_options_internal` 源码定义 bit=1 为该 twig 已被 unnest；现场目标 `0x18047dc9c` 对应 bit 已置位。外层 pmap 仍有 `[0x180000000,0x1e7f5c000)` PMAP-CS node，但 T8103 `sub_86A0924` 的实际 RE 只按 `nested_region_addr/size` bounds 选择 `pmap+0x58`，没有检查 nested-pmap ASID bitmap；于是它把已 unnest 的目标 VA 转给空 nested pmap，后续 PMAP-CS helper 返回 50。
 
 **runtime-confirmed + RE-confirmed**：当前问题已收窄为“shared-region unnest 后，T8103 PMAP-CS owner selection 仍按旧 bounds，而不尊重已置位的 unnest bitmap”。这是比“association producer 不完整”更具体的闭源 kernel 兼容性缺口。安全修复方向应是 owner selection 在 bitmap 已 unnest 时留在外层 pmap，或让 association producer同步 nested pmap；两者都属于 kernel/PPL语义，不能用用户态 trust/PTE/PAC 写入替代。本轮未修改设备状态。
+
+### 2026-10-03 system-wide/main-only dyld A/B：未解决，提前在 dynamic-region 地址失败
+
+制作了一个可回滚 dyld-only 候选，现场字节 precondition 已核对：
+
+```text
+0x34268: NOP -> BL deallocateExistingSharedCache @0x3420c
+0x3426c: MOV X0,X20 -> branch to system-wide epilogue @0x342b8
+0x3538c: LDR W28,cacheFileCount -> MOV W28,#1
+```
+
+候选经 `ldid -Hsha256 -S...`、临时 trustcache 和 fresh inode 部署；设备运行后立即恢复原文件。原始 dyld SHA 恢复核对：
+
+```text
+b8fdbc1b7cfd15cccbcd110c0c3cb1ff91d135d6664b84770d42df843381b91e
+```
+
+bounded `/bin/echo HI` 原文关键结果：
+
+```text
+[exc] type=12 code0=0xa000000100000000 code1=0x100000000
+[exc] pc=0x103126e00 lr=0x1030e5698
+[vm] 0x102f8c000..0x102f90000 prot=5/5 off=0xc000 shared=0
+[*] child SIGNALED 9
+```
+
+**runtime-confirmed**：system-wide/main-only 路线改变了故障形态，但在 dynamic-region/`0x100000000` 地址契约处提前失败，没有输出 `HI`；不能把它报告为 nested-pmap 修复，也不能继续扩大为“只映射主 cache”方案。候选、备份和 child 均已清理/恢复；本轮未写 kernel/PTE/PAC。
