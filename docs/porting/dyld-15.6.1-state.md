@@ -3681,4 +3681,33 @@ pte_pv_index=0xb4094 pte_head_addr=0xfffffdf0088cbbd0 pte_head=0x80fffdf0952d478
 
 本次只读捕获没有改 dyld、map、PTE、kernel text、PAC 或 trust policy；设备临时诊断文件已清理。下一步应围绕 `sub_86A0924` 返回的 region/code-directory 与 `sub_869BFC8` 页 hash 输入做单变量、短时限核验，仍以真实 `/bin/echo HI` 为唯一验收。
 
-补充静态核对：13337 的 `sub_FFFFFE000869BFC8` 在 `a1=1` 分支明确调用 `sha1_init`、`sha1_loop`、`SHA1Final`；`a1=2` 才走 corecrypto SHA-256。**RE-confirmed via actual T8103 kernel IDA**：本现场 association node 的 `hash_type=1` 与 SHA-1 实现对应，不是 hash-type 未知或“4 GB cache”错误。当前设备部署的 `run_dbg_hold_v2` 没有输出 `VADIFF` 比较段，因此那次短实验不作为页哈希 runtime 证据；已清理其临时日志，未保留未验证结论。
+补充静态核对：13337 的 `sub_FFFFFE000869BFC8` 确实在 `a1=1` 分支调用 SHA-1、在 `a1=2` 分支调用 SHA-256；但 PMAP association 的 `hash_type` 是 normalized 算法桶索引，不能直接按 CodeDirectory 原始 type 解读。此前把现场 `hash_type=1` 直接写成 SHA-1 的措辞已由后续 runtime/IDA 对齐撤回；当前设备部署的 `run_dbg_hold_v2` 没有输出 VADIFF 段，因此那次短实验本身不作为页哈希 runtime 证据。
+
+### 2026-10-03 页内容与 CodeDirectory slot 的直接闭环
+
+主机按仓库 `misc/run_dbg.c` 临时构建了带 `VADIFF_*` 的 arm64 只读异常捕获器，使用现有项目 entitlement、fresh inode 和临时 trustcache；设备实验后已删除该副本、临时 Python/arm64e strip helper、脚本和 child。冻结 child 的输出为：
+
+```text
+[exc] type=1 code0=0x32 code1=0x18047dc9c
+[vadiff] read 0x18047c000 kr=0 out=16384
+[vadiff] diff bytes: 0 (of 16384)
+```
+
+同一 24G90 cache 文件页（`dyld_shared_cache_arm64e` offset `0x47c000`）在设备侧计算：
+
+```text
+len 16384
+sha1   5a8ad60abb9a5eed89727e14b87142c9cab546a0
+sha256 f38ff0ae98de07e517e663c01edba6148dc127bcb420cd5fd43a94c000218e65
+```
+
+冻结 child 的真实 CodeDirectory slot[287]（`0x47c000 >> 14`）读到同一个 SHA-256 值：
+
+```text
+slot[287] @... = f38ff0ae98de07e517e663c01edba6148dc127bcb420cd5fd43a94c000218e65
+page flags: pmapped=1 validated=0xf tainted=0 nx=0
+```
+
+**runtime-confirmed**：本次 fault 页内容、CodeDirectory slot 与 SHA-256 计算完全一致；COW 改页、错误页偏移、slot 内容损坏、未验证页均已排除。此前把内部 PMAP `hash_type=1` 直接解释成 SHA-1 的措辞也已校正：13337 的 `sub_FFFFFE0008699954` 按 CodeDirectory 原始 `hashType=2` 选择 SHA-256，而 `sub_FFFFFE00086A8984` 使用的 pmap code-directory `hash_type=1` 是内部算法桶索引；现场 association 对象的 `+0x118` 与 vnode CodeDirectory 相同，`trust=8`、`reference_count=2`、内部桶 `1`，与 SHA-256 路径相容。**RE-confirmed + runtime-confirmed**：不能再把 hash 算法或 association node 缺失作为当前 50 根因。
+
+因此当前结论更新为：**THEORY** `KERN_CODESIGN_ERROR=50` 位于页哈希成功之后的 PMAP/VM code-signing policy 分支，或由 `sub_8008B8C` 下游返回；`sub_808D79C` 的 PV 冲突和 hash mismatch 均没有 runtime 证据。下一步应读取/对齐 `vm_fault_cs_*` 的具体拒绝条件（map switched/switch_protect、global enforcement、fault prot 与 object state），不修改 pmap gate、PTE、PAC 或 kernel text。
