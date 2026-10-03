@@ -194,3 +194,25 @@ Child-scoped data A/Bs for `pmap+0xc9`, `nested_pmap`, and
 `nested_region_size` all wrote and restored successfully but left the first
 50 fault unchanged. `fmt13_patch.py` was not run; its format-13 pager change
 is orthogonal to the now-dominant T8103 PMAP/PPL owner/validation failure.
+
+## Offline kernelcache candidate (not deployed, 2026-10-03)
+
+IDA 13337 maps `sub_FFFFFE00086A0924+0x10` to raw kernelcache file offset
+`0x169c934`. The exact original word is `0xf9402c08` (`LDR X8,[X0,#0x58]`).
+An offline raw candidate replaced it with `0xd2800008` (`MOV X8,#0`), forcing
+this owner selector to retain the outer pmap for non-type-3 pmaps.
+
+Candidate:
+
+```text
+/tmp/kc_raw_t8103_owner_typefix.bin
+SHA-256 ed42a7ab1b0b63c438c6cd2d026d27629939fdf8cb989b49e688e3afff97f283
+```
+
+The candidate is deliberately outside Git. It has not been compressed into a
+new signed IMG4 and has not been copied to preboot or booted. The original
+IMG4 SHA remains the device baseline. A boot-level trial requires preserving
+the original IMG4, rebuilding the payload/container with a valid signing/boot
+chain, and an explicit recovery path; simply replacing the preboot file is
+expected to fail Apple IMG4/kernel signature validation. This candidate is an
+offline review artifact, not runtime evidence or a deployment authorization.
