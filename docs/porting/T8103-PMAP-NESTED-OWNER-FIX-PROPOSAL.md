@@ -155,3 +155,25 @@ alone is not sufficient. This does not invalidate the bitmap hypothesis; it
 means either the helper receives/uses another pmap at the rejecting stage, or
 a later PMAP-CS gate still returns 50. No kernel text, PAC pointer, PTE, or
 global policy was modified.
+
+## Additional child-scoped A/B results (2026-10-03)
+
+Two reversible data-only experiments now bound the proposal:
+
+1. Outer pmap `+0xc9` changed `0 -> 3` while the child was held at the first
+   fault. The write succeeded, but the child still returned `code0=0x32` and
+   then `0xa100032`. The byte was restored to `0`.
+2. Outer pmap `nested_region_size` (`+0x68`) changed
+   `0x100000000 -> 0` while held at the first fault. The child still returned
+   the same 50 path. The original size was restored.
+
+A separate child-scoped `nested_pmap` pointer-null A/B also succeeded as a
+write and was restored, with the same 50 result. These are runtime-confirmed
+negative A/Bs: changing the visible owner-selector inputs alone is not
+sufficient; the rejecting PMAP/PPL gate is later or receives a different
+pmap/argument. No global kernel state, kernel text, PAC pointer, or PTE was
+left modified.
+
+A direct `kwrite32` attempt at the exact T8103 kernel instruction window was
+blocked by PPL/KTRR (SSH call did not return; subsequent read still matched
+`0xf9402c08`). No kernel text byte changed.
