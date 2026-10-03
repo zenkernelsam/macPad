@@ -3743,6 +3743,15 @@ nested pmap root=0x0, nested region=[0x180000000,0x280000000)
 
 **runtime-confirmed**：candidate 的新 fault 地址落在当前 pmap association tree 覆盖范围之外，同时实际 nested pmap 的 association root 仍为空；这与 `sub_86A0924` 在 nested region 内切换 lookup pmap 的静态逻辑一致。历史 pagewalk 对该 subcache object 的 vnode/packed-object 解码未形成可靠 CodeDirectory 证据，故不把它报告为签名缺失。原始 dyld 已恢复并核验，candidate 仅保留为离线/回滚证据。
 
+针对“`.01` vnode 的 F_ADDFILESIGS blob 尚未保持”又做了一个独立 A/B：在同一 candidate 启动前，用现有 `cachereg` 同时保持主 cache 与 `.01` 的签名 blob；两者均逐字报告 `fcntl=0`、`READY ok=1`。结果仍为：
+
+```text
+[exc] type=1 code0=0xa code1=0x1ee188000
+[*] child SIGNALED 10
+```
+
+**runtime-confirmed**：额外保持两个 cache vnode 的 CodeSignature 不改变 `.01` protection fault；该生命周期候选排除。候选与临时 cachereg 均已退出，当前原始 dyld SHA 仍为 `b8fdbc1b7cfd15cccbcd110c0c3cb1ff91d135d6664b84770d42df843381b91e`。
+
 ### 2026-10-03 PMAP 属性 gate 的现场排除
 
 在另一个短时 frozen child 上，用设备 arm64e `ptrauth_strip` 读取真实 pmap 后，补读了 `sub_FFFFFE00086A8984` 入口在 `0x86a8a0c` 使用的 page-table attribute 与特殊范围字段：
