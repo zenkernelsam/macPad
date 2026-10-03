@@ -3680,3 +3680,5 @@ pte_pv_index=0xb4094 pte_head_addr=0xfffffdf0088cbbd0 pte_head=0x80fffdf0952d478
 结合上述现场 PV head、`pmap+0xc2=0` 和原始 `code0=0x32`，当前最窄结论是：**runtime-confirmed** 目标 PTE 的 PV 冲突/tag 分支未命中；**RE-confirmed** 后续路径只有在 code-directory association/hash 命中时才可绕过 `0x86a8d14` 的 50；**THEORY** 本次 50 位于该 hash/association lookup 未命中后的 allow-invalid fallback。这个 THEORY 仍需直接取得 hash lookup 的 code-directory/页 hash 比较结果确认；不把它提升为可以置 `pmap+0xc2`、改 PTE、写 PAC 或 patch kernel 的理由。
 
 本次只读捕获没有改 dyld、map、PTE、kernel text、PAC 或 trust policy；设备临时诊断文件已清理。下一步应围绕 `sub_86A0924` 返回的 region/code-directory 与 `sub_869BFC8` 页 hash 输入做单变量、短时限核验，仍以真实 `/bin/echo HI` 为唯一验收。
+
+补充静态核对：13337 的 `sub_FFFFFE000869BFC8` 在 `a1=1` 分支明确调用 `sha1_init`、`sha1_loop`、`SHA1Final`；`a1=2` 才走 corecrypto SHA-256。**RE-confirmed via actual T8103 kernel IDA**：本现场 association node 的 `hash_type=1` 与 SHA-1 实现对应，不是 hash-type 未知或“4 GB cache”错误。当前设备部署的 `run_dbg_hold_v2` 没有输出 `VADIFF` 比较段，因此那次短实验不作为页哈希 runtime 证据；已清理其临时日志，未保留未验证结论。
