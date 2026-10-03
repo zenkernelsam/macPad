@@ -216,3 +216,24 @@ the original IMG4, rebuilding the payload/container with a valid signing/boot
 chain, and an explicit recovery path; simply replacing the preboot file is
 expected to fail Apple IMG4/kernel signature validation. This candidate is an
 offline review artifact, not runtime evidence or a deployment authorization.
+
+## Boot-chain audit after reboot (2026-10-03)
+
+The device kernelcache is the original 21,845,088-byte IMG4 at:
+
+```text
+/private/preboot/CFD92CED195A8E1D96E46DD57D101E3CEC005BA3A576CAA9B225733705A2775E33BFF567CD972EA42D56E91B018EF3F1/System/Library/Caches/com.apple.kernelcaches/kernelcache
+```
+
+The host copy `analysis/kernelcache_16.3_T8112.img4` has the same SHA-256 as
+the live file (`78959dd973ed3584532d51424274e183d843a2add801bd017f37d64e7b62dcc2`).
+The mounted preboot `System`/`usr` views are bindfs read-only. No bootloader,
+kexec, PongoOS, or IMG4 re-signing tool is present in `/var/jb/usr/bin`.
+
+**runtime-confirmed + static boundary**: the offline owner-fix raw kernelcache
+candidate cannot be made a bootable device artifact by simply replacing the
+preboot file. It requires a valid IMG4/kernel signature and a boot-chain
+loader that accepts the modified payload. Runtime KRW text writes are blocked
+by PPL/KTRR. The current device therefore has no safe deployment path for the
+candidate, even though the user authorized the experiment; no unsigned
+kernelcache was copied to preboot.
