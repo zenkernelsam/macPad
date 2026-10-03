@@ -237,3 +237,20 @@ loader that accepts the modified payload. Runtime KRW text writes are blocked
 by PPL/KTRR. The current device therefore has no safe deployment path for the
 candidate, even though the user authorized the experiment; no unsigned
 kernelcache was copied to preboot.
+
+## Offline IMG4 repackaging boundary (2026-10-03)
+
+Using the host `pyimg4` parser, the original device IMG4 was decompressed,
+modified at raw payload offset `0x169c934`, recompressed with the original
+LZFSE/bvx2 format, and serialized to an offline candidate:
+
+```text
+raw candidate SHA-256:  ed42a7ab1b0b63c438c6cd2d026d27629939fdf8cb989b49e688e3afff97f283
+IMG4 candidate SHA-256: e20b2bdfd20fbfc24e554c81854c0e44ca09aece6abe0974690893b16bf5f040
+size: 21845088 bytes (same as original)
+```
+
+The IMG4 manifest (`IM4M`) remains the original Apple-signed metadata; changing
+the payload therefore does not make this boot-authorized. The candidate is
+kept only in `/tmp`, was not copied to preboot, and was not sent to the device.
+A valid deployment still needs a legitimate signing/boot acceptance path.
