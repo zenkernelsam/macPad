@@ -3752,6 +3752,15 @@ nested pmap root=0x0, nested region=[0x180000000,0x280000000)
 
 **runtime-confirmed**：额外保持两个 cache vnode 的 CodeSignature 不改变 `.01` protection fault；该生命周期候选排除。候选与临时 cachereg 均已退出，当前原始 dyld SHA 仍为 `b8fdbc1b7cfd15cccbcd110c0c3cb1ff91d135d6664b84770d42df843381b91e`。
 
+在同一 candidate fault 上直接读取 `vm_map_entry`，得到：
+
+```text
+ENTRY 0x1ee188000..0x1ee1ac000
+flags2=0x29980 prot=3/3 pmap_cs_assoc=0 needs_copy=0 use_pmap=1
+```
+
+对照主 cache fault entry 的 `flags2=0x210abac0`（`pmap_cs_assoc=1`），**runtime-confirmed** `.01` 映射本身没有 `pmap_cs_associated`，却仍使用 nested pmap。该事实与 nested pmap association root=0 相互吻合；当前最具体的上游问题是 split-cache subcache 映射创建时没有建立/继承对应 PMAP-CS association，而不是 cache CDHash、页 hash 或 vnode signature 生命周期。任何修复都应在 VM mapping/association producer 层解决，不能把 `pmap_cs_assoc` 位直接写成 1。
+
 ### 2026-10-03 PMAP 属性 gate 的现场排除
 
 在另一个短时 frozen child 上，用设备 arm64e `ptrauth_strip` 读取真实 pmap 后，补读了 `sub_FFFFFE00086A8984` 入口在 `0x86a8a0c` 使用的 page-table attribute 与特殊范围字段：
