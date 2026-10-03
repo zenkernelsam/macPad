@@ -3761,6 +3761,8 @@ nested pmap root=0x0, nested region=[0x180000000,0x280000000)
 
 **runtime-confirmed**：移除 TPRO 不改变 `.01` protection fault；TPRO 不是该故障的充分原因。候选已恢复，当前原始 dyld SHA 仍为 `b8fdbc1b7cfd15cccbcd110c0c3cb1ff91d135d6664b84770d42df843381b91e`。后续应核对 `.01` backing vnode 的 `VSHARED_DYLD`/CS blob 身份与主 cache差异，而不是继续枚举 mmap flag。
 
+随后对 `.01` fault 做了设备 arm64e page-table 与 backing-object 只读核验。异常 ESR 为 `0x92000046`，即写权限 fault；fault entry 仍为 `prot=3/3`、`flags2=0x29980`（`use_pmap=1`, `pmap_cs_assoc=0`），当前/nested pmap 的目标 L3 PTE 均为空。通过 dyld pager `+0x20` 追到 backing vnode 后，读到与主 cache 相同的 vnode：`v_flag=0x84800`（含 `VSHARED_DYLD`）、UBC `ui_flags=0x1f`、主 cache `cs_blob` 链仍存在。**runtime-confirmed**：该 fault 是 `.01` data mapping 的首次写权限 fault，不能归因为未识别 shared-dyld vnode；当前仍最符合“nested pmap 下 subcache entry 没有 PMAP-CS association/正确写保护状态”的上游问题。所有 candidate 与临时探针已恢复/清理，原始 dyld SHA 未变。
+
 在同一 candidate fault 上直接读取 `vm_map_entry`，得到：
 
 ```text
