@@ -3569,6 +3569,8 @@ BOOT-TRUST {"added":0,"backend":"already-trusted","cached":81,"files":98,"hashes
 
 **RE-confirmed**：对当前 `prot=5`，`pmap+0xc2=0` 本身不是充分解释；首要静态候选是 `sub_FFFFFE000808D79C` 的 PV/PTE association check 返回非零，随后在 `0x86a8bcc` 直接变成 50。前文把 c2=0 近似描述为 prot=5 的直接 50 gate 已校正；c2 仍是后续子路径 policy 输入，但需结合 D79C 返回值和现场 PTE/PV 状态确认。
 
+同一 `pmap_enter_options_internal` 的实际 prologue/stack stores 进一步证明参数来源：`0x86a767c MOV X26,X3` 保存原始 `prot`，`0x86a7788 STR X26,[var_C8]`；`0x86a7780` 路径将物理地址 `pa` 右移 14 后写入 `var_D0`；随后 `0x86a7d90 LDP X3,X4,[var_D0]` 把 `X3=pa>>14`、`X4=var_C8=prot` 传给 `sub_FFFFFE00086A8984`。**RE-confirmed**：当前 echo `prot=5` 的 helper branch mapping 是确定的，剩余未确认项集中在 `sub_808D79C` 的 PV/PTE 返回值。
+
 ### 2026-10-03 `pmap+0xc2` 的实际 policy 语义
 
 13337 对 `sub_FFFFFE000869C590` 的反编译显示其字符串为 `pmap_cs_allow_invalid_internal`。该函数要求当前线程 pmap 与 TTBR0 匹配，取得 pmap exclusive lock 后：只有全局 debug/开发开关 `byte_FFFFFE000A9E7E08&1` 开启，且当前 pmap 具备 `get-task-allow` 或 `run-unsigned-code` entitlement，或该字节原先已为 1 时，才执行 `*(_BYTE *)(pmap+0xc2)=1` 并返回 0；否则返回 5 或 53。**RE-confirmed via actual T8103 kernel IDA**：`pmap+0xc2` 是 allow-invalid/开发策略位，不是普通 24G90 cache trust 的必需初始化位。
