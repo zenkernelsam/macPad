@@ -3507,6 +3507,41 @@ CLEAR ... 0x22802b09 0 0x22802809
 
 补充的覆盖审计：同一代码区间内对 `STR[HWDQ].*#0xC0` 与 `STR[HWDQ].*#0xC1` 的 IDA regex 搜索均无命中，未发现通过半字/字宽 store 间接覆盖 `pmap+0xc2` 的路径。该结果仍是静态证据，不能替代设备现场读取。
 
+### 2026-10-03 设备恢复认证后的 trust diagnostic 与 bounded echo 复测
+
+用户明确授权本次 thermal override；密码只存在于临时 `SSHPASS` 环境变量，没有写入文件、shell 配置或 Git。设备只读核验：
+
+```text
+Darwin Cs-Pad-2 ... RELEASE_ARM64_T8103 iPad13,11 arm Darwin
+rootfs_build=24G90
+thermal-state=serious raw=2 low-power=no battery-temp-centic=3719 virtual-temp-centic=3719 effective-temp-centic=3719
+VirtualMac PID 969；VirtualMachine.xpc PID 975，约 292.6% CPU
+```
+
+临时脚本只在 `/tmp` 生成，将 `macos_gui.sh` 的 thermal admission 和 helper `--thermal-tool` 参数移除；执行后用设备实际 `/var/jb/usr/bin/find` + `/var/jb/usr/bin/rm` 核验临时文件计数为 0。helper 输出：
+
+```text
+BOOT-TRUST {"added":0,"backend":"already-trusted","cached":81,"files":98,"hashes":83,"images":82,"resource_hits":16}
+[macos_gui] Cold-boot trust closure ready (complete dependency closure; live membership verified).
+2b9cccd5c5728972bc2a3b7f251114e6f1ff9b5e PRESENT
+8c7ba7e588b0edd43f7334e2de11688cd4732192 PRESENT
+```
+
+随后在不替换 dyld、不写 kernel/PAC、不改 map flags 的条件下，运行设备已有 `/var/mobile/run_dbg_mapinfo`，bounded 原版 `/bin/echo HI`。两次（PID 5085、5151）均得到相同 witness；代表性逐字输出：
+
+```text
+[*] task_for_pid kr=0
+[exc] type=1 code0=0x32 code1=0x18047dc9c
+[vmext] 0x180000000..0x1e7f5c000 tag=0 resident=12 external=1 shadow=1 mode=1 ref=9
+[pcmap] ... prot=5/7 off=0x0 inside=1
+[topinfo] ... private_res=0 shared_res=11765 share_mode=1
+[exc] holding child for 20s (no reply yet)
+[exc] type=10 code0=0xa100032 code1=0x18047dc9c
+[*] child SIGNALED 10
+```
+
+**runtime-confirmed**：thermal override 后 24G90 双 cache trust 已 present，但原版 echo 仍在第一次 `KERN_CODESIGN_ERROR=50`、随后 `KERN_MEMORY_ERROR=10/SIGBUS`，没有输出 `HI`。这再次排除“当前首 fault 只是 cache CDHash 缺失”解释；thermal bypass 诊断已结束，未留下持久脚本或实验 child。后续仍需获得 fault_info 扩展栈/PMAP helper runtime 参数。
+
 ### 2026-10-03 `pmap+0xc2` 的实际 policy 语义
 
 13337 对 `sub_FFFFFE000869C590` 的反编译显示其字符串为 `pmap_cs_allow_invalid_internal`。该函数要求当前线程 pmap 与 TTBR0 匹配，取得 pmap exclusive lock 后：只有全局 debug/开发开关 `byte_FFFFFE000A9E7E08&1` 开启，且当前 pmap 具备 `get-task-allow` 或 `run-unsigned-code` entitlement，或该字节原先已为 1 时，才执行 `*(_BYTE *)(pmap+0xc2)=1` 并返回 0；否则返回 5 或 53。**RE-confirmed via actual T8103 kernel IDA**：`pmap+0xc2` 是 allow-invalid/开发策略位，不是普通 24G90 cache trust 的必需初始化位。
