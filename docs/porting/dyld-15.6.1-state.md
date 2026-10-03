@@ -3653,3 +3653,30 @@ caller 侧进一步对齐：`sub_FFFFFE0008008564` 在 `0x80085d4` 从自己的 
 公开 `vm_fault` 初始化路径还显示：普通 fault 先将 `stealth/io_sync/mark_zf_absent/batch_pmap_op` 置 false，再由 map lookup 填充 entry-derived 的 `pmap_cs_associated/no_copy_on_read`；`vm_fault_enter` 从 `fault_info->pmap_options` 开始，只有 `need_retry` 路径才额外 OR `PMAP_OPTIONS_NOWAIT`。**source-confirmed**：现场 `pmap_options` 必须结合 fault stage 解释，不能把单个 bit 直接等同于 PMAP-CS association。
 
 按 `vm_object_fault_info` bitfield 布局和现场 entry `flags2=0x210abac0`，普通 fault 的 `fault_info+0x28` 预期为：`pmap_cs_associated` bit4=1、`no_copy_on_read` bit8=1，其余初始化状态（no_cache/stealth/io_sync/cs_bypass/mark_zf_absent/batch/resilient）为 0，即约 `0x110`。这是 **source-derived expected baseline**，不是设备 runtime 值；下一次捕获可先用它发现 fault_info 构造/传递异常。
+
+### 2026-10-03 `sub_808D79C` 的现场 PV head 与后续分支收窄
+
+为避免把 `sub_FFFFFE000808D79C` 的静态候选误报成已证实根因，使用临时签名的只读 Python 副本和 arm64e `ptrauth_strip` helper，在同一个 `RUN_DBG_HOLD=35` frozen child 上读取 task→map→pmap、真实四级页表、PV head table 与 PTD table；两个临时副本随后已删除。现场原始 runner 行为仍为：
+
+```text
+[exc] type=1 code0=0x32 code1=0x18047dc9c
+[pcmap] req_pc=0x18047dc9c entry=0x180000000..0x1e7f5c000 prot=5/7 off=0x0 inside=1
+```
+
+同一 child 的 KRW 输出为：
+
+```text
+pmap=0xfffffdf11753ba38 pmap_c0=0x100010101000100 c1=0x1000101010001 c2=0x10001010100 c3=0x100010101
+root=0xfffffdf284e80000 ttep=0xa88dac000 delta=0xfffffde7fc0d4000
+PTE kva=0xfffffdf2ce8248f8 raw=0x60000bc0d18ec3 pa=0xbc0d18000 ppnum=0x2f0346
+target_pv_index=0xefa06 target_head_addr=0xfffffdf008aa8760 target_head=0xc0fffdf2ce8248fa target_head_type=0x2
+pte_pv_index=0xb4094 pte_head_addr=0xfffffdf0088cbbd0 pte_head=0x80fffdf0952d4783 pte_head_type=0x3
+```
+
+`target_head` 去掉 PVH type/flags 后正好是 `0xfffffdf2ce8248f8`，即本次 leaf PTE；它不是另一个映射。**runtime-confirmed**：当前 fault 页是 `PVH_TYPE_PTEP` 单映射，PTE raw 的 AP/PNX 位也与 `sub_FFFFFE000808DBCC` 的检查输入一致；`pmap+0xc2` 的非零 qword 展示中最低 byte 仍为 `0`。PTE-page 对应的 PVH entry 为 `PVH_TYPE_PTDP (3)`，不是“PV head 缺失”。
+
+13337 对 `sub_FFFFFE00086A8984` 的实际反编译显示，当前 echo `a5=prot=5` 会进入 `0x86a8b90..0x86a8bec`：`sub_808D79C(8*a4,a2,&v77,1,0)` 后，如果 `v77&2` 未置位，就进入 `sub_86A0924` 与 code-directory hash lookup；hash lookup 失败后在 `0x86a8d14` 读取 `pmap+0xc2`，为 0 时返回 50。**RE-confirmed via actual T8103 kernel IDA**：该 qword 的最低 byte 不是当前 50 的充分静态解释，而是 hash/association fallback 的最终拒绝门；`sub_808D79C` 的单 PTE type-2 早退本身返回 0。
+
+结合上述现场 PV head、`pmap+0xc2=0` 和原始 `code0=0x32`，当前最窄结论是：**runtime-confirmed** 目标 PTE 的 PV 冲突/tag 分支未命中；**RE-confirmed** 后续路径只有在 code-directory association/hash 命中时才可绕过 `0x86a8d14` 的 50；**THEORY** 本次 50 位于该 hash/association lookup 未命中后的 allow-invalid fallback。这个 THEORY 仍需直接取得 hash lookup 的 code-directory/页 hash 比较结果确认；不把它提升为可以置 `pmap+0xc2`、改 PTE、写 PAC 或 patch kernel 的理由。
+
+本次只读捕获没有改 dyld、map、PTE、kernel text、PAC 或 trust policy；设备临时诊断文件已清理。下一步应围绕 `sub_86A0924` 返回的 region/code-directory 与 `sub_869BFC8` 页 hash 输入做单变量、短时限核验，仍以真实 `/bin/echo HI` 为唯一验收。
