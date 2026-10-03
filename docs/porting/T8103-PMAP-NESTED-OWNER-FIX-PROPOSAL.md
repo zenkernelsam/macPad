@@ -70,3 +70,33 @@ real `HI`, no `code0=0x32`, and preserved outer/nested bitmap invariants.
 Any failure restores the original kernel/dyld state and reboots before another
 trial. Until that review gate exists, the supported device state remains the
 original dyld with no kernel modification.
+
+## Exact T8103 instruction window (IDA 13337)
+
+The owner switch is the following 21-instruction function:
+
+```text
+0xfffffe00086a0928  LDRB W9, [X0,#0xC9]
+0xfffffe00086a092c  CMP  W9, #3
+0xfffffe00086a0930  B.EQ 0xfffffe00086a093c
+0xfffffe00086a0934  LDR  X8, [X0,#0x58]
+0xfffffe00086a0938  CBZ  X8, 0xfffffe00086a0970
+0xfffffe00086a093c  LDR  X8, [X0,#0x60]
+0xfffffe00086a0940  CMP  X8, X1
+0xfffffe00086a0944  B.HI 0xfffffe00086a0970
+0xfffffe00086a0948  LDR  X10,[X0,#0x68]
+0xfffffe00086a094c  ADD  X10,X10,X8
+0xfffffe00086a0950  CMP  X10,X1
+0xfffffe00086a0954  B.LS 0xfffffe00086a0970
+0xfffffe00086a0958  CMP  W9,#3
+0xfffffe00086a095c  B.EQ 0xfffffe00086a096c
+0xfffffe00086a0960  LDR  X8,[X0,#0x58]
+0xfffffe00086a0964  STR  X8,[X2]
+0xfffffe00086a0968  LDR  X8,[X0,#0x60]
+0xfffffe00086a096c  SUB  X1,X1,X8
+```
+
+A real fix must insert the bitmap test between the bounds hit and the
+`LDR/STR owner` sequence, while preserving arm64e control-flow integrity and
+all caller ABI/locking assumptions. This listing is an audit precondition,
+not a patch authorization.
