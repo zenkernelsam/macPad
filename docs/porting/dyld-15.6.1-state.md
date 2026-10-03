@@ -3542,6 +3542,18 @@ BOOT-TRUST {"added":0,"backend":"already-trusted","cached":81,"files":98,"hashes
 
 **runtime-confirmed**：thermal override 后 24G90 双 cache trust 已 present，但原版 echo 仍在第一次 `KERN_CODESIGN_ERROR=50`、随后 `KERN_MEMORY_ERROR=10/SIGBUS`，没有输出 `HI`。这再次排除“当前首 fault 只是 cache CDHash 缺失”解释；thermal bypass 诊断已结束，未留下持久脚本或实验 child。后续仍需获得 fault_info 扩展栈/PMAP helper runtime 参数。
 
+随后新增的临时只读 `run_dbg_pmap_v3` 使用 arm64e `__builtin_ptrauth_strip` 修正 canonical pointer 后，在同一 bounded echo fault 的两个 exception 上读取 task→map→pmap 和 association tree：
+
+```text
+[pmapdiag] task=0xfffffe1ee9b45328 map=0xfffffe1ccc871480 map_flags=0x10090 pmap=0xfffffdf15652c0d8 c0=0x100010101000100 c1=0x1000101010001 c2=0x10001010100 c3=0x100010101
+[pmapdiag] node=0xfffffdf2c41f9470 start=0x180000000 end=0x1e7f5c000 off=0 cd=0xfffffdf079343230 trust=0x8 ref=0x1 hash_type=0x1
+[exc] type=1 code0=0x32 code1=0x18047dc9c
+[exc] type=10 code0=0xa100032 code1=0x18047dc9c
+[*] child SIGNALED 10
+```
+
+按连续小端字节解码，pmap `+0xc0` low byte=`0`、`+0xc1`=`1`、`+0xc2`=`0`、`+0xc3`=`1`；输出中的 unaligned qword 只是相邻字段的读取展示。**runtime-confirmed**：canonical pmap 的 allow-invalid gate `+0xc2` 确实为 0，而 `[0x180000000,0x1e7f5c000)` association node、trust=8、ref=1、CD pointer/hash type 均完整；这不是 pointer-strip 假象。该临时 runner 仅加入 trustcache、只读 KRW，没有写 kernel/PAC/map，未提交源文件。
+
 ### 2026-10-03 `pmap+0xc2` 的实际 policy 语义
 
 13337 对 `sub_FFFFFE000869C590` 的反编译显示其字符串为 `pmap_cs_allow_invalid_internal`。该函数要求当前线程 pmap 与 TTBR0 匹配，取得 pmap exclusive lock 后：只有全局 debug/开发开关 `byte_FFFFFE000A9E7E08&1` 开启，且当前 pmap 具备 `get-task-allow` 或 `run-unsigned-code` entitlement，或该字节原先已为 1 时，才执行 `*(_BYTE *)(pmap+0xc2)=1` 并返回 0；否则返回 5 或 53。**RE-confirmed via actual T8103 kernel IDA**：`pmap+0xc2` 是 allow-invalid/开发策略位，不是普通 24G90 cache trust 的必需初始化位。
