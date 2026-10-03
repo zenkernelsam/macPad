@@ -3838,3 +3838,20 @@ CD trust=8 ref=1 normalized_hash_type=1
 **THEORY（修复层级）**：iPadOS shared-region nesting 与 macOS 15.6 private cache mapping 的 PMAP-CS association 生产层不匹配。现有 dyld `emptysr/highreserve` 诊断已越过 4GB guard，但没有消除 top pmap 的 nested-pmap 元数据；直接写 nested tree、`pmap+0xc2`、PTE/PAC 或 kernel text 都是绕过安全策略，禁止执行。下一步应先审计可公开调用的 shared-region unnest/映射契约；若只能在 XNU PMAP association producer 修复，必须形成可审阅、可回滚的 kernel-side方案后再另行授权，当前不部署。
 
 本轮没有修改设备文件、kernel/PAC/PTE、dyld 或 trust policy；原版 echo 仍未输出 `HI`。
+
+### 2026-10-03 `pmap_unnest_options_internal` 契约核对：当前 dyld 私有映射不会自动清掉 nested pmap
+
+13337 对实际 T8103 kernel 的 `sub_FFFFFE00086A2640`（字符串为 `pmap_unnest_options_internal`）完成 RE。该函数的关键前置条件为：
+
+```text
+pmap->nested_pmap != NULL
+若 options 未带 bypass bit，则请求区间必须落在
+[pmap->nested_region_true_start, pmap->nested_region_true_end)
+随后才锁 nested pmap、标记/清理 nested PTE，最后更新外层 pmap。
+```
+
+现场 top pmap 仍为 `nested_pmap=0xfffffdf15652c798`、`nested_region=[0x180000000,0x280000000)`；cache entry 已是普通 object、`use_pmap=1`，而不是 submap。**runtime-confirmed + RE-confirmed**：dyld 的 `deallocateExistingSharedCache`/后续 private `mmap` 已替换共享区 entry，却没有使 top pmap 的 nested metadata 消失；后续 cache fault 仍经 `sub_86A0924` 把地址转到 nested pmap，而 nested pmap 的 PMAP-CS tree root 为 0。
+
+该函数还显示，完整 unnest 不是普通用户态 `mmap` flags 的副作用；它要求专门的 pmap unnest 操作，并会处理 nested PTE/ASID bitmap。**THEORY**：要让真实 24G90 cache 在该地址范围通过 PMAP-CS，修复点可能是 shared-region teardown/unnest producer，或在 association producer 中把 node 正确登记到实际 nested pmap。直接置 `pmap+0xc2`、复制 association node、写 PTE/PAC 或 patch kernel text 都会绕过该契约，当前禁止。
+
+本轮未部署新候选、未写设备或 kernel 状态；原版 dyld SHA 和 trust 状态不变。下一步应继续静态核对 `shared_region` teardown 调用是否能合法触发 `pmap_unnest_options_internal`，以及是否存在已支持的用户态 syscall/flag；没有明确契约前不做设备 patch。
