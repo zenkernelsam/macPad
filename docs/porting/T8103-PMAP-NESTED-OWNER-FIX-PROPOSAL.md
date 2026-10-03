@@ -177,3 +177,20 @@ left modified.
 A direct `kwrite32` attempt at the exact T8103 kernel instruction window was
 blocked by PPL/KTRR (SSH call did not return; subsequent read still matched
 `0xf9402c08`). No kernel text byte changed.
+
+## Additional diagnostics and text-patch boundary (2026-10-03)
+
+After reboot/re-jailbreak, 24G90 trust was restored via the explicitly
+authorized temporary trust diagnostic. A fresh original-dyld echo baseline
+still produced `code0=0x32` at `0x18047dc9c`.
+
+A direct `kwrite32` precondition check for T8103 runtime instruction
+`0xfffffe002de1c934` (IDA `0xfffffe00086a0934`, original `0xf9402c08`) was
+performed. The write call did not return and a subsequent read remained
+`0xf9402c08`, confirming the documented PPL/KTRR text-write boundary. No text
+byte changed.
+
+Child-scoped data A/Bs for `pmap+0xc9`, `nested_pmap`, and
+`nested_region_size` all wrote and restored successfully but left the first
+50 fault unchanged. `fmt13_patch.py` was not run; its format-13 pager change
+is orthogonal to the now-dominant T8103 PMAP/PPL owner/validation failure.
