@@ -136,3 +136,22 @@ binary work:
 5. Deployment remains prohibited until a signed, reversible kernel artifact,
    recovery image, and child-scoped `/bin/echo HI` acceptance procedure are
    independently reviewed.
+
+## Child-scoped type-gate A/B (2026-10-03)
+
+A reversible KRW A/B changed only the live echo child's outer pmap byte
+`pmap+0xc9` from `0` to `3` while the exception runner held the child at the
+first fault. The write returned `0` and read back `0x3`. The child then
+continued through the runner and still produced:
+
+```text
+[exc] type=1 code0=0x32 code1=0x18047dc9c
+[exc] type=10 code0=0xa100032 code1=0x18047dc9c
+```
+
+There was no `HI`. The byte was restored to `0` with a successful KRW write
+before cleanup. **runtime-confirmed**: forcing the visible outer pmap type gate
+alone is not sufficient. This does not invalidate the bitmap hypothesis; it
+means either the helper receives/uses another pmap at the rejecting stage, or
+a later PMAP-CS gate still returns 50. No kernel text, PAC pointer, PTE, or
+global policy was modified.
