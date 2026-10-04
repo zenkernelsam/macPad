@@ -52,6 +52,10 @@
 
 因此，后续设备清理必须先把非递归顶层 JSONL 拉回本地，按这四类 review，再生成新的逐项删除 manifest。不能用递归 `du`、`find` 或宽泛正则直接删除；也不要把公共目录 `/var/jb/usr/macOS` 当成 15.6 staging。
 
+本轮第二次 review 已将明确的 15.6 目录记录并删除：`f1_leftovers_20261001`（31 个文件）、`libsys_cache_extracts`（43 个文件）、`bak_shim`/`bak_shim2`（6 个文件），以及 rootfs private tmp 下 17 个 `mr*`/`mrt*` 树（51 个文件）。逐目录清单和 inode 校验结果在 `docs/evidence/mac15-device-cleanup-dir-manifest-20261004.jsonl` 与 `mac15-device-cleanup-dir-results-20261004.jsonl`；四个残留旧目录 `hook_disabled_20261001`、`rst`、`shim_bak2`、`x` 也已按 inode 记录后删除。
+
+清理后有意保留：`/var/mobile/dscq`（约 387 个文件、226 MB 的未知 iOS `usr/lib` staging）和 `/var/mobile/macws-runtime-stage`（当前 MacWS/GPU staging）；`/var/jb/tmp` 的 GPU/OSLog 文件没有按名称猜测删除。最终非递归证据为 `docs/evidence/mac15-device-top-inventory-final-20261004.jsonl`。用途登记完成后才删除，避免丢失实验 know-how。
+
 ## 恢复 15.6 时的最小入口
 
 先读 `HANDOVER-MACOS15-FROZEN-2026-10-04.md`、`T8103-PMAP-NESTED-OWNER-FIX-PROPOSAL.md` 和 `dyld-15.6.1-state.md` 的最新条目；重新验证设备 build、dyld SHA、cache 两个完整 CDHash 和 trust 状态。任何 binary RE 仍走 IDA Pro MCP；不能用这些旧 helper 代替 IDA，也不能运行 `fmt13_patch.py` 或任何未重新验签的 kernel candidate。

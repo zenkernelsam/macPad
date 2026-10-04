@@ -1,0 +1,5 @@
+{"expected_inode": 245943229, "path": "/var/mobile/hook_disabled_20261001", "status": "deleted"}
+{"expected_inode": 245323545, "path": "/var/mobile/rst", "status": "deleted"}
+{"expected_inode": 245324208, "path": "/var/mobile/shim_bak2", "status": "deleted"}
+{"expected_inode": 245299928, "path": "/var/mobile/x", "status": "deleted"}
+{"summary": true, "time": "2026-10-04T21:49:53+0800"}

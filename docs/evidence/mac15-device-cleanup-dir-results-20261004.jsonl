@@ -1,0 +1,22 @@
+{"expected_inode": 245939659, "path": "/var/mobile/f1_leftovers_20261001", "reason": "explicit_15.6_f1_leftovers", "status": "deleted"}
+{"expected_inode": 245947284, "path": "/var/mobile/libsys_cache_extracts", "reason": "explicit_15.6_libsystem_extracts", "status": "deleted"}
+{"expected_inode": 245322951, "path": "/var/mobile/bak_shim", "reason": "explicit_15.6_shim_backup", "status": "deleted"}
+{"expected_inode": 245323075, "path": "/var/mobile/bak_shim2", "reason": "explicit_15.6_shim_backup", "status": "deleted"}
+{"expected_inode": 245131086, "path": "/var/mnt/rootfs/private/tmp/mr", "reason": "rootfs_private_tmp_15.6_tree", "status": "deleted"}
+{"expected_inode": 245131090, "path": "/var/mnt/rootfs/private/tmp/mr2", "reason": "rootfs_private_tmp_15.6_tree", "status": "deleted"}
+{"expected_inode": 245131371, "path": "/var/mnt/rootfs/private/tmp/mrAB", "reason": "rootfs_private_tmp_15.6_tree", "status": "deleted"}
+{"expected_inode": 245131377, "path": "/var/mnt/rootfs/private/tmp/mrAB2", "reason": "rootfs_private_tmp_15.6_tree", "status": "deleted"}
+{"expected_inode": 245131174, "path": "/var/mnt/rootfs/private/tmp/mr_ae2_bare", "reason": "rootfs_private_tmp_15.6_tree", "status": "deleted"}
+{"expected_inode": 245131168, "path": "/var/mnt/rootfs/private/tmp/mr_ae2_ent", "reason": "rootfs_private_tmp_15.6_tree", "status": "deleted"}
+{"expected_inode": 245131121, "path": "/var/mnt/rootfs/private/tmp/mr_cur", "reason": "rootfs_private_tmp_15.6_tree", "status": "deleted"}
+{"expected_inode": 245131180, "path": "/var/mnt/rootfs/private/tmp/mr_cur_bare", "reason": "rootfs_private_tmp_15.6_tree", "status": "deleted"}
+{"expected_inode": 245131133, "path": "/var/mnt/rootfs/private/tmp/mr_func", "reason": "rootfs_private_tmp_15.6_tree", "status": "deleted"}
+{"expected_inode": 245131352, "path": "/var/mnt/rootfs/private/tmp/mr_ios", "reason": "rootfs_private_tmp_15.6_tree", "status": "deleted"}
+{"expected_inode": 245131186, "path": "/var/mnt/rootfs/private/tmp/mr_orig", "reason": "rootfs_private_tmp_15.6_tree", "status": "deleted"}
+{"expected_inode": 245131141, "path": "/var/mnt/rootfs/private/tmp/mr_restore", "reason": "rootfs_private_tmp_15.6_tree", "status": "deleted"}
+{"expected_inode": 245131222, "path": "/var/mnt/rootfs/private/tmp/mr_restore2", "reason": "rootfs_private_tmp_15.6_tree", "status": "deleted"}
+{"expected_inode": 245131346, "path": "/var/mnt/rootfs/private/tmp/mr_rr", "reason": "rootfs_private_tmp_15.6_tree", "status": "deleted"}
+{"expected_inode": 245131285, "path": "/var/mnt/rootfs/private/tmp/mrt", "reason": "rootfs_private_tmp_15.6_tree", "status": "deleted"}
+{"expected_inode": 245131291, "path": "/var/mnt/rootfs/private/tmp/mrt2", "reason": "rootfs_private_tmp_15.6_tree", "status": "deleted"}
+{"expected_inode": 245131304, "path": "/var/mnt/rootfs/private/tmp/mrx", "reason": "rootfs_private_tmp_15.6_tree", "status": "deleted"}
+{"summary": true, "deleted": 21, "skipped": 0, "errors": 0, "time": "2026-10-04T21:46:02+0800"}

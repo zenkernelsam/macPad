@@ -3940,3 +3940,7 @@ bounded `/bin/echo HI` 原文关键结果：
 为避免清理时丢失 know-how，新增 `docs/porting/MAC15-UNTRACKED-ARTIFACT-CATALOG-2026-10-04.md`，逐项登记本地未跟踪的 IDA proof、C 探针、编译产物和危险边界，并新增只读、非递归的 `misc/device_top_inventory.py`。该目录把文件分成 15.6-only、Ventura/项目共享、系统文件、未知/用户文件四类；在新的逐项 manifest 审核前不删除未知项。上述登记是文件用途/历史的维护记录，不是新的运行修复，也不改变 15.6 冻结结论。
 
 下一步仍是先把这两个 JSONL 和用途目录提交推送，再按四类生成第二个有界删除 manifest；不再使用可能拖住设备的递归 `du`/宽泛 `find`。完成清理后才开始 Ventura 13.4/22F66 的新设备 inventory 和 bounded `/bin/echo` 验收。
+
+### 2026-10-04 有界清理完成
+
+第二次清理按 inode/size manifest 处理明确的 15.6 路径：普通文件 780 个（约 110.8 MB），`deleted=780, skipped=0, errors=0`；目录 manifest 随后删除 21 个根目录，`deleted=21, skipped=0, errors=0`。最终设备核验显示 `/var/mobile` 只剩标准用户目录、`dscq` 和 `macws-runtime-stage`；rootfs private tmp 只剩 autosignd 三件和当前 Steam semaphore；keeper、旧 `restore_env.sh`/`cachereg`、`nm`、`dsc*` staging 及 15.6 runner/chroot 进程均不存在。**runtime-confirmed**：未修改 rootfs dyld、kernel/PAC/PTE、trust policy 或公共 `/var/jb/usr/macOS` runtime；24G90 身份与原始 dyld SHA `b8fdbc1b7cfd15cccbcd110c0c3cb1ff91d135d6664b84770d42df843381b91e` 保持不变。清理证据和最终 inventory 已保存到 `docs/evidence/`；下一步才进入 Ventura inventory/trust/bounded echo，不能把这一步当作运行验收。
