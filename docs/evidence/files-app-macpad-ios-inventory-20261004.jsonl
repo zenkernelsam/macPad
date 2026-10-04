@@ -1,17 +1,17 @@
-{"kind": "meta", "time": "2026-10-04T22:40:37+0800", "scope": "read-only inventory; no device mutation"}
-{"name": "arm64ify_macho.py", "disposition": "保留；本地 misc/arm64ify_macho.py 完整相同，13/15 rootfs 准备工具，不属于仅15.6 payload"}
-{"name": "ensure_settings_extensions_runtime.sh", "disposition": "保留；本地 layout/usr/macOS/bin/ensure_settings_extensions_runtime.sh 完整相同，正式 Ventura runtime 脚本"}
-{"name": "exec_to_dylib.py", "disposition": "保留；本地 misc/exec_to_dylib.py 完整相同，通用 Mach-O 工具"}
-{"name": "install_rootfs_15.sh", "disposition": "保留归档；本地 misc/install_rootfs_15.sh 完整相同，未来重建15.6 rootfs所需"}
-{"name": "ipad_fix_deps.sh", "disposition": "保留归档；本地没有同名 tracked 文件，需从 Files App 手动保留/导出后再删"}
-{"name": "postinst.sh", "disposition": "保留；Files App 副本与本地 analysis/dyldwork/postinst.sh 完整相同，但正式源是 misc/ 与 layout/ 两份"}
-{"name": "com.kdt.macosbooter_0.3.4_iphoneos-arm64.deb", "disposition": "保留本地包；Files App副本与 packages/com.kdt.macosbooter_0.3.4_iphoneos-arm64.deb SHA相同"}
-{"name": "dyld_patched", "disposition": "可删除；15.6 patched dyld payload，本地没有同名归档，已由冻结文档记录，不是当前 Ventura runtime"}
-{"name": "sprobe", "disposition": "可删除；旧15.6 pager probe，本地 misc/sprobe 同SHA，已归档源码/二进制"}
-{"name": "libmachook_arm64_noop.dylib", "disposition": "可删除；15.6实验 noop payload，本地无同名但不属于当前正式 runtime"}
-{"name": "libmachook_noop.dylib", "disposition": "可删除；15.6实验 noop payload，本地无同名但不属于当前正式 runtime"}
-{"name": "minexit_arm64", "disposition": "可删除；15.6实验退出探针，本地无同名"}
-{"name": "minexit_arm64e", "disposition": "可删除；15.6实验退出探针，本地无同名"}
-{"name": "libSystem.B.dylib", "disposition": "可删除；Files App中的小型实验 shim，本地 misc/libSystem.B.dylib 同SHA，正式运行时不应使用"}
-{"name": "libdyld.dylib", "disposition": "可删除；Files App中的小型实验 shim，本地 misc/libdyld.dylib 同SHA，正式运行时不应使用"}
-{"name": "安装说明.md", "disposition": "保留或先导出；Files App专用说明，本地未找到同名，可能含操作 know-how"}
+{"kind": "meta", "scope": "read-only inventory; no device mutation", "time": "2026-10-04T22:40:37+0800"}
+{"disposition": "保留；本地 misc/arm64ify_macho.py 完整相同，13/15 rootfs 准备工具，不属于仅15.6 payload", "name": "arm64ify_macho.py"}
+{"disposition": "保留；本地 layout/usr/macOS/bin/ensure_settings_extensions_runtime.sh 完整相同，正式 Ventura runtime 脚本", "name": "ensure_settings_extensions_runtime.sh"}
+{"disposition": "保留；本地 misc/exec_to_dylib.py 完整相同，通用 Mach-O 工具", "name": "exec_to_dylib.py"}
+{"disposition": "保留归档；本地 misc/install_rootfs_15.sh 完整相同，未来重建15.6 rootfs所需", "name": "install_rootfs_15.sh"}
+{"archive_path": "docs/porting/archive/files-app-macpad_iOS-20261004/ipad_fix_deps.sh", "archive_sha256": null, "disposition": "可删除；已归档到 docs/porting/archive/files-app-macpad_iOS-20261004/", "name": "ipad_fix_deps.sh"}
+{"disposition": "保留；Files App 副本与本地 analysis/dyldwork/postinst.sh 完整相同，但正式源是 misc/ 与 layout/ 两份", "name": "postinst.sh"}
+{"disposition": "保留本地包；Files App副本与 packages/com.kdt.macosbooter_0.3.4_iphoneos-arm64.deb SHA相同", "name": "com.kdt.macosbooter_0.3.4_iphoneos-arm64.deb"}
+{"disposition": "可删除；15.6 patched dyld payload，本地没有同名归档，已由冻结文档记录，不是当前 Ventura runtime", "name": "dyld_patched"}
+{"disposition": "可删除；旧15.6 pager probe，本地 misc/sprobe 同SHA，已归档源码/二进制", "name": "sprobe"}
+{"disposition": "可删除；15.6实验 noop payload，本地无同名但不属于当前正式 runtime", "name": "libmachook_arm64_noop.dylib"}
+{"disposition": "可删除；15.6实验 noop payload，本地无同名但不属于当前正式 runtime", "name": "libmachook_noop.dylib"}
+{"disposition": "可删除；15.6实验退出探针，本地无同名", "name": "minexit_arm64"}
+{"disposition": "可删除；15.6实验退出探针，本地无同名", "name": "minexit_arm64e"}
+{"disposition": "可删除；Files App中的小型实验 shim，本地 misc/libSystem.B.dylib 同SHA，正式运行时不应使用", "name": "libSystem.B.dylib"}
+{"disposition": "可删除；Files App中的小型实验 shim，本地 misc/libdyld.dylib 同SHA，正式运行时不应使用", "name": "libdyld.dylib"}
+{"archive_path": "docs/porting/archive/files-app-macpad_iOS-20261004/安装说明.md", "archive_sha256": null, "disposition": "可删除；已归档到 docs/porting/archive/files-app-macpad_iOS-20261004/", "name": "安装说明.md"}
