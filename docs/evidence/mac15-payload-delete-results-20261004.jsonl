@@ -1,0 +1,4 @@
+{"path":"/Users/ciscohe/Desktop/macPad/macos-15.6.1-rootfs","status":"deleted","du_kib_before":20618528,"final_exists":false,"note":"Deletion required writable-bit normalization for read-only rootfs entries; final path check is absent."}
+{"path":"/Users/ciscohe/Desktop/macPad/analysis/dyld-cache-15.6.1","status":"deleted","du_kib_before":5905776,"final_exists":false}
+{"path":"/Users/ciscohe/Desktop/VirtualMacOniPad/.diag/guest-kext-15.6.1","status":"deleted","du_kib_before":2972,"final_exists":false}
+{"summary":true,"time":"2026-10-04T22:48:55+0800","device_rootfs":"/var/mnt/rootfs","device_rootfs_status":"deleted_after_15.6.1_24G90_inode_verified"}

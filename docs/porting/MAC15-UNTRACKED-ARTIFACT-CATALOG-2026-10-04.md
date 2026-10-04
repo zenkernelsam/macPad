@@ -61,3 +61,13 @@
 先读 `HANDOVER-MACOS15-FROZEN-2026-10-04.md`、`T8103-PMAP-NESTED-OWNER-FIX-PROPOSAL.md` 和 `dyld-15.6.1-state.md` 的最新条目；重新验证设备 build、dyld SHA、cache 两个完整 CDHash 和 trust 状态。任何 binary RE 仍走 IDA Pro MCP；不能用这些旧 helper 代替 IDA，也不能运行 `fmt13_patch.py` 或任何未重新验签的 kernel candidate。
 
 第一里程碑仍是原版 `/bin/echo HI` 经真实 24G90 dyld、系统库和 shared-cache 打印 `HI`。历史“进程活着”“trust helper 返回 0”“普通 mmap 成功”都不是该里程碑。
+
+### Files App `macPad_iOS` 目录（2026-10-04）
+
+对 `/var/mobile/Containers/Shared/AppGroup/1B2AD29A-2C34-4770-86EC-E11CD02312FF/File Provider Storage/macPad_iOS` 做了只读 inventory，没有删除任何文件。目录共有 16 个文件，已逐个计算 SHA-256 并与本地仓库搜索结果对照。结论与逐项 disposition 保存在 `docs/evidence/files-app-macpad-ios-inventory-20261004.jsonl`。
+
+可直接由用户在 Files App 删除的实验 payload：`dyld_patched`、`sprobe`、`libmachook_arm64_noop.dylib`、`libmachook_noop.dylib`、`minexit_arm64`、`minexit_arm64e`、`libSystem.B.dylib`、`libdyld.dylib`。这些不是当前 Ventura runtime；其中 `sprobe`、两个小 shim 已有本地同 SHA 或对应归档。
+
+应保留/无需在 Files App 重复保存的文件：`arm64ify_macho.py`、`ensure_settings_extensions_runtime.sh`、`exec_to_dylib.py`、`install_rootfs_15.sh`、`postinst.sh`、`com.kdt.macosbooter_0.3.4_iphoneos-arm64.deb`。前五个在本地已有对应脚本（`ipad_fix_deps.sh` 例外：Files App 中存在，但本地未找到同名 tracked 文件）；deb 与本地 `packages/com.kdt.macosbooter_0.3.4_iphoneos-arm64.deb` SHA-256 完全一致。
+
+`ipad_fix_deps.sh` 和 `安装说明.md` 本地未找到同名副本，暂不要删除；先由用户在 Files App 复制/导出，或确认其中内容已经由其他文档吸收。`install_rootfs_15.sh` 虽然目标分支已切换到 Ventura，仍应保留在本地，因为它是未来重建 15.6 rootfs 的入口脚本。

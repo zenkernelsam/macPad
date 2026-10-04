@@ -3944,3 +3944,11 @@ bounded `/bin/echo HI` 原文关键结果：
 ### 2026-10-04 有界清理完成
 
 第二次清理按 inode/size manifest 处理明确的 15.6 路径：普通文件 780 个（约 110.8 MB），`deleted=780, skipped=0, errors=0`；目录 manifest 随后删除 21 个根目录，`deleted=21, skipped=0, errors=0`。最终设备核验显示 `/var/mobile` 只剩标准用户目录、`dscq` 和 `macws-runtime-stage`；rootfs private tmp 只剩 autosignd 三件和当前 Steam semaphore；keeper、旧 `restore_env.sh`/`cachereg`、`nm`、`dsc*` staging 及 15.6 runner/chroot 进程均不存在。**runtime-confirmed**：未修改 rootfs dyld、kernel/PAC/PTE、trust policy 或公共 `/var/jb/usr/macOS` runtime；24G90 身份与原始 dyld SHA `b8fdbc1b7cfd15cccbcd110c0c3cb1ff91d135d6664b84770d42df843381b91e` 保持不变。清理证据和最终 inventory 已保存到 `docs/evidence/`；下一步才进入 Ventura inventory/trust/bounded echo，不能把这一步当作运行验收。
+
+### 2026-10-04 15.6 rootfs 与本机 payload 删除
+
+用户决定切换到作者验证的 macOS 13/Ventura 路线。设备端先以 rootfs inode、`SystemVersion.plist` 和原始 dyld SHA 三重核验：`/var/mnt/rootfs` inode `244472649`，`ProductVersion=15.6.1`，`ProductBuildVersion=24G90`，dyld SHA-256 `b8fdbc1b7cfd15cccbcd110c0c3cb1ff91d135d6664b84770d42df843381b91e`。删除脚本只在这三个条件全部满足时执行 `shutil.rmtree`; 输出 `verified` 后 `deleted` 且 `exists=false`。设备没有 chroot、WindowServer 或 runner 进程，删除后临时控制脚本也已移除。**runtime-confirmed**：`/var/mnt/rootfs` 15.6 rootfs 已删除；未删除 `/var/jb/usr/macOS`、公共 MacWS runtime 或证据文档。
+
+本机删除的明确大 payload：`macos-15.6.1-rootfs/`（约 20 GB）、`analysis/dyld-cache-15.6.1/`（约 5.6 GB，含两片 cache 和 `.a2s`）、`VirtualMacOniPad/.diag/guest-kext-15.6.1/`（约 2.9 MB，15.6 guest-kext 诊断）。删除前 manifest 在 `docs/evidence/mac15-payload-delete-manifest-20261004.jsonl`；构建脚本 `misc/build-rootfs-15.6.1.sh`、`misc/install_rootfs_15.sh`、15.6 分析 dyld/kernel IDA 材料和全部冻结文档仍保留，未来可重新下载/重建。
+
+`VirtualMacOniPad` 的作者 macOS 13 输入（`22D68__MacOS`）和 macOS 11 输入未删除；15.6 删除范围没有触及 `VirtualMac/` 源码、工具、IPSW 或现有 GPU 研究证据。
