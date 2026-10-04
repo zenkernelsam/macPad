@@ -70,4 +70,4 @@
 
 应保留/无需在 Files App 重复保存的文件：`arm64ify_macho.py`、`ensure_settings_extensions_runtime.sh`、`exec_to_dylib.py`、`install_rootfs_15.sh`、`postinst.sh`、`com.kdt.macosbooter_0.3.4_iphoneos-arm64.deb`。前五个在本地已有对应脚本（`ipad_fix_deps.sh` 例外：Files App 中存在，但本地未找到同名 tracked 文件）；deb 与本地 `packages/com.kdt.macosbooter_0.3.4_iphoneos-arm64.deb` SHA-256 完全一致。
 
-`ipad_fix_deps.sh` 和 `安装说明.md` 本地未找到同名副本，暂不要删除；先由用户在 Files App 复制/导出，或确认其中内容已经由其他文档吸收。`install_rootfs_15.sh` 虽然目标分支已切换到 Ventura，仍应保留在本地，因为它是未来重建 15.6 rootfs 的入口脚本。
+`ipad_fix_deps.sh` 和 `安装说明.md` 已复制到 `docs/porting/archive/files-app-macpad_iOS-20261004/` 并提交归档；其 SHA-256 分别为 `147b8c8bcc59390677486387cfd25c6b8831a411439167f70a53ec63c81ef113` 与 `543f62416ff03a5175ee0195b7e6337b0943df9f9ebb46123c9c74b14351b9c7`。因此 Files App 目录中的 16 个文件现在都可以由用户手动删除；本地正式源码、deb、脚本和历史 runbook 已保留。`install_rootfs_15.sh` 虽然目标分支已切换到 Ventura，仍保留在本地，因为它是未来重建 15.6 rootfs 的入口脚本。
