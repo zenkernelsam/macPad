@@ -3927,3 +3927,16 @@ bounded `/bin/echo HI` 原文关键结果：
 **runtime-confirmed + source-confirmed**：内核已经执行了标准 unnest 操作；问题不是 `check_np(NULL)` 没有触发 unnest，而是后续 T8103 `sub_86A0924` 仍只按 `nested_region_addr/size` 选择 nested owner，不读取已置位的 ASID bitmap。故此前“可能需要额外普通 munmap 才触发 unnest”的假设撤回。
 
 当前真正的兼容性缺口是：`pmap_unnest` 完成后，PMAP-CS owner lookup 必须识别该 VA 已从 nested region 脱离并继续使用外层 pmap；T8103 闭源 helper 没有这样做。这个修复只能在 kernel/PPL owner-selection 层完成，不能通过 dyld mmap 参数、trustcache 或用户态映射顺序可靠替代。
+
+### 2026-10-04 重启后清理复核与遗留物用途登记
+
+用户重启 iPad、重新越狱并启动 VirtualMac 后，先做只读设备核验。设备仍为 `iPad13,11` / `20D47`，rootfs `ProductVersion=15.6.1`、`ProductBuildVersion=24G90`；原始 dyld 大小 `1239632`，SHA-256 为
+`b8fdbc1b7cfd15cccbcd110c0c3cb1ff91d135d6664b84770d42df843381b91e`。没有运行 chroot、WindowServer、dyld 替换、kernel/PAC/PTE 写入或 `fmt13_patch.py`。当前 rootfs 的先前 staging 路径 `/var/mnt/rootfs/private/tmp/dsc*` 已不存在；这只说明 staging 目录状态，不能据此声称 24G90 cache 已验收。
+
+先前删除 manifest 已逐项删除 548 个明确 15.6 实验文件，3 项跳过，0 errors；重启后的非递归顶层 inventory 仍发现 824 个文件条目：`/var/mobile` 677、`/var/jb/var/mobile` 4、`/var/jb/tmp` 9、`/var/mnt/rootfs/private/tmp` 134。原始 JSONL 证据保存在 `docs/evidence/mac15-device-top-inventory-post-reboot-20261004.jsonl`，删除结果在 `docs/evidence/mac15-device-delete-results-20261004.jsonl`。`/var/jb/tmp/osl_sigsys.txt` 等共享/未知文件没有被按名字删除；`/var/jb/usr/macOS`、rootfs 本体和系统 trustd 文件也没有递归触碰。
+
+**runtime-confirmed**：重启不会让 `/var/mobile` 和 rootfs 私有临时目录中的历史文件自动消失，因此“已重启”不是清理完成的证据。当前进程核验没有发现 `device_mac15_topscan`、`ventura_top_inventory`、`run_dbg` 或 `chroot` 残留；VirtualMac 及正式 macPad 宿主服务仍在运行，未停止。
+
+为避免清理时丢失 know-how，新增 `docs/porting/MAC15-UNTRACKED-ARTIFACT-CATALOG-2026-10-04.md`，逐项登记本地未跟踪的 IDA proof、C 探针、编译产物和危险边界，并新增只读、非递归的 `misc/device_top_inventory.py`。该目录把文件分成 15.6-only、Ventura/项目共享、系统文件、未知/用户文件四类；在新的逐项 manifest 审核前不删除未知项。上述登记是文件用途/历史的维护记录，不是新的运行修复，也不改变 15.6 冻结结论。
+
+下一步仍是先把这两个 JSONL 和用途目录提交推送，再按四类生成第二个有界删除 manifest；不再使用可能拖住设备的递归 `du`/宽泛 `find`。完成清理后才开始 Ventura 13.4/22F66 的新设备 inventory 和 bounded `/bin/echo` 验收。
