@@ -131,11 +131,12 @@ echo "layout OK"
 echo "=== [4/7] arm64ify entry-point executables ==="
 # iOS 16.3's kernel execs arm64/ALL slices for third-party/ad-hoc main
 # executables; the ARM64E macOS slices stay for dyld's own loading. bash/sh
-# are the shell entry points, echo is the first-milestone witness, the two
-# GUI entry points follow the author's proven set.
-WS="$NEW/System/Library/PrivateFrameworks/SkyLight.framework/Resources/WindowServer"
+# are the shell entry points, echo is the first-milestone witness.
+# WindowServer is deliberately NOT arm64ified here: postinst.sh's
+# prepare_windowserver_runtime() extracts its verified ARM64/E slice
+# (UUID-pinned 465422c7-…) into a thin ARM64/ALL image instead.
 IP="$NEW/System/Library/CoreServices/Installer Progress.app/Contents/MacOS/Installer Progress"
-for b in "$WS" "$IP" "$NEW/bin/bash" "$NEW/bin/sh" "$NEW/bin/echo"; do
+for b in "$IP" "$NEW/bin/bash" "$NEW/bin/sh" "$NEW/bin/echo"; do
     [ -f "$b" ] || { echo "FAIL: $b missing"; exit 1; }
     if ! "$PY" "$MISC_DIR/arm64ify_macho.py" --check "$b" | grep -qw arm64; then
         "$PY" "$MISC_DIR/arm64ify_macho.py" "$b"
