@@ -1683,7 +1683,19 @@ restore_cold_boot_trust() {
         "$ROOTFS/System/Library/CoreServices/SystemVersion.plist" 2>/dev/null \
         | tr -d '[:space:]') || macos_rootfs_build=""
     case "$macos_rootfs_build" in
-        22F82|22F66|"")
+        22F82|"")
+            # macOS 13.4.1 (22F82) stock cryptex cache — verified with
+            # `codesign -vvv -d` against UniversalMac_13.4.1_22F82_Restore.ipsw
+            # (sha256 5ac144d1…) on 2026-10-06. "" keeps the fallback on the
+            # currently deployed build.
+            set -- "$@" \
+                --hash 7a3e85f1ddcb90e7d785bbfd6232fd058b4de317 \
+                --hash 2573536d64cbd47872f3d318bf0efc6273d7cf20
+            ;;
+        22F66)
+            # Author's historical 13.4-era pair (provenance unverified:
+            # likely 22F66 stock or the author's patched cache). It is NOT
+            # the stock 22F82 signature — do not merge the branches.
             set -- "$@" \
                 --hash b5da39409492ac85e5a8e8ab618fe77e2d7a2980 \
                 --hash bbb765988e2677b98d47a549d612fa0d4af25f69

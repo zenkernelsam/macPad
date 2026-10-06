@@ -73,17 +73,25 @@ restore_cold_boot_trust "$@"
                 "2b9cccd5c5728972bc2a3b7f251114e6f1ff9b5e",
                 "8c7ba7e588b0edd43f7334e2de11688cd4732192",
             },
+            # 22F82 stock cryptex pair — verified with the documented method
+            # (codesign -vvv -d) against UniversalMac_13.4.1_22F82_Restore.ipsw,
+            # sha256 5ac144d1…, on 2026-10-06.
             "22F82": {
-                "b5da39409492ac85e5a8e8ab618fe77e2d7a2980",
-                "bbb765988e2677b98d47a549d612fa0d4af25f69",
+                "7a3e85f1ddcb90e7d785bbfd6232fd058b4de317",
+                "2573536d64cbd47872f3d318bf0efc6273d7cf20",
             },
+            # The historical pair belongs to the author's 22F66-era cache
+            # (patched or stock; never reproduced here). Keep it pinned to
+            # 22F66 only — it must not be reused for a stock 22F82 rootfs.
             "22F66": {
                 "b5da39409492ac85e5a8e8ab618fe77e2d7a2980",
                 "bbb765988e2677b98d47a549d612fa0d4af25f69",
             },
+            # Unreadable plist still falls back to the current proven build:
+            # our deployed rootfs is 22F82 stock.
             "": {
-                "b5da39409492ac85e5a8e8ab618fe77e2d7a2980",
-                "bbb765988e2677b98d47a549d612fa0d4af25f69",
+                "7a3e85f1ddcb90e7d785bbfd6232fd058b4de317",
+                "2573536d64cbd47872f3d318bf0efc6273d7cf20",
             },
         }.items():
             result, args = self._run_restore(build)

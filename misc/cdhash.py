@@ -12,14 +12,17 @@ def cdhash_of_cd(cd):
     magic, length, version = struct.unpack(">III", cd[0:12])
     if magic != CSMAGIC_CODEDIRECTORY:
         return None
-    hashType = cd[34]
+    # CodeDirectory header: hashSize at 36, hashType at 37 — NOT offset 34
+    # (34 sits inside codeLimit). Reading 34 forced every sha256-typed CD
+    # down the sha1 fallback, producing hashes AMFI never matches.
+    hashType = cd[37]
     blob = cd[:length]
-    if hashType == 2:
-        h = hashlib.sha256(blob).digest()
-    elif hashType == 4:
+    if hashType == 4:
         h = hashlib.sha384(blob).digest()
-    else:
+    elif hashType == 1:
         h = hashlib.sha1(blob).digest()
+    else:  # 2 = sha256, 3 = sha256-truncated, 0 defaults to sha256-era CDs
+        h = hashlib.sha256(blob).digest()
     return h[:20].hex()
 
 def sigs_from_macho(d):
