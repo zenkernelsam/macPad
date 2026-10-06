@@ -97,6 +97,26 @@ rebuilding the VM inputs would need these back.
 | Q3 | The 15.6 PMAP-CS nested-owner bug (frozen branch root cause) — does it also bite a Ventura cache mapped through the **systemwide** 536 path? THEORY: no — 536 registers the cache AS the shared region rather than private-mapping inside the iOS SR submap; the author's 13.4 devices ran it. | THEORY — runtime verdict at first exec |
 | Q4 | 22F82 IPSW OS volume contains no on-disk `libSystem.B.dylib` (macOS 11+ design; §19.6 for 22D68, same family). For `echo`, dyld resolves libSystem from the cache — no disk stubs needed. | THEORY — confirm with `DYLD_PRINT_LIBRARIES` |
 | Q5 | `install_rootfs_15.sh` is 15.6-shaped (build checks `24G90`, arm64ify targets, swap logic using `rootfs-13.4.bak`). Needs a version-clean `install-rootfs-13.sh` — never reuse the 15.6 script as-is. | TODO |
+| Q6 | `usr/lib/systemhook.dylib` inside rootfs is trust-listed by `postinst.sh:1467` but **absent on this device** (`/var/jb/usr/lib/` has no `systemhook.dylib`; ElleKit uses `libhooker.dylib`/`libellekit.dylib`/`libinjector.dylib` instead). Old rootfs backups that used to carry it are deleted. | OPEN — candidate: harvest `libhooker.dylib` under a documented name, or source the original systemhook build; only needed for the chroot tweak-injection chain, NOT for the echo milestone |
+
+## 4.1 Injection sources on device (runtime-confirmed 2026-10-06)
+
+```text
+OK   /var/jb/usr/lib/TweakLoader.dylib
+OK   /var/jb/Library/Frameworks/CydiaSubstrate.framework
+OK   /var/jb/usr/lib/ellekit/{pspawn,MobileSafety,libinjector}.dylib
+OK   /var/jb/usr/lib/{libsubstrate,libhooker,libellekit,TweakInject}.dylib
+OK   /var/jb/usr/lib/TweakInject/{MacWSCatalystLaunch,MacWSWindowing,
+      MTLCompilerBypassOSCheck,VZKeyboardPassthrough}.dylib (+ plists)
+MISS /var/jb/usr/lib/systemhook.dylib
+MISS /var/jb/usr/lib/CydiaSubstrate.framework
+MISS /var/jb/var/mobile/theos
+```
+
+`launchdchrootexec` injects `DYLD_INSERT_LIBRARIES=libmachook` itself
+(`main.m:61-72`), so the echo milestone does not depend on the chroot
+tweak-injection chain. The `systemhook`/`TweakLoader`/`CydiaSubstrate`
+closure is required later by `postinst.sh:1463-1467` and chroot-side tweaks.
 
 ## 5. Execution plan (current)
 
