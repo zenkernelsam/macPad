@@ -1580,6 +1580,8 @@ restore_cold_boot_trust() {
         "$ROOTFS/System/Library/Frameworks/CydiaSubstrate.framework/CydiaSubstrate" \
         /var/jb/Library/Frameworks/CydiaSubstrate.framework/CydiaSubstrate \
         "$ROOTFS/bin/bash" \
+        "$ROOTFS/bin/sh" \
+        "$ROOTFS/bin/echo" \
         "$ROOTFS$DEFAULTS_BIN" \
         "$ROOTFS/usr/sbin/filecoordinationd" \
         "$ROOTFS/System/Library/CoreServices/launchservicesd" \
