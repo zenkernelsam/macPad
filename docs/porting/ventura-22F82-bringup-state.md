@@ -96,8 +96,28 @@ rebuilding the VM inputs would need these back.
 | Q2 | Old `syscall 536 → 40` failure: RE-confirmed producer is Sandbox `mpo_file_check_mmap` (`cred_sb_evaluate` of `file-map-executable`) firing on a vnode **lacking VSHAREDCACHE**. Was that failure specific to the 15.6 cache/layout, or will a legit 22F82 cryptex cache carry the flag and pass? | OPEN — likely non-issue for a proper cryptex-placed cache; verify at runtime |
 | Q3 | The 15.6 PMAP-CS nested-owner bug (frozen branch root cause) — does it also bite a Ventura cache mapped through the **systemwide** 536 path? THEORY: no — 536 registers the cache AS the shared region rather than private-mapping inside the iOS SR submap; the author's 13.4 devices ran it. | THEORY — runtime verdict at first exec |
 | Q4 | 22F82 IPSW OS volume contains no on-disk `libSystem.B.dylib` (macOS 11+ design; §19.6 for 22D68, same family). For `echo`, dyld resolves libSystem from the cache — no disk stubs needed. | THEORY — confirm with `DYLD_PRINT_LIBRARIES` |
-| Q5 | `install_rootfs_15.sh` is 15.6-shaped (build checks `24G90`, arm64ify targets, swap logic using `rootfs-13.4.bak`). Needs a version-clean `install-rootfs-13.sh` — never reuse the 15.6 script as-is. | TODO |
+| Q5 | `install_rootfs_15.sh` is 15.6-shaped (build checks `24G90`, arm64ify targets, swap logic using `rootfs-13.4.bak`). Needs a version-clean `install-rootfs-13.sh` — never reuse the 15.6 script as-is. | DONE — `misc/install_rootfs_13.sh` (22F82) + `misc/build-rootfs-13.4.1.sh` |
 | Q6 | `usr/lib/systemhook.dylib` inside rootfs is trust-listed by `postinst.sh:1467` but **absent on this device** (`/var/jb/usr/lib/` has no `systemhook.dylib`; ElleKit uses `libhooker.dylib`/`libellekit.dylib`/`libinjector.dylib` instead). Old rootfs backups that used to carry it are deleted. | OPEN — candidate: harvest `libhooker.dylib` under a documented name, or source the original systemhook build; only needed for the chroot tweak-injection chain, NOT for the echo milestone |
+| Q7 | Hardcoded "Ventura" pair `b5da3940…`/`bbb76598…` is **NOT** the stock 22F82 cache signature. `codesign -vvv -d` on the verified IPSW gives `7a3e85f1ddcb90e7d785bbfd6232fd058b4de317` / `2573536d64cbd47872f3d318bf0efc6273d7cf20`. The historical pair is now pinned to `22F66` only; `22F82|""` registers the stock pair in `postinst.sh`, `misc/postinst.sh`, `macos_gui.sh`, `DEBIAN/postinst`. | runtime/source-confirmed (codesign, commit 1656f07) |
+| Q8 | `misc/cdhash.py` read CodeDirectory `hashType` at offset 34 (inside `codeLimit`; real offset is 37) → every sha256-typed CD fell into the sha1 fallback and printed hashes AMFI never matches (e.g. dyld `4e1b7d94` instead of `02a8a781`). Fixed + added `misc/cache_cdhash.py` (parses cache header csOff@0x28 → superblob slot 0 → hashType-aware digest). | source-confirmed, fixed |
+
+## 4.2 Rootfs staging (source-confirmed 2026-10-06)
+
+- `UniversalMac_13.4.1_22F82_Restore.ipsw` sha256 `5ac144d1…` matches appledb.
+- OS volume (096-09648-077.dmg via `ipsw mount fs`): `ProductBuildVersion=22F82`,
+  fat x86_64+arm64e `/bin/echo` + `/bin/bash`, 3-slice dyld, SkyLight
+  `WindowServer` present, `/private/etc` empty (sealed volume).
+- arm64e cryptex (096-09706-080.dmg via hdiutil): cache pair + `.map`,
+  `usr/lib/system|swift`, `System/iOSSupport`, Frameworks — copied whole
+  minus x86_64/aot caches (~2.5GB dead bytes on iOS).
+- `misc/build-rootfs-13.4.1.sh` staged `~/Desktop/macos-13.4.1-rootfs`:
+  System + Templates/Data skeleton (incl. stock `private/etc`) + cryptex +
+  symlinks; cache ledger verified `7a3e85f1`/`2573536d` on staged bits.
+- `/bin/echo` links only `/usr/lib/libSystem.B.dylib` → resolves via cache.
+- Deployment in progress: tar stream → `/var/mnt/macos-13.4.1-rootfs.tar`
+  on device, then `misc/install_rootfs_13.sh` (22F82 verify, arm64ify
+  WindowServer/InstallerProgress/bash/sh/echo, swap, harvest, bindfs,
+  postinst, run_bash smoke).
 
 ## 4.1 Injection sources on device (runtime-confirmed 2026-10-06)
 
