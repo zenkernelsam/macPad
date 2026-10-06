@@ -171,3 +171,105 @@ D bounded echo milestone, capture stdout/stderr/rc/DYLD_PRINT_LIBRARIES/
   before citing addresses.
 - Every commit → immediate `git push origin main`.
 - Apple payloads (rootfs/IPSW/cache/archives) never enter git.
+
+## 7. Milestone witness: `/bin/echo HI` prints HI (2026-10-06 ~22:02)
+
+**Status: runtime-confirmed, reproducible (2/2 runs + reruns).**
+
+```text
+$ /var/jb/usr/macOS/bin/launchdchrootexec 0 0 /var/mnt/rootfs /bin/echo HI
+chdir: No such file or directory
+[launchdchrootexec] target=/bin/echo arch=arm64 \
+    insert=/usr/local/lib/libmachook_arm64.dylib
+HI            <-- real stdout from macOS 13.4.1 echo
+rc=0
+```
+
+Authenticity basis: the exec chain is stock 22F82 `/usr/lib/dyld`
+(arm64e slice) + the stock 22F82 split shared cache + cache-resident
+`libSystem.B.dylib`/`libsystem_darwin.dylib` (crash `.ips` usedImages show
+`source:"P"` = cache). No shim `libSystem`, no disk copy — echo's deps all
+resolved from the cache (`P`). Output is a completed functional
+transaction, not a keep-alive.
+
+### The 137 wall: root cause chain (all runtime-confirmed)
+
+Earlier `/bin/echo` runs died `RC=137` with **zero dyld output**. Two
+independent BRK-at-entry probes (brk#0 written over `__dyld_start` file
+off 0x4a40 = `mov x0,sp`, and over echo's `pacibsp` at arm64 entry) both
+still returned 137 with no SIGTRAP and no `.ips` — **neither dyld's nor
+echo's first instruction ever executed**; the kill is in kernel exec
+admission / first-exec-page CS validation, not userspace.
+
+Control run: `chroot /var/mnt/rootfs /var/jb/usr/bin/true` reaches iOS
+dyld (prints diagnostics, rc=134) — exec inside the chroot is fine; the
+kill is specific to the macOS-signed image admission.
+
+**Fix (runtime-confirmed)**: re-sign both `bin/echo` and `usr/lib/dyld`
+with `ldid -Hsha256 -S"$ENT"` (project entitlements plist, **without**
+`-M`), then `jbctl trustcache add` each new CDHash. This matches the
+15.6-era documented recipe (`dyld-15.6.1-state.md` fact ②: plain `-S`
+/Apple-ent-merged signatures get killed at exec; `-Hsha256 -S<项目ent>`
+admits). After re-signing:
+
+1. macOS dyld ran, mapped the 22F82 cache, loaded images — crash `.ips`
+   then showed a *userspace* `EXC_BREAKPOINT (brk 1)` inside
+   `libsystem_darwin.dylib` `_check_internal_content.cold.1`, called via
+   `os_variant_has_internal_diagnostics` from `libSystem_initializer`.
+   libmachook's `DYLD_INTERPOSE` on `os_variant_has_internal_diagnostics`
+   (`libmachook/os_variant_hooks.x`) bypasses it at bind time — so the
+   milestone requires the `launchdchrootexec` insert path; plain
+   `/var/jb/usr/bin/chroot` still SIGTRAPs there by design.
+2. With `launchdchrootexec`, dyld then aborted loading
+   `libmachook_arm64.dylib`: `@rpath/CydiaSubstrate.framework` resolved
+   only to iOS-built copies — "mach-o file, but incompatible platform
+   (have 'iOS', need 'macOS')". The author's rootfs shipped a macOS-built
+   CydiaSubstrate we do not have.
+3. Scaffold `misc/cydiasubstrate_macos.m` provides a macOS-platform
+   `CydiaSubstrate.framework/CydiaSubstrate` (fat arm64+arm64e) with real
+   `MSGetImageByName`/`MSFindSymbol` (dlsym + bounded export-trie walk +
+   symtab fallback) and **no-op MSHookFunction/MSHookMessageEx stubs**
+   (labeled diagnostic seam — GUI hook paths still need a real
+   substrate). Result: `HI`, rc=0.
+
+### Current known deltas / not yet done
+
+- Plain `chroot` (no insert): rc=133 SIGTRAP at the os_variant check —
+  expected; the interpose is the product fix. If the acceptance line must
+  be the literal `chroot` binary, that path needs an equivalent
+  interpose carrier, not a rootfs change.
+- arm64e targets (`/usr/bin/true`, `/bin/cat`): still `rc=137` — arm64e
+  exec admission is a separate signing surface (only arm64/ALL slices
+  admitted third-party per 15.6 doctrine). Cat run printed nothing and
+  launcher reported `arch=arm64e` → inserted `libmachook.dylib`.
+- `chdir: No such file or directory` from the launcher (harmless;
+  launcher chdirs into a path absent in the fresh rootfs — identify and
+  fix cosmetically later).
+- `MSHookFunction`/`MSHookMessageEx` are currently no-ops: exec_hooks /
+  Metal / HID hook installation is NOT active. os_variant and other
+  `DYLD_INTERPOSE` fixes ARE active (bind-time).
+- Rootfs still lacks most on-disk system libraries (cache-resident only)
+  — fine for the CLI milestone; GUI closure will need the remaining
+  closure verification.
+- The `id` binary earlier produced `id-*.ips` crash — unexamined.
+- Device state deltas to re-verify on reboot: dyld/echo/CydiaSubstrate
+  CDHashes must be re-added by the cold-boot trust path — extend
+  `macos_gui.sh`/`postinst.sh` restore list if they aren't already.
+
+### Files changed on device during this session (for reproducibility)
+
+- `/var/mnt/rootfs/usr/lib/dyld`: restored to prior signed image, then
+  re-signed `ldid -Hsha256 -S$ENT` (twice). Stock content otherwise.
+- `/var/mnt/rootfs/bin/echo`: previous-session signature replaced by
+  `ldid -Hsha256 -S$ENT` (twice). arm64 slice content stock.
+- `/var/mnt/rootfs/System/Library/Frameworks/CydiaSubstrate.framework/
+  CydiaSubstrate`: replaced harvested iOS build with host-built
+  macOS scaffold (`misc/cydiasubstrate_macos.m`).
+- Trustcache (dynamic, this boot): dyld slices
+  `941b648c…/2045e3de…/92f445a6…` (i386/x86_64/arm64e), echo slices
+  `8584ae5e…`(x86_64)/`294ebee8…`(arm64), cache pair
+  `7a3e85f1…`/`2573536d…`, CydiaSubstrate scaffold
+  `b6882124…`(arm64)/`68df5c7a…`(arm64e). Earlier `02a8a781…`/`3fa2adad…`
+  hashes are stale — trust must always be re-derived from the final
+  signed image, never copied forward.
+

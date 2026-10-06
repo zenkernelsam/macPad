@@ -136,16 +136,26 @@ echo "=== [4/7] arm64ify entry-point executables ==="
 # prepare_windowserver_runtime() extracts its verified ARM64/E slice
 # (UUID-pinned 465422c7-…) into a thin ARM64/ALL image instead.
 IP="$NEW/System/Library/CoreServices/Installer Progress.app/Contents/MacOS/Installer Progress"
+ENT=/var/jb/usr/macOS/bin/entitlements.plist
 for b in "$IP" "$NEW/bin/bash" "$NEW/bin/sh" "$NEW/bin/echo"; do
     [ -f "$b" ] || { echo "FAIL: $b missing"; exit 1; }
     if ! "$PY" "$MISC_DIR/arm64ify_macho.py" --check "$b" | grep -qw arm64; then
         "$PY" "$MISC_DIR/arm64ify_macho.py" "$b"
-        /var/jb/usr/bin/ldid -S "$b"
-        /var/jb/usr/bin/ldid -S "$b"   # second pass: settled __LINKEDIT
+        # Runtime-confirmed 2026-10-06: plain `ldid -S` gets the macOS
+        # main image SIGKILL'd at exec admission (BRK-at-entry never ran).
+        # The admitted form is -Hsha256 with the project entitlements,
+        # no -M merge — same recipe the 15.6 line documented.
+        /var/jb/usr/bin/ldid -Hsha256 -S"$ENT" "$b"
+        /var/jb/usr/bin/ldid -Hsha256 -S"$ENT" "$b"   # settled __LINKEDIT
     else
         echo "already arm64: $b"
     fi
 done
+# Same admission recipe for the interpreter itself: the stock arm64e
+# dyld is exec'd as interpreter and dies identically without project-ent
+# sha256 signing (BRK-at-__dyld_start never executed; runtime-confirmed).
+/var/jb/usr/bin/ldid -Hsha256 -S"$ENT" "$NEW/usr/lib/dyld"
+/var/jb/usr/bin/ldid -Hsha256 -S"$ENT" "$NEW/usr/lib/dyld"
 
 # launchservicesd runs via the entitled iOS shim dlopening a converted
 # dylib. Regenerate from THIS rootfs's binary so postinst's [ ! -e ] guard
