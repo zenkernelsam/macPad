@@ -164,30 +164,19 @@ done
 
 # Second pass — the whole /bin+/sbin CLI surface plus the curated
 # /usr/bin set gets the self-declared libmachook dependency + signature
-# WITHOUT arm64ify (native arm64e slices just get the arm64e dylib
-# path; both were proven on device 2026-10-07). Files with no arm
-# slice or no header padding are skipped by the tool, never moved.
+# WITHOUT arm64ify (native slices keep their arch; the fat dylib
+# resolves for arm64 and arm64e alike). Non-Mach-O scripts and files
+# with no arm slice or no header padding are skipped, never moved.
 for b in "$NEW"/bin/* "$NEW"/sbin/* \
     "$NEW"/usr/bin/{grep,sed,awk,cut,tr,sort,uniq,head,tail,wc,find,xargs,tar,gzip,uname,vi,vim,nano,less,more,python3,top,killall,du,w,whoami,which,file,strings,otool,nm,sw_vers,arch,plutil,stat,readlink,basename,dirname,tee,touch,clear,reset,open,pbcopy,pbpaste,say,osascript}; do
     [ -f "$b" ] || continue
-    SUB=$("$PY" -c "
-import struct,sys
-d=open('$b','rb').read()
-if len(d)<8 or d[:4] not in (b'\xca\xfe\xba\xbe',b'\xcf\xfa\xed\xfe'): sys.exit(2)
-if d[:4]==b'\xca\xfe\xba\xbe':
-    n=struct.unpack('>I',d[4:8])[0]
-    for i in range(n):
-        cpu,sub,fo,sz,al=struct.unpack('>IIIII',d[8+i*20:28+i*20])
-        if cpu==0x100000c: print(sub&0xffffff); sys.exit(0)
-    sys.exit(2)
-if struct.unpack('<I',d[4:8])[0]!=0x100000c: sys.exit(2)
-print(struct.unpack('<I',d[8:12])[0]&0xffffff)" 2>/dev/null) || continue
-    case $SUB in
-        0|1) D=/usr/local/lib/libmachook_arm64.dylib;;
-        2)   D=/usr/local/lib/libmachook.dylib;;
-        *)   continue;;
-    esac
-    "$PY" "$MISC_DIR/add_macho_load_dylib.py" "$b" "$D" >/dev/null 2>&1 || true
+    "$PY" -c "import sys;d=open('$b','rb').read(8);sys.exit(0 if d[:4] in (b'\xca\xfe\xba\xbe',b'\xcf\xfa\xed\xfe') else 1)" \
+        2>/dev/null || continue
+    # Both packaged libmachook names resolve to the same fat
+    # (arm64+arm64e) dylib since 2026-10-07, so one path serves every
+    # arm slice; dyld selects the matching slice itself.
+    "$PY" "$MISC_DIR/add_macho_load_dylib.py" "$b" \
+        /usr/local/lib/libmachook.dylib >/dev/null 2>&1 || true
     /var/jb/usr/bin/ldid -Hsha256 -S"$ENT" "$b"
     /var/jb/usr/bin/ldid -Hsha256 -S"$ENT" "$b"
 done
