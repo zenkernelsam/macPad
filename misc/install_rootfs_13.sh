@@ -144,15 +144,22 @@ for b in "$IP" "$NEW/bin/bash" "$NEW/bin/sh" "$NEW/bin/echo" \
     [ -f "$b" ] || { echo "WARN: $b missing, skipping"; continue; }
     if ! "$PY" "$MISC_DIR/arm64ify_macho.py" --check "$b" | grep -qw arm64; then
         "$PY" "$MISC_DIR/arm64ify_macho.py" "$b"
-        # Runtime-confirmed 2026-10-06: plain `ldid -S` gets the macOS
-        # main image SIGKILL'd at exec admission (BRK-at-entry never ran).
-        # The admitted form is -Hsha256 with the project entitlements,
-        # no -M merge — same recipe the 15.6 line documented.
-        /var/jb/usr/bin/ldid -Hsha256 -S"$ENT" "$b"
-        /var/jb/usr/bin/ldid -Hsha256 -S"$ENT" "$b"   # settled __LINKEDIT
     else
         echo "already arm64: $b"
     fi
+    # LC_LOAD_DYLIB on libmachook makes the bare literal
+    # `chroot $ROOTFS <bin> ...` carry the os_variant interpose with no
+    # environment and no launcher (runtime-confirmed 2026-10-07:
+    # echo/cat/date/ls/id/sh all produce real output, rc=0).
+    "$PY" "$MISC_DIR/add_macho_load_dylib.py" "$b" \
+        /usr/local/lib/libmachook_arm64.dylib
+    # Runtime-confirmed 2026-10-06: plain `ldid -S` gets the macOS
+    # main image SIGKILL'd at exec admission (BRK-at-entry never ran).
+    # The admitted form is -Hsha256 with the project entitlements,
+    # no -M merge — same recipe the 15.6 line documented. Signing must
+    # come after every Mach-O edit above.
+    /var/jb/usr/bin/ldid -Hsha256 -S"$ENT" "$b"
+    /var/jb/usr/bin/ldid -Hsha256 -S"$ENT" "$b"   # settled __LINKEDIT
 done
 # Same admission recipe for the interpreter itself: the stock arm64e
 # dyld is exec'd as interpreter and dies identically without project-ent

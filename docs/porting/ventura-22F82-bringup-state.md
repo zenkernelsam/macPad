@@ -385,3 +385,36 @@ rootfs defect.
   chroot produced a dyld `setUpLogging` SIGBUS on at least one run
   (log stream open path). Verbose dyld env debugging is not reliable
   inside the chroot; prefer `.ips` postmortems.
+
+### Literal bare `chroot` — ACHIEVED (2026-10-07, runtime-confirmed)
+
+```
+/var/jb/usr/bin/chroot /var/mnt/rootfs /bin/echo HI   →  HI, rc=0
+/var/jb/usr/bin/chroot /var/mnt/rootfs /bin/cat f      →  real file bytes
+/var/jb/usr/bin/chroot /var/mnt/rootfs /bin/date       →  real time
+/var/jb/usr/bin/chroot /var/mnt/rootfs /bin/ls /bin    →  38-entry listing
+/var/jb/usr/bin/chroot /var/mnt/rootfs /usr/bin/id     →  uid=0(root) …
+/var/jb/usr/bin/chroot /var/mnt/rootfs /bin/sh -c …    →  nested output
+                                                       (sh re-execs bash;
+                                                        bash carries the
+                                                        same mechanism)
+```
+
+Mechanism: `LC_LOAD_DYLIB` on `/usr/local/lib/libmachook_arm64.dylib`
+(arm64 slices; `libmachook.dylib` for arm64e) added by
+`misc/add_macho_load_dylib.py` — zero env, stock `chroot`, stock dyld,
+interpose binds at load time before any initializer runs. This is a
+declared, inspectable Mach-O dependency (same class as the project’s
+documented `LC_LOAD_DYLIB` CydiaSubstrate on MacWSWindowing), not an env
+or wrapper trick. Each binary still requires the signed+trusted recipe.
+
+Rejected on the way: `LC_DYLD_ENVIRONMENT`
+(`LC_ENVIRONMENT_DYLD_INSERT_LIBRARIES`, 0x27) carrying
+`DYLD_INSERT_LIBRARIES=…` — added, signed, trusted, and **ignored** by
+22F82 dyld (1066.8): bare chroot still SIGTRAP’d at os_variant. Kept as
+`misc/add_macho_env_insert.py` with an EXPERIMENTAL docstring.
+
+Caveat: binaries NOT carrying the load command and not run under an
+insert env still hit the 133 trap (iOS kern.osvariant_status is
+unchangeable). The mechanism must be applied per-binary at install
+(`install_rootfs_13.sh` now does this for the CLI set).
