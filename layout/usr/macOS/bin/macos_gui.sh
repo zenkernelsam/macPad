@@ -1582,6 +1582,16 @@ restore_cold_boot_trust() {
         "$ROOTFS/bin/bash" \
         "$ROOTFS/bin/sh" \
         "$ROOTFS/bin/echo" \
+        "$ROOTFS/bin/cat" \
+        "$ROOTFS/bin/dash" \
+        "$ROOTFS/bin/zsh" \
+        "$ROOTFS/bin/ls" \
+        "$ROOTFS/bin/pwd" \
+        "$ROOTFS/bin/date" \
+        "$ROOTFS/bin/ps" \
+        "$ROOTFS/usr/bin/true" \
+        "$ROOTFS/usr/bin/env" \
+        "$ROOTFS/usr/bin/id" \
         "$ROOTFS$DEFAULTS_BIN" \
         "$ROOTFS/usr/sbin/filecoordinationd" \
         "$ROOTFS/System/Library/CoreServices/launchservicesd" \

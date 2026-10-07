@@ -137,8 +137,11 @@ echo "=== [4/7] arm64ify entry-point executables ==="
 # (UUID-pinned 465422c7-…) into a thin ARM64/ALL image instead.
 IP="$NEW/System/Library/CoreServices/Installer Progress.app/Contents/MacOS/Installer Progress"
 ENT=/var/jb/usr/macOS/bin/entitlements.plist
-for b in "$IP" "$NEW/bin/bash" "$NEW/bin/sh" "$NEW/bin/echo"; do
-    [ -f "$b" ] || { echo "FAIL: $b missing"; exit 1; }
+for b in "$IP" "$NEW/bin/bash" "$NEW/bin/sh" "$NEW/bin/echo" \
+         "$NEW/bin/cat" "$NEW/bin/dash" "$NEW/bin/zsh" "$NEW/bin/ls" \
+         "$NEW/bin/pwd" "$NEW/bin/date" "$NEW/bin/ps" \
+         "$NEW/usr/bin/true" "$NEW/usr/bin/env" "$NEW/usr/bin/id"; do
+    [ -f "$b" ] || { echo "WARN: $b missing, skipping"; continue; }
     if ! "$PY" "$MISC_DIR/arm64ify_macho.py" --check "$b" | grep -qw arm64; then
         "$PY" "$MISC_DIR/arm64ify_macho.py" "$b"
         # Runtime-confirmed 2026-10-06: plain `ldid -S` gets the macOS

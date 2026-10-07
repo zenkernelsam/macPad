@@ -352,3 +352,36 @@ lever reaches the resolution path. Interposition is required; both
 carriers now proven (`launchdchrootexec` and `DYLD_INSERT_LIBRARIES` +
 literal chroot binary). This is the upstream-designed constraint, not a
 rootfs defect.
+
+### CLI breadth (runtime-confirmed, same evening)
+
+- Generic admission recipe confirmed for both arches: any stock
+  arm64/arm64e binary → `ldid -Hsha256 -S$ENT` ×2 +
+  `macws_boot_trust.py --readd <file>` (registers the arm-family slice
+  CDHashes; x86_64 slices are correctly skipped). `/usr/bin/true`
+  went 137 → 133 → rc=0 with `libmachook.dylib` (arm64e slice) and
+  via `launchdchrootexec`.
+- `/bin/cat /tmp_test.txt` → real file content via launcher
+  (arm64e path) AND via `DYLD_INSERT_LIBRARIES` + literal chroot.
+- **`/bin/sh` is a dash-12 re-exec shim**: reads `/private/var/select/sh`
+  (absent → default `/bin/bash`) and execs it. First `sh -c` attempts
+  died 137 in the CHILD — not the sh image itself — because `bash`'s
+  arm64 slice was signed but its CDHash had not been registered this
+  boot. Lesson: **a 137 on a re-exec shim usually means the exec
+  TARGET is untrusted, not the invoked path.**
+- After signing+trusting bash/dash/zsh:
+  `launchdchrootexec 0 0 /var/mnt/rootfs /bin/sh -c
+  "/bin/cat /tmp_test.txt; /bin/date +%H:%M; /usr/bin/id -u;
+   /bin/ls /bin/echo"` → all grandchildren (cat/date/id/ls) produce
+  real output, rc=0. `DYLD_INSERT_LIBRARIES` propagates to children,
+  so every exec'd grandchild gets the interpose bound automatically.
+- arm64ify coverage is inconsistent in the installed rootfs:
+  sh/echo/bash carry `sub=0` (arm64) slices; cat/true still `sub=2`
+  (arm64e). Both admit under the recipe — arch only selects which
+  libmachook slice must be inserted (arm64 → `_arm64.dylib`,
+  arm64e → `.dylib`). install_rootfs_13.sh + cold-boot restore list
+  now cover cat/dash/zsh/ls/pwd/date/ps/true/env/id.
+- Caveat: `DYLD_PRINT_LIBRARIES`/`DYLD_PRINT_INITIALIZERS` inside the
+  chroot produced a dyld `setUpLogging` SIGBUS on at least one run
+  (log stream open path). Verbose dyld env debugging is not reliable
+  inside the chroot; prefer `.ips` postmortems.
