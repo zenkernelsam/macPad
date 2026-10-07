@@ -273,3 +273,82 @@ admits). After re-signing:
   hashes are stale — trust must always be re-derived from the final
   signed image, never copied forward.
 
+
+---
+
+## 2026-10-07 — cold-reboot verification + os_variant root cause (RE-complete)
+
+### Reboot behaviour (runtime-confirmed)
+
+- After device reboot + re-jailbreak, **all** trustcache CDHashes were
+  still LIVE (dyld slices, echo arm64 `294ebee8…`, CydiaSubstrate
+  `b6882124…`, 22F82 cache pair `7a3e85f1…`/`2573536d…`). Dopamine's
+  `jbctl trustcache add` persists across reboot on this build — the
+  earlier "dynamic = volatile" assumption is corrected. The
+  `restore_cold_boot_trust` path (now including `bin/sh`, `bin/echo`,
+  commit `9d66403`) remains valuable as verification/repair.
+- `launchdchrootexec 0 0 /var/mnt/rootfs /bin/echo HI` → `HI`, rc=0 —
+  survives reboot. (Launcher prints `chdir: No such file or directory`
+  because the host cwd is absent inside the chroot; falls back to `/` —
+  cosmetic only.)
+- Bare `/var/jb/usr/bin/chroot /var/mnt/rootfs /bin/echo HI` → rc=133,
+  **unchanged** (earlier "rc=0" was a pipeline artefact: `$?` measured
+  `head`, not chroot).
+- New: `DYLD_INSERT_LIBRARIES=/usr/local/lib/libmachook_arm64.dylib
+  /var/jb/usr/bin/chroot /var/mnt/rootfs /bin/echo HI` → **HI, rc=0.**
+  The literal chroot binary succeeds with env-level interpose — the
+  launcher's only magic over bare chroot is supplying this env var
+  (+ chdir/uid handling).
+
+### os_variant trap — full root cause (RE-confirmed, libsystem_darwin 22F82)
+
+`_os_variant_has_internal_diagnostics` (extracted image 0x…77c8):
+
+```
+once(token @dirty+0xa20) → flag byte @0x9fd ("diagnostics" override)
+  !=0 → return 0            ; override honored
+  ==0 → _check_internal_content(0x786c)
+          status @0xa00: 2→0, 3→1, else → os_assert("os_variant had
+          unexpected status") → brk #1     ← OUR TRAP
+```
+
+Once-init (0x9104): `sysctlbyname("kern.osvariant_status")` —
+
+- **succeeds** → bit-parse: bit1 gates writing `status&3` into @0xa00,
+  bit3→@0xa08, bit15→@0xa18, bit25→@0xa1c, bit7→@0xa04, bit9→@0xa0c,
+  bit19→@0xa14, bit23→@0xa10, bits[48:52)→@0x9f8. Then
+  `ldrb global-byte` — **byte==0 → `b epilogue`, SKIPS file fallback
+  AND the `/var/db/os_variant_override` parser** (which sits at the end
+  of the fallback path, reached only via the per-field loop).
+- **fails** → per-field loop resolves each field by file/sysctl
+  (`AppleInternalVariant.plist`, `hw.ephemeral_storage`,
+  `csr_check(0x10)`, `AppleFactoryVariant.plist`, `BaseSystem`,
+  `DarwinVariant.plist`, InternalDiagnostics plist), then override parse.
+
+Measured on device (iPadOS 16.3 kernel):
+
+- `kern.osvariant_status` = `0x7000000100000028` → sysctl succeeds,
+  bit1=0 → **@0xa00 (internal_content) never resolved → stays 0**
+  → `_check_internal_content` asserts. `[x22]` global byte is 0 on this
+  path → file fallback + override never run.
+- `kern.osvariant_status` is **read-only** (`sysctl -w` → EPERM).
+- Legacy per-feature sysctls (`kern.osvariant_has_internal_content`,
+  …diagnostics, …ui, allows_internal_security_policies, is_recovery,
+  is_baseos) **do not exist** on iOS 16.3 — only the consolidated
+  bitmask.
+- `os_variant_override` file experiment: created
+  `/var/mnt/rootfs/var/db/os_variant_override` =
+  `content,diagnostics,ui,security` → bare chroot still rc=133, same
+  `.ips` stack. Confirms the parse is unreachable on the
+  sysctl-success/non-internal path. File left in place (inert here,
+  correct on fallback paths).
+- `os_variant_init_4launchd(<feature>)` (export @0x8c40) accepts
+  "fvunlock/kcgen/diagnostics/migration/eacs" and calls the override
+  parser — but only launchd invokes it; nothing in the chroot does.
+
+**Conclusion:** on an iOS kernel the literal zero-env `chroot` cannot
+pass `os_variant_has_internal_diagnostics` — no file, env, or sysctl
+lever reaches the resolution path. Interposition is required; both
+carriers now proven (`launchdchrootexec` and `DYLD_INSERT_LIBRARIES` +
+literal chroot binary). This is the upstream-designed constraint, not a
+rootfs defect.
