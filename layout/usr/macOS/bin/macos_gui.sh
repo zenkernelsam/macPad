@@ -1655,6 +1655,42 @@ restore_cold_boot_trust() {
         set -- "$@" "$path"
     done
 
+    # 2026-10-07: the whole /bin+/sbin CLI surface and a curated /usr/bin
+    # set carry LC_LOAD_DYLIB on libmachook + project-entitlement sha256
+    # signatures so the literal `chroot $ROOTFS /bin/<tool>` works with no
+    # environment. Register every arm-family CodeDirectory present —
+    # unsigned or non-Mach-O entries contribute nothing and are skipped
+    # by the reader. Globbing only these bounded directories keeps the
+    # restore set synchronized with whatever the install script signed.
+    for path in "$ROOTFS"/bin/* "$ROOTFS"/sbin/* \
+        "$ROOTFS"/usr/bin/grep "$ROOTFS"/usr/bin/sed \
+        "$ROOTFS"/usr/bin/awk "$ROOTFS"/usr/bin/cut \
+        "$ROOTFS"/usr/bin/tr "$ROOTFS"/usr/bin/sort \
+        "$ROOTFS"/usr/bin/uniq "$ROOTFS"/usr/bin/head \
+        "$ROOTFS"/usr/bin/tail "$ROOTFS"/usr/bin/wc \
+        "$ROOTFS"/usr/bin/find "$ROOTFS"/usr/bin/xargs \
+        "$ROOTFS"/usr/bin/tar "$ROOTFS"/usr/bin/gzip \
+        "$ROOTFS"/usr/bin/uname "$ROOTFS"/usr/bin/vi \
+        "$ROOTFS"/usr/bin/vim "$ROOTFS"/usr/bin/nano \
+        "$ROOTFS"/usr/bin/less "$ROOTFS"/usr/bin/more \
+        "$ROOTFS"/usr/bin/python3 "$ROOTFS"/usr/bin/top \
+        "$ROOTFS"/usr/bin/killall "$ROOTFS"/usr/bin/du \
+        "$ROOTFS"/usr/bin/w "$ROOTFS"/usr/bin/whoami \
+        "$ROOTFS"/usr/bin/which "$ROOTFS"/usr/bin/file \
+        "$ROOTFS"/usr/bin/strings "$ROOTFS"/usr/bin/otool \
+        "$ROOTFS"/usr/bin/nm "$ROOTFS"/usr/bin/sw_vers \
+        "$ROOTFS"/usr/bin/arch "$ROOTFS"/usr/bin/plutil \
+        "$ROOTFS"/usr/bin/stat "$ROOTFS"/usr/bin/readlink \
+        "$ROOTFS"/usr/bin/basename "$ROOTFS"/usr/bin/dirname \
+        "$ROOTFS"/usr/bin/tee "$ROOTFS"/usr/bin/touch \
+        "$ROOTFS"/usr/bin/clear "$ROOTFS"/usr/bin/reset \
+        "$ROOTFS"/usr/bin/open "$ROOTFS"/usr/bin/pbcopy \
+        "$ROOTFS"/usr/bin/pbpaste "$ROOTFS"/usr/bin/say \
+        "$ROOTFS"/usr/bin/osascript; do
+        [ -f "$path" ] || continue
+        set -- "$@" "$path"
+    done
+
     # Preview is linked against Hydra before libmachook/autosignd can run.
     # Runtime-confirmed on 2026-09-10 after a cold-boot trust restore: Preview
     # itself reached dyld, which rejected the on-disk arm64e Hydra slice as
