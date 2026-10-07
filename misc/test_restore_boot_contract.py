@@ -149,11 +149,15 @@ restore_cold_boot_trust "$@"
             {"gawk", "ldid", "odcctools", "plutil", "python3"})
 
     def test_package_survives_dpkg_fat_macho_thinning(self):
+        # 2026-10-07: dual-slice binaries declare one dependency name on
+        # both slice subtypes, so the package stages the FAT libmachook
+        # under both names and lets dyld pick the matching slice.
         self.assertIn(
             'arm64="$(THEOS_STAGING_DIR)/usr/macOS/lib/libmachook_arm64.dylib"',
             MAKEFILE)
-        self.assertIn('lipo "$$fat" -thin arm64 -output "$$arm64"', MAKEFILE)
-        self.assertIn('lipo "$$fat" -thin arm64e -output "$$arm64e"', MAKEFILE)
+        self.assertIn('cp "$$fat" "$$arm64"', MAKEFILE)
+        self.assertIn('Staged fat libmachook under both dependency names',
+                      MAKEFILE)
         self.assertIn('elif [ -f "$LIBMACHOOK_ARM64" ]; then', PACKAGE_POSTINST)
         self.assertIn(
             '"$MACHO_PATCHER" "$LIBMACHOOK_ARM64" || exit 1',

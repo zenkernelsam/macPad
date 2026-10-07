@@ -480,3 +480,34 @@ Fixes confirmed afterwards:
 dyld `"Library not loaded"` errors inside the chroot can mean a CS
 admission failure rather than a missing file — check `jbctl
 trustcache info` membership before assuming a staging gap.
+
+### Cold-boot restore sequence — runtime-confirmed (2026-10-07)
+
+**Correction:** the dynamic trustcache (`jbctl trustcache add` /
+libjailbreak backend) is **volatile across reboot** — this boot opened
+with 117 baseline entries and every registered hash gone. The earlier
+"persistence" observation does not hold for this jailbreak path;
+cold-boot restore is required after every reboot.
+
+The complete failure→fix chain observed on this boot:
+
+| Symptom | Missing layer | Fix |
+|---|---|---|
+| `chroot` rc=137, silent | all exec CDHashes | re-register binaries |
+| `dyld cache '(null)' not loaded` | shared-cache CDHash pair | `jbctl` the two 22F82 hashes |
+| `@rpath/CydiaSubstrate … code signature invalid` | scaffold CDHash | register framework dir |
+| `EnableJIT … connect_errno=61` | **autosignd not running** | `restart_autosignd.sh` |
+| `libperl.dylib … missing arch` | plug-in CDHashes (~3.5k) | re-scan System/Library+usr/lib{,exec} (~62 s) |
+
+After the manual sequence every acceptance line passes again: `HI`,
+nested `sh`, `sw_vers`, `sqlite3`, `curl`, `perl`, `ruby`, the smoke
+script — all real output, rc=0.
+
+`macos_gui.sh trust` now (a) restores the plug-in roots
+`System/Library`+`usr/lib`+`usr/libexec` via the bounded glob list and
+(b) calls `ensure_autosignd_ready` after the hash restore, so one
+command covers the entire CLI closure. Note the command still
+thermal-pauses on `thermal-state=serious` — on a warm post-reboot
+device run the bounded `macws_boot_trust.py` subset first (bin+sbin,
+usr/bin+usr/sbin, cache pair, CydiaSubstrate, plug-in roots ≈ 63 s
+total).

@@ -1691,6 +1691,17 @@ restore_cold_boot_trust() {
         set -- "$@" "$path"
     done
 
+    # 2026-10-07 cold-boot evidence: dlopen'd plug-ins (Perl CORE
+    # libperl, Ruby .bundle trees, framework sub-bundles) lose CS
+    # admission across reboot exactly like executables — the dynamic
+    # trustcache is volatile on this jailbreak. Registering the three
+    # plug-in roots costs ~62 s and admits ~3.5k existing Apple
+    # signatures without re-signing anything.
+    for path in "$ROOTFS/System/Library" "$ROOTFS/usr/lib" \
+        "$ROOTFS/usr/libexec"; do
+        [ -d "$path" ] && set -- "$@" "$path"
+    done
+
     # Preview is linked against Hydra before libmachook/autosignd can run.
     # Runtime-confirmed on 2026-09-10 after a cold-boot trust restore: Preview
     # itself reached dyld, which rejected the on-disk arm64e Hydra slice as
@@ -5715,7 +5726,12 @@ case "$CMD" in
         # signature and does not stop or launch any GUI process; production
         # start runs the identical closure automatically before WindowServer.
         require_root "$@"
-        restore_cold_boot_trust
+        restore_cold_boot_trust || exit 1
+        # 2026-10-07 cold-boot evidence: registered hashes alone are not
+        # enough for literal `chroot` — libmachook's jit.m EnableJIT
+        # handshake needs autosignd's socket or every injected client
+        # aborts with connect_errno=61 (ECONNREFUSED).
+        ensure_autosignd_ready
         ;;
     switches)
         switch_status
