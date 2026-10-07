@@ -422,7 +422,7 @@ unchangeable). The mechanism must be applied per-binary at install
 ### Full CLI sweep (2026-10-07, runtime-confirmed)
 
 Audited every entry in `bin`, `sbin`, `usr/bin`, `usr/sbin` on the
-deployed rootfs (manifest: `/tmp/cli_manifest.json` on device):
+deployed rootfs (manifest: `docs/evidence/cli-manifest-20261007.json`):
 
 | Class | Count | State |
 |---|---|---|

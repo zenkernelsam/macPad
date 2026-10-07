@@ -1,0 +1,4 @@
+/var/mnt/rootfs/usr/bin/awk
+/var/mnt/rootfs/usr/bin/csreq
+/var/mnt/rootfs/usr/bin/scp
+/var/mnt/rootfs/usr/sbin/rpcinfo
