@@ -456,3 +456,27 @@ Cold-boot restore: `macos_gui.sh` `restore_cold_boot_trust` now globs
 the bounded `$ROOTFS/bin` + `$ROOTFS/sbin` sets and the curated
 `usr/bin` list, so the restore stays synchronized with whatever the
 installer signed (unsigned files contribute no hashes).
+
+### Plugin-closure trust (2026-10-07, runtime-confirmed)
+
+dlopen'd plugins need CS admission exactly like executables; the exec
+sweep did not cover them. Registered **existing Apple signatures** for
+every Mach-O under `System/Library`, `usr/lib`, `usr/libexec` — no
+re-signing, no file modification:
+
+```
+macws_boot_trust.py $ROOTFS/System/Library $ROOTFS/usr/lib $ROOTFS/usr/libexec
+→ files=214087 images=3725 hashes=3566 added=3492 (63 s)
+```
+
+Fixes confirmed afterwards:
+
+- `perl -e` → `perl-ok 5.030003` (`libperl.dylib` load failure had been
+  a trust rejection, not a missing file)
+- `ruby -e` → `rubyok` (framework `.bundle` plug-ins now admit)
+- `ps aux` inside the chroot prints the real host process table,
+  including the iOS `VirtualMachine.xpc` guest process.
+
+dyld `"Library not loaded"` errors inside the chroot can mean a CS
+admission failure rather than a missing file — check `jbctl
+trustcache info` membership before assuming a staging gap.
