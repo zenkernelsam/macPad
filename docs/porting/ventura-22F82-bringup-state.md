@@ -418,3 +418,41 @@ Caveat: binaries NOT carrying the load command and not run under an
 insert env still hit the 133 trap (iOS kern.osvariant_status is
 unchangeable). The mechanism must be applied per-binary at install
 (`install_rootfs_13.sh` now does this for the CLI set).
+
+### Full CLI sweep (2026-10-07, runtime-confirmed)
+
+Audited every entry in `bin`, `sbin`, `usr/bin`, `usr/sbin` on the
+deployed rootfs (manifest: `/tmp/cli_manifest.json` on device):
+
+| Class | Count | State |
+|---|---|---|
+| Mach-O with working libmachook dep | 918 | literal `chroot` runs them |
+| Mach-O, no header padding for the load command | 4 | `awk`, `csreq`, `scp`, `rpcinfo` — need env insert |
+| Non-Mach-O (perl/.d/sh scripts etc.) | 298 | interpreter-dependent |
+
+Verified under literal bare `chroot` this session (rc=0, real output):
+`uname -a` (Darwin 22.3.0 / iPad13,11), `sw_vers` (macOS 13.4.1 / 22F82),
+`hostname` `sysctl kern.hostname` `uptime` `uuidgen` `whoami` `id`,
+`file` `stat` `plutil -lint` `xmllint` `diff` `du` `wc` `sort` `sed`
+`grep` `find` `xargs` `tar`/`pax` `gzip` `zip`/`unzip` `sqlite3`
+`openssl` (LibreSSL 3.3.6) `curl 7.88.1` `vim --version` (macOS arm64),
+`cp`/`mv`/`rm`/`touch` mutations, `test` `ps` `vm_stat` `ioreg` `arch`
+`open` (reached real LaunchServices, OSStatus -10661 as expected).
+`python3`, `git`, `lldb`, `otool`, `nano` are stock Ventura
+xcode-select stubs/TERM-dependent — genuine behaviour, not failure.
+`df` fails on `getattrlist` (kernel lacks macOS-only attr; documented
+kernel-API gap, not a signing or injection failure).
+
+Load-command fix found during the sweep: dual-slice binaries
+(`file`, `mpioutil`, arm64+arm64e) declared the arm64-only
+`libmachook_arm64.dylib` name on their arm64e slice and could not
+load it. Resolved by shipping the **fat** (arm64+arm64e) libmachook
+under BOTH names — Makefile staging now copies the fat object to
+`libmachook_arm64.dylib` instead of thinning, so either dep path
+resolves for either slice. `install_rootfs_13.sh` second pass
+therefore uses a single dep path with no per-slice detection.
+
+Cold-boot restore: `macos_gui.sh` `restore_cold_boot_trust` now globs
+the bounded `$ROOTFS/bin` + `$ROOTFS/sbin` sets and the curated
+`usr/bin` list, so the restore stays synchronized with whatever the
+installer signed (unsigned files contribute no hashes).
