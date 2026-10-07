@@ -103,7 +103,7 @@ caught:
 The corrected attribution is retained in the historical AGX snapshot below so
 it is available to every agent without an external memory store.
 
-## Current Project Memory and Operating Baseline (2026-10-02)
+## Current Project Memory and Operating Baseline (2026-10-07)
 
 This section is the current summary. Later sections retain detailed and
 historical bring-up knowledge. If an older section conflicts with this one,
@@ -133,6 +133,7 @@ patterns, GPU ABIs, and jailbreak trust behavior are version-specific.
 |---|---|---|---|
 | iPad13,6 (M1), iPadOS 16.3.1 / 20D67 | Dopamine rootless | Ventura 13.4 / 22F66 | Primary and broadest validation target: native AGX desktop, window/fullscreen Host, 120-Hz paths, input/IME, VS Code, Steam, Office workloads, system apps and interop |
 | iPad14,5 (M2), iPadOS 16.0 / 20A8372 | Dopamine rootless | Ventura 13.4 / 22F66 | Exact MTLCompilerService UUID adapter, VS Code web rendering, Steam/arm64 Unity 7DTD, direct presentation and audio paths validated; coverage is narrower than M1 |
+| iPad14,3 (M2), iPadOS 16.5.1 / 20F75 | Dopamine rootless | Ventura 13.4 / 22F66 | Porting candidate only: the exact compiler identity, native AGX ABI and cold workspace startup are runtime-confirmed, but the device remained locked before final Host pixels, sequence advance and unlocked interaction could be accepted |
 | iPad13,7, iPadOS 16.6 | NathanLR | Ventura rootfs experiment | Unsupported: runtime-confirmed CoreTrust signing cannot admit the patched macOS shared-cache closure and AMFI rejects the helper; package install fails closed without `/var/jb/usr/bin/jbctl` |
 | Any other device/build | unknown | unknown | Porting target, not supported until its identities, ABI and runtime witnesses are added |
 
@@ -275,6 +276,19 @@ Input and interoperability:
 - Electron/Catalyst precise scrolling no longer performs a synchronous global
   WindowServer hit test for every continuation event. Begin-time ownership
   validation remains; this is route-based, not a VS Code bundle-ID exception.
+- Game Camera mode requests UIKit pointer lock and consumes `GCMouse` deltas
+  only after the Scene reports the lock active. Applications publish their
+  relative-pointer request through the exact window catalog, so Host can enter
+  and leave the mode automatically without a game bundle-ID allowlist. Direct
+  touch uses the same unbounded relative route. The first absolute-click
+  calibration was runtime-rejected: relabeling both the point and frame by the
+  same factor left Dock's normalized CGEvent coordinate unchanged. The current
+  follow-up preserves the real UIKit click, inverses the visible-source
+  transform and uses the exact AppInput PID/window route only for a completed,
+  identity-matched direct drawable. It is a guarded candidate, not an accepted
+  fix, until a fresh game run supplies the exact route log and visible-button
+  witness. See
+  `docs/evidence/game-pointer-lock-and-click-geometry-20261006.md`.
 - Text, rich clipboard representations, files and cross-app drag use bounded,
   versioned payloads with origin/generation and path validation.
 
@@ -324,6 +338,73 @@ Application-specific memory:
   that to a new version or to unrecorded apps such as Edge/Asobi without a
   fresh visible-output and interaction witness.
 
+### iPadOS 16.5.1 porting facts retained from the 2026-10-06 run
+
+- The iPad14,3 / 20F75 compiler service is exact UUID
+  `B5CBF457-B300-3FD0-A646-1261DA6E86B0`. Its authenticated build calls are at
+  `+0x2050`, `+0x2558` and `+0x2590`; the diagnostic reply-data call is at
+  `+0x26d8`. Keep offsets and expected instruction words in one UUID profile;
+  never admit the UUID with offsets from an older executable.
+- AGX selector `0x100` is a per-user-client capability boundary. Ventura's
+  original `0x78` output request must run first. Retry the legacy `0x70` shape
+  only when that exact read-only call returns `kIOReturnBadArgument`. A native
+  `0x78` connection preserves its type-0 resource-create structure unchanged;
+  only a successful legacy retry enables the older layout translation. This
+  is runtime-confirmed by the native probe and WindowServer create trace, not
+  an OS-version guess.
+- On this rootless kernel, the packaged `/var/jb/usr` exposure may be the exact
+  absolute link `/var/mnt/rootfs/var/jb/usr -> /var/jb/usr` when bindfs is not
+  supported. Accept only that link and only while the packaged Dock proxy is
+  executable through it; arbitrary links and nonempty directories still fail
+  closed.
+- Procursus clang 16 paired with LLD 14 cannot resolve the iOS 16.5 TBD-v4
+  Objective-C entries required by MacWSHost. The same SDK and sources link with
+  the installed Apple `ld64` 951.9. Do not replace that capability check with
+  weak undefined symbols or dynamic lookup.
+- Cold start and WindowServer recovery must create navigation Spaces, persist
+  wallpaper through the still-responsive SkyLight generation, and only then
+  reload Dock. Runtime sampling found all 4,203 observations of the reversed
+  order blocked in `get_session_port`; extending the timeout is not a fix.
+- The complete evidence, including compiler hash/instructions, MPS output
+  identities, native AGX request bytes, startup trace, cleanup and the still
+  pending visible-output acceptance, is in
+  `docs/evidence/ipad14-3-ios1651-port-20261006.md`.
+
+### Recovered iPadOS 16.4.1 compatibility work (synchronized 2026-10-07)
+
+The sibling `macPad` repository still carried useful changes from commit
+`024c0fb` that had never reached this guide. They are now shared. The original
+standalone runtime logs were not committed, so the observations below remain
+historical reported witnesses and do not by themselves promote iPad13,11 /
+20E252 into the validated platform matrix. Obtain fresh visible/protocol
+acceptance before making that claim.
+
+- The historical iPad13,11 / iPadOS 16.4.1 run reported selector `0x100`
+  accepting `0x78` and rejecting `0x70`. Its first resource could arrive before
+  AGXMetal's own query, so every newly published AGX connection now performs
+  the bounded read-only `0x78`-then-BadArgument-`0x70` probe and records the
+  result per connection. Unknown results enable no legacy mutation.
+- A native-`0x78` connection preserves type-0 and type-`0x82` resource shapes
+  and command storage. The historical control reported 13 completed final
+  composites when native command storage was preserved, versus Metal internal
+  errors `0x102/0x103` when the legacy command compactor ran. The legacy
+  transforms now require a positively negotiated `0x70` profile.
+- `AudioRenderBridge` uses dyld interposition plus `RTLD_NEXT` for the Ventura
+  shared-cache AudioUnit entry points. The former Substrate inline hook was
+  reported to cross an unreadable page while sizing `AudioUnitSetProperty` and
+  SIGBUS utility processes such as `codesign`; do not restore shared-cache
+  instruction scanning.
+- A NAS-restored rootfs may retain foreign numeric ownership. Package repair is
+  deliberately bounded to the two split dyld-cache files and the project-owned
+  boot-trust/settings state directories; never recursively `chown` the rootfs.
+  The cfprefsd directory helper also creates the root Preferences hierarchy
+  with `0700` ownership/mode before first use.
+- `misc/agx_device_info_probe.c`,
+  `misc/agx_native_iokit_substrate_observer.c`, and
+  `misc/agx_native_request_probe.m` are diagnostic-only reproduction tools.
+  The observer may inline-hook only a disposable one-shot probe; production
+  `libmachook` must continue to use the versioned interposition path.
+
 ### Non-negotiable agent workflow
 
 For every new device, OS build, app version, feature or regression:
@@ -353,7 +434,9 @@ For every new device, OS build, app version, feature or regression:
    scripts and `git diff --check`.
 9. **Build the affected architectures.** `libmachook` requires both arm64 and
    arm64e thin installed images. SpringBoard code requires the validated
-   Apple-ld64 artifact; an on-device lld result is not interchangeable.
+   Apple-ld64 artifact; an on-device lld result is not interchangeable. On
+   iPadOS 16.5.1, MacWSHost also requires the installed Apple `ld64` because
+   Procursus LLD 14 fails valid UIKit TBD-v4 Objective-C symbols.
    MacWSWindowing must also carry the rootless
    `@rpath/CydiaSubstrate.framework/CydiaSubstrate` load command. A rootful
    `/Library/Frameworks/...` dependency passes signing and fixup checks but is
@@ -476,15 +559,193 @@ After every run, verify the cleanup command succeeded and inspect the process
 list. A forgotten benchmark or recursive log scan can materially heat the
 device and invalidate the next result.
 
-## Imported Project-Memory Ledger (complete audit: 2026-10-01)
+## Local Agent and Codex Project-Memory Ledger (complete audit: 2026-10-07)
 
-The former per-agent project memory directory contained one index and four
+The live shared-agent project memory directory contains one index and four
 topic files: macOS build SDK setup, Claude Code in the iOS chroot, the chroot
 SOCKS proxy, and autosignd on-demand signing. This section carries every
 durable fact from those files into the repository. It is intentionally
 self-contained: do not depend on a private agent memory store or resurrect
 the old cross-references. Where a 2026-06 observation is historical, that is
 stated explicitly; current source and current build outputs take precedence.
+The later Codex subsection separately audits thread-compaction memory and the
+plaintext history from which its durable facts were recovered.
+
+### Local agent-memory reconciliation (corrected audit: 2026-10-07)
+
+The first 2026-10-07 audit checked only Codex-native storage and was too
+narrow. A live shared-agent project-memory directory also exists under
+`~/.claude/projects/<encoded-old-checkout>/memory/`. It uses the repository's
+older checkout path (before the `Downloads/Projects/` move), so a search only
+for the current path or only below `$CODEX_HOME` misses it. The directory was
+read to EOF and contains exactly this five-file source set:
+
+- `MEMORY.md`: a four-entry index;
+- `macos-build-sdk-setup.md`;
+- `claude-code-on-ios-chroot.md`;
+- `chroot-socks-proxy.md`;
+- `autosignd-on-demand-signing.md`.
+
+The YAML `name`, `description`, `node_type`, `type`, and `originSessionId`
+fields are memory-system bookkeeping, not runtime project facts. The source
+filenames and every durable technical statement are retained below; private
+absolute usernames and the obsolete hard-coded deployment address are not.
+
+The dedicated Codex long-term-memory stores were also checked directly.
+`$CODEX_HOME/memories/` contained no files. `$CODEX_HOME/memories_1.sqlite`
+was present; it had zero `stage1_outputs` rows and zero jobs. The global
+`$CODEX_HOME/AGENTS.md` contained no project memory. Those observations apply
+only to the dedicated memory pipeline; they do **not** imply that Codex has no
+project memory. Codex thread compactions are a second, separate store and are
+audited below. The five-file shared-agent source is fully mirrored by the four
+topic sections below.
+
+### Codex thread-compaction memory (corrected audit: 2026-10-07)
+
+The earlier audit incorrectly classified Codex rollout/history state as mere
+operational data. For this repository it is a large project-memory source.
+The corrected pre-import snapshot, selected by exact repository `cwd`, found:
+
+- 38 Codex threads in `$CODEX_HOME/state_5.sqlite`;
+- 14 threads with indexed compactions;
+- 1,092 `contextCompaction` items in
+  `$CODEX_HOME/thread_history_1.sqlite`;
+- 12,828 agent messages, 716 user messages and 7,597 file-change records in
+  those project threads;
+- additional local thread catalog and short-summary indexes in
+  `$CODEX_HOME/sqlite/codex-dev.db` and
+  `$CODEX_HOME/sqlite/codex-thread-summaries-dev.db`.
+
+A `contextCompaction` history row contains only an item ID. The corresponding
+rollout JSONL has a `compacted` record containing replacement history,
+guardian history, retained context and an encrypted compaction object. A
+filename search below `$CODEX_HOME/memories/`, or a text search for a literal
+`<memories>` block, therefore misses it. `memory_mode=enabled` is still only
+thread configuration, but the compaction and retained histories are real
+Codex working memory.
+
+The audit read the plaintext user/agent history for all exact-CWD threads,
+deduplicated forked conversations, and reconciled technical claims against
+current source and dated repository evidence. Do not promote every old model
+statement: speculative product discussion, superseded intermediate results,
+unaccepted review branches, transient PIDs/temperatures, unrelated personal
+storage operations, device addresses and credentials are not durable project
+facts. Confirmed facts, rejected approaches and acceptance limits are retained
+below and in the named evidence records.
+
+### Historical native-AGX, VNC and Chrome witnesses recovered from Codex
+
+- The 2026-07-28 diagnostic RFB soak retained one `2388x1668` connection for
+  224.9 seconds. All 20/20 clicks selected the visible GlassDemo AppKit
+  endpoint, its checkbox alternated 10 times each way, native PF550 reached
+  `clean=12000 error=0`, and the WindowServer PID did not change. The short
+  run also recorded roughly 15 MiB of WindowServer RSS growth, so it is not a
+  long leak/thermal acceptance. See
+  `docs/evidence/native-agx-vnc-multiapp-soak-20260728.txt`.
+- Untargeted diagnostic input is resolved by a versioned, nonce-bound probe to
+  live application endpoints. Only a uniquely ranked visible AppKit owner
+  receives the original event; equal-ranked overlaps remain unresolved and
+  events are never broadcast. This is historical RFB recovery behavior, not a
+  reason to put VNC back into the production presentation path.
+- The exact Google Chrome `150.0.7871.187` arm64 port used UUID-bound,
+  invariant-preserving PartitionAlloc geometry transformations rather than
+  fake VM success or an OOM bypass. It produced a real `2388x1668` Retina
+  Chrome window and a working main-process AppKit input endpoint. Treat this
+  as a bounded exact-version result, not generic current-Chrome support. See
+  `docs/evidence/chrome150-secondary-partitionalloc-20260729.txt`.
+- RE and native probes established the exact IOGPUMTLEvent lifecycle mapping
+  `create 0x18 -> 0x14` and `destroy 0x19 -> 0x15` between Ventura 13.4 and
+  iPadOS 16.3. A six-second Chrome WebGL2 regression completed 9,100 draws and
+  91/91 timer queries with zero pending or command/protection errors. Its rAF
+  median was still 78.5 ms, so this did not prove smooth browser presentation.
+  See `docs/evidence/chrome150-event-lifecycle-selector-20260729.txt`.
+- Large-address-space splitting for an otherwise unmodified browser remains a
+  THEORY unless every contiguous reservation, compiled mask and cross-entry
+  protection/deallocation invariant is preserved and independently probed.
+  Never return a smaller or overlapping mapping as fake success.
+
+### Historical Stray/Steam performance and graphics contracts recovered from Codex
+
+- The first accepted native-AGX Stray gameplay run was a real rendered level,
+  not a menu or loading screen. A 30-second `W` interval advanced presents at
+  about 11.01 FPS on a `1194x834` game surface, remained live for 183 seconds
+  and ended thermal `nominal`. See
+  `docs/evidence/stray-native-agx-gameplay-20260818.md`.
+- Later like-for-like evidence reached about 56.40 FPS at `1194x834`, High,
+  85% internal resolution with a narrow Stray-only
+  `CAMetalLayer.displaySyncEnabled=NO` policy, all ten bounded samples
+  `nominal`. The later `1400x900`, High, 35%, 54-cap profile reached a
+  50.312-FPS median at `nominal`. The `2388x1668`, Medium, 35% run reached only
+  a 26.103-FPS median and moved to `serious`; never cite it as near-60.
+- The generic Metal library path parses the MTLB container, validates the
+  exact producer target, retargets AIR, validates the complete output and
+  caches by content. The audit covered 430/430 valid Stray libraries; an
+  unseen conversion took about 740 ms and its cached load about 1.433 ms.
+  This is not permission to rewrite unknown command opcodes or bypass pipeline
+  validation.
+- Stray's unchanged renderer performed a synchronous staging-surface lock and
+  explicit Metal wait for histogram eye adaptation once per frame. The
+  evidence-backed profile uses `r.EyeAdaptationQuality=0`,
+  `r.EyeAdaptation.MethodOverride=1` and `r.UsePreExposure=1`; override 2 was
+  rejected after the game emitted `Shader compilation failures are Fatal.`
+  Do not reintroduce a generic `waitUntilCompleted` bypass.
+- The black-block producer was an iOS/macOS half-float conversion difference:
+  finite writes into `R/RG/RGBA16Float` could become infinity on iOS AGX.
+  Resource-format-bound variants saturate only proven half-float writable
+  slots; 32-bit float and ambiguous bindings keep the ordinary pipeline. The
+  device LLVM 16 artifact is load-bearing; the tested host LLVM 22 artifact
+  loaded as a library but failed real AGX pipeline creation. See
+  `docs/evidence/stray-half-float-runtime-20260824.txt`.
+- Steam semaphore protocol v23 preserves the authoritative named-semaphore
+  generation and falls back to the broker only for real blocking waits. Do not
+  restore the rejected exact-callsite event-wait replacement, suspend the
+  Steam owner, or disable hardware occlusion queries: each reduced FPS,
+  stalled presentation or crashed the game in its recorded A/B.
+- A Steam launch retry must republish the same validated `-applaunch` AppID
+  marker before loading every replacement job. The recorded UI-timeout retry
+  lost that marker and waited for a launch that it had never requested.
+- The Steam/Stray supervisor must avoid global idle process scans. A deployed
+  loop spent about 7.7% CPU in repeated discovery after all Steam owners had
+  exited; bounded generation-aware discovery reduced five subsequent hostd
+  samples to 0.0%. See
+  `docs/evidence/stray-steam-performance-20260821.md`.
+
+### Historical desktop, input and interoperability contracts recovered from Codex
+
+- Ventura QuartzCore UUID `CF853BBD-01B6-3F46-ADA1-EC70FD2DC9DC` selected a
+  client-storage `didModifyData` path whose iOS IOGPU implementation was a
+  no-op. The exact guarded WindowServer fix runs original bookkeeping, then
+  uses the existing validated source/stride and `replaceRegion`; cancelled
+  presentation retires a generation only after its exact command buffer
+  reaches terminal status. This fixed rapid Terminal input coherency without
+  a blanket synchronization or buffer stub. See
+  `docs/evidence/terminal-render-coherency-20260906.md`.
+- DesktopServices interoperability is restored through its real helper/authd
+  protocols and required `kTCCServiceSystemPolicyAllFiles` entitlement, not a
+  forced authorization result. `NSItemProvider` file representations must be
+  staged inside their completion callback before the temporary URL is
+  deleted. Cross-App drag is one-shot because the same long press cannot
+  simultaneously mean UIKit drag, AppKit internal drag and context click.
+  See `docs/evidence/ipados-macos-interop-20260906.md` and
+  `docs/evidence/drag-clipboard-interop-20260906.md`.
+- A cold-start witness took 526 seconds, of which 452 seconds were the existing
+  12-bundle/1,067-Mach-O trust restoration. Moving System Settings pane
+  preparation to its application launch boundary later reduced the observed
+  desktop start to about 111 seconds, which was still an unresolved latency
+  problem. Never remove dependency-closure trust walking merely to improve a
+  timer. See `docs/evidence/coldboot-windowing-readiness-20260912.md` and
+  `docs/evidence/startup-latency-20260912.md`.
+- Rootfs executable preflight uses metadata for macOS targets that are later
+  executed by privileged `launchdchrootexec`; an unprivileged host daemon's
+  `access(X_OK)` is not authoritative for that future execution context. Real
+  service readiness, display sequence and visible pixels remain required.
+- Historical UI/application coverage is routed by evidence family rather than
+  inferred from a process surviving: `docs/evidence/office-*`,
+  `docs/evidence/vscode-*`, `docs/evidence/finder-*`,
+  `docs/evidence/window-*`, `docs/evidence/weather-*`,
+  `docs/evidence/maps-*`, `docs/evidence/terminal-*`, and the dated Steam/
+  Stray/7DTD records. Later source and newer evidence supersede an older
+  thread summary.
 
 ### autosignd on-demand signing (introduced 2026-06-11)
 
@@ -495,13 +756,15 @@ macOS dyld rejects the iOS `libjailbreak.dylib` with `incompatible platform:
 have 'iOS', need 'macOS'`. That is why signing is split across the chroot and
 an iOS-native daemon rather than implemented wholly in `libmachook`.
 
-- `autosignd/main.c` is an iOS/arm64 daemon. It listens at the host path
+- `autosignd/main.c` is an iOS/arm64 daemon (`TARGET=iphone`, `ARCHS=arm64`).
+  It listens at the host path
   `/var/mnt/rootfs/tmp/autosignd.sock`, which is `/tmp/autosignd.sock` inside
   the chroot. For each requested chroot path it prepends `/var/mnt/rootfs`,
   runs `ldid -S<entitlements> -M`, extracts every present architecture's
   CDHash, and admits each hash with `jbctl trustcache add`. An in-memory seen
-  set avoids repeated work. `postinst.sh` starts/restarts it and its historical
-  log location is `/var/mnt/rootfs/tmp/autosignd.log`.
+  set avoids repeated work. `postinst.sh` historically launched it with
+  `nohup`, restarts it on each run, and writes its historical log at
+  `/var/mnt/rootfs/tmp/autosignd.log`.
 - `libmachook/exec_hooks.c` interposes `posix_spawn`, `posix_spawnp`,
   `execve`, `execv`, and `execvp`. A bare executable is first resolved through
   `PATH`; the hook sends its chroot path to autosignd, waits up to five seconds
@@ -528,21 +791,25 @@ semantic contract, but revalidate current paths and hashes on a new build.
 The chroot can have working IP connectivity while its macOS resolver and
 Security/Keychain services are unreachable, producing `Could not resolve
 host`. Proxy environment variables are useful only if an actual listener is
-running. A historical self-contained setup made the iOS device SSH to its own
-sshd and exposed a dynamic forward on loopback:
+running. The historical separation witness was iOS-side HTTP access succeeding
+(`claude.ai` returned 302 and the tested npm registries returned 200) while the
+chroot still failed DNS. The recorded self-contained setup made the iOS device
+SSH to its own sshd and exposed port 1082 on the device's local address. That
+user-specific address is deliberately not reproduced here; use a validated,
+narrowly reachable local address and do not commit it:
 
 ```bash
 # One-time on the device: create a device-local key and authorize only that key.
 [ -f ~/.ssh/id_ed25519 ] || ssh-keygen -t ed25519 -N "" -f ~/.ssh/id_ed25519
 cat ~/.ssh/id_ed25519.pub >> ~/.ssh/authorized_keys
 
-# Example only: use the device's actual local sshd port.
-ssh -f -N -D 127.0.0.1:1082 -o BatchMode=yes \
+# Example only: supply the device-local addresses and actual local sshd port.
+ssh -f -N -D <DEVICE_LOCAL_ADDRESS>:1082 -o BatchMode=yes \
   -o StrictHostKeyChecking=no -o ExitOnForwardFailure=yes \
-  -o ServerAliveInterval=30 -p <LOCAL_SSH_PORT> root@127.0.0.1
+  -o ServerAliveInterval=30 -p <LOCAL_SSH_PORT> root@<DEVICE_SSH_ADDRESS>
 ```
 
-Use `ALL_PROXY=socks5h://127.0.0.1:1082` for tools that support SOCKS. The
+Use `ALL_PROXY=socks5h://<DEVICE_LOCAL_ADDRESS>:1082` for tools that support SOCKS. The
 `h` is load-bearing: DNS is resolved by the proxy/iOS side; `socks5://` leaves
 DNS in the broken chroot. Verify the listener with a bounded `curl` through
 `socks5h`, not with iOS `netstat`, which was unreliable in this environment.
@@ -564,26 +831,35 @@ The native bun/JSC Claude Code binary was verified in this environment on
 about the current release format.
 
 - The official installer rejected the chroot because `uname -m` reported the
-  iPad model identifier rather than `arm64`. The working installation path was
-  to read the release version endpoint and `manifest.json`, select the
-  `darwin-arm64` artifact and its SHA-256, download it directly, verify the
-  hash, install it at `/usr/local/bin/claude`, and mark it executable.
+  iPad model identifier rather than `arm64`, reporting `Unsupported
+  architecture`. The working installation path read
+  `https://downloads.claude.ai/claude-code-releases/latest`, then
+  `<version>/manifest.json`, selected the `darwin-arm64` artifact and its
+  SHA-256, downloaded `<version>/darwin-arm64/claude`, verified the hash,
+  installed it at `/usr/local/bin/claude`, and marked it executable.
   Python 3.13 was used for JSON and hashing because chroot `jq`/`shasum`
   wrappers could hit the AMFI shebang constraint.
 - Sign and trustcache the binary and every native helper it spawns. The
-  historical manual command was `ldid -S<project-entitlements> -M <binary>`
+  historical manual command was
+  `ldid -S/var/jb/usr/macOS/bin/entitlements.plist -M <binary>`
   followed by admission of each slice's CDHash; autosignd now owns the normal
   first-exec path.
-- JSC initially attempted a 64-GiB gigacage virtual-address reservation and
-  aborted. Export `GIGACAGE_ENABLED=0`; increased-memory/extended-VA
-  entitlements did not solve it. Do **not** set `BUN_JSC_useGigacage`: bun
-  rejected that as an invalid JSC environment variable.
+- JSC initially aborted with `FATAL: Could not allocate gigacage memory` and
+  `totalSize = 68719476736`, a 64-GiB virtual-address reservation. Export
+  `GIGACAGE_ENABLED=0`; `extended-virtual-addressing` and
+  `increased-memory-limit` entitlements did not solve it. Do **not** set
+  `BUN_JSC_useGigacage`: bun rejected that as an invalid JSC environment
+  variable.
 - `claude -p` initially failed `posix_spawn('/usr/bin/security')` with
   `EBADEXEC`/errno `-85`. Re-signing and trustcaching the fat arm64e+x86_64
   `/usr/bin/security` allowed Claude to fall back to file credentials.
-  `postinst.sh` historically covered both `claude` and `security`, while the
-  chroot `.bashrc`/`.bash_profile` exported the TUI environment. Confirm those
-  source paths before assuming a fresh rootfs still has the block.
+  `postinst.sh` historically covered both `claude` and `security` through
+  `sign_and_trustcache`, while the
+  chroot `.bashrc` block named `Claude Code TUI environment` exported the
+  runtime values and `.bash_profile` sourced it. The README also carried a
+  `Running Claude Code in the chroot` section. The historical user flow was
+  `run_bash.sh` followed by `claude`, modulo proxy and authentication. Confirm
+  those source paths before assuming a fresh rootfs still has the block.
 - Its API client accepts HTTP(S), not SOCKS, proxy URLs. The chroot still has
   no resolver, so the HTTP proxy must resolve on the upstream side. The
   historical test found `SSL_CERT_FILE` did not affect Claude's own request,
@@ -593,13 +869,17 @@ about the current release format.
   `ANTHROPIC_API_KEY` selects `x-api-key`; `ANTHROPIC_AUTH_TOKEN` together
   with `ANTHROPIC_BASE_URL` selects bearer authentication for a relay. An
   internal gateway must not be sent through an unrelated external proxy: add
-  a fixed host mapping plus `NO_PROXY`, use a proxy with internal egress, or
-  choose the correct base URL. The historical dummy-key checks distinguished
-  `Not logged in` from `Invalid API key`, proving the variables were read.
+  a fixed mapping to the chroot `/etc/hosts` plus `NO_PROXY`, use a proxy with internal egress, or
+  choose the correct base URL. Sending the historical internal gateway through
+  the unrelated external proxy produced an `*-external` quota response/HTTP
+  429; selecting the correct base URL resolved that particular setup. The
+  dummy-key checks distinguished `Not logged in` from `Invalid API key`,
+  proving the variables were read.
 
-`claude --version` and `--help` are installation checks only. A real prompt
-still requires an API credential or interactive `/login` and working browser/
-network routing. The minimal run environment includes the explicit chroot
+`claude --version` and `--help` are installation checks only. The historical
+unauthenticated prompt reached `Not logged in · Please run /login`; a real
+prompt still requires an API credential or interactive `/login` (OAuth needs
+a browser) and working network routing. The minimal run environment includes the explicit chroot
 `PATH`, `HOME=/Users/root`, `SSL_CERT_FILE=/etc/ssl/cert.pem`,
 `GIGACAGE_ENABLED=0`, and the appropriate proxy variables.
 
@@ -629,10 +909,12 @@ Two non-obvious SDK fixes were committed into the repository:
 The obsolete `login` subproject was removed because it duplicated
 `launchdchrootexec`'s bash-spawn path and was never executed; its Makefile,
 postinstall trustcache entry, and directory were deleted. The memory recorded
-five root subprojects at that time and a hard-coded deploy target in the old
-`build.sh`. Both are historical implementation details. Always inspect the
-current root `SUBPROJECTS` and the current parameterized build/deploy scripts;
-never restore a user-specific destination or treat the old count as current.
+five root subprojects at that time. Its remaining historical host pipeline ran
+`set_macos_version.py`, then `ldid`, then `codesign`, then SCP/SSH deployment
+to a hard-coded device destination. The count and destination are obsolete
+historical implementation details. Always inspect the current root `SUBPROJECTS` and the
+current parameterized build/deploy scripts; never restore a user-specific
+destination or treat the old count as current.
 
 ## Historical AGX Bring-up Snapshot (not the current project goal)
 

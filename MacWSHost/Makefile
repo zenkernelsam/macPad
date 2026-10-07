@@ -26,7 +26,7 @@ MacWSHost_FILES = main.m MacWSControlClient.m MacWSStreamClient.m \
 	MacWSMenuClient.m \
 	MacWSInteropClient.m ../misc/iosclear_ref.m
 MacWSHost_FRAMEWORKS = UIKit Metal MetalKit QuartzCore CoreGraphics Foundation \
-	AVFoundation ImageIO IOKit IOSurface UniformTypeIdentifiers
+	AVFoundation ImageIO IOKit IOSurface UniformTypeIdentifiers GameController
 MacWSHost_LIBRARIES = bsm
 MacWSHost_CFLAGS = -fobjc-arc -Wall -Wextra -I$(CURDIR)/../include \
 	-I$(CURDIR) -I$(CURDIR)/Support -I$(CURDIR)/Testing -I$(CURDIR)/Transport \
@@ -35,5 +35,17 @@ MacWSHost_CFLAGS = -fobjc-arc -Wall -Wextra -I$(CURDIR)/../include \
 	-isystem $(CURDIR)/../vendor/ios-xpc -DIOSCLEAR_LIBRARY_MODE=1
 MacWSHost_CODESIGN_FLAGS = -Sentitlements.plist
 MacWSHost_RESOURCE_FILES = Resources/AppIcon.png
+
+# Procursus currently pairs clang 16 with LLD 14.  That linker does not
+# resolve the iOS 16.5 TBD-v4 objc-classes/objc-ivars entries used by the Host
+# (runtime build witness: UIButtonConfiguration and
+# UIWindowSceneActivationRequestOptions remained undefined even though both
+# are present in the selected UIKit.tbd).  Prefer the installed Apple
+# ld-classic on-device when that exact capability exists.  This is deliberately
+# scoped to the arm64 Host: the SpringBoard tweak still comes only from the
+# separately manifested Mac Apple-ld64 cross-build.
+ifneq ($(wildcard /var/jb/usr/bin/ld64),)
+MacWSHost_LDFLAGS += -fuse-ld=/var/jb/usr/bin/ld64
+endif
 
 include $(THEOS_MAKE_PATH)/application.mk
