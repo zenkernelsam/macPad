@@ -21,6 +21,11 @@ behind it; the witness files are named inline.
 - SystemUIServer likewise survives past `_RegisterApplication`
 - displayd: one IOSurface frame arrived (`frame-first stream=118
   surface=2732x2048`), recognized 1366x1024@2x AppKit display
+- `diskarbitrationd` (Ventura, project-signed) alive under launchd;
+  private endpoint `com.apple.macosbooter.DiskArbitration.diskarbitrationd`
+  checked in `active=1` — root cause of the persistent `OS_REASON_EXEC`
+  137s was the `com.apple.rootless.datavault.metadata` entitlement; see
+  dedicated section below
 
 ## Root cause chain for the `Connection invalid` era (FIXED)
 
@@ -83,6 +88,49 @@ misc/macws_boot_trust.py <file>    # register every slice cdhash
 Stock-Apple-signed binaries are killed `OS_REASON_EXEC` (SIGKILL 137 at
 exec) under CT policy 0x8. `SIGTRAP/133-134` is a different layer
 (dyld/jit after exec succeeds).
+
+### `com.apple.rootless.datavault.metadata` kills exec admission (diskarbitrationd fix)
+
+Symptom: `diskarbitrationd` exited instantly with `last exit reason =
+OS_REASON_EXEC` / rc 137 under every spawn context (launchd job,
+`launchdchrootexec`, plain `chroot`, with and without `libmachook`,
+with `_MSSafeMode=1`). `DYLD_PRINT_LIBRARIES`/`DYLD_PRINT_INITIALIZERS`
+produced **zero output from the target** — everything previously
+attributed to it (91 loaded images, 16 initializers) was actually the
+*parent* `launchdchrootexec`'s own dyld run (same `dyld[pid]` prefix).
+`fs_usage` showed `posix_spawn` → `exit` ~12 µs later: kernel exec
+admission kill before dyld. This is the documented "137 wall" shape from
+`ventura-22F82-bringup-state.md` — never trust dyld logs without
+checking which pid emitted them.
+
+Isolated via re-sign experiments on device (each step re-registered the
+new cdhash via `macws_boot_trust.py`):
+
+- `Identifier=com.apple.diskarbitrationd` + pure project ENT → **runs**
+  (identifier is innocent)
+- full merged ENT+native minus `xpc.launchd.ios-system-session` → still
+  137
+- signature containing **only** `com.apple.rootless.datavault.metadata`
+  → **137** — this single key is the exec-fatal trigger on iPadOS 16.3
+- merged ENT + all 6 other natives (LiveFS.connection,
+  allow-external-storage, security.disk-device-access,
+  security.storage-exempt.heritable, vfs.revoke-mounted-device,
+  xpc.launchd.ios-system-session=false) → **runs**
+
+Fix shipped: `diskarbitrationd-native-entitlements.plist` no longer
+carries the datavault key, and
+`sign_and_trustcache_merging_native_entitlements` gained a 6th
+`strip_keys` parameter that (a) invalidates the already-signed fast path
+when a stripped key is present in the current signature and (b) re-seals
+the merged signature with a full `-S` replace after stripping — `ldid
+-M` preserves stock keys, so merging alone can never remove datavault.
+Verified end-state: pid alive under launchd, endpoint
+`com.apple.macosbooter.DiskArbitration.diskarbitrationd` **active=1**
+(check-in via the libmachook name remap succeeded).
+
+Gotcha discovered in passing: the job's jetsam memory limits are
+6 MB soft/hard while the daemon RSS is ~24 MB — survived so far, but a
+jetsam kill under memory pressure is a plausible future failure mode.
 
 ### Required directory preconditions
 

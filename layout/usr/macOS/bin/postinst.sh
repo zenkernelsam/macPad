@@ -389,11 +389,22 @@ sign_and_trustcache_merging_native_entitlements() {
     local native_marker="$3"
     local identifier="$4"
     local explicit_requirement="${5:-0}"
+    local strip_keys="${6:-}"
     [ -f "$path" ] || return 0
     [ -f "$native_entitlements" ] || return 1
 
-    local hashes="" h dominated=1 current_entitlements="" requirement_valid=1
+    # `ldid -M` preserves keys already present in the stock signature, so a
+    # key listed in $strip_keys survives every merge step below.  It must be
+    # removed explicitly and the result re-sealed with a full `-S` replace.
+    # Presence of a stripped key also invalidates the "already signed" fast
+    # path — a previously deployed bad signature must be re-done.
+    local hashes="" h dominated=1 current_entitlements="" requirement_valid=1 strip_key=""
     current_entitlements=$(ldid -e "$path" 2>/dev/null || true)
+    for strip_key in $strip_keys; do
+        if printf '%s\n' "$current_entitlements" | grep -Fq "$strip_key"; then
+            dominated=0
+        fi
+    done
     if [ "$explicit_requirement" -eq 1 ]; then
         ldid -q "$path" 2>/dev/null | strings |
             grep -Fqx "$identifier" || requirement_valid=0
@@ -445,6 +456,34 @@ sign_and_trustcache_merging_native_entitlements() {
         ldid -I"$identifier" -S"$ENT" -M "$path" || return 1
         ldid -I"$identifier" -S"$native_entitlements" -M "$path" || return 1
         ldid -I"$identifier" -S"$native_entitlements" -M "$path" || return 1
+    fi
+    if [ -n "$strip_keys" ]; then
+        local merged_ent="/tmp/macws-ent-stripped.$$.plist"
+        ldid -e "$path" > "$merged_ent" 2>/dev/null || return 1
+        if ! /var/jb/usr/bin/python3 - "$merged_ent" $strip_keys <<'PYEOF'
+import plistlib, sys
+pl, keys = sys.argv[1], sys.argv[2:]
+try:
+    data = open(pl, 'rb').read()
+    docs = [p for p in data.split(b'<?xml') if p.strip()]
+    merged = {}
+    for p in docs:
+        merged.update(plistlib.loads(b'<?xml' + p))
+    for k in keys:
+        merged.pop(k, None)
+    plistlib.dump(merged, open(pl, 'wb'))
+except Exception:
+    sys.exit(1)
+PYEOF
+        then
+            rm -f "$merged_ent"
+            return 1
+        fi
+        ldid -I"$identifier" -S"$merged_ent" "$path" || {
+            rm -f "$merged_ent"
+            return 1
+        }
+        rm -f "$merged_ent"
     fi
     current_entitlements=$(ldid -e "$path" 2>/dev/null || true)
     printf '%s\n' "$current_entitlements" |
@@ -1379,11 +1418,19 @@ for quicklook_system_plugin in \
         /var/jb/usr/bin/chflags restricted "$quicklook_system_plugin" || exit 1
     fi
 done
+# Runtime-confirmed 2026-10-11 (iPad13,11 / iPadOS 16.3): the stock Ventura
+# entitlement `com.apple.rootless.datavault.metadata` alone in the signature
+# makes iPadOS kernel exec-admission SIGKILL the image before dyld runs
+# (OS_REASON_EXEC, zero dyld output). The native-entitlements plist ships
+# without it; do not add datavault keys back — they only belong on genuine
+# platform binaries, which our ad-hoc signature can never satisfy.
 sign_and_trustcache_merging_native_entitlements \
     '/var/mnt/rootfs/usr/libexec/diskarbitrationd' \
     "$DISKARBITRATIOND_NATIVE_ENT" \
     '<key>com.apple.private.security.disk-device-access</key>' \
-    'com.apple.diskarbitrationd' || exit 1
+    'com.apple.diskarbitrationd' \
+    0 \
+    'com.apple.rootless.datavault.metadata' || exit 1
 # The chroot has no loginwindow trust/bootstrap handoff. These are direct
 # outer-launchd targets, so each top-level executable must already satisfy the
 # same project signing policy before libmachook/autosignd can run. Their stock
