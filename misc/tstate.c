@@ -49,8 +49,8 @@ int main(int argc, char **argv)
         if (thread_get_state(ths[i], ARM_THREAD_STATE64, (thread_state_t)&stt, &cnt) == KERN_SUCCESS)
             printf("[thr%u] pc=%llx sp=%llx fp=%llx lr=%llx x16=%llx\n", i,
                    (unsigned long long)arm_thread_state64_get_pc(stt),
-                   (unsigned long long)stt.__sp, (unsigned long long)stt.__fp,
-                   (unsigned long long)stt.__lr, (unsigned long long)stt.__x[16]);
+                   (unsigned long long)arm_thread_state64_get_sp(stt), (unsigned long long)arm_thread_state64_get_fp(stt),
+                   (unsigned long long)arm_thread_state64_get_lr(stt), (unsigned long long)stt.__x[16]);
         mach_port_deallocate(mach_task_self(), ths[i]);
     }
 

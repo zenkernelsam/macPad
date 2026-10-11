@@ -113,6 +113,42 @@ static inline MacWSMetalDAGInputTarget MacWSMetalDAGGetInputTarget(
     return cursor == end ? requestTarget : MacWSMetalDAGInputUnknown;
 }
 
+// Runtime-confirmed via raw-1161-001-f-103208 (iPadOS 16.3/20D47 service,
+// WindowServer Ventura 22F82): discriminator 15 carries a serialized
+// function archive whose AIR module is embedded directly in the blob
+// (BC\xc0\xde observed at 0x1fc), not wrapped in the discriminator-14
+// " gad" DAG layout.  The module's bitcode string table packs the target
+// triple without a NUL follower (the next identifier begins immediately),
+// so the DAG follower rule does not apply.  Recognize the blob only when
+// it contains bitcode and every embedded air64-apple-* triple names the
+// same validated Ventura macOS target; anything else stays stock iOS.
+static inline MacWSMetalDAGInputTarget MacWSMetalEmbeddedArchiveTarget(
+        const void *data, size_t size) {
+    if (!data || size < 32 || size > 32U * 1024U * 1024U)
+        return MacWSMetalDAGInputUnknown;
+    const uint8_t *bytes = data;
+    static const char bcMagic[] = "BC\xc0\xde";
+    static const char prefix[] = "air64-apple-";
+    static const char macos[] = "air64-apple-macosx13.4.0";
+    size_t firstBC = (size_t)-1;
+    for (size_t i = 0; i + sizeof(bcMagic)-1 <= size; ++i) {
+        if (!memcmp(bytes + i, bcMagic, sizeof(bcMagic)-1)) {
+            firstBC = i;
+            break;
+        }
+    }
+    if (firstBC == (size_t)-1) return MacWSMetalDAGInputUnknown;
+    MacWSMetalDAGInputTarget result = MacWSMetalDAGInputUnknown;
+    for (size_t i = firstBC; i + sizeof(prefix)-1 <= size; ++i) {
+        if (memcmp(bytes + i, prefix, sizeof(prefix)-1)) continue;
+        if (i + sizeof(macos)-1 > size ||
+            memcmp(bytes + i, macos, sizeof(macos)-1))
+            return MacWSMetalDAGInputUnknown;
+        result = MacWSMetalDAGInputMacOS134;
+    }
+    return result;
+}
+
 static inline bool MacWSMetalDAGHasCatalystInputs(const void *data, size_t size) {
     return MacWSMetalDAGGetInputTarget(data, size) == MacWSMetalDAGInputCatalyst;
 }

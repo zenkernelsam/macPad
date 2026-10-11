@@ -1651,6 +1651,8 @@ restore_cold_boot_trust() {
         "$ROOTFS/usr/local/bin/macwsinputd" \
         "$ROOTFS/usr/local/bin/macwsdisplayd" \
         "$ROOTFS/usr/local/bin/macwsinteropd" \
+        /var/jb/usr/macOS/Frameworks/Metal.framework/XPCServices/MTLCompilerService.xpc/MTLCompilerService \
+        "$ROOTFS/System/Library/Frameworks/Metal.framework/XPCServices/MTLCompilerService.xpc/Contents/MacOS/MTLCompilerService" \
         "$ROOTFS/usr/local/bin/macwsworkspacectl"; do
         set -- "$@" "$path"
     done

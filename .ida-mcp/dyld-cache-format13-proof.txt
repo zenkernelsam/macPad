@@ -1,0 +1,738 @@
+INPUT /Users/ciscohe/Desktop/macPad/analysis/dyld_15.6.1_arm64e_thin
+Static IDB offsets; task base NOT yet proven.
+0x349ec e80080d2 MOV             X8, #0xD400000000007
+0x349f0 0800c8f2 MOV             X8, #0xD400000000007
+0x349f4 a801e0f2 MOV             X8, #0xD400000000007
+0x349f8 080300f9 STR             X8, [X24]
+0x349fc 170b00b9 STR             W23, [X24,#8]
+0x34a00 08c300fc STUR            D8, [X24,#0xC]
+0x34a04 141700b9 STR             W20, [X24,#0x14]
+0x34a08 68464af9 LDR             X8, [X19,#0x1488]
+0x34a0c 0e0540f9 LDR             X14, [X8,#8]
+0x34a10 76be42a9 LDP             X22, X15, [X19,#0x28]
+0x34a14 0ebf01a9 STP             X14, X15, [X24,#0x18]
+0x34b74 e00319aa MOV             X0, X25; regions
+0x34b78 e1031aaa MOV             X1, X26; regionCount
+0x34b7c e20318aa MOV             X2, X24; blob
+0x34b80 e30317aa MOV             X3, X23; blobSize
+0x34b84 92070194 BL              ___map_with_linking_np
+0x34b88 1f000071 CMP             W0, #0
+0x34b8c f4179f1a CSET            W20, EQ
+0x34b90 20010034 CBZ             W0, loc_34BB4
+0x769cc d04480d2 MOV             X16, #0x226
+0x769d0 011000d4 SVC             0x80
+0x769d4 03010054 B.CC            locret_769F4
+0x769d8 7f2303d5 PACIBSP
+0x769dc fd7bbfa9 STP             X29, X30, [SP,#var_10_1]!
+0x769e0 fd030091 MOV             X29, SP
+0x769e4 e030fe97 BL              _cerror_nocancel
+0x769e8 bf030091 MOV             SP, X29
+0x769ec fd7bc1a8 LDP             X29, X30, [SP+0x10+var_10_1],#0x10
+0x769f0 ff0f5fd6 RETAB
+0x769f4 c0035fd6 RET
+0xb9ec 42faff97 BL              __ZN5dyld47consoleEPKcz; dyld4::console(char const*,...)
+0xb9f0 68c24039 LDRB            W8, [X19,#0x30]
+0xb9f4 1f050071 CMP             W8, #1
+0xb9f8 41010054 B.NE            loc_BA20
+0xb9fc 880245f8 LDUR            X8, [X20,#0x50]
+
+Full mapSplitCachePrivate decompilation:
+__int64 __fastcall dyld3::mapSplitCachePrivate(__int64 a1)
+{
+  unsigned int *v1; // x0
+  __int64 v2; // x1
+  __int64 v3; // x21
+  unsigned int *v4; // x27
+  int v5; // w0
+  char v6; // w8
+  const char *v7; // x1
+  __int64 v8; // x26
+  __int64 i; // x8
+  _QWORD *v10; // x10
+  __int64 *v11; // x21
+  __int64 v12; // x24
+  _BYTE *v13; // x22
+  const char *v14; // x1
+  dyld3 *v15; // x0
+  unsigned __int64 v16; // x1
+  __int64 v17; // x8
+  __int64 v18; // x24
+  _QWORD *v19; // x8
+  __int64 v20; // x26
+  __int64 v21; // x20
+  int v22; // w21
+  __int64 v23; // x25
+  int *v24; // x27
+  int v25; // w11
+  unsigned int v26; // w10
+  unsigned int v27; // w12
+  __int64 v28; // x23
+  __int64 v29; // x22
+  __int64 v30; // x0
+  DyldSharedCache::DynamicRegion *v31; // x21
+  unsigned int *v32; // x27
+  __int64 v33; // x0
+  __int64 v34; // x1
+  __int64 v35; // x3
+  __int64 v36; // x0
+  __int64 v37; // x1
+  __int64 v38; // x3
+  const DyldSharedCache::DynamicRegion *v39; // x1
+  __int64 v40; // x21
+  __int64 v41; // x22
+  _BYTE *v42; // x24
+  __int64 v43; // x0
+  unsigned __int64 v44; // x2
+  unsigned __int64 v45; // x8
+  unsigned int v46; // w10
+  unsigned __int8 v47; // w9
+  __int64 v48; // x11
+  _DWORD **v49; // x12
+  unsigned __int64 v50; // x28
+  int *v51; // x22
+  _DWORD *v52; // x20
+  int v53; // w8
+  __int64 v54; // x21
+  int v55; // w24
+  int v56; // w27
+  unsigned __int64 v57; // x8
+  __int64 v58; // x23
+  vm_address_t v59; // x25
+  vm_size_t v60; // x26
+  __int64 v61; // x8
+  __int64 v62; // x11
+  __int64 v63; // x10
+  __int64 v64; // x28
+  unsigned int v65; // w20
+  __int64 v66; // x8
+  __int64 v67; // x9
+  size_t v68; // x23
+  _QWORD *v69; // x24
+  __int64 v70; // x0
+  __int64 v71; // x14
+  __int64 v72; // x15
+  __int64 v73; // x8
+  unsigned int v74; // w9
+  __int64 v75; // x10
+  unsigned int v76; // w13
+  __int64 v77; // x14
+  __int64 v78; // x15
+  _DWORD *v79; // x0
+  char *v80; // x1
+  int v81; // w16
+  __int64 v82; // x17
+  _WORD *v83; // x1
+  __int16 v84; // t1
+  const char *v85; // x1
+  __int64 v86; // x8
+  __int128 *v87; // x12
+  __int64 v88; // x13
+  const mwl_region *v89; // x25
+  __int64 v90; // x26
+  __int64 v91; // x9
+  mwl_region *v92; // x10
+  __int128 v93; // q0
+  __int128 v94; // q1
+  bool v95; // w20
+  const char *v96; // x1
+  bool v97; // w8
+  __int64 v98; // x1
+  __int64 v99; // x2
+  __int64 v100; // x23
+  __int64 v101; // x0
+  char v102; // w8
+  __int64 v103; // x8
+  __int64 v104; // x0
+  char v105; // w8
+  __int64 v106; // x8
+  char v107; // w8
+  __int64 v108; // x8
+  char v109; // w8
+  __int64 v110; // x8
+  __int64 v111; // x8
+  __int64 v112; // x8
+  int *v113; // x20
+  __int64 v114; // x9
+  const char *v115; // x10
+  int *v116; // x0
+  const char *v117; // x1
+  __int64 v118; // x21
+  int *v119; // x20
+  __int64 v121; // [xsp+10h] [xbp-FBB0h] BYREF
+  _QWORD v122[3]; // [xsp+20h] [xbp-FBA0h] BYREF
+  _BYTE *v123; // [xsp+38h] [xbp-FB88h]
+  int *v124; // [xsp+40h] [xbp-FB80h]
+  __int64 v125; // [xsp+48h] [xbp-FB78h]
+  __int64 v126; // [xsp+50h] [xbp-FB70h]
+  __int64 v127; // [xsp+58h] [xbp-FB68h]
+  _QWORD *v128; // [xsp+60h] [xbp-FB60h]
+  _QWORD *v129; // [xsp+68h] [xbp-FB58h]
+  __int64 v130; // [xsp+70h] [xbp-FB50h]
+  int v131; // [xsp+7Ch] [xbp-FB44h]
+  __int64 v132; // [xsp+80h] [xbp-FB40h]
+  int *v133; // [xsp+88h] [xbp-FB38h]
+  unsigned int *v134; // [xsp+90h] [xbp-FB30h]
+  _QWORD v135[2]; // [xsp+98h] [xbp-FB28h] BYREF
+  _QWORD v136[4]; // [xsp+A8h] [xbp-FB18h] BYREF
+  _QWORD v137[2]; // [xsp+C8h] [xbp-FAF8h] BYREF
+  _QWORD v138[4]; // [xsp+D8h] [xbp-FAE8h] BYREF
+  __int128 v139; // [xsp+F8h] [xbp-FAC8h] BYREF
+  __int128 v140; // [xsp+108h] [xbp-FAB8h] BYREF
+  vm_size_t v141; // [xsp+118h] [xbp-FAA8h]
+  _QWORD v142[3]; // [xsp+120h] [xbp-FAA0h] BYREF
+  __int16 v143; // [xsp+138h] [xbp-FA88h]
+  dev_t v144; // [xsp+13Ch] [xbp-FA84h] BYREF
+  _BYTE v145[12]; // [xsp+140h] [xbp-FA80h] BYREF
+  int v146; // [xsp+14Ch] [xbp-FA74h] BYREF
+  unsigned int v147; // [xsp+2A0h] [xbp-F920h]
+  char v148; // [xsp+2E7h] [xbp-F8D9h] BYREF
+  _BYTE v149[4096]; // [xsp+2E8h] [xbp-F8D8h] BYREF
+  _QWORD v150[48]; // [xsp+12E8h] [xbp-E8D8h] BYREF
+  char v151; // [xsp+146Dh] [xbp-E753h]
+  int v152; // [xsp+1470h] [xbp-E750h]
+  unsigned int v153; // [xsp+1490h] [xbp-E730h]
+  __int64 v154; // [xsp+1498h] [xbp-E728h]
+  __int64 v155; // [xsp+14A8h] [xbp-E718h] BYREF
+  lsl::Lock *v156; // [xsp+14B0h] [xbp-E710h] BYREF
+  _QWORD v157[2]; // [xsp+14B8h] [xbp-E708h] BYREF
+  _QWORD v158[2]; // [xsp+14C8h] [xbp-E6F8h] BYREF
+  __int128 v159; // [xsp+14D8h] [xbp-E6E8h]
+  __int128 v160; // [xsp+14E8h] [xbp-E6D8h]
+  char v161[1024]; // [xsp+1640h] [xbp-E580h] BYREF
+  _QWORD v162[5]; // [xsp+1A40h] [xbp-E180h] BYREF
+  int v163; // [xsp+1A6Ch] [xbp-E154h] BYREF
+  _BYTE v164[56]; // [xsp+1BC8h] [xbp-DFF8h] BYREF
+  __int64 v165; // [xsp+1C00h] [xbp-DFC0h] BYREF
+  char v166[264]; // [xsp+FA40h] [xbp-180h] BYREF
+  unsigned __int128 v167; // 0:x1.16
+  unsigned __int128 v168; // 0:x1.16
+
+  v1 = (unsigned int *)__chkstk_darwin(a1);
+  v3 = v2;
+  v4 = v1;
+  v155 = v2;
+  v151 = 0;
+  v152 = 0;
+  memset(v166, 0, 256);
+  v5 = dyld3::preflightMainCacheFile(v1, v2, (__int64)v150, v166, (int)v149);
+  v6 = 0;
+  if ( !v5 )
+    return v6 & 1;
+  if ( *((_BYTE *)v4 + 6) == 1 && (unsigned int)FileIdTuple::getPath((dev_t *)(v3 + 28), (char *)v162) )
+    dyld4::console((mach_o::Platform *)"mapped dyld cache file private to process (%s):\n", v7, v162);
+  v8 = v153;
+  if ( v153 && (v151 & 1) == 0 )
+  {
+    v6 = 0;
+    v114 = v155;
+    v115 = "shared cache is too old, missing subcache suffixes";
+LABEL_143:
+    *(_QWORD *)(v114 + 16) = v115;
+    return v6 & 1;
+  }
+  for ( i = 0; i != 7168; i += 56 )
+  {
+    v10 = &v162[i];
+    *((_BYTE *)v10 + 389) = 0;
+    *((_DWORD *)v10 + 98) = 0;
+  }
+  if ( (unsigned int)v8 >= 2 )
+  {
+    v11 = &v165;
+    v12 = v8 - 1;
+    v13 = v149;
+    do
+    {
+      memset(v142, 0, sizeof(v142));
+      v143 = 0;
+      bzero(&v144, 0x10u);
+      if ( !(unsigned int)dyld3::preflightSubCacheFile((int)v4, (int)v142, (int)v11, v166) )
+        goto LABEL_141;
+      if ( *((_BYTE *)v4 + 6) == 1 )
+      {
+        bzero(v161, 0x400u);
+        if ( (unsigned int)FileIdTuple::getPath(&v144, v161) )
+          dyld4::console((mach_o::Platform *)"mapped dyld cache file private to process (%s):\n", v14, v161);
+      }
+      LODWORD(v11) = (_DWORD)v11 + 448;
+      v13 += 32;
+    }
+    while ( --v12 );
+  }
+  v134 = v4;
+  v15 = (dyld3 *)memmove(v162, v150, 0x1C0u);
+  v126 = v150[0];
+  dyld3::deallocateExistingSharedCache(v15);
+  v17 = v155;
+  *(_QWORD *)v155 = v162[0];
+  *(_QWORD *)(v17 + 8) = 0;
+  v127 = v8;
+  if ( (_DWORD)v8 )
+  {
+    v18 = 0;
+    v133 = &v163;
+    while ( 1 )
+    {
+      v19 = &v162[56 * v18];
+      v20 = *((unsigned int *)v19 + 96);
+      if ( (_DWORD)v20 )
+        break;
+LABEL_33:
+      ++v18;
+      v133 += 112;
+      if ( v18 == v127 )
+        goto LABEL_34;
+    }
+    v21 = *v19;
+    v22 = *((_DWORD *)v19 + 98);
+    v23 = *v19 - (v126 + *(_QWORD *)(v155 + 8)) + 0x180000000LL;
+    v24 = v133;
+    while ( 1 )
+    {
+      v25 = *(v24 - 1);
+      v26 = *v24 & 5 | 2;
+      if ( (*((_BYTE *)v134 + 9) & 1) != 0 )
+        v27 = 524306;
+      else
+        v27 = 18;
+      if ( (*((_BYTE *)v134 + 9) & 1) == 0 )
+        v26 = *v24 & 7;
+      v28 = (v25 & 0x200) != 0 ? v27 : 18LL;
+      v29 = (v25 & 0x200) != 0 ? v26 : *v24 & 7u;
+      if ( mmap(
+             (void *)(v23 + *(_QWORD *)(v24 - 11) - v21 + *(_QWORD *)(v155 + 8)),
+             *(_QWORD *)(v24 - 9),
+             v29,
+             v28,
+             v22,
+             *(_QWORD *)(v24 - 7)) == (void *)-1LL )
+        break;
+      v24 += 12;
+      if ( !--v20 )
+        goto LABEL_33;
+    }
+    if ( *((_BYTE *)v134 + 6) == 1 )
+    {
+      v116 = __error();
+      dyld4::console(
+        (mach_o::Platform *)"mmap(%d, %d) the shared cache region failed due to: %d\n",
+        v117,
+        v29,
+        v28,
+        (unsigned int)*v116);
+    }
+    v118 = v127;
+    if ( !*(_QWORD *)(v155 + 16) )
+      *(_QWORD *)(v155 + 16) = "mmap() the shared cache region failed";
+    v119 = (int *)v164;
+    do
+    {
+      if ( *v119 != -1 )
+        close(*v119);
+      v119 += 112;
+      --v118;
+    }
+    while ( v118 );
+LABEL_141:
+    v6 = 0;
+    return v6 & 1;
+  }
+LABEL_34:
+  v30 = DyldSharedCache::DynamicRegion::make((#123 *)(*(_QWORD *)(v155 + 8) + v154), v16);
+  if ( !v30 )
+  {
+    mmap((void *)0x180000000LL, 0x180000000uLL, 0, 4114, 0, 0);
+    v6 = 0;
+    *(_QWORD *)v155 = 0;
+    v114 = v155;
+    v115 = "could not mmap() dynamic config memory";
+    goto LABEL_143;
+  }
+  v31 = (DyldSharedCache::DynamicRegion *)v30;
+  bzero(v161, 0x400u);
+  if ( (unsigned int)FileIdTuple::getPath((dev_t *)(v155 + 28), v161) )
+    DyldSharedCache::DynamicRegion::setCachePath(v31, v161);
+  DyldSharedCache::DynamicRegion::setDyldCacheFileID(v31, *(_QWORD *)(v155 + 28), *(_QWORD *)(v155 + 36));
+  v32 = v134;
+  v33 = dyld4::ProcessConfig::evaluateProcessorSpecificFunctionVariantFlags(*((_QWORD *)v134 + 4));
+  v35 = v34;
+  *(_QWORD *)&v167 = v33;
+  *((_QWORD *)&v167 + 1) = v35;
+  DyldSharedCache::DynamicRegion::setProcessorFlags(v31, v167);
+  v36 = dyld4::ProcessConfig::evaluateSystemWideFunctionVariantFlags(*((_QWORD *)v134 + 4));
+  v38 = v37;
+  *(_QWORD *)&v168 = v36;
+  *((_QWORD *)&v168 + 1) = v38;
+  DyldSharedCache::DynamicRegion::setSystemWideFlags(v31, v168);
+  DyldSharedCache::DynamicRegion::setReadOnly(v31);
+  v40 = v127;
+  if ( *((_BYTE *)v134 + 6) == 1 )
+    dyld3::verboseSharedCacheMappings(*(#117 **)v155, v39);
+  v148 = 1;
+  if ( (_DWORD)v127 )
+  {
+    v41 = 0;
+    v122[0] = v158;
+    v122[1] = v136;
+    v122[2] = v138;
+    v42 = v145;
+    v124 = &v146;
+    v123 = v145;
+    do
+    {
+      v129 = &v162[56 * v41];
+      v43 = (__int64)memmove(v142, v129, 0x1C0u);
+      v45 = v147;
+      if ( v147 )
+      {
+        v46 = 0;
+        v47 = *((_BYTE *)v32 + 13);
+        v48 = v147;
+        v49 = (_DWORD **)v42;
+        do
+        {
+          if ( *(v49 - 1) )
+          {
+            ++v46;
+            v47 &= **v49 == 5;
+          }
+          v49 += 6;
+          --v48;
+        }
+        while ( v48 );
+        if ( v46 )
+        {
+          if ( ((v46 < 6) & v47) != 1 )
+            goto LABEL_92;
+          v50 = 0;
+          *(_QWORD *)&v139 = v157;
+          *((_QWORD *)&v139 + 1) = 8;
+          v141 = 0;
+          v125 = v41;
+          v128 = &v142[6 * v41];
+          v51 = v124;
+          v140 = 0u;
+          do
+          {
+            if ( *(_QWORD *)(v51 - 5) )
+            {
+              v52 = *(_DWORD **)(v51 - 3);
+              if ( *v52 != 5 )
+                __assert_rtn("mapSplitCachePrivate", "SharedCacheRuntime.cpp", 1081, "slideInfoHeader->version == 5");
+              if ( (*((_BYTE *)v32 + 9) & 1) != 0 )
+                v53 = *v51 & 7 | 0x200;
+              else
+                v53 = *v51 & 7;
+              if ( (*(v51 - 1) & 0x200) == 0 )
+                v53 = *v51 & 7;
+              LODWORD(v133) = v53;
+              v131 = *((_DWORD *)v129 + 98);
+              v132 = *(_QWORD *)(v51 - 7);
+              v130 = *(_QWORD *)(v51 - 11);
+              v54 = *(_QWORD *)(v155 + 8);
+              v56 = v52[1];
+              v55 = v52[2];
+              v43 = DyldSharedCache::mappingName((DyldSharedCache::DynamicRegion *)*((unsigned int *)v128 + 10), 0, v44);
+              v57 = v140 + 1;
+              if ( (unsigned __int64)(v140 + 1) > *((_QWORD *)&v139 + 1) )
+              {
+                v58 = v43;
+                v59 = *((_QWORD *)&v140 + 1);
+                v60 = v141;
+                if ( 2LL * *((_QWORD *)&v139 + 1) > v57 )
+                  v57 = 2LL * *((_QWORD *)&v139 + 1);
+                v141 = (vm_page_size + 48 * v57 - 1) & -(__int64)vm_page_size;
+                if ( vm_allocate(mach_task_self_, (vm_address_t *)&v140 + 1, v141, 1006632961) )
+                  __assert_rtn("growTo", "Array.h", 187, "0");
+                memmove(*((void **)&v140 + 1), (const void *)v139, 48 * v140);
+                *(_QWORD *)&v139 = *((_QWORD *)&v140 + 1);
+                *((_QWORD *)&v139 + 1) = v141 / 0x30;
+                v43 = v58;
+                if ( v59 )
+                {
+                  vm_deallocate(mach_task_self_, v59, v60);
+                  v43 = v58;
+                }
+              }
+              v61 = v54 + v130;
+              v62 = v140;
+              *(_QWORD *)&v140 = v140 + 1;
+              v63 = v139 + 48 * v62;
+              *(_DWORD *)v63 = v131;
+              *(_DWORD *)(v63 + 4) = (_DWORD)v133;
+              *(_QWORD *)(v63 + 8) = v132;
+              *(_QWORD *)(v63 + 16) = v61;
+              *(_QWORD *)(v63 + 24) = (unsigned int)(v55 * v56);
+              *(_QWORD *)(v63 + 32) = v43;
+              *(_QWORD *)(v63 + 40) = v52;
+              v45 = v147;
+              v32 = v134;
+            }
+            ++v50;
+            v51 += 12;
+          }
+          while ( v50 < v45 );
+          v64 = v140;
+          if ( (_QWORD)v140 )
+          {
+            v65 = 4 * v140 + 4;
+            v66 = v139 + 40;
+            v67 = 48 * v140;
+            do
+            {
+              if ( **(_DWORD **)v66 != 5 )
+                __assert_rtn("mapSplitCachePrivate", "SharedCacheRuntime.cpp", 1116, "slideInfoHeader->version == 5");
+              v65 = (v65 + 2 * *(_DWORD *)(*(_QWORD *)v66 + 8LL) + 25) & 0xFFFFFFFC;
+              v66 += 48;
+              v67 -= 48;
+            }
+            while ( v67 );
+            v68 = (v65 + 47) & 0xFFFFFFF8;
+            __chkstk_darwin(v43);
+            v69 = (_QWORD *)((char *)v122 - ((v68 + 15) & 0x1FFFFFFF0LL));
+            bzero(v69, v68);
+            *v69 = 0xD400000000007LL;
+            *((_DWORD *)v69 + 2) = v68;
+            *(_QWORD *)((char *)v69 + 12) = 0x2800000000LL;
+            *((_DWORD *)v69 + 5) = v65;
+            v71 = *(_QWORD *)(v155 + 8);
+            v41 = v125;
+            v72 = v126;
+            v69[3] = v71;
+            v69[4] = v72;
+            v73 = v140;
+            *((_DWORD *)v69 + 10) = v140;
+            if ( v73 )
+            {
+              v74 = 0;
+              v75 = v139 + 48 * v73;
+              v76 = 4 * v73 + 4;
+              v77 = v71 + v72;
+              v78 = v139;
+              do
+              {
+                v79 = *(_DWORD **)(v78 + 40);
+                if ( *v79 != 5 )
+                  __assert_rtn("mapSplitCachePrivate", "SharedCacheRuntime.cpp", 1142, "slideInfoHeader->version == 5");
+                *((_DWORD *)v69 + v74 + 11) = v76;
+                v80 = (char *)v69 + v76 + 40;
+                v81 = 2 * v79[2] + 22;
+                *(_DWORD *)v80 = v81;
+                *((_DWORD *)v80 + 1) = 868352;
+                *((_QWORD *)v80 + 1) = *(_QWORD *)(v78 + 16) - v77;
+                *((_DWORD *)v80 + 4) = 0;
+                v82 = (unsigned int)v79[2];
+                *((_WORD *)v80 + 10) = v82;
+                if ( (_DWORD)v82 )
+                {
+                  v79 += 6;
+                  v83 = v80 + 22;
+                  do
+                  {
+                    v84 = *(_WORD *)v79;
+                    v79 = (_DWORD *)((char *)v79 + 2);
+                    *v83++ = v84;
+                    --v82;
+                  }
+                  while ( v82 );
+                }
+                ++v74;
+                v76 = (v76 + v81 + 3) & 0xFFFFFFFC;
+                v78 += 48;
+              }
+              while ( v78 != v75 );
+              __chkstk_darwin(v79);
+              v89 = (const mwl_region *)((char *)v122 - (v88 & 0xFFFFFFFFFFFFFFE0LL | 0x10));
+              v90 = 0;
+              v91 = 48 * v86;
+              v92 = (mwl_region *)v89;
+              do
+              {
+                if ( v86 == v90 )
+                  __assert_rtn("push_back", "Array.h", 67, "_usedCount < _allocCount");
+                ++v90;
+                v93 = *v87;
+                v94 = v87[1];
+                v87 += 3;
+                *(_OWORD *)&v92->mwlr_fd = v93;
+                *(_OWORD *)&v92->mwlr_address = v94;
+                ++v92;
+                v91 -= 48;
+              }
+              while ( v91 );
+            }
+            else
+            {
+              __chkstk_darwin(v70);
+              v89 = (const mwl_region *)&v121;
+              LODWORD(v90) = 0;
+            }
+            if ( (*((_BYTE *)v32 + 6) & 1) != 0 )
+              dyld4::console((mach_o::Platform *)"Setting up kernel page-in linking for subcache %d\n", v85, v41);
+            v43 = __map_with_linking_np(
+                    v89,
+                    v90,
+                    (const mwl_info_hdr *)((char *)v122 - ((v68 + 15) & 0x1FFFFFFF0LL)),
+                    v68);
+            v95 = (_DWORD)v43 == 0;
+            if ( (_DWORD)v43 && *((_BYTE *)v32 + 6) == 1 )
+              v43 = dyld4::console(
+                      (mach_o::Platform *)"__map_with_linking_np(subcache %d) failed, falling back to linking in-process\n",
+                      v96,
+                      v41);
+          }
+          else
+          {
+            v95 = 1;
+            v41 = v125;
+          }
+          *(_QWORD *)&v140 = 0;
+          if ( *((_QWORD *)&v140 + 1) )
+            v43 = vm_deallocate(mach_task_self_, *((vm_address_t *)&v140 + 1), v141);
+          v97 = !v64 || v95;
+          v40 = v127;
+          v42 = v123;
+          if ( !v97 )
+          {
+LABEL_92:
+            if ( *((_BYTE *)v32 + 8) == 1 )
+            {
+              v137[0] = _NSConcreteStackBlock;
+              v137[1] = 0x40000000;
+              v138[0] = ___ZN5dyld3L20mapSplitCachePrivateERKNS_18SharedCacheOptionsEPNS_19SharedCacheLoadInfoE_block_invoke;
+              v138[1] = &__block_descriptor_tmp_7;
+              v138[2] = v32;
+              v138[3] = v155;
+              v43 = DyldSharedCache::forEachRegion(v142[0], v137);
+            }
+            v100 = lsl::MemoryManager::memoryManager((lsl::MemoryManager *)v43);
+            *(_QWORD *)&v139 = v142;
+            *((_QWORD *)&v139 + 1) = &v148;
+            *(_QWORD *)&v140 = v32;
+            *((_QWORD *)&v140 + 1) = &v155;
+            v101 = *(_QWORD *)(v100 + 48);
+            if ( v101 && (unsigned int)lsl::ProtectedStack::onStackInAnyFrameInThisThread(v101, v98, v99) )
+            {
+              if ( !MEMORY[0xFFFFFC10C] )
+                goto LABEL_150;
+              if ( (MEMORY[0xFFFFFC10C] & 0xFE) != 2 )
+                goto LABEL_150;
+              v102 = MEMORY[0xFFFFFC10C];
+              __dmb(0xAu);
+              if ( (v102 & 0xFE) != 2 )
+                goto LABEL_150;
+              _WriteStatusReg(SPRR_UPERM_EL0, MEMORY[0xFFFFFC0D0]);
+              __isb(0xFu);
+              v103 = MEMORY[0xFFFFFC0D0];
+              if ( v103 != _ReadStatusReg(SPRR_UPERM_EL0) )
+                goto LABEL_150;
+              v104 = *(_QWORD *)(v100 + 48);
+              v157[0] = _NSConcreteStackBlock;
+              v157[1] = 0x40000000;
+              v158[0] = ___ZN3lsl13MemoryManager26withWritableMemoryInternalIZN5dyld3L20mapSplitCachePrivateERKNS2_18SharedCacheOptionsEPNS2_19SharedCacheLoadInfoEE3__0EEvT__block_invoke;
+              v158[1] = &__block_descriptor_tmp_40;
+              v159 = v139;
+              v160 = v140;
+              lsl::ProtectedStack::withNestedProtectedStack(v104, v157);
+              if ( !MEMORY[0xFFFFFC10C] )
+                goto LABEL_150;
+              if ( (MEMORY[0xFFFFFC10C] & 0xFE) != 2 )
+                goto LABEL_150;
+              v105 = MEMORY[0xFFFFFC10C];
+              __dmb(0xAu);
+              if ( (v105 & 0xFE) != 2 )
+                goto LABEL_150;
+              _WriteStatusReg(SPRR_UPERM_EL0, MEMORY[0xFFFFFC0D8]);
+              __isb(0xFu);
+              v106 = MEMORY[0xFFFFFC0D8];
+              if ( v106 != _ReadStatusReg(SPRR_UPERM_EL0) )
+                goto LABEL_150;
+            }
+            else if ( *(_BYTE *)(v100 + 32) == 1 )
+            {
+              if ( !MEMORY[0xFFFFFC10C] || (MEMORY[0xFFFFFC10C] & 0xFE) != 2 )
+LABEL_150:
+                __break(1u);
+              if ( (_ReadStatusReg(SPRR_UPERM_EL0) & 0x1000000000LL) != 0 )
+              {
+                dyld3::mapSplitCachePrivate(dyld3::SharedCacheOptions const&,dyld3::SharedCacheLoadInfo *)::$_0::operator()(&v139);
+              }
+              else
+              {
+                if ( !MEMORY[0xFFFFFC10C] )
+                  goto LABEL_150;
+                if ( (MEMORY[0xFFFFFC10C] & 0xFE) != 2 )
+                  goto LABEL_150;
+                v107 = MEMORY[0xFFFFFC10C];
+                __dmb(0xAu);
+                if ( (v107 & 0xFE) != 2 )
+                  goto LABEL_150;
+                _WriteStatusReg(SPRR_UPERM_EL0, MEMORY[0xFFFFFC0D0]);
+                __isb(0xFu);
+                v108 = MEMORY[0xFFFFFC0D0];
+                if ( v108 != _ReadStatusReg(SPRR_UPERM_EL0) )
+                  goto LABEL_150;
+                dyld3::mapSplitCachePrivate(dyld3::SharedCacheOptions const&,dyld3::SharedCacheLoadInfo *)::$_0::operator()(&v139);
+                if ( !MEMORY[0xFFFFFC10C] )
+                  goto LABEL_150;
+                if ( (MEMORY[0xFFFFFC10C] & 0xFE) != 2 )
+                  goto LABEL_150;
+                v109 = MEMORY[0xFFFFFC10C];
+                __dmb(0xAu);
+                if ( (v109 & 0xFE) != 2 )
+                  goto LABEL_150;
+                _WriteStatusReg(SPRR_UPERM_EL0, MEMORY[0xFFFFFC0D8]);
+                __isb(0xFu);
+                v110 = MEMORY[0xFFFFFC0D8];
+                if ( v110 != _ReadStatusReg(SPRR_UPERM_EL0) )
+                  goto LABEL_150;
+              }
+            }
+            else
+            {
+              lsl::MemoryManager::lockGuard((__int64 *)&v156, (#111 *)v100);
+              v111 = *(_QWORD *)(v100 + 24);
+              if ( !v111 )
+              {
+                lsl::MemoryManager::writeProtect((lsl::MemoryManager *)v100, 0);
+                v111 = *(_QWORD *)(v100 + 24);
+              }
+              *(_QWORD *)(v100 + 24) = v111 + 1;
+              lsl::Lock::unlock(v156);
+              dyld3::mapSplitCachePrivate(dyld3::SharedCacheOptions const&,dyld3::SharedCacheLoadInfo *)::$_0::operator()(&v139);
+              lsl::MemoryManager::lockGuard((__int64 *)&v156, (#111 *)v100);
+              v112 = *(_QWORD *)(v100 + 24) - 1LL;
+              *(_QWORD *)(v100 + 24) = v112;
+              if ( !v112 )
+                lsl::MemoryManager::writeProtect((lsl::MemoryManager *)v100, 1);
+              lsl::Lock::unlock(v156);
+            }
+            if ( *((_BYTE *)v32 + 8) == 1 )
+            {
+              v135[0] = _NSConcreteStackBlock;
+              v135[1] = 0x40000000;
+              v136[0] = ___ZN5dyld3L20mapSplitCachePrivateERKNS_18SharedCacheOptionsEPNS_19SharedCacheLoadInfoE_block_invoke_2;
+              v136[1] = &__block_descriptor_tmp_10_0;
+              v136[2] = v32;
+              v136[3] = v155;
+              DyldSharedCache::forEachRegion(v142[0], v135);
+            }
+          }
+        }
+      }
+      ++v41;
+    }
+    while ( v41 != v40 );
+    v113 = (int *)v164;
+    do
+    {
+      if ( *v113 != -1 )
+        close(*v113);
+      v113 += 112;
+      --v40;
+    }
+    while ( v40 );
+  }
+  v6 = v148;
+  return v6 & 1;
+}

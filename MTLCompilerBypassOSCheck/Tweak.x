@@ -19,6 +19,8 @@
 // The rootless iOS 16 Theos SDK used by this project omits xpc/xpc.h.  This
 // is the exact public C ABI needed by the UUID-locked reply observer.
 extern void *xpc_data_create(const void *bytes, size_t length);
+extern void xpc_dictionary_set_string(void *dictionary, const char *key,
+                                      const char *value);
 
 // Diagnostics are explicitly opt-in for the current boot.  They must never
 // survive as configuration under a persistent mobile or rootless directory.
@@ -812,6 +814,23 @@ static void *MacWSCompilerReplyDataCreate(const void *bytes, size_t length) {
     return xpc_data_create(bytes, length);
 }
 
+// Read-only error-witness for the same reply block. When the service answers
+// a build request with {error=code, errorMessage=text}, the exact reply site
+// BLs here instead of xpc_dictionary_set_string under diagnostics, records
+// the error code/message verbatim, then calls the real XPC API. Nothing about
+// the reply contents is changed.
+static void MacWSCompilerErrorStringSet(void *dictionary, const char *key,
+                                        const char *value) {
+    if (!MacWSCompilerDiagnosticsEnabled())
+        return xpc_dictionary_set_string(dictionary, key, value);
+    MTLPatchLog("compiler error reply request=%u discriminator=%#lx sourceHash=%016llx key=%s message=%s",
+                gReplyRequestSequence,
+                (unsigned long)gReplyRequestDiscriminator,
+                (unsigned long long)gReplySourceHash,
+                key ? key : "(null)", value ? value : "(null)");
+    return xpc_dictionary_set_string(dictionary, key, value);
+}
+
 static uintptr_t MacWSMTLCodeGenServiceBuildRequest(
     uintptr_t a0, uintptr_t a1, uintptr_t a2,
     void *request, size_t requestSize, void *a5) {
@@ -991,7 +1010,10 @@ static uintptr_t MacWSMTLCodeGenServiceBuildRequest(
     if (!OrigMTLCodeGenServiceBuildRequest) return (uintptr_t)-1;
 
     MacWSMetalDAGInputTarget dagInputTarget = a2 == 14
-        ? MacWSMetalDAGGetInputTarget(request, requestSize) : MacWSMetalDAGInputUnknown;
+        ? MacWSMetalDAGGetInputTarget(request, requestSize)
+        : (a2 == 15
+            ? MacWSMetalEmbeddedArchiveTarget(request, requestSize)
+            : MacWSMetalDAGInputUnknown);
     bool nativeImageFilter = a2 == 5 &&
         MacWSMetalImageFilterGetInputTarget(request, requestSize) == MacWSMetalDAGInputMacOS134;
     if (adapted || dagInputTarget != MacWSMetalDAGInputUnknown || nativeImageFilter)
@@ -1012,6 +1034,43 @@ static uintptr_t MacWSMTLCodeGenServiceBuildRequest(
     MacWSMetalDAGInputTarget previousDAGContext = gMacWSDAGInputTarget;
     gMacWSDAGInputTarget = dagInputTarget && InstallCatalystDAGTargetContext()
         ? dagInputTarget : MacWSMetalDAGInputUnknown;
+    // Discriminator 15 embeds the AIR module itself, so its target triple is a
+    // fixed-length entry in the wrapped bitcode string table and never reaches
+    // a Module object the way the kind-5 modules do.  After the byte-level
+    // recognizer has already required every embedded air64-apple-* triple to
+    // name the validated Ventura macOS target, translate the serialized module
+    // target to the same macabi identity the image-filter path assigns through
+    // LLVMSetTarget.  The service still parses, verifies and codegens the
+    // module under its own validation, and the reply archive takes its
+    // Catalyst platform from the DAG context above.
+    if (a2 == 15 && dagInputTarget == MacWSMetalDAGInputMacOS134) {
+        // DIAGNOSTIC EXPERIMENT: RE at MTLCompiler+0x186e28 shows the
+        // embedded-archive check requires an OS-type field == 7 before
+        // emitting "Target OS is incompatible." The request's leading dword
+        // (big-endian 6) is the only visible platform field; rewrite it to
+        // iOS to confirm which side of the gate it feeds.
+        uint8_t *requestHead = (uint8_t *)request;
+        if (requestSize >= 4 && requestHead[0] == 0 && requestHead[1] == 0 &&
+            requestHead[2] == 0 && requestHead[3] == 6) {
+            requestHead[3] = 7;
+            MTLPatchLog("MacWS embedded-archive header platform rewritten 6->7");
+        }
+        static const char macosTriple[] = "air64-apple-macosx13.4.0";
+        static const char macabiTriple[] = "air64-apple-ios19-macabi";
+        _Static_assert(sizeof(macosTriple) == sizeof(macabiTriple),
+            "embedded triple retarget must preserve serialized length");
+        uint8_t *requestBytes = (uint8_t *)request;
+        uint32_t retargets = 0;
+        for (size_t i = 0; i + sizeof(macosTriple) - 1 <= requestSize; ++i) {
+            if (!memcmp(requestBytes + i, macosTriple, sizeof(macosTriple) - 1)) {
+                memcpy(requestBytes + i, macabiTriple, sizeof(macabiTriple) - 1);
+                ++retargets;
+            }
+        }
+        if (diagnostics || !retargets)
+            MTLPatchLog("MacWS embedded-archive module target retargets=%u size=%zu",
+                        retargets, requestSize);
+    }
     uint32_t previousImageFilterCount = gImageFilterRequestModuleCount;
     gImageFilterRequestModuleCount = nativeImageFilter && InstallImageFilterTargetContext()
         ? MacWSMetalImageFilterReadLE32((const uint8_t *)request + 8) : 0;
@@ -1059,6 +1118,11 @@ static void InstallMacOSMetalTargetAdapter(void) {
         struct MacWSTargetAdapterCallSite callSites[3];
         uintptr_t replyOffset;
         uint32_t expectedReplyCall;
+        // Diagnostics-only error witness: the reply block's
+        // xpc_dictionary_set_string call for "errorMessage".  Zero keeps the
+        // observer off for a profile that has not been RE-confirmed.
+        uintptr_t errorStringOffset;
+        uint32_t expectedErrorStringCall;
     };
     static const struct MacWSTargetAdapterProfile profiles[] = {
         {
@@ -1073,6 +1137,8 @@ static void InstallMacOSMetalTargetAdapter(void) {
             },
             .replyOffset = 0x2770,
             .expectedReplyCall = 0x9400047c,
+            .errorStringOffset = 0x274c,
+            .expectedErrorStringCall = 0x940004a9,
         },
         {
             .uuid = {
@@ -1086,6 +1152,8 @@ static void InstallMacOSMetalTargetAdapter(void) {
             },
             .replyOffset = 0x2770,
             .expectedReplyCall = 0x9400047c,
+            .errorStringOffset = 0,
+            .expectedErrorStringCall = 0,
         },
         {
             .uuid = {
@@ -1099,6 +1167,8 @@ static void InstallMacOSMetalTargetAdapter(void) {
             },
             .replyOffset = 0x26d8,
             .expectedReplyCall = 0x940004ae,
+            .errorStringOffset = 0,
+            .expectedErrorStringCall = 0,
         },
     };
     const struct mach_header_64 *mh = NULL;
@@ -1226,6 +1296,31 @@ static void InstallMacOSMetalTargetAdapter(void) {
         MTLPatchLog("compiler reply observer installed site=%p old=%#x new=%#x wrapper=%#lx",
                     replyDataSite, expectedReplyCall, *replyDataSite,
                     (unsigned long)replyTarget);
+
+        if (profile->errorStringOffset) {
+            uint32_t *errorStringSite =
+                (uint32_t *)((uintptr_t)mh + profile->errorStringOffset);
+            const uint32_t expectedErrorCall = profile->expectedErrorStringCall;
+            uintptr_t errorTarget =
+                StripPAC((const void *)MacWSCompilerErrorStringSet);
+            intptr_t errorDelta = (intptr_t)errorTarget - (intptr_t)errorStringSite;
+            if (*(const uint32_t *)errorTarget != kPacibsp ||
+                *errorStringSite != expectedErrorCall || (errorDelta & 3) != 0 ||
+                errorDelta < -(1LL << 27) || errorDelta >= (1LL << 27)) {
+                MTLPatchLog("compiler error observer validation failed site=%p insn=%#x target=%#lx targetInsn=%#x delta=%#lx",
+                            errorStringSite, *errorStringSite,
+                            (unsigned long)errorTarget,
+                            *(const uint32_t *)errorTarget,
+                            (unsigned long)errorDelta);
+                return;
+            }
+            uint32_t errorBranch = 0x94000000u |
+                ((uint32_t)((uint64_t)(errorDelta >> 2) & 0x03ffffffu));
+            PatchInstruction(errorStringSite, errorBranch);
+            MTLPatchLog("compiler error observer installed site=%p old=%#x new=%#x wrapper=%#lx",
+                        errorStringSite, expectedErrorCall, *errorStringSite,
+                        (unsigned long)errorTarget);
+        }
     }
 }
 

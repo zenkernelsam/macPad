@@ -1,0 +1,720 @@
+{
+  "addr": "0xfffffe00092a45e4",
+  "code": "__int64 __fastcall _vnode_check_signature(\n        __int64 a1,\n        __int64 a2,\n        __int64 a3,\n        __int64 a4,\n        int *a5,\n        _DWORD *a6,\n        unsigned int a7,\n        int a8,\n        __int64 a9,\n        __int64 a10)\n{\n  __int64 v15; // x0\n  __int64 v16; // x20\n  __int64 v17; // x24\n  __int64 v18; // x27\n  const char *v19; // x23\n  int v20; // w25\n  const unsigned __int8 *cdhash; // x26\n  OSEntitlements *v22; // x21\n  const OSCollection *v23; // x0\n  const OSCollection *v24; // x24\n  OSCollectionIterator *v25; // x0\n  OSCollectionIterator *v26; // x23\n  __int64 v27; // x0\n  const OSMetaClassBase *v28; // x25\n  int v29; // w22\n  int v30; // w28\n  OSMetaClassBase *v31; // x0\n  const char *v32; // x0\n  char *v33; // x27\n  const OSMetaClass *v34; // x0\n  const char *ClassName; // x0\n  __int64 v36; // x22\n  __int64 v37; // x0\n  int v38; // w8\n  int v39; // w23\n  const char *v40; // x3\n  int v41; // w22\n  int v42; // w8\n  int v43; // w8\n  __int64 v44; // x22\n  __int64 v45; // x0\n  unsigned __int8 *v46; // x28\n  __int64 addr; // x23\n  __int64 size; // x0\n  __int64 blob_bytes; // x0\n  size_t v50; // x8\n  const char *v51; // x23\n  int v52; // w25\n  int v53; // w24\n  char v54; // w8\n  char v55; // w9\n  __int64 v56; // x23\n  __int64 v57; // x0\n  __int64 v58; // x0\n  __int64 v59; // x24\n  unsigned int v60; // w9\n  unsigned int v61; // w8\n  proc *v62; // x0\n  bool *v63; // x3\n  __int64 v64; // x23\n  __int64 v65; // x23\n  _BOOL8 v66; // x4\n  __int64 v67; // x1\n  unsigned __int8 *v68; // x23\n  int v69; // w25\n  const char *v70; // x0\n  int v71; // w24\n  const ccdigest_info *v72; // x0\n  int hashtype; // w0\n  ipc_port *v74; // x23\n  int v75; // w10\n  ipc_port *v76; // x24\n  size_t v77; // x23\n  size_t v78; // x22\n  OSMetaClassBase *v79; // x0\n  const OSMetaClassBase *v80; // x0\n  OSMetaClassBase *v81; // x0\n  OSMetaClassBase *v82; // x25\n  int v83; // w0\n  int v84; // w27\n  __int64 v85; // x24\n  const OSMetaClassBase *v86; // x0\n  OSMetaClassBase *v87; // x0\n  OSMetaClassBase *v88; // x23\n  __int64 v89; // x8\n  __int128 v90; // q0\n  _BYTE *v91; // x9\n  unsigned __int64 v92; // x11\n  const char *v93; // x2\n  int v94; // w24\n  int v95; // w0\n  int v96; // w23\n  const ccdigest_info *v97; // x0\n  int IsRestricted; // w23\n  __int64 v99; // x24\n  __int64 v100; // x0\n  __int64 v101; // x0\n  __int64 v102; // x24\n  __int64 v103; // x9\n  __int128 v104; // q0\n  _BYTE *v105; // x10\n  unsigned __int64 v106; // x11\n  __int64 v107; // x9\n  _BYTE *v108; // x10\n  unsigned __int64 v109; // x11\n  __int64 v111; // x0\n  __int64 v112; // x1\n  __int64 v113; // x25\n  const char *v114; // x0\n  __int128 v115; // q0\n  const void *v116; // x23\n  _BOOL8 v117; // x22\n  ipc_port *v118; // x25\n  __int64 base_offset; // x0\n  int v120; // w0\n  int v121; // w25\n  const char *v122; // x8\n  char v123; // w23\n  __int64 v124; // x0\n  unsigned int v125; // w8\n  OSDictionary *v126; // x24\n  OSCollectionIterator *v127; // x0\n  OSCollectionIterator *v128; // x22\n  const OSMetaClassBase *v129; // x0\n  const OSMetaClassBase *v130; // x28\n  OSMetaClassBase *v131; // x0\n  OSMetaClassBase *v132; // x23\n  __int64 v133; // x0\n  char *v134; // x25\n  const OSMetaClass *v135; // x0\n  const char *v136; // x0\n  __int64 v137; // [xsp+0h] [xbp-230h]\n  OSObject *anObject; // [xsp+50h] [xbp-1E0h]\n  const char *v139; // [xsp+58h] [xbp-1D8h]\n  __int64 v140; // [xsp+68h] [xbp-1C8h]\n  __int64 v141; // [xsp+70h] [xbp-1C0h]\n  size_t v142; // [xsp+78h] [xbp-1B8h]\n  char v143; // [xsp+80h] [xbp-1B0h]\n  unsigned __int8 *v144; // [xsp+80h] [xbp-1B0h]\n  int v145; // [xsp+8Ch] [xbp-1A4h]\n  int v146; // [xsp+8Ch] [xbp-1A4h]\n  int v147; // [xsp+90h] [xbp-1A0h]\n  char v148; // [xsp+9Ch] [xbp-194h]\n  int v149; // [xsp+9Ch] [xbp-194h]\n  unsigned int v150; // [xsp+A0h] [xbp-190h]\n  const char *v151; // [xsp+A8h] [xbp-188h]\n  __int64 v152; // [xsp+B0h] [xbp-180h]\n  __int64 v153; // [xsp+B8h] [xbp-178h]\n  __int64 v154; // [xsp+C0h] [xbp-170h]\n  _DWORD *v155; // [xsp+C8h] [xbp-168h]\n  BOOL v156; // [xsp+C8h] [xbp-168h]\n  const char *v157; // [xsp+D0h] [xbp-160h] BYREF\n  OSEntitlements *v158; // [xsp+D8h] [xbp-158h] BYREF\n  __int64 v159; // [xsp+E0h] [xbp-150h] BYREF\n  size_t v160; // [xsp+E8h] [xbp-148h] BYREF\n  const void *v161; // [xsp+F0h] [xbp-140h] BYREF\n  size_t v162; // [xsp+F8h] [xbp-138h] BYREF\n  ipc_port *v163; // [xsp+100h] [xbp-130h] BYREF\n  __int64 v164; // [xsp+108h] [xbp-128h] BYREF\n  char v165[8]; // [xsp+110h] [xbp-120h] BYREF\n  __int64 v166; // [xsp+118h] [xbp-118h]\n  size_t v167; // [xsp+120h] [xbp-110h]\n  const void *v168; // [xsp+128h] [xbp-108h]\n  _OWORD v169[2]; // [xsp+130h] [xbp-100h] BYREF\n  OSEntitlements *v170; // [xsp+150h] [xbp-E0h]\n  _QWORD __s2[2]; // [xsp+158h] [xbp-D8h] BYREF\n  int v172; // [xsp+168h] [xbp-C8h]\n  audit_token_t errorString; // [xsp+170h] [xbp-C0h] BYREF\n  __int128 v174; // [xsp+190h] [xbp-A0h]\n  audit_token_t v175; // [xsp+1A0h] [xbp-90h] BYREF\n  unsigned __int64 v176; // [xsp+1C0h] [xbp-70h]\n  char v177; // [xsp+1C8h] [xbp-68h]\n\n  if ( cs_debug )\n    IOLog(\"AMFI: vnode_check_signature called with platform %d\\n\", a8);\n  v15 = IOMallocTypeImpl(&_vnode_check_signature(vnode *,label *,int,cs_blob *,unsigned int *,unsigned int *,int,unsigned int,char **,unsigned long *)::kalloc_type_view_2796); /*0xfffffe00092a4654*/\n  if ( !v15 )\n  {\n    IOLog(\"AMFI: Could not allocate memory for lp, bailing out.\\n\");\n    return 1; /*0xfffffe00092a497c*/\n  }\n  v16 = v15; /*0xfffffe00092a465c*/\n  v17 = a9; /*0xfffffe00092a4660*/\n  v18 = a10; /*0xfffffe00092a4660*/\n  v19 = (const char *)(v15 + 8); /*0xfffffe00092a4664*/\n  bzero((void *)(v15 + 8), 0x401u); /*0xfffffe00092a4670*/\n  *(_QWORD *)v16 = off_FFFFFE0007BAC6F0; /*0xfffffe00092a468c*/\n  *(_QWORD *)(v16 + 1040) = a1; /*0xfffffe00092a4690*/\n  v20 = *a5; /*0xfffffe00092a4694*/\n  v155 = a6; /*0xfffffe00092a4698*/\n  *a6 = 0; /*0xfffffe00092a469c*/\n  cdhash = (const unsigned __int8 *)csblob_get_cdhash(a4); /*0xfffffe00092a46a8*/\n  v157 = 0; /*0xfffffe00092a46ac*/\n  v158 = 0; /*0xfffffe00092a46ac*/\n  if ( (StaticPlatformPolicy<true,true,false,false,false,false,true,true,false,true,false,false,false,false,true,true,2u,false,false,true>::loadEntitlementsFromSignature(\n          &v158,\n          a4,\n          v16,\n          &v157)\n      & 1) == 0 )\n  {\n    v37 = fatal_error_fmt(\n            v16,\n            a9,\n            a10,\n            \"The signature could not be validated because AMFI could not load its entitlements for validation: %s\",\n            v157);\n    cdhash = 0; /*0xfffffe00092a49a0*/\n    v36 = 1; /*0xfffffe00092a49a4*/\n    v22 = v158; /*0xfffffe00092a49a8*/\n    goto LABEL_170; /*0xfffffe00092a49ac*/\n  }\n  v151 = v19; /*0xfffffe00092a46c8*/\n  v22 = v158; /*0xfffffe00092a46cc*/\n  v154 = a4; /*0xfffffe00092a46d0*/\n  v150 = a7; /*0xfffffe00092a46d4*/\n  if ( !v158 ) /*0xfffffe00092a46d8*/\n  {\n    v29 = 0; /*0xfffffe00092a4a2c*/\n    v39 = 0x4000000; /*0xfffffe00092a4a30*/\n    v30 = 1; /*0xfffffe00092a4a34*/\n    if ( cdhash ) /*0xfffffe00092a4a38*/\n      goto LABEL_36; /*0xfffffe00092a4a38*/\n    goto LABEL_42; /*0xfffffe00092a4a38*/\n  }\n  *(_DWORD *)v165 = 0; /*0xfffffe00092a46e0*/\n  v23 = (const OSCollection *)OSEntitlements::asDict(v158); /*0xfffffe00092a46e8*/\n  if ( !v23 || (v24 = v23, (v25 = OSCollectionIterator::withCollection(v23)) == 0) ) /*0xfffffe00092a46f8*/\n  {\n    v29 = 0; /*0xfffffe00092a49b0*/\n    v38 = 0; /*0xfffffe00092a49b4*/\n    v30 = 1; /*0xfffffe00092a49b8*/\n    goto LABEL_35; /*0xfffffe00092a49b8*/\n  }\n  v26 = v25; /*0xfffffe00092a46fc*/\n  v145 = v20; /*0xfffffe00092a4700*/\n  if ( !((unsigned int (__fastcall *)(const OSCollection *))v24->getCount)(v24) ) /*0xfffffe00092a472c*/\n  {\n    v29 = 0; /*0xfffffe00092a4c10*/\n    v52 = 0; /*0xfffffe00092a4c14*/\n    v30 = 1; /*0xfffffe00092a4c20*/\n    v53 = 1; /*0xfffffe00092a4c24*/\n    goto LABEL_70; /*0xfffffe00092a4c28*/\n  }\n  v27 = ((__int64 (__fastcall *)(OSCollectionIterator *))v26->getNextObject)(v26); /*0xfffffe00092a4760*/\n  if ( !v27 ) /*0xfffffe00092a4764*/\n  {\n    v29 = 0; /*0xfffffe00092a4c3c*/\n    v54 = 0; /*0xfffffe00092a4c40*/\n    v55 = 0; /*0xfffffe00092a4c44*/\n    v30 = 1; /*0xfffffe00092a4c48*/\n    v53 = 1; /*0xfffffe00092a4c4c*/\n    goto LABEL_69; /*0xfffffe00092a4c4c*/\n  }\n  v28 = (const OSMetaClassBase *)v27; /*0xfffffe00092a4768*/\n  v29 = 0; /*0xfffffe00092a476c*/\n  v143 = 0; /*0xfffffe00092a4770*/\n  v148 = 0; /*0xfffffe00092a4774*/\n  v30 = 1; /*0xfffffe00092a4784*/\n  while ( 1 )\n  {\n    v31 = OSMetaClassBase::safeMetaCast(v28, (const OSMetaClass *)&OSString::gMetaClass); /*0xfffffe00092a4790*/\n    if ( !v31\n      || (v32 = (const char *)((__int64 (__fastcall *)(OSMetaClassBase *))v31->__vftable[1].isEqualTo)(v31)) == 0 )\n    {\n      v34 = (const OSMetaClass *)((__int64 (__fastcall *)(const OSMetaClassBase *))v28->getMetaClass)(v28); /*0xfffffe00092a48d8*/\n      ClassName = OSMetaClass::getClassName(v34); /*0xfffffe00092a48dc*/\n      IOLog(\"AMFI: skipping invalid entitlement of type '%s'\\n\", ClassName);\n      v30 = 0; /*0xfffffe00092a48f0*/\n      v29 = 1; /*0xfffffe00092a48f4*/\n      goto LABEL_27; /*0xfffffe00092a48f4*/\n    }\n    v33 = (char *)v32; /*0xfffffe00092a47c0*/\n    *a5 |= 0x200u; /*0xfffffe00092a47cc*/\n    if ( !strcmp(v32, \"get-task-allow\") /*0xfffffe00092a47f8*/\n      && (unsigned int)OSEntitlementsHaveEntitlementBool(v22, cdhash, \"get-task-allow\") )\n    {\n      if ( !(unsigned int)developer_mode_state() ) /*0xfffffe00092a4804*/\n        goto LABEL_85; /*0xfffffe00092a4804*/\n      *a5 |= 4u; /*0xfffffe00092a4810*/\n    }\n    if ( (developer_mode_state() & 1) == 0 /*0xfffffe00092a483c*/\n      && (unsigned int)matchIn((int)&developerModeEntitlements, v33)\n      && (unsigned int)OSEntitlementsHaveEntitlementBool(v22, cdhash, v33) )\n    {\nLABEL_85:\n      fatal_error_fmt(v16, a9, a10, \"Developer mode is disabled, %s is disallowed\"); /*0xfffffe00092a4dbc*/\n      goto LABEL_110; /*0xfffffe00092a4dc8*/\n    }\n    if ( strcmp(v33, \"com.apple.private.oop-jit.loader\") ) /*0xfffffe00092a484c*/\n      break; /*0xfffffe00092a484c*/\n    if ( (_UNKNOWN *)OSEntitlements::entitlementTypeFor(v22, cdhash, \"com.apple.private.oop-jit.loader\", v165) == &Errors ) /*0xfffffe00092a4950*/\n    {\n      if ( *(_DWORD *)v165 != 4 ) /*0xfffffe00092a495c*/\n      {\n        fatal_error_fmt(v16, a9, a10, \"OOP-JIT loader entitlement is an incorrect type\", v137); /*0xfffffe00092a4e2c*/\n        goto LABEL_110; /*0xfffffe00092a4e2c*/\n      }\n      v148 = 1; /*0xfffffe00092a4964*/\n    }\nLABEL_27:\n    v28 = (const OSMetaClassBase *)((__int64 (__fastcall *)(OSCollectionIterator *))v26->getNextObject)(v26); /*0xfffffe00092a48f8*/\n    if ( !v28 ) /*0xfffffe00092a4924*/\n    {\n      v53 = 1; /*0xfffffe00092a4c2c*/\n      goto LABEL_67; /*0xfffffe00092a4928*/\n    }\n  }\n  if ( strcmp(v33, \"com.apple.private.oop-jit.runner\") /*0xfffffe00092a4890*/\n    || (_UNKNOWN *)OSEntitlements::entitlementTypeFor(v22, cdhash, \"com.apple.private.oop-jit.runner\", v165) != &Errors )\n  {\n    goto LABEL_27; /*0xfffffe00092a4890*/\n  }\n  if ( *(_DWORD *)v165 == 2 || *(_DWORD *)v165 == 4 ) /*0xfffffe00092a48a4*/\n  {\n    v143 = 1; /*0xfffffe00092a48ac*/\n    goto LABEL_27; /*0xfffffe00092a48b0*/\n  }\n  fatal_error_fmt(v16, a9, a10, \"OOP-JIT runner entitlement is an incorrect type\", v137); /*0xfffffe00092a4f7c*/\nLABEL_110:\n  v53 = 0; /*0xfffffe00092a4f80*/\nLABEL_67:\n  v54 = v148; /*0xfffffe00092a4c30*/\n  v55 = v143; /*0xfffffe00092a4c34*/\nLABEL_69:\n  v52 = (unsigned __int8)v54 & (unsigned __int8)v55 & 1; /*0xfffffe00092a4c50*/\nLABEL_70:\n  v37 = ((__int64 (__fastcall *)(OSCollectionIterator *))v26->release_0)(v26); /*0xfffffe00092a4c5c*/\n  if ( v52 ) /*0xfffffe00092a4c7c*/\n  {\n    v37 = fatal_error_fmt(v16, a9, a10, \"Cannot be both OOP-JIT loader and runner simultaneously\"); /*0xfffffe00092a4c90*/\n    goto LABEL_74; /*0xfffffe00092a4c94*/\n  }\n  if ( !v53 ) /*0xfffffe00092a4c98*/\n  {\nLABEL_74:\n    cdhash = 0; /*0xfffffe00092a4cb0*/\nLABEL_75:\n    v36 = 1; /*0xfffffe00092a4cb4*/\n    v20 = v145; /*0xfffffe00092a4cb8*/\n    goto LABEL_170; /*0xfffffe00092a4cbc*/\n  }\n  v38 = (v29 != 0) << 14; /*0xfffffe00092a4ca4*/\n  v20 = v145; /*0xfffffe00092a4ca8*/\nLABEL_35:\n  v39 = v38 | 0x4000000; /*0xfffffe00092a49bc*/\n  v17 = a9; /*0xfffffe00092a49c0*/\n  v18 = a10; /*0xfffffe00092a49c0*/\n  if ( !cdhash )\n  {\nLABEL_42:\n    v40 = \"Internal Error: No cdhash found.\";\n    goto LABEL_43; /*0xfffffe00092a4a3c*/\n  }\nLABEL_36:\n  v147 = v30; /*0xfffffe00092a49c8*/\n  v149 = v29; /*0xfffffe00092a49cc*/\n  if ( (AMFIIsCodeDirectoryInTrustCache(cdhash) & 1) == 0\n    && !(unsigned int)codeDirectoryHashIsInLoadedTrustCache(cdhash) )\n  {\n    v44 = v154; /*0xfffffe00092a4b14*/\n    if ( (unsigned int)pmap_match_compilation_service_cdhash(cdhash)\n      && (unsigned int)noEntitlementsPresent(v154)\n      && (!v22 || !OSEntitlements::asDict(v22)) )\n    {\n      setAndCheckValidationCategory(v154, 10, \"compilation-service\"); /*0xfffffe00092a4d48*/\n      v165[0] = 0; /*0xfffffe00092a4d4c*/\n      v62 = current_proc(); /*0xfffffe00092a4d50*/\n      AppleMobileFileIntegrity::AMFIEntitlementGetBool( /*0xfffffe00092a4d60*/\n        v62,\n        (proc *)\"com.apple.private.amfi.can-execute-cdhash\",\n        v165,\n        v63);\n      if ( v165[0] )\n      {\n        v64 = (unsigned int)*a5; /*0xfffffe00092a4d70*/\n        if ( !emptyDictionary(void)::empty ) /*0xfffffe00092a4d7c*/\n          emptyDictionary(void)::empty = (__int64)OSDictionary::withCapacity(1u); /*0xfffffe00092a4d8c*/\n        v37 = postValidation(v16, v154, v64); /*0xfffffe00092a4db0*/\n        v42 = v37 ^ 1; /*0xfffffe00092a4db4*/\n      }\n      else\n      {\n        IOLog(\"AMFI: can-execute-cdhash code in non-entitled context.\\n\");\n        v42 = 1; /*0xfffffe00092a4e18*/\n      }\n      cdhash = 0; /*0xfffffe00092a4e1c*/\n      goto LABEL_49; /*0xfffffe00092a4e20*/\n    }\n    cdhash = (const unsigned __int8 *)IOMallocTypeImpl(&StaticPlatformPolicy<true,true,false,false,false,false,true,true,false,true,false,false,false,false,true,true,2u,false,false,true>::check_signature(LazyPath *,int,cs_blob *,unsigned int *,unsigned int *,int,bool,bool,unsigned int,char **,unsigned long *)::kalloc_type_view_2568); /*0xfffffe00092a4b44*/\n    v45 = csblob_get_cdhash(v154); /*0xfffffe00092a4b4c*/\n    if ( !v45 ) /*0xfffffe00092a4b50*/\n      _vnode_check_signature(); /*0xfffffe00092a577c*/\n    v46 = (unsigned __int8 *)v45; /*0xfffffe00092a4b54*/\n    v152 = v17; /*0xfffffe00092a4b58*/\n    v153 = v18; /*0xfffffe00092a4b58*/\n    *(_QWORD *)v165 = v16; /*0xfffffe00092a4b5c*/\n    v166 = v154; /*0xfffffe00092a4b5c*/\n    v167 = 0; /*0xfffffe00092a4b60*/\n    v168 = 0; /*0xfffffe00092a4b60*/\n    memset(v169, 0, sizeof(v169)); /*0xfffffe00092a4b68*/\n    v170 = v22; /*0xfffffe00092a4b6c*/\n    if ( !*(_BYTE *)(v16 + 1032) ) /*0xfffffe00092a4b70*/\n      *(_BYTE *)(v16 + 1032) = (*(__int64 (__fastcall **)(__int64))(*(_QWORD *)v16 + 16LL))(v16); /*0xfffffe00092a4ba0*/\n    __s2[0] = 0; /*0xfffffe00092a4bac*/\n    v163 = 0; /*0xfffffe00092a4bb0*/\n    v164 = 0; /*0xfffffe00092a4bb0*/\n    v161 = 0; /*0xfffffe00092a4bb4*/\n    v162 = 0; /*0xfffffe00092a4bb4*/\n    v160 = 0; /*0xfffffe00092a4bb8*/\n    addr = csblob_get_addr(v154); /*0xfffffe00092a4bc4*/\n    size = csblob_get_size(v154); /*0xfffffe00092a4bcc*/\n    blob_bytes = csblob_find_blob_bytes(addr, size, 0, 4208856066LL); /*0xfffffe00092a4be4*/\n    if ( !blob_bytes )\n    {\n      v51 = v151; /*0xfffffe00092a4cc0*/\n      IOLog(\"AMFI: '%s' has no cd?\\n\");\n      goto LABEL_167; /*0xfffffe00092a4cd0*/\n    }\n    v50 = bswap32(*(_DWORD *)(blob_bytes + 4)); /*0xfffffe00092a4bf0*/\n    if ( (unsigned int)v50 <= 7 )\n    {\n      v51 = v151; /*0xfffffe00092a4bfc*/\n      IOLog(\"AMFI: '%s' has short cd (%u)?\\n\");\nLABEL_167:\n      IOLog(\"AMFI: '%s': Unrecoverable CT signature issue, bailing out.\\n\", v51);\n      goto LABEL_168; /*0xfffffe00092a5504*/\n    }\n    v142 = v50; /*0xfffffe00092a4cd4*/\n    v144 = (unsigned __int8 *)blob_bytes; /*0xfffffe00092a4cd4*/\n    v56 = csblob_get_addr(v154); /*0xfffffe00092a4ce0*/\n    v57 = csblob_get_size(v154); /*0xfffffe00092a4ce8*/\n    v58 = csblob_find_blob_bytes(v56, v57, 0x10000, 4208855809LL); /*0xfffffe00092a4cfc*/\n    if ( !v58 )\n    {\n      v51 = v151; /*0xfffffe00092a4dcc*/\n      IOLog(\"AMFI: '%s' has no CMS blob?\\n\");\n      goto LABEL_167; /*0xfffffe00092a4ddc*/\n    }\n    v59 = v58; /*0xfffffe00092a4d04*/\n    v60 = *(_DWORD *)(v58 + 4); /*0xfffffe00092a4d08*/\n    v61 = bswap32(v60); /*0xfffffe00092a4d0c*/\n    v51 = v151; /*0xfffffe00092a4d14*/\n    if ( v61 <= 7 )\n    {\n      IOLog(\"AMFI: '%s' has short cms (%u), bailing out.\\n\");\n      goto LABEL_167; /*0xfffffe00092a4d28*/\n    }\n    if ( v60 == 0x8000000 )\n    {\n      __s2[0] = 0; /*0xfffffe00092a4dec*/\n      if ( (csblob_get_flags(v154) & 2) == 0 )\n      {\n        IOLog(\"AMFI: '%s' has zero length cms, but is not adhoc?\\n\");\n        goto LABEL_167; /*0xfffffe00092a4e08*/\n      }\n      v145 = v20; /*0xfffffe00092a4e9c*/\n      v69 = 1; /*0xfffffe00092a4ea0*/\n      v70 = \"AMFI: '%s' is adhoc signed.\\n\";\n      goto LABEL_96; /*0xfffffe00092a4ea4*/\n    }\n    v65 = v61 - 8; /*0xfffffe00092a4e34*/\n    v66 = PE_i_can_has_debugger(0) != 0; /*0xfffffe00092a4e44*/\n    v67 = v65; /*0xfffffe00092a4e70*/\n    v68 = v144; /*0xfffffe00092a4e74*/\n    if ( (unsigned int)CTEvaluateAMFICodeSignatureCMS_0(\n                         v59 + 8,\n                         v67,\n                         v144,\n                         v142,\n                         v66,\n                         &v161,\n                         &v160,\n                         __s2,\n                         (char *)&v164 + 4,\n                         &v164,\n                         &v163,\n                         &v162) )\n    {\n      __s2[0] = 0; /*0xfffffe00092a4e84*/\n      v51 = v151; /*0xfffffe00092a4e88*/\n      IOLog(\"AMFI: '%s' does not pass CT evaluation, result: %#x\\n\");\n      goto LABEL_167; /*0xfffffe00092a4e98*/\n    }\n    v141 = v59 + 8; /*0xfffffe00092a4f0c*/\n    if ( v160 && v161 ) /*0xfffffe00092a4f1c*/\n    {\n      v72 = ccsha256_di_0(); /*0xfffffe00092a4f28*/\n      v68 = v144; /*0xfffffe00092a4f34*/\n      ccdigest_0(v72, v160, v161, v169); /*0xfffffe00092a4f38*/\n    }\n    if ( (_DWORD)v164 )\n    {\n      hashtype = csblob_get_hashtype(v154); /*0xfffffe00092a4f48*/\n      v74 = v163; /*0xfffffe00092a4f50*/\n      if ( (_DWORD)v164 == 1 )\n      {\n        v75 = 1; /*0xfffffe00092a5294*/\n      }\n      else\n      {\n        if ( (_DWORD)v164 != 4 )\n        {\n          v51 = v151; /*0xfffffe00092a52dc*/\n          IOLog(\"AMFI: '%s' has unknown CT digest type %#x\\n\");\n          goto LABEL_147; /*0xfffffe00092a52ec*/\n        }\n        v75 = 2; /*0xfffffe00092a4f64*/\n      }\n      if ( v75 != hashtype )\n      {\n        v51 = v151; /*0xfffffe00092a52c8*/\n        IOLog(\"AMFI: '%s' has unexpected digest type, actual %#x != expected %#x\\n\");\n        goto LABEL_147; /*0xfffffe00092a52d8*/\n      }\n      v140 = v59; /*0xfffffe00092a52a0*/\n      if ( v162 <= 0x13 )\n      {\n        v51 = v151; /*0xfffffe00092a52b0*/\n        IOLog(\"AMFI: '%s' has unexpected digest data len %zu (type %#x)\\n\");\nLABEL_147:\n        IOLog(\"AMFI: '%s': V2 hash agility validation failed, bailing out.\\n\");\n        goto LABEL_167; /*0xfffffe00092a52fc*/\n      }\n      if ( memcmp(v46, v163, 0x14u) )\n      {\n        v103 = 0; /*0xfffffe00092a5418*/\n        v176 = 0xAAAAAAAAAAAAAAAALL; /*0xfffffe00092a5420*/\n        *(_QWORD *)&v104 = 0xAAAAAAAAAAAAAAAALL; /*0xfffffe00092a5424*/\n        *((_QWORD *)&v104 + 1) = 0xAAAAAAAAAAAAAAAALL; /*0xfffffe00092a5424*/\n        *(_OWORD *)v175.val = v104; /*0xfffffe00092a5428*/\n        *(_OWORD *)&v175.val[4] = v104; /*0xfffffe00092a5428*/\n        *(_QWORD *)&v174 = 0xAAAAAAAAAAAAAAAALL; /*0xfffffe00092a542c*/\n        *(_OWORD *)errorString.val = v104; /*0xfffffe00092a5430*/\n        *(_OWORD *)&errorString.val[4] = v104; /*0xfffffe00092a5430*/\n        v105 = (char *)v175.val + 1; /*0xfffffe00092a5438*/\n        do /*0xfffffe00092a5468*/\n        {\n          v106 = v46[v103]; /*0xfffffe00092a5444*/\n          *(v105 - 1) = cdhash_to_string(char *,unsigned char const*)::nibble[v106 >> 4]; /*0xfffffe00092a5450*/\n          *v105 = cdhash_to_string(char *,unsigned char const*)::nibble[v106 & 0xF]; /*0xfffffe00092a545c*/\n          v105 += 2; /*0xfffffe00092a545c*/\n          ++v103; /*0xfffffe00092a5460*/\n        }\n        while ( v103 != 20 ); /*0xfffffe00092a5468*/\n        v107 = 0; /*0xfffffe00092a546c*/\n        v177 = 0; /*0xfffffe00092a5470*/\n        v108 = (char *)errorString.val + 1; /*0xfffffe00092a5478*/\n        do /*0xfffffe00092a54a0*/\n        {\n          v109 = *((unsigned __int8 *)v74 + v107); /*0xfffffe00092a547c*/\n          *(v108 - 1) = cdhash_to_string(char *,unsigned char const*)::nibble[v109 >> 4]; /*0xfffffe00092a5488*/\n          *v108 = cdhash_to_string(char *,unsigned char const*)::nibble[v109 & 0xF]; /*0xfffffe00092a5494*/\n          v108 += 2; /*0xfffffe00092a5494*/\n          ++v107; /*0xfffffe00092a5498*/\n        }\n        while ( v107 != 20 ); /*0xfffffe00092a54a0*/\n        BYTE8(v174) = 0; /*0xfffffe00092a54a4*/\n        v51 = v151; /*0xfffffe00092a54b4*/\n        IOLog(\n          \"AMFI: '%s': cdhash mismatch: actual '%s' != expected '%s'\\n\",\n          v151,\n          (const char *)&v175,\n          (const char *)&errorString);\n        v44 = v154; /*0xfffffe00092a54c8*/\n        goto LABEL_147; /*0xfffffe00092a54cc*/\n      }\nLABEL_219:\n      v145 = v20; /*0xfffffe00092a59d8*/\n      if ( __s2[0] )\n      {\nLABEL_220:\n        v69 = 1; /*0xfffffe00092a59e4*/\n        v44 = v154; /*0xfffffe00092a59ec*/\nLABEL_97:\n        v71 = __s2[0]; /*0xfffffe00092a4eb4*/\n        if ( (csblob_get_flags(v44) & 2) != 0 && !csblob_get_code_directory(v44) )\n          IOLog(\"AMFI: %s: unable to find code directory\\n\", \"_checkForOOPJit\");\n        if ( !((v69 ^ 1) & 1 | ((*(_QWORD *)&v71 & 0x1FF80LL) != 0)) )\n        {\n          IOLog(\"AMFI: '%s': unsuitable CT policy %#llx for this platform/device, rejecting signature.\\n\");\nLABEL_114:\n          v20 = v145; /*0xfffffe00092a4fac*/\n          goto LABEL_168; /*0xfffffe00092a4fb0*/\n        }\n        if ( (developer_mode_state() & 1) == 0 && (v71 & 0x90) != 0 )\n        {\n          IOLog(\"AMFI: '%s': has developer signature (%#llx) but developer mode is not enabled\\n\");\n          goto LABEL_114; /*0xfffffe00092a4fa8*/\n        }\n        if ( allow3rdParty ) /*0xfffffe00092a51e8*/\n        {\n          if ( (v71 & 0x1100) == 0 ) /*0xfffffe00092a51f4*/\n            goto LABEL_135; /*0xfffffe00092a51f4*/\n          if ( (IsCDHashDenylisted(v46) & 1) == 0 ) /*0xfffffe00092a5200*/\n          {\n            IOLog(\"App Store Fast Path -> %s\\n\", v151); /*0xfffffe00092a5608*/\n            *a5 |= 0x4000u; /*0xfffffe00092a5614*/\n            v93 = \"fast-path-appstore\"; /*0xfffffe00092a5618*/\n            goto LABEL_179; /*0xfffffe00092a5618*/\n          }\n          if ( allow3rdParty ) /*0xfffffe00092a5208*/\n          {\nLABEL_135:\n            if ( PE_i_can_has_debugger(0) && (v71 & 0x2200) != 0 ) /*0xfffffe00092a5220*/\n            {\n              IOLog(\"QA Hierarchy used -> %s\\n\", v151); /*0xfffffe00092a5234*/\n              *a5 |= 0x4000u; /*0xfffffe00092a5240*/\n              v93 = \"qa-path-appstore\"; /*0xfffffe00092a5244*/\nLABEL_179:\n              v111 = v44; /*0xfffffe00092a5620*/\n              v112 = 4; /*0xfffffe00092a5624*/\n              goto LABEL_180; /*0xfffffe00092a5624*/\n            }\n          }\n        }\n        if ( (v69 & 1) != 0 )\n        {\n          *a5 &= 0xF3FFBFFF; /*0xfffffe00092a5264*/\n          if ( allow3rdParty )\n          {\n            v163 = 0; /*0xfffffe00092a5270*/\n            if ( (unsigned int)getDaemonPort(&v163) )\n            {\n              IOLog(\"StaticPlatformPolicy<%d>: no registered daemon port\\n\");\n            }\n            else\n            {\n              *(_QWORD *)&v115 = 0xAAAAAAAAAAAAAAAALL; /*0xfffffe00092a5780*/\n              *((_QWORD *)&v115 + 1) = 0xAAAAAAAAAAAAAAAALL; /*0xfffffe00092a5780*/\n              *(_OWORD *)errorString.val = v115; /*0xfffffe00092a5784*/\n              *(_OWORD *)&errorString.val[4] = v115; /*0xfffffe00092a5784*/\n              LODWORD(v160) = 0; /*0xfffffe00092a5788*/\n              v164 = 0; /*0xfffffe00092a578c*/\n              v159 = 0; /*0xfffffe00092a5790*/\n              __s2[0] = 0; /*0xfffffe00092a5794*/\n              __s2[1] = 0; /*0xfffffe00092a5794*/\n              v172 = 0; /*0xfffffe00092a5798*/\n              v116 = (const void *)csblob_get_cdhash(v154); /*0xfffffe00092a57a4*/\n              if ( !*(_BYTE *)(v16 + 1032) ) /*0xfffffe00092a57a8*/\n                *(_BYTE *)(v16 + 1032) = (*(__int64 (__fastcall **)(__int64))(*(_QWORD *)v16 + 16LL))(v16); /*0xfffffe00092a57d8*/\n              v117 = v149 != 0; /*0xfffffe00092a57f0*/\n              v161 = 0; /*0xfffffe00092a57f4*/\n              v162 = 0; /*0xfffffe00092a57f4*/\n              v118 = v163; /*0xfffffe00092a57f8*/\n              base_offset = csblob_get_base_offset(v154); /*0xfffffe00092a5800*/\n              v120 = verify_code_directory( /*0xfffffe00092a5860*/\n                       v118,\n                       v151,\n                       base_offset,\n                       v150,\n                       v117,\n                       v147 != 0,\n                       2,\n                       &v159,\n                       &v164,\n                       (char *)&v159 + 4,\n                       v155,\n                       &v160,\n                       (char *)&v164 + 4,\n                       cdhash,\n                       __s2,\n                       &v162,\n                       &v161,\n                       &errorString);\n              v121 = v120; /*0xfffffe00092a5864*/\n              if ( cs_debug >= 20 )\n              {\n                v122 = (const char *)&unk_FFFFFE0007351806; /*0xfffffe00092a587c*/\n                if ( v149 ) /*0xfffffe00092a5894*/\n                  v122 = \"(restricted entitlements)\"; /*0xfffffe00092a5894*/\n                IOLog(\"callout out to amfid for %s %s, return %d valid: %d isApple: %d\\n\", v122, v151, v120, v164, v160);\n              }\n              if ( v121 == -308 )\n              {\n                IOLog(\"StaticPlatformPolicy<%d>: verify_code_directory server is dead\\n\");\n              }\n              else if ( v121 )\n              {\n                IOLog(\"StaticPlatformPolicy<%d>: verify_code_directory returned 0x%x\\n\");\n              }\n              else\n              {\n                v175 = errorString; /*0xfffffe00092a58cc*/\n                if ( (unsigned int)tokenIsTrusted(&v175) )\n                {\n                  if ( (_DWORD)v164 == 1 )\n                  {\n                    if ( !memcmp(v116, __s2, 0x14u) )\n                    {\n                      if ( (_DWORD)v160 ) /*0xfffffe00092a5ce8*/\n                        panic( /*0xfffffe00092a5eb8*/\n                          \"\\\"amfid is broken. (%s) (%d) (%d) (%d)\\\" @%s:%d\",\n                          v151,\n                          v117,\n                          v164,\n                          v160,\n                          \"AppleMobileFileIntegrity.cpp\",\n                          713);\n                      if ( HIDWORD(v164) ) /*0xfffffe00092a5cf0*/\n                        *a5 |= 0x40000000u; /*0xfffffe00092a5cfc*/\n                      if ( HIDWORD(v159) ) /*0xfffffe00092a5d04*/\n                        *a5 &= ~0x800u; /*0xfffffe00092a5d10*/\n                      if ( (_DWORD)v159 ) /*0xfffffe00092a5d18*/\n                        *a5 |= 0x4200u; /*0xfffffe00092a5d28*/\n                      if ( (*(_QWORD *)&v71 & 0x1EE80LL) == 0\n                        || (v167 = v162, v168 = v161, !(unsigned int)validateAndRegisterProfile(v165)) )\n                      {\n                        if ( (unsigned int)csblob_get_validation_category(v154) ) /*0xfffffe00092a5d54*/\n                        {\nLABEL_181:\n                          if ( v22 && OSEntitlements::asDict(v22) ) /*0xfffffe00092a5634*/\n                          {\n                            OSEntitlements::asDict(v22); /*0xfffffe00092a5640*/\n                          }\n                          else if ( !emptyDictionary(void)::empty ) /*0xfffffe00092a5654*/\n                          {\n                            emptyDictionary(void)::empty = (__int64)OSDictionary::withCapacity(1u); /*0xfffffe00092a5664*/\n                          }\n                          v18 = v153; /*0xfffffe00092a5678*/\n                          v17 = v152; /*0xfffffe00092a567c*/\n                          v37 = postValidation(v16, v154, (unsigned int)*a5); /*0xfffffe00092a5688*/\n                          v42 = v37 ^ 1; /*0xfffffe00092a568c*/\n                          v20 = v145; /*0xfffffe00092a5690*/\n                          goto LABEL_49; /*0xfffffe00092a5694*/\n                        }\n                        if ( (v71 & 0x20) != 0 ) /*0xfffffe00092a5d68*/\n                          v112 = 6; /*0xfffffe00092a5d68*/\n                        else\n                          v112 = 3; /*0xfffffe00092a5d68*/\n                        if ( (v71 & 0xB0) == 0 )\n                        {\n                          if ( (v71 & 0x10000) != 0 )\n                          {\n                            v112 = 5; /*0xfffffe00092a5e38*/\n                          }\n                          else if ( (v71 & 0x400) != 0 )\n                          {\n                            IOLog(\"%s: Signature meets iphone VPN Prod policy\\n\", v151);\n                            v112 = 10; /*0xfffffe00092a5e54*/\n                          }\n                          else\n                          {\n                            v112 = 2 * (unsigned int)((v71 & 0xC000) != 0); /*0xfffffe00092a5d84*/\n                          }\n                        }\n                        v93 = \"amfid_validated\"; /*0xfffffe00092a5e58*/\n                        v111 = v154; /*0xfffffe00092a5e60*/\nLABEL_180:\n                        setAndCheckValidationCategory(v111, v112, v93); /*0xfffffe00092a5628*/\n                        goto LABEL_181; /*0xfffffe00092a5628*/\n                      }\n                    }\n                    else\n                    {\n                      IOLog(\"%s: Possible race detected. Rejecting.\\n\", v151);\n                      IOLog(\"StaticPlatformPolicy<%d>: Unable to match identity\\n\", 2);\n                      *a5 &= ~1u; /*0xfffffe00092a592c*/\n                    }\n                  }\n                }\n                else\n                {\n                  IOLog(\"StaticPlatformPolicy<%d>: unable to verify audit token came from amfid\\n\");\n                }\n              }\n            }\n          }\n          else\n          {\n            IOLog(\"AMFI: '%s' does not pass kernel-side policy for this model, bailing out.\\n\");\n          }\n          v20 = v145; /*0xfffffe00092a56ac*/\n          v44 = v154; /*0xfffffe00092a56b4*/\n          if ( v149 && !v147 )\n          {\n            IOLog(\"AMFI: code signature validation failed.\\n\");\n            IOLog(\"AMFI: bailing out because of restricted entitlements.\\n\");\n            v37 = fatal_error_fmt(\n                    v16,\n                    v152,\n                    v153,\n                    \"Code has restricted entitlements, but the validation of its code signature failed.\\n\"\n                    \"Unsatisfied Entitlements: %s\");\n            goto LABEL_169; /*0xfffffe00092a56f0*/\n          }\nLABEL_168:\n          IOLog(\"AMFI: code signature validation failed.\\n\");\n          v37 = setAndCheckValidationCategory(v44, 10, \"untrusted\"); /*0xfffffe00092a5524*/\nLABEL_169:\n          v36 = 1; /*0xfffffe00092a5528*/\n          goto LABEL_170; /*0xfffffe00092a5528*/\n        }\n        IsRestricted = AMFILocalSigningIsRestricted(v46); /*0xfffffe00092a5398*/\n        v99 = csblob_get_addr(v44); /*0xfffffe00092a53a4*/\n        v100 = csblob_get_size(v44); /*0xfffffe00092a53ac*/\n        v101 = csblob_find_blob_bytes(v99, v100, 0, 4208856066LL); /*0xfffffe00092a53c4*/\n        if ( v101 )\n        {\n          v102 = v101; /*0xfffffe00092a53cc*/\n          if ( bswap32(*(_DWORD *)(v101 + 8)) >> 10 > 0x80 )\n          {\n            v113 = *(_QWORD *)(v101 + 80); /*0xfffffe00092a572c*/\n            if ( (v113 & 0x100000000000000LL) != 0 )\n            {\n              if ( IsRestricted )\n              {\n                IOLog(\"AMFI: '%s': verification failed since local signing is restricted\\n\");\n                goto LABEL_192; /*0xfffffe00092a5748*/\n              }\n              AMFIRestrictLocalSigning(); /*0xfffffe00092a5aac*/\n            }\n            v125 = *(_DWORD *)(v102 + 48); /*0xfffffe00092a5ab0*/\n            if ( v125 )\n            {\n              if ( !strcmp((const char *)(v102 + bswap32(v125)), \"LOCALSPKEY\") )\n              {\n                if ( v22 && OSEntitlements::asDict(v22) ) /*0xfffffe00092a5b2c*/\n                {\n                  v126 = (OSDictionary *)OSEntitlements::asDict(v22); /*0xfffffe00092a5b3c*/\n                }\n                else\n                {\n                  v126 = (OSDictionary *)emptyDictionary(void)::empty; /*0xfffffe00092a5b5c*/\n                  if ( !emptyDictionary(void)::empty ) /*0xfffffe00092a5b60*/\n                  {\n                    v126 = OSDictionary::withCapacity(1u); /*0xfffffe00092a5b6c*/\n                    emptyDictionary(void)::empty = (__int64)v126; /*0xfffffe00092a5b70*/\n                  }\n                }\n                if ( ((unsigned int (__fastcall *)(OSDictionary *))v126->getCount)(v126) )\n                {\n                  if ( (v113 & 0x100000000000000LL) == 0 )\n                  {\n                    IOLog(\"AMFI: '%s': disallowing locally signed library with entitlements\");\n                    goto LABEL_192; /*0xfffffe00092a5bb4*/\n                  }\n                  v127 = OSCollectionIterator::withCollection(v126); /*0xfffffe00092a5bc8*/\n                  if ( v127 )\n                  {\n                    v128 = v127; /*0xfffffe00092a5bd0*/\n                    if ( ((unsigned int (__fastcall *)(OSDictionary *))v126->getCount)(v126) )\n                    {\n                      do\n                      {\n                        v129 = (const OSMetaClassBase *)((__int64 (__fastcall *)(OSCollectionIterator *))v128->getNextObject)(v128); /*0xfffffe00092a5c3c*/\n                        v156 = v129 == 0; /*0xfffffe00092a5c48*/\n                        if ( !v129 ) /*0xfffffe00092a5c4c*/\n                          break; /*0xfffffe00092a5c4c*/\n                        v130 = v129; /*0xfffffe00092a5c50*/\n                        v131 = OSMetaClassBase::safeMetaCast(v129, (const OSMetaClass *)&OSString::gMetaClass); /*0xfffffe00092a5c58*/\n                        if ( !v131\n                          || (v132 = v131,\n                              (v133 = ((__int64 (__fastcall *)(OSMetaClassBase *))v131->__vftable[1].isEqualTo)(v131)) == 0) )\n                        {\n                          v135 = (const OSMetaClass *)((__int64 (__fastcall *)(const OSMetaClassBase *))v130->getMetaClass)(v130); /*0xfffffe00092a5dbc*/\n                          v136 = OSMetaClass::getClassName(v135); /*0xfffffe00092a5dc0*/\n                          IOLog(\n                            \"AMFI: '%s':invalid entitlement of type '%s' disallowed in local signed code\\n\",\n                            v151,\n                            v136);\n                          v156 = 0; /*0xfffffe00092a5dd8*/\n                          break; /*0xfffffe00092a5dd8*/\n                        }\n                        v134 = (char *)v133; /*0xfffffe00092a5c8c*/\n                        ((void (__fastcall *)(OSDictionary *, OSMetaClassBase *))v126->getObject_0)(v126, v132); /*0xfffffe00092a5cc0*/\n                      }\n                      while ( (entitlementAllowedByConstraints((int)&swiftPlaygrounds_iOS, v134) & 1) != 0 );\n                    }\n                    else\n                    {\n                      v156 = 1; /*0xfffffe00092a5d90*/\n                    }\n                    ((void (__fastcall *)(OSCollectionIterator *))v128->release_0)(v128); /*0xfffffe00092a5df8*/\n                    if ( !v156 ) /*0xfffffe00092a5e00*/\n                      goto LABEL_192; /*0xfffffe00092a5e00*/\n                  }\n                }\n                IOLog(\"Locally Signed Fast Path -> %s\\n\", v151); /*0xfffffe00092a5e14*/\n                *a5 |= 0x4000u; /*0xfffffe00092a5e20*/\n                v93 = \"fast-path-local\"; /*0xfffffe00092a5e24*/\n                v111 = v154; /*0xfffffe00092a5e2c*/\n                v112 = 7; /*0xfffffe00092a5e30*/\n                goto LABEL_180; /*0xfffffe00092a5e34*/\n              }\n              IOLog(\"AMFI: '%s': local signed binary has an invalid team-identifier: %s\\n\");\n            }\n            else\n            {\n              IOLog(\"AMFI: '%s': local signed binary does not have a team identifier\\n\");\n            }\n          }\n          else\n          {\n            IOLog(\"AMFI: '%s': locally signed signatures need to be at least 0x%X signature version (0x%X)\\n\");\n          }\n        }\n        else\n        {\n          IOLog(\"AMFI: '%s': unable to find code directory\\n\");\n        }\nLABEL_192:\n        IOLog(\"AMFI: code signature validation failed.\\n\");\n        IOLog(\"AMFI: local signing validation was unsuccessful.\\n\");\n        goto LABEL_75; /*0xfffffe00092a5720*/\n      }\n      v124 = AMFIGetLocalSigningPublicKey(); /*0xfffffe00092a59f4*/\n      if ( v124 )\n      {\n        if ( (unsigned int)CTEvaluateAMFICodeSignatureCMSPubKey_0( /*0xfffffe00092a5a24*/\n                             v141,\n                             bswap32(*(_DWORD *)(v140 + 4)) - 8,\n                             v144,\n                             v142,\n                             v124,\n                             97,\n                             0,\n                             0,\n                             0,\n                             0) )\n          goto LABEL_220; /*0xfffffe00092a5a28*/\n        v69 = 0; /*0xfffffe00092a5a2c*/\n        v70 = \"AMFI: '%s': locally signed\\n\";\n      }\n      else\n      {\n        v69 = 1; /*0xfffffe00092a5a3c*/\n        v70 = \"AMFI: '%s': local signing public key not initialized\\n\";\n      }\n      v51 = v151; /*0xfffffe00092a5a48*/\n      v44 = v154; /*0xfffffe00092a5a4c*/\nLABEL_96:\n      IOLog(v70, v51); /*0xfffffe00092a4eac*/\n      goto LABEL_97; /*0xfffffe00092a4eb0*/\n    }\n    v140 = v59; /*0xfffffe00092a4fb4*/\n    v76 = v163; /*0xfffffe00092a4fb8*/\n    if ( !v163 )\n    {\n      v174 = 0u; /*0xfffffe00092a5304*/\n      memset(&errorString, 0, sizeof(errorString)); /*0xfffffe00092a5308*/\n      v94 = v68[37]; /*0xfffffe00092a530c*/\n      v95 = csblob_get_hashtype(v154); /*0xfffffe00092a5314*/\n      v96 = v68[37]; /*0xfffffe00092a5318*/\n      if ( v94 != v95 )\n      {\n        v44 = v154; /*0xfffffe00092a54d0*/\n        csblob_get_hashtype(v154); /*0xfffffe00092a54d8*/\n        v51 = v151; /*0xfffffe00092a54e4*/\n        IOLog(\"AMFI: '%s': no hash agility data and first cd hash type (%d) does not match best cd hash type (%d).\\n\");\n        goto LABEL_167; /*0xfffffe00092a54f4*/\n      }\n      if ( (unsigned int)(v96 - 2) < 2 )\n      {\n        v97 = ccsha256_di_0(); /*0xfffffe00092a5724*/\n      }\n      else if ( v96 == 4 )\n      {\n        v97 = ccsha384_di_0(); /*0xfffffe00092a5934*/\n      }\n      else\n      {\n        if ( v96 != 1 )\n          panic(\n            \"\\\"AMFI: '%s': Invalid first Code Directory should have been caught by xnu.\\\\n\\\" @%s:%d\",\n            v151,\n            \"AppleMobileFileIntegrity.cpp\",\n            1125);\n        v97 = ccsha1_di_0(); /*0xfffffe00092a5340*/\n      }\n      ccdigest_0(v97, v142, v144, &errorString); /*0xfffffe00092a5940*/\n      if ( bcmp(v46, &errorString, 0x14u) )\n      {\n        v51 = v151; /*0xfffffe00092a5958*/\n        IOLog(\"AMFI: '%s': first code directory doesn't match the best code directory, but no hash agility data\", v151);\n        v44 = v154; /*0xfffffe00092a596c*/\n        goto LABEL_167; /*0xfffffe00092a5970*/\n      }\n      goto LABEL_219; /*0xfffffe00092a5954*/\n    }\n    v146 = v20; /*0xfffffe00092a4fc0*/\n    v77 = v162; /*0xfffffe00092a4fc4*/\n    *(_QWORD *)errorString.val = 0; /*0xfffffe00092a4fc8*/\n    if ( v162 >= 0x7FFFFFFF )\n    {\n      IOLog(\"AMFI: '%s': agility data length %zu for V1 agility text is too big.\\n\", v151, v162);\n      v78 = v77 + 1; /*0xfffffe00092a535c*/\n    }\n    else\n    {\n      v78 = v162 + 1; /*0xfffffe00092a4fd8*/\n      v139 = (const char *)IOMallocData_external(v162 + 1); /*0xfffffe00092a4fe4*/\n      if ( v139 )\n      {\n        __memcpy_chk(v139, v76, v77, v77 + 1); /*0xfffffe00092a5000*/\n        v139[v77] = 0; /*0xfffffe00092a5004*/\n        anObject = OSUnserializeXML(v139, v77 + 1, (OSString **)&errorString); /*0xfffffe00092a5018*/\n        if ( anObject )\n        {\n          v79 = OSMetaClassBase::safeMetaCast(anObject, &OSDictionary::gMetaClass); /*0xfffffe00092a5030*/\n          if ( v79 )\n          {\n            v80 = (const OSMetaClassBase *)((__int64 (__fastcall *)(OSMetaClassBase *, const char *))v79->__vftable[3].~OSMetaClassBase)( /*0xfffffe00092a5068*/\n                                             v79,\n                                             \"cdhashes\");\n            v81 = OSMetaClassBase::safeMetaCast(v80, &OSArray::gMetaClass); /*0xfffffe00092a5078*/\n            if ( v81 )\n            {\n              v82 = v81; /*0xfffffe00092a5080*/\n              v83 = ((__int64 (__fastcall *)(OSMetaClassBase *))v81->__vftable[1].release_0)(v81); /*0xfffffe00092a50a4*/\n              if ( v83 )\n              {\n                v84 = v83; /*0xfffffe00092a50ac*/\n                v85 = 0; /*0xfffffe00092a50b0*/\n                while ( 1 ) /*0xfffffe00092a50f4*/\n                {\n                  v86 = (const OSMetaClassBase *)((__int64 (__fastcall *)(OSMetaClassBase *, __int64))v82->__vftable[2].taggedRetain)( /*0xfffffe00092a50f4*/\n                                                   v82,\n                                                   v85);\n                  v87 = OSMetaClassBase::safeMetaCast(v86, &OSData::gMetaClass); /*0xfffffe00092a50fc*/\n                  if ( v87 ) /*0xfffffe00092a5100*/\n                  {\n                    v88 = v87; /*0xfffffe00092a5104*/\n                    if ( ((unsigned int (__fastcall *)(OSMetaClassBase *))v87->__vftable[1].getMetaClass)(v87) == 20 /*0xfffffe00092a5164*/\n                      && (((__int64 (__fastcall *)(OSMetaClassBase *, unsigned __int8 *, __int64))v88->__vftable[2].retain)(\n                            v88,\n                            v46,\n                            20)\n                        & 1) != 0 )\n                    {\n                      break; /*0xfffffe00092a5164*/\n                    }\n                  }\n                  v85 = (unsigned int)(v85 + 1); /*0xfffffe00092a5168*/\n                  if ( v84 == (_DWORD)v85 ) /*0xfffffe00092a5170*/\n                    goto LABEL_127; /*0xfffffe00092a5170*/\n                }\n                v123 = 1; /*0xfffffe00092a5bb8*/\nLABEL_218:\n                IOFreeData(v139, v78); /*0xfffffe00092a5998*/\n                ((void (__fastcall *)(OSObject *))anObject->release_0)(anObject); /*0xfffffe00092a59c8*/\n                v20 = v146; /*0xfffffe00092a59cc*/\n                v44 = v154; /*0xfffffe00092a59d0*/\n                if ( (v123 & 1) != 0 ) /*0xfffffe00092a59d4*/\n                  goto LABEL_219; /*0xfffffe00092a59d4*/\nLABEL_156:\n                v51 = v151; /*0xfffffe00092a537c*/\n                IOLog(\"AMFI: '%s': V1 hash agility validation failed, bailing out.\\n\");\n                goto LABEL_167; /*0xfffffe00092a538c*/\n              }\nLABEL_127:\n              v89 = 0; /*0xfffffe00092a5174*/\n              v176 = 0xAAAAAAAAAAAAAAAALL; /*0xfffffe00092a517c*/\n              *(_QWORD *)&v90 = 0xAAAAAAAAAAAAAAAALL; /*0xfffffe00092a5180*/\n              *((_QWORD *)&v90 + 1) = 0xAAAAAAAAAAAAAAAALL; /*0xfffffe00092a5180*/\n              *(_OWORD *)v175.val = v90; /*0xfffffe00092a5184*/\n              *(_OWORD *)&v175.val[4] = v90; /*0xfffffe00092a5184*/\n              v91 = (char *)v175.val + 1; /*0xfffffe00092a518c*/\n              do /*0xfffffe00092a51bc*/\n              {\n                v92 = v46[v89]; /*0xfffffe00092a5198*/\n                *(v91 - 1) = cdhash_to_string(char *,unsigned char const*)::nibble[v92 >> 4]; /*0xfffffe00092a51a4*/\n                *v91 = cdhash_to_string(char *,unsigned char const*)::nibble[v92 & 0xF]; /*0xfffffe00092a51b0*/\n                v91 += 2; /*0xfffffe00092a51b0*/\n                ++v89; /*0xfffffe00092a51b4*/\n              }\n              while ( v89 != 20 ); /*0xfffffe00092a51bc*/\n              v177 = 0; /*0xfffffe00092a51c0*/\n              IOLog(\"AMFI: '%s': cdhash mismatch: '%s' does not match any in V1 agility array.\\n\");\n            }\n            else\n            {\n              IOLog(\"AMFI: '%s': hash agility v1 cdhashes missing or not an array, bailing out.\\n\");\n            }\n          }\n          else\n          {\n            IOLog(\"AMFI: '%s': hash agility v1 data not a dictionary, bailing out.\\n\");\n          }\n          v123 = 0; /*0xfffffe00092a5994*/\n          goto LABEL_218; /*0xfffffe00092a5994*/\n        }\n        if ( *(_QWORD *)errorString.val ) /*0xfffffe00092a5750*/\n          v114 = (const char *)(*(__int64 (__fastcall **)(_QWORD))(**(_QWORD **)errorString.val + 168LL))(*(_QWORD *)errorString.val); /*0xfffffe00092a5774*/\n        else\n          v114 = \"<no error obj>\"; /*0xfffffe00092a5a54*/\n        IOLog(\"AMFI: '%s': cannot unserialize hash agility V1 object: '%s'\\n\", v151, v114);\n        if ( *(_QWORD *)errorString.val ) /*0xfffffe00092a5a74*/\n          (*(void (__fastcall **)(_QWORD))(**(_QWORD **)errorString.val + 40LL))(*(_QWORD *)errorString.val); /*0xfffffe00092a5a98*/\n        IOFreeData(v139, v77 + 1); /*0xfffffe00092a5aa4*/\nLABEL_155:\n        v44 = v154; /*0xfffffe00092a5374*/\n        goto LABEL_156; /*0xfffffe00092a5378*/\n      }\n    }\n    IOLog(\"AMFI: '%s': cannot allocate %zu bytes for V1 agility text, bailing out.\\n\", v151, v78);\n    goto LABEL_155; /*0xfffffe00092a5370*/\n  }\n  *a5 |= v39; /*0xfffffe00092a49f0*/\n  setAndCheckValidationCategory(v154, 1, \"trust-cache\"); /*0xfffffe00092a4a08*/\n  if ( v22 && OSEntitlements::asDict(v22) ) /*0xfffffe00092a4a14*/\n  {\n    OSEntitlements::asDict(v22); /*0xfffffe00092a4a20*/\n  }\n  else if ( !emptyDictionary(void)::empty ) /*0xfffffe00092a4a60*/\n  {\n    emptyDictionary(void)::empty = (__int64)OSDictionary::withCapacity(1u); /*0xfffffe00092a4a70*/\n  }\n  v41 = postValidation(v16, v154, (unsigned int)*a5); /*0xfffffe00092a4a94*/\n  v37 = IsCDHashDenylisted(cdhash); /*0xfffffe00092a4a9c*/\n  if ( (_DWORD)v37 ) /*0xfffffe00092a4aa0*/\n  {\n    v37 = fatal_error_fmt(v16, v17, v18, \"Bad things happened.\"); /*0xfffffe00092a4ab8*/\n    cdhash = 0; /*0xfffffe00092a4abc*/\n    goto LABEL_169; /*0xfffffe00092a4ac0*/\n  }\n  cdhash = 0; /*0xfffffe00092a4ac4*/\n  v42 = v41 ^ 1; /*0xfffffe00092a4ac8*/\nLABEL_49:\n  if ( v42 ) /*0xfffffe00092a4acc*/\n    goto LABEL_169; /*0xfffffe00092a4acc*/\n  v43 = *a5; /*0xfffffe00092a4ad0*/\n  if ( (*a5 & 0x4000000) == 0 ) /*0xfffffe00092a4ad4*/\n  {\n    v37 = devModeStatusResolved(); /*0xfffffe00092a4ad8*/\n    if ( (_DWORD)v37 ) /*0xfffffe00092a4adc*/\n    {\n      v43 = *a5; /*0xfffffe00092a4ae0*/\n      goto LABEL_53; /*0xfffffe00092a4ae0*/\n    }\n    v40 = \"The system only allows platform binaries until developer mode status has been resolved, and the code is not a \" /*0xfffffe00092a4d2c*/\n          \"platform binary\\n\";\nLABEL_43:\n    v37 = fatal_error_fmt(v16, v17, v18, v40, v137); /*0xfffffe00092a4a44*/\n    goto LABEL_169; /*0xfffffe00092a4a54*/\n  }\nLABEL_53:\n  v36 = 0; /*0xfffffe00092a4ae4*/\n  *a5 = v43 | 0x20000000; /*0xfffffe00092a4af0*/\n  if ( (v43 & 0x4000000) != 0 && v22 ) /*0xfffffe00092a4af8*/\n  {\n    OSEntitlements::markAsCSPlatform(v22); /*0xfffffe00092a4b00*/\n    v36 = 0; /*0xfffffe00092a4b04*/\n    goto LABEL_171; /*0xfffffe00092a4b08*/\n  }\nLABEL_170:\n  if ( v22 ) /*0xfffffe00092a552c*/\nLABEL_171:\n    v37 = (*(__int64 (__fastcall **)(OSEntitlements *))(*(_QWORD *)v22 + 40LL))(v22); /*0xfffffe00092a5530*/\n  if ( cdhash ) /*0xfffffe00092a5558*/\n    v37 = IOFreeTypeImpl( /*0xfffffe00092a5568*/\n            &StaticPlatformPolicy<true,true,false,false,false,false,true,true,false,true,false,false,false,false,true,true,2u,false,false,true>::check_signature(LazyPath *,int,cs_blob *,unsigned int *,unsigned int *,int,bool,bool,unsigned int,char **,unsigned long *)::kalloc_type_view_2772,\n            cdhash);\n  if ( (v20 & ~*a5 & 0xFFFFF7FE) != 0 ) /*0xfffffe00092a557c*/\n    _vnode_check_signature(v37); /*0xfffffe00092a55f4*/\n  (**(void (__fastcall ***)(__int64))v16)(v16); /*0xfffffe00092a55a4*/\n  IOFreeTypeImpl( /*0xfffffe00092a55b4*/\n    &_vnode_check_signature(vnode *,label *,int,cs_blob *,unsigned int *,unsigned int *,int,unsigned int,char **,unsigned long *)::kalloc_type_view_2844,\n    v16);\n  return v36; /*0xfffffe00092a55f0*/\n}",
+  "refs": [
+    {
+      "addr": "0xfffffe000854c93c",
+      "name": "_IOLog"
+    },
+    {
+      "addr": "0xfffffe000735320c",
+      "name": "aAmfiVnodeCheck",
+      "string": "AMFI: vnode_check_signature called with platform %d\n"
+    },
+    {
+      "addr": "0xfffffe000aa5a580",
+      "name": "_cs_debug"
+    },
+    {
+      "addr": "0xfffffe000854bf88",
+      "name": "_IOMallocTypeImpl"
+    },
+    {
+      "addr": "0xfffffe0007bad1c8",
+      "name": "__ZZL22_vnode_check_signatureP5vnodeP5labeliP7cs_blobPjS5_ijPPcPmE21kalloc_type_view_2796"
+    },
+    {
+      "addr": "0xfffffe00073532d8",
+      "name": "aAmfiCouldNotAl",
+      "string": "AMFI: Could not allocate memory for lp, bailing out.\n"
+    },
+    {
+      "addr": "0xfffffe0007f18b60",
+      "name": "_bzero"
+    },
+    {
+      "addr": "0xfffffe0007bac6f0",
+      "name": "off_FFFFFE0007BAC6F0"
+    },
+    {
+      "addr": "0xfffffe0008373e20",
+      "name": "_csblob_get_cdhash"
+    },
+    {
+      "addr": "0xfffffe00092a195c",
+      "name": "__Z15fatal_error_fmtP8LazyPathPPcPmPKcz"
+    },
+    {
+      "addr": "0xfffffe000735332f",
+      "name": "aTheSignatureCo",
+      "string": "The signature could not be validated because AMFI could not load its entitlements for validation: %s"
+    },
+    {
+      "addr": "0xfffffe00092a6d9c",
+      "name": "__ZN20StaticPlatformPolicyILb1ELb1ELb0ELb0ELb0ELb0ELb1ELb1ELb0ELb1ELb0ELb0ELb0ELb0ELb1ELb1ELj2ELb0ELb0ELb1EE29loadEntitlementsFromSignatureEPP14OSEntitlementsP7cs_blobP8LazyPathPPKc"
+    },
+    {
+      "addr": "0xfffffe000929ebb4",
+      "name": "__ZN14OSEntitlements6asDictEv"
+    },
+    {
+      "addr": "0xfffffe00084e490c",
+      "name": "__ZN20OSCollectionIterator14withCollectionEPK12OSCollection"
+    },
+    {
+      "addr": "0xfffffe00084dc850",
+      "name": "__ZN15OSMetaClassBase12safeMetaCastEPKS_PK11OSMetaClass"
+    },
+    {
+      "addr": "0xfffffe000aa5b818",
+      "name": "__ZN8OSString10gMetaClassE"
+    },
+    {
+      "addr": "0xfffffe00084dd480",
+      "name": "__ZNK11OSMetaClass12getClassNameEv"
+    },
+    {
+      "addr": "0xfffffe000735377b",
+      "name": "aAmfiSkippingIn",
+      "string": "AMFI: skipping invalid entitlement of type '%s'\n"
+    },
+    {
+      "addr": "0xfffffe00083df6c4",
+      "name": "_developer_mode_state"
+    },
+    {
+      "addr": "0xfffffe0008073208",
+      "name": "_strcmp"
+    },
+    {
+      "addr": "0xfffffe0007351823",
+      "name": "aGetTaskAllow",
+      "string": "get-task-allow"
+    },
+    {
+      "addr": "0xfffffe000929ef4c",
+      "name": "__Z33OSEntitlementsHaveEntitlementBoolP14OSEntitlementsPKhPKc"
+    },
+    {
+      "addr": "0xfffffe00073537ac",
+      "name": "aDeveloperModeI",
+      "string": "Developer mode is disabled, %s is disallowed"
+    },
+    {
+      "addr": "0xfffffe000929f348",
+      "name": "_matchIn"
+    },
+    {
+      "addr": "0xfffffe0007bab188",
+      "name": "_developerModeEntitlements"
+    },
+    {
+      "addr": "0xfffffe00073537d9",
+      "name": "aComApplePrivat_34",
+      "string": "com.apple.private.oop-jit.loader"
+    },
+    {
+      "addr": "0xfffffe00073537fa",
+      "name": "aOopJitLoaderEn",
+      "string": "OOP-JIT loader entitlement is an incorrect type"
+    },
+    {
+      "addr": "0xfffffe000929e870",
+      "name": "__ZN14OSEntitlements18entitlementTypeForEPKhPKcP8CEType_t"
+    },
+    {
+      "addr": "0xfffffe0007bad008",
+      "name": "_Errors"
+    },
+    {
+      "addr": "0xfffffe0007352d5c",
+      "name": "aComApplePrivat_33",
+      "string": "com.apple.private.oop-jit.runner"
+    },
+    {
+      "addr": "0xfffffe000735382a",
+      "name": "aOopJitRunnerEn",
+      "string": "OOP-JIT runner entitlement is an incorrect type"
+    },
+    {
+      "addr": "0xfffffe000735385a",
+      "name": "aCannotBeBothOo",
+      "string": "Cannot be both OOP-JIT loader and runner simultaneously"
+    },
+    {
+      "addr": "0xfffffe0007353394",
+      "name": "aInternalErrorN",
+      "string": "Internal Error: No cdhash found."
+    },
+    {
+      "addr": "0xfffffe00092a18f8",
+      "name": "__Z29setAndCheckValidationCategoryP7cs_blobjPKc"
+    },
+    {
+      "addr": "0xfffffe00073533cb",
+      "name": "aCompilationSer",
+      "string": "compilation-service"
+    },
+    {
+      "addr": "0xfffffe00084db040",
+      "name": "_current_proc"
+    },
+    {
+      "addr": "0xfffffe00092a2784",
+      "name": "__ZN24AppleMobileFileIntegrity22AMFIEntitlementGetBoolEP4procPKcPb_0"
+    },
+    {
+      "addr": "0xfffffe0007352c55",
+      "name": "aComApplePrivat_32",
+      "string": "com.apple.private.amfi.can-execute-cdhash"
+    },
+    {
+      "addr": "0xfffffe000ab30fb0",
+      "name": "__ZZ15emptyDictionaryvE5empty"
+    },
+    {
+      "addr": "0xfffffe00084e973c",
+      "name": "__ZN12OSDictionary12withCapacityEj"
+    },
+    {
+      "addr": "0xfffffe00092a7060",
+      "name": "__ZL14postValidationP8LazyPathP7cs_blobjP12OSDictionaryhbjPKcPPcPm"
+    },
+    {
+      "addr": "0xfffffe00073533f2",
+      "name": "aAmfiCanExecute",
+      "string": "AMFI: can-execute-cdhash code in non-entitled context.\n"
+    },
+    {
+      "addr": "0xfffffe00080917ec",
+      "name": "_pmap_match_compilation_service_cdhash"
+    },
+    {
+      "addr": "0xfffffe000929f2c0",
+      "name": "__Z21noEntitlementsPresentP7cs_blob"
+    },
+    {
+      "addr": "0xfffffe0007bad248",
+      "name": "__ZZN20StaticPlatformPolicyILb1ELb1ELb0ELb0ELb0ELb0ELb1ELb1ELb0ELb1ELb0ELb0ELb0ELb0ELb1ELb1ELj2ELb0ELb0ELb1EE15check_signatureEP8LazyPathiP7cs_blobPjS5_ibbjPPcPmE21kalloc_type_view_2568"
+    },
+    {
+      "addr": "0xfffffe00092b3540",
+      "name": "__ZL22_vnode_check_signatureP5vnodeP5labeliP7cs_blobPjS5_ijPPcPm.cold.2"
+    },
+    {
+      "addr": "0xfffffe0008373b14",
+      "name": "_csblob_get_addr"
+    },
+    {
+      "addr": "0xfffffe0008373b0c",
+      "name": "_csblob_get_size"
+    },
+    {
+      "addr": "0xfffffe00083fee98",
+      "name": "_csblob_find_blob_bytes"
+    },
+    {
+      "addr": "0xfffffe0007353ae6",
+      "name": "aAmfiSHasNoCd",
+      "string": "AMFI: '%s' has no cd?\n"
+    },
+    {
+      "addr": "0xfffffe0007353afd",
+      "name": "aAmfiSHasShortC",
+      "string": "AMFI: '%s' has short cd (%u)?\n"
+    },
+    {
+      "addr": "0xfffffe0007353932",
+      "name": "aAmfiSUnrecover",
+      "string": "AMFI: '%s': Unrecoverable CT signature issue, bailing out.\n"
+    },
+    {
+      "addr": "0xfffffe0007353b1c",
+      "name": "aAmfiSHasNoCmsB",
+      "string": "AMFI: '%s' has no CMS blob?\n"
+    },
+    {
+      "addr": "0xfffffe0007353b39",
+      "name": "aAmfiSHasShortC_0",
+      "string": "AMFI: '%s' has short cms (%u), bailing out.\n"
+    },
+    {
+      "addr": "0xfffffe0007353b83",
+      "name": "aAmfiSHasZeroLe",
+      "string": "AMFI: '%s' has zero length cms, but is not adhoc?\n"
+    },
+    {
+      "addr": "0xfffffe0008373cd0",
+      "name": "_csblob_get_flags"
+    },
+    {
+      "addr": "0xfffffe0007353b66",
+      "name": "aAmfiSIsAdhocSi",
+      "string": "AMFI: '%s' is adhoc signed.\n"
+    },
+    {
+      "addr": "0xfffffe0008659ea8",
+      "name": "_PE_i_can_has_debugger"
+    },
+    {
+      "addr": "0xfffffe0007353bb6",
+      "name": "aAmfiSDoesNotPa_0",
+      "string": "AMFI: '%s' does not pass CT evaluation, result: %#x\n"
+    },
+    {
+      "addr": "0xfffffe000998bf38",
+      "name": "_CTEvaluateAMFICodeSignatureCMS_0"
+    },
+    {
+      "addr": "0xfffffe000a7e781c",
+      "name": "_ccsha256_di_0"
+    },
+    {
+      "addr": "0xfffffe000a7bdb64",
+      "name": "_ccdigest_0"
+    },
+    {
+      "addr": "0xfffffe0008373cd8",
+      "name": "_csblob_get_hashtype"
+    },
+    {
+      "addr": "0xfffffe0007353dd1",
+      "name": "aAmfiSHasUnknow",
+      "string": "AMFI: '%s' has unknown CT digest type %#x\n"
+    },
+    {
+      "addr": "0xfffffe0007353dfc",
+      "name": "aAmfiSHasUnexpe",
+      "string": "AMFI: '%s' has unexpected digest type, actual %#x != expected %#x\n"
+    },
+    {
+      "addr": "0xfffffe0007353e3f",
+      "name": "aAmfiSHasUnexpe_0",
+      "string": "AMFI: '%s' has unexpected digest data len %zu (type %#x)\n"
+    },
+    {
+      "addr": "0xfffffe0007353beb",
+      "name": "aAmfiSV2HashAgi",
+      "string": "AMFI: '%s': V2 hash agility validation failed, bailing out.\n"
+    },
+    {
+      "addr": "0xfffffe0007352401",
+      "name": "__ZZ16cdhash_to_stringPcPKhE6nibble",
+      "string": "0123456789abcdef"
+    },
+    {
+      "addr": "0xfffffe0007353e79",
+      "name": "aAmfiSCdhashMis",
+      "string": "AMFI: '%s': cdhash mismatch: actual '%s' != expected '%s'\n"
+    },
+    {
+      "addr": "0xfffffe000809c924",
+      "name": "_memcmp"
+    },
+    {
+      "addr": "0xfffffe000735406f",
+      "name": "aAmfiSUnableToF",
+      "string": "AMFI: %s: unable to find code directory\n"
+    },
+    {
+      "addr": "0xfffffe0007354098",
+      "name": "aCheckforoopjit",
+      "string": "_checkForOOPJit"
+    },
+    {
+      "addr": "0xfffffe0008373ecc",
+      "name": "_csblob_get_code_directory"
+    },
+    {
+      "addr": "0xfffffe000735396e",
+      "name": "aAmfiSUnsuitabl",
+      "string": "AMFI: '%s': unsuitable CT policy %#llx for this platform/device, rejecting signature.\n"
+    },
+    {
+      "addr": "0xfffffe00073539c5",
+      "name": "aAmfiSHasDevelo",
+      "string": "AMFI: '%s': has developer signature (%#llx) but developer mode is not enabled\n"
+    },
+    {
+      "addr": "0xfffffe0007353a14",
+      "name": "aAppStoreFastPa",
+      "string": "App Store Fast Path -> %s\n"
+    },
+    {
+      "addr": "0xfffffe0007353a2f",
+      "name": "aFastPathAppsto",
+      "string": "fast-path-appstore"
+    },
+    {
+      "addr": "0xfffffe00092a77a4",
+      "name": "__Z18IsCDHashDenylistedPKh"
+    },
+    {
+      "addr": "0xfffffe0007353a42",
+      "name": "aQaHierarchyUse",
+      "string": "QA Hierarchy used -> %s\n"
+    },
+    {
+      "addr": "0xfffffe0007353a5b",
+      "name": "aQaPathAppstore",
+      "string": "qa-path-appstore"
+    },
+    {
+      "addr": "0xfffffe0007bab609",
+      "name": "_allow3rdParty"
+    },
+    {
+      "addr": "0xfffffe0007354442",
+      "name": "aStaticplatform_3",
+      "string": "StaticPlatformPolicy<%d>: no registered daemon port\n"
+    },
+    {
+      "addr": "0xfffffe0008373b04",
+      "name": "_csblob_get_base_offset"
+    },
+    {
+      "addr": "0xfffffe00092a7818",
+      "name": "_verify_code_directory"
+    },
+    {
+      "addr": "0xfffffe0007351806",
+      "name": "unk_FFFFFE0007351806"
+    },
+    {
+      "addr": "0xfffffe00073542c3",
+      "name": "aRestrictedEnti",
+      "string": "(restricted entitlements)"
+    },
+    {
+      "addr": "0xfffffe0007354282",
+      "name": "aCalloutOutToAm",
+      "string": "callout out to amfid for %s %s, return %d valid: %d isApple: %d\n"
+    },
+    {
+      "addr": "0xfffffe00073543c3",
+      "name": "aStaticplatform_1",
+      "string": "StaticPlatformPolicy<%d>: verify_code_directory server is dead\n"
+    },
+    {
+      "addr": "0xfffffe0007354403",
+      "name": "aStaticplatform_2",
+      "string": "StaticPlatformPolicy<%d>: verify_code_directory returned 0x%x\n"
+    },
+    {
+      "addr": "0xfffffe000867fec4",
+      "name": "_panic"
+    },
+    {
+      "addr": "0xfffffe00073542dd",
+      "name": "aAmfidIsBrokenS",
+      "string": "\"amfid is broken. (%s) (%d) (%d) (%d)\" @%s:%d"
+    },
+    {
+      "addr": "0xfffffe0007352457",
+      "name": "aApplemobilefil_1",
+      "string": "AppleMobileFileIntegrity.cpp"
+    },
+    {
+      "addr": "0xfffffe0008373ec4",
+      "name": "_csblob_get_validation_category"
+    },
+    {
+      "addr": "0xfffffe000735430b",
+      "name": "aSSignatureMeet",
+      "string": "%s: Signature meets iphone VPN Prod policy\n"
+    },
+    {
+      "addr": "0xfffffe0007354337",
+      "name": "aAmfidValidated",
+      "string": "amfid_validated"
+    },
+    {
+      "addr": "0xfffffe00092a0d18",
+      "name": "__Z26validateAndRegisterProfileR21ProfileValidationData"
+    },
+    {
+      "addr": "0xfffffe0007354477",
+      "name": "aSPossibleRaceD",
+      "string": "%s: Possible race detected. Rejecting.\n"
+    },
+    {
+      "addr": "0xfffffe0007354347",
+      "name": "aStaticplatform",
+      "string": "StaticPlatformPolicy<%d>: Unable to match identity\n"
+    },
+    {
+      "addr": "0xfffffe000735437b",
+      "name": "aStaticplatform_0",
+      "string": "StaticPlatformPolicy<%d>: unable to verify audit token came from amfid\n"
+    },
+    {
+      "addr": "0xfffffe00092a08a4",
+      "name": "__Z14tokenIsTrusted13audit_token_t"
+    },
+    {
+      "addr": "0xfffffe00092a0850",
+      "name": "__Z13getDaemonPortPP8ipc_port"
+    },
+    {
+      "addr": "0xfffffe0007353a9c",
+      "name": "aAmfiSDoesNotPa",
+      "string": "AMFI: '%s' does not pass kernel-side policy for this model, bailing out.\n"
+    },
+    {
+      "addr": "0xfffffe0007353458",
+      "name": "aAmfiCodeSignat",
+      "string": "AMFI: code signature validation failed.\n"
+    },
+    {
+      "addr": "0xfffffe000735348b",
+      "name": "aAmfiBailingOut",
+      "string": "AMFI: bailing out because of restricted entitlements.\n"
+    },
+    {
+      "addr": "0xfffffe00073534c2",
+      "name": "aCodeHasRestric",
+      "string": "Code has restricted entitlements, but the validation of its code signature failed.\nUnsatisfied Entitlements: %s"
+    },
+    {
+      "addr": "0xfffffe0007353481",
+      "name": "aUntrusted",
+      "string": "untrusted"
+    },
+    {
+      "addr": "0xfffffe000929c238",
+      "name": "__Z28AMFILocalSigningIsRestrictedPKh"
+    },
+    {
+      "addr": "0xfffffe000735412c",
+      "name": "aAmfiSVerificat",
+      "string": "AMFI: '%s': verification failed since local signing is restricted\n"
+    },
+    {
+      "addr": "0xfffffe000929c1ec",
+      "name": "__Z24AMFIRestrictLocalSigningv"
+    },
+    {
+      "addr": "0xfffffe00073541f4",
+      "name": "aAmfiSDisallowi",
+      "string": "AMFI: '%s': disallowing locally signed library with entitlements"
+    },
+    {
+      "addr": "0xfffffe0007354235",
+      "name": "aAmfiSInvalidEn",
+      "string": "AMFI: '%s':invalid entitlement of type '%s' disallowed in local signed code\n"
+    },
+    {
+      "addr": "0xfffffe000929c43c",
+      "name": "__Z31entitlementAllowedByConstraintsPK24entitlement_constraint_tPKcP8OSObjectS3_"
+    },
+    {
+      "addr": "0xfffffe0007baaf50",
+      "name": "_swiftPlaygrounds_iOS"
+    },
+    {
+      "addr": "0xfffffe0007353a6c",
+      "name": "aLocallySignedF",
+      "string": "Locally Signed Fast Path -> %s\n"
+    },
+    {
+      "addr": "0xfffffe0007353a8c",
+      "name": "aFastPathLocal",
+      "string": "fast-path-local"
+    },
+    {
+      "addr": "0xfffffe00073509e3",
+      "name": "aLocalspkey",
+      "string": "LOCALSPKEY"
+    },
+    {
+      "addr": "0xfffffe00073541b0",
+      "name": "aAmfiSLocalSign_1",
+      "string": "AMFI: '%s': local signed binary has an invalid team-identifier: %s\n"
+    },
+    {
+      "addr": "0xfffffe000735416f",
+      "name": "aAmfiSLocalSign_0",
+      "string": "AMFI: '%s': local signed binary does not have a team identifier\n"
+    },
+    {
+      "addr": "0xfffffe00073540d3",
+      "name": "aAmfiSLocallySi_0",
+      "string": "AMFI: '%s': locally signed signatures need to be at least 0x%X signature version (0x%X)\n"
+    },
+    {
+      "addr": "0xfffffe00073540a8",
+      "name": "aAmfiSUnableToF_0",
+      "string": "AMFI: '%s': unable to find code directory\n"
+    },
+    {
+      "addr": "0xfffffe0007353532",
+      "name": "aAmfiLocalSigni",
+      "string": "AMFI: local signing validation was unsuccessful.\n"
+    },
+    {
+      "addr": "0xfffffe000929bf94",
+      "name": "__Z28AMFIGetLocalSigningPublicKeyv"
+    },
+    {
+      "addr": "0xfffffe000998bf7c",
+      "name": "_CTEvaluateAMFICodeSignatureCMSPubKey_0"
+    },
+    {
+      "addr": "0xfffffe0007353db5",
+      "name": "aAmfiSLocallySi",
+      "string": "AMFI: '%s': locally signed\n"
+    },
+    {
+      "addr": "0xfffffe0007353d7f",
+      "name": "aAmfiSLocalSign",
+      "string": "AMFI: '%s': local signing public key not initialized\n"
+    },
+    {
+      "addr": "0xfffffe0007353c65",
+      "name": "aAmfiSNoHashAgi",
+      "string": "AMFI: '%s': no hash agility data and first cd hash type (%d) does not match best cd hash type (%d).\n"
+    },
+    {
+      "addr": "0xfffffe000a7e7828",
+      "name": "_ccsha384_di_0"
+    },
+    {
+      "addr": "0xfffffe0007353cca",
+      "name": "aAmfiSInvalidFi",
+      "string": "\"AMFI: '%s': Invalid first Code Directory should have been caught by xnu.\\n\" @%s:%d"
+    },
+    {
+      "addr": "0xfffffe000a7df258",
+      "name": "_ccsha1_di_0"
+    },
+    {
+      "addr": "0xfffffe0007353d1e",
+      "name": "aAmfiSFirstCode",
+      "string": "AMFI: '%s': first code directory doesn't match the best code directory, but no hash agility data"
+    },
+    {
+      "addr": "0xfffffe000809c8e4",
+      "name": "_bcmp"
+    },
+    {
+      "addr": "0xfffffe0007353eb4",
+      "name": "aAmfiSAgilityDa",
+      "string": "AMFI: '%s': agility data length %zu for V1 agility text is too big.\n"
+    },
+    {
+      "addr": "0xfffffe000854c624",
+      "name": "_IOMallocData_external"
+    },
+    {
+      "addr": "0xfffffe0008073610",
+      "name": "___memcpy_chk"
+    },
+    {
+      "addr": "0xfffffe000852669c",
+      "name": "__Z16OSUnserializeXMLPKcmPP8OSString"
+    },
+    {
+      "addr": "0xfffffe000aa5b5a0",
+      "name": "__ZN12OSDictionary10gMetaClassE"
+    },
+    {
+      "addr": "0xfffffe0007353fcf",
+      "name": "aCdhashes",
+      "string": "cdhashes"
+    },
+    {
+      "addr": "0xfffffe000aa5b500",
+      "name": "__ZN7OSArray10gMetaClassE"
+    },
+    {
+      "addr": "0xfffffe000aa5b578",
+      "name": "__ZN6OSData10gMetaClassE"
+    },
+    {
+      "addr": "0xfffffe000854c6bc",
+      "name": "_IOFreeData"
+    },
+    {
+      "addr": "0xfffffe0007353c28",
+      "name": "aAmfiSV1HashAgi",
+      "string": "AMFI: '%s': V1 hash agility validation failed, bailing out.\n"
+    },
+    {
+      "addr": "0xfffffe0007354024",
+      "name": "aAmfiSCdhashMis_0",
+      "string": "AMFI: '%s': cdhash mismatch: '%s' does not match any in V1 agility array.\n"
+    },
+    {
+      "addr": "0xfffffe0007353fd8",
+      "name": "aAmfiSHashAgili_0",
+      "string": "AMFI: '%s': hash agility v1 cdhashes missing or not an array, bailing out.\n"
+    },
+    {
+      "addr": "0xfffffe0007353f8e",
+      "name": "aAmfiSHashAgili",
+      "string": "AMFI: '%s': hash agility v1 data not a dictionary, bailing out.\n"
+    },
+    {
+      "addr": "0xfffffe0007353f7f",
+      "name": "aNoErrorObj",
+      "string": "<no error obj>"
+    },
+    {
+      "addr": "0xfffffe0007353f42",
+      "name": "aAmfiSCannotUns",
+      "string": "AMFI: '%s': cannot unserialize hash agility V1 object: '%s'\n"
+    },
+    {
+      "addr": "0xfffffe0007353ef9",
+      "name": "aAmfiSCannotAll",
+      "string": "AMFI: '%s': cannot allocate %zu bytes for V1 agility text, bailing out.\n"
+    },
+    {
+      "addr": "0xfffffe000929ca98",
+      "name": "__Z31AMFIIsCodeDirectoryInTrustCachePKh"
+    },
+    {
+      "addr": "0xfffffe000929cab4",
+      "name": "__Z37codeDirectoryHashIsInLoadedTrustCachePKh"
+    },
+    {
+      "addr": "0xfffffe00073533b5",
+      "name": "aTrustCache_0",
+      "string": "trust-cache"
+    },
+    {
+      "addr": "0xfffffe0007353564",
+      "name": "aBadThingsHappe",
+      "string": "Bad things happened."
+    },
+    {
+      "addr": "0xfffffe000929db10",
+      "name": "__Z21devModeStatusResolvedv"
+    },
+    {
+      "addr": "0xfffffe0007353579",
+      "name": "aTheSystemOnlyA",
+      "string": "The system only allows platform binaries until developer mode status has been resolved, and the code is not a platform binary\n"
+    },
+    {
+      "addr": "0xfffffe000929ec68",
+      "name": "__ZN14OSEntitlements16markAsCSPlatformEv"
+    },
+    {
+      "addr": "0xfffffe000854c170",
+      "name": "_IOFreeTypeImpl"
+    },
+    {
+      "addr": "0xfffffe0007bad288",
+      "name": "__ZZN20StaticPlatformPolicyILb1ELb1ELb0ELb0ELb0ELb0ELb1ELb1ELb0ELb1ELb0ELb0ELb0ELb0ELb1ELb1ELj2ELb0ELb0ELb1EE15check_signatureEP8LazyPathiP7cs_blobPjS5_ibbjPPcPmE21kalloc_type_view_2772"
+    },
+    {
+      "addr": "0xfffffe00092b351c",
+      "name": "__ZL22_vnode_check_signatureP5vnodeP5labeliP7cs_blobPjS5_ijPPcPm.cold.1"
+    },
+    {
+      "addr": "0xfffffe0007bad208",
+      "name": "__ZZL22_vnode_check_signatureP5vnodeP5labeliP7cs_blobPjS5_ijPPcPmE21kalloc_type_view_2844"
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+INPUT /Users/ciscohe/Desktop/macPad/analysis/dyld_15.6.1_arm64e_thin
+Runtime PID 6792 PC 0x104f4b9f8, text entry 0x104f44000..0x104fe0000 offset0.
+PC offset = 0x79f8; runtime 32-byte window matches IDB bytes exactly.
+0x79b8 803640f9 LDR             X0, [X20,#0x68]
+0x79bc e03b00b4 CBZ             X0, loc_8138
+0x79c0 e10314aa MOV             X1, X20
+0x79c4 705a0094 BL              __ZNK5dyld46Loader8analyzerERKNS_12RuntimeStateE; dyld4::Loader::analyzer(dyld4::RuntimeState const&)
+0x79c8 f70300aa MOV             X23, X0
+0x79cc 010400f0 ADRL            X1, aTproConst; "__TPRO_CONST"
+0x79d0 21fc3791 ADRL            X1, aTproConst; "__TPRO_CONST"
+0x79d4 030400f0 ADRL            X3, aDyldApis; "__dyld_apis"
+0x79d8 63303891 ADRL            X3, aDyldApis; "__dyld_apis"
+0x79dc 82018052 MOV             W2, #0xC
+0x79e0 64018052 MOV             W4, #0xB
+0x79e4 25008052 MOV             W5, #1
+0x79e8 15e00194 BL              __ZNK6mach_o6Header18findSectionContentE7CStringS1_b; mach_o::Header::findSectionContent(CString,CString,bool)
+0x79ec f60301aa MOV             X22, X1
+0x79f0 3f2000f1 CMP             X1, #8
+0x79f4 41000054 B.NE            loc_79FC
+0x79f8 140000f9 STR             X20, [X0]
+0x79fc 010400f0 ADRL            X1, aDataConst; "__DATA_CONST"
+0x7a00 21603891 ADRL            X1, aDataConst; "__DATA_CONST"
+0x7a04 030400f0 ADRL            X3, aHelper; "__helper"
+0x7a08 63943891 ADRL            X3, aHelper; "__helper"
+0x7a0c e00317aa MOV             X0, X23
+0x7a10 82018052 MOV             W2, #0xC
+0x7a14 04018052 MOV             W4, #8
+0x7a18 25008052 MOV             W5, #1
+0x7a1c 08e00194 BL              __ZNK6mach_o6Header18findSectionContentE7CStringS1_b; mach_o::Header::findSectionContent(CString,CString,bool)
+Runtime X0=0x1ee188000; ESR=0x92000046; WnR bit6=1.

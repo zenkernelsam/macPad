@@ -1011,6 +1011,25 @@ add_all_trustcache "/var/mnt/rootfs/System/Library/PrivateFrameworks/SkyLight.fr
 add_all_trustcache /var/jb/usr/macOS/bin/HostInjectBootstrap
 add_all_trustcache /var/mnt/rootfs/System/Library/Frameworks/Metal.framework/XPCServices/MTLCompilerService.xpc/Contents/MacOS/MTLCompilerService
 add_all_trustcache /System/Library/Frameworks/Metal.framework/XPCServices/MTLCompilerService.xpc/MTLCompilerService
+# Flat-layout compiler-service bundle for chroot clients.  libmachook calls
+# xpc_add_bundle on this jb-root path from inside the chroot; launchd then
+# derives the spawn executable at the bundle root, a path that resolves in
+# the iOS namespace.  Registering the in-chroot Ventura bundle instead makes
+# launchd look for ".../Contents/MacOS/MTLCompilerService" on iOS, which does
+# not exist, and every connection returns XPC_ERROR_CONNECTION_INVALID
+# (runtime-confirmed 2026-10-07).  The spawned service is the stock iOS
+# MTLCompilerService binary, adapted by MTLCompilerBypassOSCheck.
+MTLCOMPILER_PROXY_DIR=/var/jb/usr/macOS/Frameworks/Metal.framework/XPCServices
+MTLCOMPILER_PROXY_BUNDLE="$MTLCOMPILER_PROXY_DIR/MTLCompilerService.xpc"
+MTLCOMPILER_IOS_BUNDLE=/System/Library/Frameworks/Metal.framework/XPCServices/MTLCompilerService.xpc
+if [ ! -f "$MTLCOMPILER_PROXY_BUNDLE/MTLCompilerService" ] ||
+   ! cmp -s "$MTLCOMPILER_IOS_BUNDLE/MTLCompilerService" \
+            "$MTLCOMPILER_PROXY_BUNDLE/MTLCompilerService"; then
+    mkdir -p "$MTLCOMPILER_PROXY_DIR" || exit 1
+    rm -rf "$MTLCOMPILER_PROXY_BUNDLE" || exit 1
+    cp -R "$MTLCOMPILER_IOS_BUNDLE" "$MTLCOMPILER_PROXY_BUNDLE" || exit 1
+fi
+add_all_trustcache "$MTLCOMPILER_PROXY_BUNDLE/MTLCompilerService"
 # Refresh the chroot copy of libmachook. CRITICAL: rm before cp so the new file
 # gets a FRESH INODE. Overwriting in place (cp -f, same inode) leaves the chroot
 # kernel's cached code-signature blob for that vnode stale -> it validates the new

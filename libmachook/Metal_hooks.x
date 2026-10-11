@@ -24350,7 +24350,7 @@ xpc_connection_t hooked_xpc_connection_create_mach_service(const char * name, di
     // enable it implicitly, making an ordinary production shell write every
     // XPC lookup to stderr.  Keep the functional privileged-flag translation
     // below, but emit the trace only under the explicit debug environment.
-    if (getenv("MACWS_XPC_DEBUG")) {
+    if (getenv("MACWS_XPC_DEBUG") || macws_runtime_diagnostics_enabled()) {
         fprintf(stderr,
             "#### XPC_TRACE mach_service create: '%s'%s%s%s flags=%#llx\n",
             originalName ?: "(null)",
@@ -24373,7 +24373,8 @@ xpc_connection_t hooked_xpc_connection_create(const char *name, dispatch_queue_t
         return orig_xpc_connection_create(name, queue);
     }
     name = macws_private_chroot_service_name(name);
-    if (originalName && getenv("MACWS_XPC_DEBUG")) {
+    if (originalName &&
+        (getenv("MACWS_XPC_DEBUG") || macws_runtime_diagnostics_enabled())) {
         fprintf(stderr, "#### XPC_TRACE service create: '%s'%s%s%s\n",
                 originalName,
                 name != originalName ? " -> '" : "",
@@ -24389,6 +24390,38 @@ xpc_connection_t hooked_xpc_connection_create(const char *name, dispatch_queue_t
     if (originalName &&
         !strcmp(originalName, "com.apple.quicklook.satellite")) {
         return orig_xpc_connection_create_mach_service(name, queue, 0);
+    }
+    // Metal's XPCCompilerConnection::setupConnection (RE-confirmed, Metal
+    // 22F82 @0x1898ed1ec) asks the bundle-service API for
+    // "com.apple.MTLCompilerService".  Registering the bundle at libmachook
+    // constructor time provably does not take effect (runtime 2026-10-07: a
+    // chroot probe with only the constructor registration still received
+    // XPC_ERROR_CONNECTION_INVALID, while the same probe calling
+    // xpc_add_bundle from main completed the requestType=9
+    // checkConnectionActive round-trip).  The domain lookup runs inside
+    // orig_xpc_connection_create below, so register once here — after libxpc
+    // has uncorked this task's pid domain — with the jb-root flat-layout
+    // copy.  The in-chroot Ventura bundle resolves to a
+    // ".../Contents/MacOS/MTLCompilerService" spawn path that does not exist
+    // in launchd's iOS namespace and therefore fails closed; the flat bundle
+    // keeps executable path identical in both namespaces, matching the
+    // ViewBridge/Dock proxy registrations.
+    if (originalName &&
+        !strcmp(originalName, "com.apple.MTLCompilerService")) {
+        static _Atomic bool mtlCompilerServiceRegistered = false;
+        if (!atomic_exchange_explicit(&mtlCompilerServiceRegistered, true,
+                memory_order_acq_rel)) {
+            char mtlBundlePath[PATH_MAX];
+            snprintf(mtlBundlePath, sizeof(mtlBundlePath),
+                     "%s/Metal.framework/XPCServices/MTLCompilerService.xpc",
+                     JBROOT_PATH("/usr/macOS/Frameworks"));
+            xpc_add_bundle(mtlBundlePath, 2);
+            if (macws_runtime_diagnostics_enabled()) {
+                fprintf(stderr,
+                    "#### XPC_MTL: registered %s for %s\n",
+                    mtlBundlePath, originalName);
+            }
+        }
     }
     return orig_xpc_connection_create(name, queue);
 }
@@ -24407,6 +24440,11 @@ static void macws_install_private_xpc_name_hooks(void) {
     MSHookFunction(MSFindSymbol(xpc, "_xpc_connection_create"),
                    hooked_xpc_connection_create,
                    (void *)&orig_xpc_connection_create);
+    if (macws_runtime_diagnostics_enabled()) {
+        fprintf(stderr, "#### XPC_MTL: name hooks installed xpc=%p create=%p mach=%p\n",
+                xpc, orig_xpc_connection_create,
+                orig_xpc_connection_create_mach_service);
+    }
 }
 
 extern int xpc_connection_enable_sim2host_4sim();
@@ -24834,4 +24872,15 @@ __attribute__((constructor)) static void InitMetalHooks() {
     snprintf(frameworkPath, sizeof(frameworkPath), "%s",
              JBROOT_PATH("/Applications/MacWSCatalystLauncher.app/PlugIns/SettingsExtensionProxy.appex"));
     xpc_add_bundle(frameworkPath, 2);
+
+    // com.apple.MTLCompilerService is deliberately NOT registered here.
+    // Runtime 2026-10-07: an xpc_add_bundle issued from this constructor
+    // never reaches the task's pid-domain service table — a chroot probe
+    // relying on it still received XPC_ERROR_CONNECTION_INVALID at
+    // resume, while an identical probe issuing xpc_add_bundle from main
+    // (post-uncork) completed the requestType=9 checkConnectionActive
+    // round-trip against the spawned iOS service.  The registration
+    // therefore lives in hooked_xpc_connection_create, issued on the first
+    // lookup of the service name; see that block for the flat-layout /
+    // dual-namespace bundle-path reasoning and witnesses.
 }

@@ -11393,7 +11393,30 @@ static void macws_install_target_feature_flag_compatibility(void) {
                    (void **)&macws_os_feature_enabled_impl_orig);
 }
 
+extern kern_return_t bootstrap_look_up(
+    mach_port_t bp, const char *name, mach_port_t *sp);
+extern mach_port_t bootstrap_port;
+
 __attribute__((constructor)) void InitStuff() {
+    // Diagnostic: MACWS_BOOTSTRAP_PROBE dumps the inherited bootstrap port and
+    // a control bootstrap_look_up of the LaunchServices endpoint before any
+    // other hook runs, so we can tell a dead bootstrap context apart from a
+    // mid-init corruption inside the client process.
+    if (getenv("MACWS_BOOTSTRAP_PROBE")) {
+        const char *probeName =
+            getenv("MACWS_BOOTSTRAP_PROBE_NAME") ?:
+            "com.apple.macosbooter.coreservices.launchservicesd";
+        mach_port_t found = MACH_PORT_NULL;
+        kern_return_t kr =
+            bootstrap_look_up(bootstrap_port, probeName, &found);
+        char line[256];
+        int n = snprintf(line, sizeof(line),
+                         "#### BOOTSTRAP-PROBE bootstrap_port=%#x "
+                         "look_up(%s) kr=%#x port=%#x uid=%d prog=%s\n",
+                         bootstrap_port, probeName, (unsigned)kr, found,
+                         getuid(), getprogname() ?: "?");
+        if (n > 0) (void)write(STDERR_FILENO, line, (size_t)n);
+    }
     atomic_store_explicit(&g_macws_libsystem_runtime_ready, true,
                           memory_order_release);
     macws_install_pkd_signed_entitlements_adapter();
@@ -11598,6 +11621,112 @@ __attribute__((constructor)) void InitStuff() {
 }
 
 extern int gpu_bundle_find_trusted(const char *name, char *trusted_path, size_t trusted_path_len);
+
+// RE-confirmed via /usr/lib/system/libsystem_sandbox.dylib on iPadOS 16.3
+// (gpu_bundle_find_trusted @ 0x18a764ac0, gpu_bundle_is_path_trusted,
+// rootless_check_trusted_class, __sandbox_ms("Sandbox",2,...) disasm):
+// the stock lookup iterates {"/Library/GPUBundles",
+// "/System/Library/Extensions"}, stats "<dir>/<name>.bundle", requires
+// S_ISDIR, then asks gpu_bundle_is_path_trusted() which is:
+//     rc = rootless_check_trusted_class(path, "KernelExtensionManagement");
+//     if (rc != 1) return rc;
+//     return !__dyld_shared_cache_contains_path(path);
+// On the iPadOS host the KernelExtensionManagement sandbox query denies
+// every chroot path (there is no macOS kext-management trusted storage
+// class), so rc stays 1 and the decision falls to
+// __dyld_shared_cache_contains_path(bundle_dir) — which can never match:
+// the shared cache records image *files*, not bundle directories
+// (runtime-confirmed: contains("/System/Library/Extensions/AGXMetal13_3
+// .bundle")=0 while contains(".../Contents/MacOS/AGXMetal13_3")=1).
+// The stock function therefore always returns 1 inside the chroot and
+// Metal.framework's getMetalPluginClassForService logs "Failed to find
+// bundle for accelerator bundle named %s".
+//
+// Compat (not a blanket bypass): this is a faithful reimplementation of
+// the stock algorithm — same two-directory search order, same stat() and
+// S_ISDIR requirements, same ENOENT-continue / other-error(-1) semantics.
+// Only the trust predicate differs in mechanism, not in meaning: the
+// macOS original trusts a bundle dir that lives in the
+// KernelExtensionManagement trusted storage class *or* whose path is
+// shared-cache-managed; this host has no KEM storage class and cache
+// containment never matches directories, so we verify the equivalent
+// signal — the bundle's *executable* is itself a shared-cache image,
+// i.e. the plugin's code is the sealed Apple cache build that the
+// macOS rootless/SSV check was verifying.  A bundle whose executable is
+// not cache-managed still returns the stock "not found" (1).
+//
+// The real entry point is intentionally NOT called: dyld honours
+// interposition inside dlsym lookups too — both RTLD_DEFAULT and
+// RTLD_NEXT returned this replacement itself, recursing to stack
+// exhaustion (runtime-confirmed: gpu_probe ips reports with 500+ frames
+// of macws_gpu_bundle_find_trusted).  Reimplementing the documented
+// semantics directly avoids that self-reference entirely.
+static int (*macws_cache_contains_path)(const char *path);
+static _Atomic int macws_cache_contains_resolved;
+
+static int macws_resolve_cache_contains(void) {
+    if (!atomic_exchange_explicit(&macws_cache_contains_resolved, 1,
+                                  memory_order_acq_rel)) {
+        const char *names[] = {
+            "dyld_shared_cache_contains_path",
+            "_dyld_shared_cache_contains_path",
+            "__dyld_shared_cache_contains_path",
+        };
+        for (size_t i = 0; i < sizeof(names) / sizeof(names[0]); i++) {
+            void *sym = dlsym(RTLD_DEFAULT, names[i]);
+            if (sym) {
+                macws_cache_contains_path = (int (*)(const char *))sym;
+                break;
+            }
+        }
+    }
+    return macws_cache_contains_path != NULL;
+}
+
+int macws_gpu_bundle_find_trusted(const char *name, char *trusted_path,
+                                  size_t trusted_path_len) {
+    if (!name || !trusted_path || !trusted_path_len)
+        return -1;
+    if (!macws_resolve_cache_contains())
+        return 1;
+    static const char *bundle_dirs[] = {
+        "/Library/GPUBundles",
+        "/System/Library/Extensions",
+    };
+    char path[PATH_MAX];
+    char exe[PATH_MAX];
+    struct stat st;
+    for (size_t i = 0; i < sizeof(bundle_dirs) / sizeof(bundle_dirs[0]); i++) {
+        int n = snprintf(path, sizeof(path), "%s/%s.bundle",
+                         bundle_dirs[i], name);
+        if (n < 0 || (size_t)n >= sizeof(path)) continue;
+        if (stat(path, &st) != 0) {
+            if (errno == ENOENT) continue;
+            return -1;
+        }
+        if (!S_ISDIR(st.st_mode)) continue;
+        n = snprintf(exe, sizeof(exe), "%s/Contents/MacOS/%s", path, name);
+        if (n < 0 || (size_t)n >= sizeof(exe)) continue;
+        // The cache check canonicalizes internally — it matches the
+        // /Library/GPUBundles symlink path as well as the real Extensions
+        // path (runtime-confirmed: contains()=1 for both spellings while
+        // realpath() fails in the chroot).
+        if (!macws_cache_contains_path(exe)) continue;
+        if (snprintf(trusted_path, trusted_path_len, "%s", path)
+                >= (int)trusted_path_len)
+            continue;
+        static _Atomic int logged;
+        if (!atomic_exchange_explicit(&logged, 1, memory_order_relaxed)) {
+            fprintf(stderr,
+                "#### GPU-BUNDLE-COMPAT name=%s path=%s "
+                "(executable is a shared-cache image; iOS host lacks the "
+                "KernelExtensionManagement trust class macOS checks)\n",
+                name, path);
+        }
+        return 0;
+    }
+    return 1;
+}
 
 // Calling sysctlbyname() from its own DYLD_INTERPOSE replacement is not a
 // reliable route to the original symbol.  A client image can bind that call
@@ -12578,9 +12707,32 @@ static mach_msg_return_t macws_dispatch_mig_server(
 static const au_asid_t MacWSSharedAuditSessionID =
     (au_asid_t)0x004d5753; // "MWS"
 
+// Diagnostic tracer for the launchservicesd session-resolution path.  Gated
+// entirely on MACWS_AUDIT_TRACE so production pays only one getenv check; the
+// underlying values returned to the caller are unchanged.
+static bool macws_audit_trace_enabled(void) {
+    static bool enabled;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        enabled = getenv("MACWS_AUDIT_TRACE") != NULL;
+    });
+    return enabled;
+}
+#define MACWS_AUDIT_LOG(fmt, ...)                                            \
+    do {                                                                     \
+        if (macws_audit_trace_enabled()) {                                   \
+            dprintf(STDERR_FILENO, "#### MACWS-AUDIT " fmt "\n",             \
+                    ##__VA_ARGS__);                                          \
+        }                                                                    \
+    } while (0)
+
 au_asid_t audit_token_to_asid_new(audit_token_t atoken) {
-    return atoken.val[6] != 0
+    au_asid_t result = atoken.val[6] != 0
         ? (au_asid_t)atoken.val[6] : MacWSSharedAuditSessionID;
+    MACWS_AUDIT_LOG("audit_token_to_asid val6=%u -> %#x pid=%u",
+                    (unsigned)atoken.val[6], (unsigned)result,
+                    (unsigned)atoken.val[5]);
+    return result;
 }
 uid_t audit_token_to_auid_new(audit_token_t atoken) {
     return atoken.val[0] = 501;
@@ -12621,6 +12773,7 @@ void auditpinfo_fill(auditpinfo_addr_t *addr) {
     addr->ap_flags = 0x6030;
 }
 int auditon_new(int cmd, void *data, uint32_t length) {
+    MACWS_AUDIT_LOG("auditon cmd=%d len=%u", cmd, length);
     if(!data) {
         errno = EINVAL;
         return -1;
@@ -12629,10 +12782,16 @@ int auditon_new(int cmd, void *data, uint32_t length) {
         case A_GETSINFO_ADDR: {
             auditinfo_addr_t *addr = (auditinfo_addr_t *)data;
             auditinfo_fill(addr);
+            MACWS_AUDIT_LOG("auditon SINFO asid=%#x auid=%u flags=%#llx",
+                            (unsigned)addr->ai_asid, addr->ai_auid,
+                            (unsigned long long)addr->ai_flags);
         } return 0;
         case A_GETPINFO_ADDR: {
             auditpinfo_addr_t *addr = (auditpinfo_addr_t *)data;
             auditpinfo_fill(addr);
+            MACWS_AUDIT_LOG("auditon PINFO asid=%#x auid=%u pid=%d",
+                            (unsigned)addr->ap_asid, addr->ap_auid,
+                            addr->ap_pid);
         } return 0;
         case A_GETCOND: {
             if(length < sizeof(int)) {
@@ -12653,6 +12812,10 @@ int getaudit_addr_new(auditinfo_addr_t *auditinfo_addr, u_int length) {
     }
     auditinfo_addr->ai_asid = MacWSSharedAuditSessionID;
     auditinfo_fill(auditinfo_addr);
+    MACWS_AUDIT_LOG("getaudit_addr asid=%#x auid=%u flags=%#llx",
+                    (unsigned)auditinfo_addr->ai_asid,
+                    auditinfo_addr->ai_auid,
+                    (unsigned long long)auditinfo_addr->ai_flags);
     return 0;
 }
 
@@ -14280,6 +14443,7 @@ DYLD_INTERPOSE(macws_SecRequirementCreateWithString,
 DYLD_INTERPOSE(macws_LSOpenFromURLSpec, LSOpenFromURLSpec);
 DYLD_INTERPOSE(__mac_syscall_new, __mac_syscall);
 DYLD_INTERPOSE(macws_sandbox_ms, __sandbox_ms);
+DYLD_INTERPOSE(macws_gpu_bundle_find_trusted, gpu_bundle_find_trusted);
 DYLD_INTERPOSE(csr_get_active_config_new, csr_get_active_config);
 DYLD_INTERPOSE(sandbox_init_with_parameters_new, sandbox_init_with_parameters);
 DYLD_INTERPOSE(sandbox_init_new, sandbox_init);
@@ -15486,10 +15650,46 @@ xpc_connection_t macws_xpc_connection_create_mach_service_early(
     }
     name = macws_private_bootstrap_service_name(name);
     macws_trace_xpc_name("xpc_mach_service", originalName);
-    if (name != originalName)
+    if (name != originalName) {
         macws_trace_xpc_name("xpc_mach_service.mapped", name);
-    return macws_xpc_connection_create_mach_service_raw(
+        // iPadOS launchd rejects the privileged endpoint request that
+        // Ventura libxpc emits for XPC_CONNECTION_MACH_SERVICE_PRIVILEGED
+        // (0x2): the lookup error surfaces as XPC_ERROR_CONNECTION_INVALID
+        // on activation even though the service is registered and a
+        // non-privileged lookup of the same name succeeds (lsxpc_probe
+        // control: flags=0 -> serverversion reply, flags=0x2 -> invalid).
+        // The private macosbooter endpoints are all hosted by daemons we
+        // launch ourselves, where the privileged bit carries no semantics;
+        // drop it so the normal domain-routine lookup is used.
+        flags &= ~(uint64_t)0x2;
+    }
+    if (getenv("MACWS_XPC_DEBUG")) {
+        char line[192];
+        int n = snprintf(line, sizeof(line),
+                         "#### XPC-FLAGS %s flags=%#llx\n",
+                         originalName ?: "(null)", (unsigned long long)flags);
+        if (n > 0) (void)write(STDERR_FILENO, line, (size_t)n);
+    }
+    xpc_connection_t conn = macws_xpc_connection_create_mach_service_raw(
         name, targetq, flags);
+    // MACWS_CONN_INSPECT: diagnostic only. Dump the Ventura libxpc
+    // connection fields that feed __xpc_look_up_endpoint's request dict:
+    // +0x54 target uid, +0xb8 lookup-handle, +0xd8 cputypes, +0xe0 flags.
+    // Comparing these between the working probe and Dock narrows why the
+    // launchd domain-routine lookup fails only for the latter.
+    if (conn && getenv("MACWS_CONN_INSPECT")) {
+        const unsigned char *base = (const unsigned char *)conn;
+        char line[224];
+        int n = snprintf(line, sizeof(line),
+                         "#### XPC-CONN %s uid54=%#x bh8=%#llx bd8=%#llx e0=%#x\n",
+                         originalName ?: "(null)",
+                         *(const uint32_t *)(base + 0x54),
+                         *(const unsigned long long *)(base + 0xb8),
+                         *(const unsigned long long *)(base + 0xd8),
+                         *(const uint32_t *)(base + 0xe0));
+        if (n > 0) (void)write(STDERR_FILENO, line, (size_t)n);
+    }
+    return conn;
 }
 
 // GeoServices does not create its daemon listener through xpc_main or
@@ -15527,6 +15727,26 @@ xpc_connection_t macws_xpc_connection_create_listener_early(
 xpc_connection_t macws_xpc_connection_create_early(
     const char *name, dispatch_queue_t targetq) {
     macws_trace_xpc_name("xpc_service", name);
+    // Ventura Metal resolves MTLCompilerService by bundle identifier through
+    // this constructor (runtime-confirmed: XPC-NAME xpc_service trace inside
+    // WindowServer).  The stock Ventura bundle uses a Contents/MacOS layout
+    // that iOS launchd cannot resolve, so postinst installs a flat-layout
+    // copy under the jailbreak namespace.  Register that bundle once here;
+    // the real create below then performs ordinary bundle activation and the
+    // _MultipleInstances UUID from xpc_connection_set_instance is forwarded
+    // intact because the service remains an XPC bundle, not a singleton
+    // Mach listener.
+    if (name && !strcmp(name, "com.apple.MTLCompilerService")) {
+        static _Atomic bool registered = false;
+        if (!atomic_exchange_explicit(&registered, true,
+                memory_order_acq_rel)) {
+            char path[PATH_MAX];
+            snprintf(path, sizeof(path),
+                     "%s/Metal.framework/XPCServices/MTLCompilerService.xpc",
+                     "/var/jb/usr/macOS/Frameworks");
+            xpc_add_bundle(path, 2);
+        }
+    }
     if (name && !strcmp(name, QUICKLOOK_SATELLITE_ORIG)) {
         xpc_connection_t connection =
             macws_xpc_connection_create_mach_service_raw(
@@ -15617,6 +15837,25 @@ xpc_connection_t macws_xpc_connection_create_early(
             GEOD_XPC_SERVICE_NEW, targetq, 0);
     }
     return xpc_connection_create(name, targetq);
+}
+
+extern void macws_xpc_add_bundle_raw(const char *, int)
+    __asm("_xpc_add_bundle");
+
+void macws_xpc_add_bundle_early(const char *path, int flags) {
+    // Runtime 2026-10-08: inside the chroot the name
+    // com.apple.MTLCompilerService can resolve through launchd to the stock
+    // iPadOS bundle, whose service then legitimately rejects the Ventura
+    // function archive with "Target OS is incompatible" (observed after a
+    // mobile-domain system instance answered WindowServer's request and the
+    // flat bundle never spawned).  Whether the surviving registration is
+    // first- or last-wins is libxpc-internal, so pin every registration
+    // naming that service — Ventura Metal's own bundle path, the chroot
+    // /System alias, or ours — to the flat jailbreak bundle.
+    if (path && strstr(path, "MTLCompilerService"))
+        path = "/var/jb/usr/macOS/Frameworks/Metal.framework/"
+               "XPCServices/MTLCompilerService.xpc";
+    macws_xpc_add_bundle_raw(path, flags);
 }
 
 extern void macws_xpc_connection_set_instance_raw(
@@ -15800,6 +16039,66 @@ static void macws_install_service_xpc_main_import(void) {
             : "com.apple.hiservices-xpcservice(main)");
 }
 
+// Diagnostic only: dumps LaunchServices request/reply payloads for
+// xpc_connection_send_message_with_reply_sync when MACWS_LSXPC_TRACE is set.
+// Used to capture the exact error/ASN fields the daemon returns to
+// _RegisterApplication instead of guessing at the protocol failure.
+static void macws_lsxpc_trace_write(const char *tag, xpc_object_t object,
+                                    size_t limit) {
+    char *description = xpc_copy_description(object);
+    if (!description) return;
+    size_t length = strlen(description);
+    if (length > limit) length = limit;
+    char header[128];
+    int headerLength = snprintf(header, sizeof(header),
+                                "#### LSXPC %s len=%zu\n", tag,
+                                strlen(description));
+    if (headerLength > 0)
+        (void)write(STDERR_FILENO, header, (size_t)headerLength);
+    size_t offset = 0;
+    while (offset < length) {
+        size_t chunk = length - offset;
+        if (chunk > 1024) chunk = 1024;
+        ssize_t written = write(STDERR_FILENO, description + offset, chunk);
+        if (written <= 0) break;
+        offset += (size_t)written;
+    }
+    (void)write(STDERR_FILENO, "\n#### LSXPC-END\n", 16);
+    free(description);
+}
+
+xpc_object_t xpc_connection_send_message_with_reply_sync_new(
+    xpc_connection_t connection, xpc_object_t message) {
+    xpc_object_t reply =
+        xpc_connection_send_message_with_reply_sync(connection, message);
+    static bool enabled;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        enabled = getenv("MACWS_LSXPC_TRACE") != NULL;
+    });
+    if (!enabled) return reply;
+    const char *filter = getenv("MACWS_LSXPC_TRACE_FILTER");
+    if (filter && filter[0]) {
+        char *description = xpc_copy_description(message);
+        bool match = description && strcasestr(description, filter);
+        free(description);
+        if (!match) return reply;
+    }
+    const char *connectionName =
+        xpc_connection_get_name(connection);
+    char header[160];
+    int headerLength = snprintf(header, sizeof(header),
+                                "#### LSXPC-CONN name=%s\n",
+                                connectionName ?: "(anonymous)");
+    if (headerLength > 0)
+        (void)write(STDERR_FILENO, header, (size_t)headerLength);
+    macws_lsxpc_trace_write("request", message, 4096);
+    macws_lsxpc_trace_write("reply", reply, 4096);
+    return reply;
+}
+
+DYLD_INTERPOSE(xpc_connection_send_message_with_reply_sync_new,
+               xpc_connection_send_message_with_reply_sync);
 DYLD_INTERPOSE(bootstrap_look_up_new, bootstrap_look_up);
 DYLD_INTERPOSE(bootstrap_check_in_new, bootstrap_check_in);
 DYLD_INTERPOSE(bootstrap_look_up2_new, bootstrap_look_up2);
@@ -15813,6 +16112,7 @@ DYLD_INTERPOSE(macws_xpc_connection_set_instance_early,
 DYLD_INTERPOSE(macws_xpc_connection_create_listener_early,
                macws_xpc_connection_create_listener_raw);
 DYLD_INTERPOSE(macws_xpc_connection_create_early, xpc_connection_create);
+DYLD_INTERPOSE(macws_xpc_add_bundle_early, xpc_add_bundle);
 DYLD_INTERPOSE(macws_xpc_main, macws_xpc_main_raw);
 
 // 2026-06-19 RE: chroot's texture super-init failure traces to
