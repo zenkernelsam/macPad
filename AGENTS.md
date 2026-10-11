@@ -110,6 +110,12 @@ historical bring-up knowledge. If an older section conflicts with this one,
 the current source, focused tests, dated evidence under `docs/evidence/`, and
 this section take precedence—in that order.
 
+**Latest dated update (2026-10-11):** LaunchServices/XPC chain fully working
+(Dock obtains a real ASN); remaining blocker is unanswered WindowServer
+`final-composite` replay. See
+`docs/evidence/ventura-22F82-desktop-chain-20261011.md` for the privileged-
+flag fix, deployment recipes, and the display-hazard discipline.
+
 ### Product and release status
 
 MacWS/macPad is a controlled research beta that runs a Ventura 13.4 macOS
