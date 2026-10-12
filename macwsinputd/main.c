@@ -8,6 +8,7 @@
 #include <dirent.h>
 #include <dlfcn.h>
 #include <fcntl.h>
+#include <libproc.h>
 #include <math.h>
 #include <poll.h>
 #include <signal.h>
@@ -600,6 +601,20 @@ static MacWSWindowTarget WindowServerRoutingTargetAtPoint(CGPoint point) {
 
     CFArrayRef records = (CFArrayRef)CFDictionaryGetValue(
         response, CFSTR("Routing Records"));
+    if (RuntimeDiagnosticsEnabled()) {
+        char description[4096];
+        description[0] = '\0';
+        CFStringRef desc = CFCopyDescription(response);
+        if (desc) {
+            CFStringGetCString(desc, description, sizeof(description),
+                               kCFStringEncodingUTF8);
+            CFRelease(desc);
+        }
+        fprintf(stderr,
+                "MACWS-INPUT SLS-RAW point=(%.2f,%.2f) window=%d %s\n",
+                point.x, point.y, windowID, description);
+        fflush(stderr);
+    }
     if (records && CFGetTypeID(records) == CFArrayGetTypeID()) {
         for (CFIndex index = CFArrayGetCount(records); index > 0; index--) {
             CFTypeRef value = CFArrayGetValueAtIndex(records, index - 1);
@@ -618,9 +633,18 @@ static MacWSWindowTarget WindowServerRoutingTargetAtPoint(CGPoint point) {
                 continue;
             }
             pid_t pid = 0;
-            if (api.connectionGetPID((SLSConnectionID)rawConnection, &pid) !=
-                    0 ||
-                pid <= 1 || pid == getpid()) {
+            int32_t pidStatus = api.connectionGetPID(
+                (SLSConnectionID)rawConnection, &pid);
+            if (RuntimeDiagnosticsEnabled()) {
+                fprintf(stderr,
+                        "MACWS-INPUT SLS-RECORD point=(%.2f,%.2f) "
+                        "connection=%u pidStatus=%d pid=%d index=%ld/%ld\n",
+                        point.x, point.y, (unsigned)rawConnection,
+                        pidStatus, pid, (long)index,
+                        (long)CFArrayGetCount(records));
+                fflush(stderr);
+            }
+            if (pidStatus != 0 || pid <= 1 || pid == getpid()) {
                 continue;
             }
             target.pid = pid;
@@ -1088,6 +1112,36 @@ static bool AppInputBridgeEndpointExists(pid_t pid) {
            access(path, F_OK) == 0;
 }
 
+// WindowServer can keep a retired Dock's surface registered long after its
+// connection died, so a point that SLS resolves to a dead process may still
+// sit over the live Dock's visible surface. The live Dock AppInput endpoint
+// is then the only native receiver for system-surface input there. Resolve
+// it by endpoint executable identity, not by the stale route owner. Dock's
+// own router hit-tests the event coordinate, so records outside its rect
+// are dropped natively and cannot be misdelivered.
+static pid_t LiveDockInputEndpointPID(void) {
+    static pid_t cached;
+    static uint64_t deadline;
+    uint64_t now = MonotonicNanoseconds();
+    if (now != 0 && now < deadline && cached > 1 &&
+        AppInputBridgeEndpointExists(cached))
+        return cached;
+    cached = 0;
+    pid_t pids[64] = {0};
+    size_t discovered = AppInputBridgePIDs(pids, 64);
+    size_t count = discovered < 64 ? discovered : 64;
+    for (size_t index = 0; index < count; index++) {
+        char path[MAXPATHLEN] = {0};
+        if (proc_pidpath(pids[index], path, sizeof(path)) > 0 &&
+            strstr(path, "/Dock.app/Contents/MacOS/Dock") != NULL) {
+            cached = pids[index];
+            break;
+        }
+    }
+    deadline = now + 250ull * 1000ull * 1000ull;
+    return cached;
+}
+
 // Ask every live AppKit process to hit-test on its own main thread, then send
 // the real event only to the unique best reply. This is a query broadcast,
 // not an event broadcast: probes cannot create NSEvents. Active/key state
@@ -1404,6 +1458,25 @@ int main(void) {
         fprintf(stderr, "macwsinputd chmod %s failed: %s\n",
                 InputSocketPath, strerror(errno));
     }
+    {
+        // DIAGNOSTIC: prove which address socketFD is actually bound to and
+        // which inode the published path names. A silent mismatch here
+        // explains a receiver that blocks in recvfrom while senders succeed.
+        struct sockaddr_un bound = {0};
+        socklen_t boundLength = sizeof(bound);
+        struct stat fileStat = {0};
+        int statResult = stat(InputSocketPath, &fileStat);
+        if (getsockname(socketFD, (struct sockaddr *)&bound,
+                        &boundLength) == 0) {
+            fprintf(stderr,
+                    "MACWS-INPUT BIND fd=%d bound_path=%s file_ino=%llu "
+                    "file_mtime=%lld stat_rc=%d\n",
+                    socketFD, bound.sun_path,
+                    statResult == 0 ? (unsigned long long)fileStat.st_ino : 0,
+                    statResult == 0 ? (long long)fileStat.st_mtime : -1LL,
+                    statResult);
+        }
+    }
 
     int targetSocketFD = socket(AF_UNIX, SOCK_DGRAM, 0);
     if (targetSocketFD >= 0) {
@@ -1463,7 +1536,87 @@ int main(void) {
     // delivered to a verified global-system endpoint.
     MacWSWindowTarget globalSystemMenuCaptureTarget = {0};
     uint64_t globalSystemMenuCaptureDeadline = 0;
+    // WindowServer's routing hands the previous owner one final move at the
+    // leave coordinate so its tracking area unwinds; Dock's magnification
+    // state machine depends on exactly that transition. Per-process sockets
+    // simply stop delivering when the pointer leaves the Dock area, which
+    // stranded the last enlarged icon until the next Dock hit. Track the
+    // last live Dock endpoint a system-surface record reached.
+    pid_t dockDeliveredPID = 0;
+    uint64_t lastPollLog = 0;
+    int pollTimeouts = 0;
     while (!StopRequested) {
+        // DIAGNOSTIC: bounded poll in front of recvfrom so a receiver that
+        // never sees POLLIN (datagrams landing on a different socket object)
+        // leaves a periodic witness instead of blocking silently forever.
+        struct pollfd inputPoll = {.fd = socketFD, .events = POLLIN};
+        int pollResult = poll(&inputPoll, 1, 5000);
+        if (pollResult == 0) {
+            pollTimeouts++;
+            uint64_t now = RealtimeNanoseconds();
+            if (now - lastPollLog >= 5000000000ULL) {
+                lastPollLog = now;
+                struct stat fileStat = {0};
+                int statResult = stat(InputSocketPath, &fileStat);
+                fprintf(stderr,
+                        "MACWS-INPUT POLL-TIMEOUT fd=%d revents=%#x "
+                        "file_ino=%llu file_mtime=%lld stat_rc=%d "
+                        "errno=%d\n",
+                        socketFD, inputPoll.revents,
+                        statResult == 0
+                            ? (unsigned long long)fileStat.st_ino : 0,
+                        statResult == 0
+                            ? (long long)fileStat.st_mtime : -1LL,
+                        statResult, errno);
+            }
+            // DIAGNOSTIC: if datagrams keep landing on a different socket
+            // object than fd (observed as POLLIN never firing while sendto
+            // succeeds), re-register this socket against the published path.
+            if (pollTimeouts == 12) {
+                int newFD = socket(AF_UNIX, SOCK_DGRAM, 0);
+                if (newFD >= 0) {
+                    int buf = 512 * 1024;
+                    (void)setsockopt(newFD, SOL_SOCKET, SO_RCVBUF,
+                                     &buf, sizeof(buf));
+                    struct sockaddr_un reb = {0};
+                    reb.sun_family = AF_UNIX;
+                    memcpy(reb.sun_path, InputSocketPath,
+                           sizeof(InputSocketPath));
+                    unlink(InputSocketPath);
+                    if (bind(newFD, (struct sockaddr *)&reb,
+                             sizeof(reb)) == 0) {
+                        fprintf(stderr,
+                                "MACWS-INPUT REBIND oldfd=%d newfd=%d\n",
+                                socketFD, newFD);
+                        int oldFD = socketFD;
+                        socketFD = newFD;
+                        InputSocketFD = newFD;
+                        close(oldFD);
+                        (void)chmod(InputSocketPath, 0666);
+                    } else {
+                        fprintf(stderr,
+                                "MACWS-INPUT REBIND-FAIL %s\n",
+                                strerror(errno));
+                        close(newFD);
+                    }
+                }
+                pollTimeouts = 0;
+            }
+            continue;
+        }
+        pollTimeouts = 0;
+        if (pollResult < 0) {
+            if (errno == EINTR) continue;
+            fprintf(stderr, "MACWS-INPUT poll failed: %s\n",
+                    strerror(errno));
+            break;
+        }
+        if (!(inputPoll.revents & POLLIN)) {
+            fprintf(stderr,
+                    "MACWS-INPUT POLL-UNEXPECTED fd=%d revents=%#x\n",
+                    socketFD, inputPoll.revents);
+            continue;
+        }
         MacWSInputRecord record = {0};
         struct sockaddr_un sender = {0};
         socklen_t senderLength = sizeof(sender);
@@ -1695,9 +1848,39 @@ int main(void) {
                 fflush(stderr);
             }
         }
+        bool endpointRouted = false;
         if (fullscreenGlobalPointerRecord) {
+            // 22F82 runtime evidence: WindowServer declines every injected
+            // CGS pointer post, so a record accepted by the osxvnc proxy
+            // socket is still silently lost. Prefer the live per-process
+            // AppInput endpoint named by WindowServer's current route or by
+            // the Host system-surface descriptor; a dead/stale SLS owner (a
+            // retired Dock surface keeps routing long after its connection
+            // died) must not shadow the live endpoint. The proxy remains
+            // only for points with no process-local receiver.
+            MacWSWindowTarget endpointTarget = WindowTargetAtPoint(point);
+            if (!AppInputBridgeEndpointExists(endpointTarget.pid)) {
+                endpointTarget.pid = record.targetPID;
+                endpointTarget.windowID = 0;
+            }
+            endpointRouted = AppInputBridgeEndpointExists(
+                endpointTarget.pid);
+            if (endpointRouted) {
+                eventTarget = endpointTarget;
+                if (record.kind == MacWSInputKindTouchDown)
+                    gestureTarget = eventTarget;
+                if (RuntimeDiagnosticsEnabled()) {
+                    fprintf(stderr,
+                        "MACWS-INPUT GLOBAL-POINTER kind=%s contact=%u "
+                        "route=app-input pid=%d window=%d\n",
+                        KindName((MacWSInputKind)record.kind),
+                        record.contactID, eventTarget.pid,
+                        eventTarget.windowID);
+                    fflush(stderr);
+                }
+            }
             int proxyError = 0;
-            bool proxySent = SendToVNCPointerProxy(
+            bool proxySent = !endpointRouted && SendToVNCPointerProxy(
                 socketFD, &record, &proxyError);
             if (proxySent) {
                 sequence++;
@@ -1732,7 +1915,14 @@ int main(void) {
                 fflush(stderr);
             }
         }
-        if (fullscreenGlobalPointerRecord) {
+        if (fullscreenGlobalPointerRecord && endpointRouted) {
+            // Block A's SLS route resolved a live per-process endpoint; that
+            // exact {pid, window} pair is authoritative. Runtime evidence on
+            // 22F82: without this arm the generic `record.targetPID > 1`
+            // fallthrough below rewrote the resolved Terminal target back to
+            // the fullscreen producer PID (Dock), so every tap outside Dock's
+            // strip arrived at Dock's native router and was discarded.
+        } else if (fullscreenGlobalPointerRecord) {
             // A fullscreen workspace is a hardware-style global input
             // surface. Its composited Mission Control/Dock transforms are
             // authoritative only inside WindowServer, so never trust a stale
@@ -1916,9 +2106,27 @@ int main(void) {
             record.kind != MacWSInputKindTap && gestureTarget.pid > 1) {
             eventTarget = gestureTarget;
         } else if (record.targetPID > 1) {
-            eventTarget.pid = record.targetPID;
-            if (record.kind == MacWSInputKindTouchDown)
-                gestureTarget = eventTarget;
+            // The Host can retain a producer-side target across a WindowServer
+            // restart.  A dead PID's stale socket file still accepts nothing
+            // (ENOBUFS on every send), so only honor the explicit target while
+            // its per-process AppInputBridge endpoint remains live; otherwise
+            // resolve the real owner below instead of leaking every gesture
+            // into a closed queue.
+            if (AppInputBridgeEndpointExists(record.targetPID)) {
+                eventTarget.pid = record.targetPID;
+                if (record.kind == MacWSInputKindTouchDown)
+                    gestureTarget = eventTarget;
+            } else {
+                eventTarget = WindowTargetAtPoint(point);
+                if (eventTarget.pid <= 1) {
+                    eventTarget = ProbeAppInputTarget(targetSocketFD, &record);
+                }
+                if (eventTarget.pid <= 1) {
+                    eventTarget.pid = SoleAppInputBridgePID();
+                }
+                if (record.kind == MacWSInputKindTouchDown)
+                    gestureTarget = eventTarget;
+            }
         } else {
             eventTarget = WindowTargetAtPoint(point);
             if (eventTarget.pid <= 1) {
@@ -1943,6 +2151,22 @@ int main(void) {
             if (record.kind == MacWSInputKindTouchDown)
                 gestureTarget = eventTarget;
         }
+        // A stale SLS owner (a retired Dock surface keeps its routing slot
+        // after its connection died) resolves yet cannot receive. When a
+        // system-surface record still names no live endpoint, hand it to the
+        // live Dock endpoint — the only system-surface owner with a native
+        // receiver. Dock's own router drops events outside its rect, so this
+        // cannot leak into an ordinary application's event stream.
+        if ((record.flags & MacWSInputFlagGlobalSystemSurface) != 0 &&
+            IsSystemPointerKind((MacWSInputKind)record.kind) &&
+            (eventTarget.pid <= 1 ||
+             !AppInputBridgeEndpointExists(eventTarget.pid))) {
+            pid_t dockPID = LiveDockInputEndpointPID();
+            if (dockPID > 1) {
+                eventTarget.pid = dockPID;
+                eventTarget.windowID = 0;
+            }
+        }
         // A native scroll/magnify gesture has one hit-tested owner from begin
         // through its terminal phase.  Fullscreen Host records deliberately
         // carry targetPID=0 so the first sample can hit Dock, Finder, a menu,
@@ -1959,8 +2183,13 @@ int main(void) {
             gestureTarget = eventTarget;
         if (record.kind == MacWSInputKindActivateTarget)
             menuTarget = eventTarget;
+        // A stale Host-cached producer PID must not suppress the system-surface
+        // flag either: if the named endpoint is already dead the record is
+        // effectively untargeted and the resolved Dock surface still applies.
         bool resolvedDockSystemSurface =
-            record.targetPID <= 1 && exactWindowID == 0 &&
+            (record.targetPID <= 1 ||
+             !AppInputBridgeEndpointExists(record.targetPID)) &&
+            exactWindowID == 0 &&
             IsSystemPointerKind((MacWSInputKind)record.kind) &&
             WindowTargetIsDockSystemSurface(eventTarget);
         uint64_t captureGeneration = ArmCaptureForInput(&record);
@@ -2026,6 +2255,37 @@ int main(void) {
                 socketFD, eventTarget.pid, &record);
         }
         int appBridgeError = 0;
+        // When the pointer leaves the Dock area the records simply stop
+        // reaching Dock's endpoint; its magnification then stays latched on
+        // the last hit. WindowServer would instead deliver one final move at
+        // the leave coordinate so the tracking area unwinds. Mirror that: on
+        // the first system-surface record resolving away from the Dock
+        // endpoint that received the previous one, hand Dock a hover at the
+        // real leave position. Dock's own router hit-tests and drops records
+        // outside its strip, so this cannot fabricate a click or a second
+        // hover inside the strip.
+        if (dockDeliveredPID > 1 &&
+            routedRecord.targetPID != dockDeliveredPID &&
+            IsSystemPointerKind((MacWSInputKind)record.kind)) {
+            MacWSInputRecord leaveRecord = record;
+            leaveRecord.kind = MacWSInputKindHover;
+            leaveRecord.targetPID = dockDeliveredPID;
+            leaveRecord.flags |= MacWSInputFlagGlobalSystemSurface;
+            leaveRecord.sceneID = MacWSInputSceneForWindow(
+                0, MacWSInputModifiersForScene(record.sceneID));
+            int leaveError = 0;
+            bool leaveSent = SendToAppInputBridge(
+                socketFD, &leaveRecord, &leaveError);
+            if (RuntimeDiagnosticsEnabled() || !leaveSent) {
+                fprintf(stderr,
+                        "MACWS-INPUT DOCK-LEAVE pid=%d kind=%u sent=%s "
+                        "errno=%d\n",
+                        dockDeliveredPID, record.kind,
+                        leaveSent ? "YES" : "NO", leaveError);
+                fflush(stderr);
+            }
+            dockDeliveredPID = 0;
+        }
         // System surfaces such as Dock now expose a process-local endpoint.
         // Prefer it because this broker's CoreGraphics post access is denied;
         // retain the old per-PID CGEvent path only as an explicit fallback
@@ -2036,6 +2296,12 @@ int main(void) {
              activationRepairNeeded || systemMenuPreflightNeeded);
         bool appBridgeSent = appBridgeAttempted &&
             SendToAppInputBridge(socketFD, &routedRecord, &appBridgeError);
+        if (appBridgeSent &&
+            IsSystemPointerKind((MacWSInputKind)record.kind) &&
+            routedRecord.targetPID > 1 &&
+            routedRecord.targetPID == LiveDockInputEndpointPID()) {
+            dockDeliveredPID = routedRecord.targetPID;
+        }
         bool effectiveGlobalSystemSurface =
             globalSystemSurfaceRecord || resolvedDockSystemSurface;
         if (effectiveGlobalSystemSurface &&

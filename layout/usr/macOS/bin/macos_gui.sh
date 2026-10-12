@@ -582,6 +582,13 @@ proc_running() {
 
 wait_for_vnc_pointer_proxy() {
     local waited=0
+    # Fresh installs never ship OSXvnc-server (it only exists in the
+    # original author's rootfs bundle). Mission Control pointer drags
+    # degrade, but the desktop must not be gated on an absent binary.
+    if [ ! -x "$ROOTFS$VNC_BIN" ]; then
+        log "WARNING: $VNC_BIN absent; continuing without the Mission Control pointer proxy."
+        return 0
+    fi
     while [ "$waited" -lt 100 ]; do
         if proc_running "$P_OSXVNC" && [ -S "$VNC_POINTER_PROXY_SOCKET" ]; then
             log "OSXvnc pointer proxy ready at $VNC_POINTER_PROXY_SOCKET."
@@ -1558,6 +1565,27 @@ application_trust_thermally_safe() {
     return 0
 }
 
+# Read-only probe answering one question: is every cdhash the boot-trust
+# manifest recorded already present in this boot's live trustcache? It reads
+# only the manifest JSON and `jbctl trustcache info` output — no application
+# CodeDirectories — so it is bounded and thermally cheap.
+trust_closure_already_live() {
+    local manifest="$1"
+    [ -f "$manifest" ] || return 1
+    /var/jb/usr/bin/python3 - "$manifest" <<'PY'
+import json, re, subprocess, sys
+try:
+    files = json.load(open(sys.argv[1]))["files"]
+    need = {c["hash"].lower() for f in files.values() for c in f.get("codes", [])}
+    out = subprocess.run(["/var/jb/usr/bin/jbctl", "trustcache", "info"],
+                         capture_output=True, text=True).stdout
+    live = {h.lower() for h in re.findall(r"[0-9a-fA-F]{40}", out)}
+    sys.exit(0 if need and need <= live else 1)
+except Exception:
+    sys.exit(1)
+PY
+}
+
 restore_cold_boot_trust() {
     local path=""
     local macos_rootfs_build=""
@@ -1568,6 +1596,19 @@ restore_cold_boot_trust() {
         log "ERROR: packaged CodeDirectory trust reader is missing."
         return 1
     }
+    # Cheap live-membership probe: if every manifest cdhash is already
+    # registered this boot, the CodeDirectory walk below is a pure no-op.
+    # The trustcache is reboot-volatile but only additive within a boot, so
+    # manifest membership implies live trust for the recorded files. Files
+    # that drifted from the manifest still exec-fail and are repaired by a
+    # manual `macos_gui.sh trust`, same as before. Unlike the expensive walk,
+    # this probe reads no application CodeDirectories, so it is safe to run
+    # while the device is thermally pressured.
+    if trust_closure_already_live "$boot_trust_cache/hashes.json"; then
+        BASE_TRUST_READY=1
+        log "Cold-boot trust closure already live (all manifest hashes registered this boot); skipping expensive walk."
+        return 0
+    fi
     application_trust_thermally_safe || return 1
     set --
     for path in \
@@ -5107,7 +5148,9 @@ start_macos() {
         log "Starting localhost-only Mission Control pointer proxy (launchd job '$VNC_LABEL')..."
     fi
     rm -f "$LOGDIR/osxvnc.log" "$VNC_POINTER_PROXY_SOCKET"
-    launchctl load "$VNC_PLIST" || return 1
+    if [ -x "$ROOTFS$VNC_BIN" ]; then
+        launchctl load "$VNC_PLIST" || return 1
+    fi
     wait_for_vnc_pointer_proxy || return 1
     started_ws_unchanged "OSXvnc pointer-proxy startup" || return 1
 

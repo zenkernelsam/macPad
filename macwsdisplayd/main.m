@@ -937,10 +937,33 @@ static void UpdateWorkspaceGraphState(MacWSDisplayClient *client,
     if (signature == WorkspaceGraphStateSignature) return;
     WorkspaceGraphStateSignature = signature;
 
+    // Diagnostic dump of every tracked transient layer. This is read by the
+    // workspace-graph state file consumers and by debugging sessions to
+    // determine why layers lack streams/surfaces (suppression gates).
+    NSMutableString *layerDump = [NSMutableString string];
+    for (MacWSTransientLayer *layer in client.transientLayers.allValues) {
+        if (!layer) continue;
+        [layerDump appendFormat:
+            @"layer=%u pid=%d owner=%@ name=%@ skylight=%ld flags=0x%x "
+            "stream=%llu surf=%u oneshot=%d snapdone=%d retiring=%d "
+            "fcsusp=%d ddsusp=%d ddsusppend=%d dest=(%.0f,%.0f %.0fx%.0f)\n",
+            layer.windowID, layer.ownerPID, layer.ownerName ?: @"",
+            layer.windowName ?: @"", (long)layer.skyLightLayer,
+            layer.windowFlags,
+            (unsigned long long)(layer.stream ? layer.streamID : 0),
+            layer.latestSurface ? IOSurfaceGetID(layer.latestSurface) : 0,
+            layer.oneShotCapture, layer.snapshotComplete, layer.retiring,
+            layer.finalCompositeCaptureSuspensionPending,
+            layer.directDrawableCaptureSuspended,
+            layer.directDrawableCaptureSuspensionPending,
+            layer.destinationBounds.origin.x, layer.destinationBounds.origin.y,
+            layer.destinationBounds.size.width,
+            layer.destinationBounds.size.height];
+    }
     NSString *payload = [identity stringByAppendingFormat:
-        @"publisher=%d\nsignature=%016llx\nupdated=%.6f\nreason=%@\n",
+        @"publisher=%d\nsignature=%016llx\nupdated=%.6f\nreason=%@\n%@",
         getpid(), (unsigned long long)signature,
-        NSDate.date.timeIntervalSince1970, reason ?: @"reconcile"];
+        NSDate.date.timeIntervalSince1970, reason ?: @"reconcile", layerDump];
     NSError *error = nil;
     if (![payload writeToFile:WorkspaceGraphStatePath atomically:YES
                       encoding:NSUTF8StringEncoding error:&error]) {

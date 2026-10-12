@@ -1501,6 +1501,18 @@ static _Thread_local uint64_t g_macws_agx_initfull_len = 0;
 static _Atomic int g_macws_iomfb_coexist_swap_cancel = 0;
 static void macws_install_quartzcore_frame_info_hook(
     const struct mach_header *header);
+static bool macws_rs_ctx_trace_enabled(void);
+static bool macws_sl_wctx_trace_enabled(void);
+static void macws_install_quartzcore_ctx_trace_hooks(
+    const struct mach_header_64 *header);
+static void macws_install_skylight_wctx_trace_hooks(
+    const struct mach_header_64 *header);
+static void macws_install_skylight_beginupdate_hook(
+    const struct mach_header_64 *header);
+static void macws_install_qc_wctx_trace_hooks(
+    const struct mach_header_64 *header);
+static void macws_install_cg_wctx_trace_hooks(
+    const struct mach_header_64 *header);
 static void macws_install_quartzcore_coexist_pacing_hooks(
     const struct mach_header *header);
 static uint32_t macws_coexist_completion_pace_us(void);
@@ -1787,6 +1799,7 @@ const char *IOMFBPath = "/System/Library/PrivateFrameworks/IOMobileFramebuffer.f
 const char *MetalPath = "/System/Library/Frameworks/Metal.framework/Versions/A/Metal";
 const char *SkyLightPath = "/System/Library/PrivateFrameworks/SkyLight.framework/Versions/A/SkyLight";
 const char *QuartzCorePath = "/System/Library/Frameworks/QuartzCore.framework/Versions/A/QuartzCore";
+const char *CoreGraphicsPath = "/System/Library/Frameworks/CoreGraphics.framework/Versions/A/CoreGraphics";
 const char *libxpcPath = "/usr/lib/system/libxpc.dylib";
 const char *AGXMetalPath = "/System/Library/Extensions/AGXMetal13_3.bundle/Contents/MacOS/AGXMetal13_3";
 
@@ -2685,7 +2698,13 @@ static void *macws_deque_slot_ptr(void *self, uint64_t idx) {
 static int macws_pop_on_startcomp_bail(void *self, uint64_t before, int rv) {
     if (rv != 0) return rv;
     if (!self || (uintptr_t)self < 0x1000) return rv;
-    if (!orig_skylight_state_stack_pop_back) return rv;
+    // When the deque pop_back symbol is unavailable (stripped from exports
+    // on SkyLight 22F82 — the whole MetalContext method block moved to
+    // localsyms), fall back to the manual pop below. MACWS_SKYLIGHT_MANUAL_POP=0
+    // is an A/B escape hatch, not a requirement.
+    if (!orig_skylight_state_stack_pop_back &&
+        getenv("MACWS_SKYLIGHT_MANUAL_POP") &&
+        !strcmp(getenv("MACWS_SKYLIGHT_MANUAL_POP"), "0")) return rv;
     uint64_t after = *(volatile uint64_t *)((char *)self + 0x28);
     if (after <= before) return rv;
     // pop until we're back to the pre-call size. In practice that's a single
@@ -2718,7 +2737,18 @@ static int macws_pop_on_startcomp_bail(void *self, uint64_t before, int rv) {
         if (cur_size == 0) break;
         void *slot = macws_deque_slot_ptr(self, start + cur_size - 1);
         if (slot) memset(slot, 0, 0xb0);
-        orig_skylight_state_stack_pop_back(self);
+        if (orig_skylight_state_stack_pop_back) {
+            orig_skylight_state_stack_pop_back(self);
+        } else {
+            // Manual pop_back — RE-verified against the inlined deque math
+            // inside 22F82 EndCurrentComposite (umulh-by-17097… /23, madd
+            // *-23, madd *0xb0): the element lives in map[last/23] +
+            // (last%23)*0xb0; pop = size--. Skipping libc++'s trailing
+            // block-free only retains capacity (bounded to <23*0xb0 bytes
+            // per drained block); the deque stays self-consistent because
+            // every accessor derives the range from start+size.
+            *(volatile uint64_t *)((char *)self + 0x28) = cur_size - 1;
+        }
         uint64_t new_after = *(volatile uint64_t *)((char *)self + 0x28);
         if (new_after >= after) break;  // safety: pop didn't shrink → stop
         after = new_after;
@@ -2843,9 +2873,19 @@ static NSUInteger macws_command_buffer_status(id command_buffer) {
 
 static void hooked_skylight_end_update(void *self, bool waitUntilSubmitted,
                                        bool extra) {
-    bool outermost = self &&
-        *(volatile int32_t *)((char *)self + 0x178) == 1;
+    int32_t depth178 = self
+        ? *(volatile int32_t *)((char *)self + 0x178) : -1;
+    bool outermost = self && depth178 == 1;
     orig_skylight_end_update(self, waitUntilSubmitted, extra);
+    {
+        static _Atomic uint64_t endUpdateDiag = 0;
+        uint64_t n = atomic_fetch_add(&endUpdateDiag, 1) + 1;
+        if (n <= 16 || (n % 2048) == 0) {
+            fprintf(stderr,
+                "#### ENDUPDATE-DIAG #%llu self=%p depth@178=%d outermost=%d\n",
+                (unsigned long long)n, self, depth178, outermost ? 1 : 0);
+        }
+    }
     if (outermost) {
         g_macws_last_end_update_metal_context = self;
         extern void macws_vnc_finish_update(void *);
@@ -2921,6 +2961,28 @@ static void hooked_metalcontext_stop_capture(void *this) {
     orig_metalcontext_stop_capture(this);
 }
 
+// Resolve a stripped SkyLight symbol by image-relative offset, accepting the
+// candidate only when the first 12 instruction words match exactly. A
+// different SkyLight build fails closed. Same contract as the inline
+// EndCurrentComposite/EndUpdate fallback tables below.
+struct macws_sl_fallback {
+    uintptr_t offset;
+    uint32_t expected[12];
+    const char *build;
+};
+static void *macws_sl_fallback_resolve(const void *header,
+                                       const struct macws_sl_fallback *fb,
+                                       size_t n) {
+    if (!header) return NULL;
+    for (size_t i = 0; i < n; i++) {
+        uint32_t *candidate = (uint32_t *)((uintptr_t)header + fb[i].offset);
+        if (memcmp(candidate, fb[i].expected,
+                   sizeof(fb[i].expected)) == 0)
+            return candidate;
+    }
+    return NULL;
+}
+
 static void install_skylight_prepare_for_use_tolerate_nil_hook(const void *header) {
     MSImageRef sl = MSGetImageByName(SkyLightPath);
     if (!sl) {
@@ -2929,6 +2991,24 @@ static void install_skylight_prepare_for_use_tolerate_nil_hook(const void *heade
     }
     void *sym1 = MSFindSymbol(sl,
         "__ZN21MetalIOSurfaceBacking13PrepareForUseEP12MetalContexty");
+    if (!sym1) {
+        // 22F82: the symbol is stripped to localsyms AND the backing class
+        // on the failing path is MetalTiledBacking, not MetalIOSurfaceBacking.
+        // Runtime backtrace (WindowServer.err) placed
+        // MetalTiledBacking::PrepareForUse at image +0x3243ac; tolerate-nil
+        // signature (self, ctx, arg) is unchanged.
+        static const struct macws_sl_fallback fb[] = {
+            { 0x3243ac, {
+                0xd503237f, 0xd10203ff, 0xa9026ffc, 0xa90367fa,
+                0xa9045ff8, 0xa90557f6, 0xa9064ff4, 0xa9077bfd,
+                0x9101c3fd, 0xaa0203f7, 0xaa0003f4, 0xf028b1c8 },
+              "22F82 MetalTiledBacking" },
+        };
+        sym1 = macws_sl_fallback_resolve(header, fb,
+                                         sizeof(fb) / sizeof(fb[0]));
+        if (sym1) fprintf(stderr,
+            "#### SkyLight PrepareForUse RE-verified fallback at %p\n", sym1);
+    }
     if (sym1) {
         MSHookFunction(sym1, (void *)hooked_skylight_prepare_for_use,
                        (void **)&orig_skylight_prepare_for_use);
@@ -2951,6 +3031,24 @@ static void install_skylight_prepare_for_use_tolerate_nil_hook(const void *heade
     extern void *orig_skylight_start_composite_wscd_ref;
     void *sym_sc_wscd = MSFindSymbol(sl,
         "__ZN12MetalContext14StartCompositeEP22WSCompositeDestination13MTLLoadAction14MTLStoreAction");
+    if (!sym_sc_wscd) {
+        // 22F82: stripped to localsyms. Located by call-graph analysis of the
+        // extracted dyld-cache image (misc/dsc_find_hidden_syms.py): the
+        // MTLTexture variant at +0x148fb8 calls this at +0x84; render_update/
+        // CompositorMetal callers match. Push of the RenderState lives here.
+        static const struct macws_sl_fallback fb[] = {
+            { 0x148358, {
+                0xd503237f, 0xd10683ff, 0x6d103bef, 0x6d1133ed,
+                0x6d122beb, 0x6d1323e9, 0xa9146ffc, 0xa91567fa,
+                0xa9165ff8, 0xa91757f6, 0xa9184ff4, 0xa9197bfd },
+              "22F82" },
+        };
+        sym_sc_wscd = macws_sl_fallback_resolve(header, fb,
+                                                sizeof(fb) / sizeof(fb[0]));
+        if (sym_sc_wscd) fprintf(stderr,
+            "#### SkyLight StartComposite(WSCD) RE-verified fallback at %p\n",
+            sym_sc_wscd);
+    }
     if (sym_sc_wscd) {
         extern int hooked_skylight_start_composite_wscd(void *, void *,
                                                         unsigned long,
@@ -2974,6 +3072,24 @@ static void install_skylight_prepare_for_use_tolerate_nil_hook(const void *heade
     void *sym_sc_mtltex = MSFindSymbol(sl,
         "__ZN12MetalContext14StartCompositeEPU21objcproto10MTLTexture"
         "11objc_object13MTLLoadAction14MTLStoreAction");
+    if (!sym_sc_mtltex) {
+        // 22F82: stripped to localsyms. 4-arg wrapper (ctx, tex, load, store)
+        // that creates the WSCompositeDestination via +0x14b53c then tail-
+        // calls the WSCD variant at +0x148358; post-push it writes the
+        // texture into the top deque slot (str x19,[slot+0x20]).
+        static const struct macws_sl_fallback fb[] = {
+            { 0x148fb8, {
+                0xd503237f, 0x6dbb23e9, 0xa9015ff8, 0xa90257f6,
+                0xa9034ff4, 0xa9047bfd, 0x910103fd, 0xaa0303f3,
+                0xaa0203f4, 0xaa0103f6, 0xaa0003f5, 0xf9404017 },
+              "22F82" },
+        };
+        sym_sc_mtltex = macws_sl_fallback_resolve(header, fb,
+                                                  sizeof(fb) / sizeof(fb[0]));
+        if (sym_sc_mtltex) fprintf(stderr,
+            "#### SkyLight StartComposite(MTLTex) RE-verified fallback at %p\n",
+            sym_sc_mtltex);
+    }
     if (sym_sc_mtltex) {
         MSHookFunction(sym_sc_mtltex,
             (void *)hooked_skylight_start_composite_mtltex,
@@ -3105,10 +3221,28 @@ static void install_skylight_prepare_for_use_tolerate_nil_hook(const void *heade
     } else {
         fprintf(stderr,
             "#### SkyLight _state_stack pop_back: symbol not found — "
-            "pop-on-bail will NO-OP, expect Unbalanced Composites asserts\n");
+            "pop-on-bail falls back to manual deque pop (22F82 layout)\n");
     }
 
     void *sym3 = MSFindSymbol(sl, "_WSCompositeDestinationCreateWithMetalTexture");
+    if (!sym3) {
+        // 22F82: stripped to localsyms. Upstream BN disasm already pinned
+        // this function at image +0x14b53c (VMA 0x18523053c — see comment on
+        // WSCompositeDestinationCreateWithMetalTexture_t above); it is the
+        // destination factory called by StartComposite(MTLTexture) +0x84.
+        static const struct macws_sl_fallback fb[] = {
+            { 0x14b53c, {
+                0xd503237f, 0xd10343ff, 0x6d0433ed, 0x6d052beb,
+                0x6d0623e9, 0xa9076ffc, 0xa90867fa, 0xa9095ff8,
+                0xa90a57f6, 0xa90b4ff4, 0xa90c7bfd, 0x910303fd },
+              "22F82" },
+        };
+        sym3 = macws_sl_fallback_resolve(header, fb,
+                                         sizeof(fb) / sizeof(fb[0]));
+        if (sym3) fprintf(stderr,
+            "#### SkyLight WSCDCreateWithMetalTexture RE-verified fallback at %p\n",
+            sym3);
+    }
     if (sym3) {
         MSHookFunction(sym3, (void *)hooked_skylight_wsccd_with_tex,
                        (void **)&orig_skylight_wsccd_with_tex);
@@ -5990,6 +6124,24 @@ void loadImageCallback(const struct mach_header* header, intptr_t vmaddr_slide) 
         }
 #endif
 
+        // DIAGNOSTIC: client-side window-content pipeline trace
+        // (MACWS_SL_WCTX_TRACE=1).  Arms the SkyLight entry points that
+        // move window content to the compositor — SLWindowContextCreate
+        // (CA-vs-RIP decision), SLSCreateLayerContext / SLSBindSurface /
+        // SLSAddSurface (the 0x1513/5395 multiplexed channel) and
+        // SLSSetWindowLayerContext (0x7318).  Read-only; see the wrapper
+        // comment block for the 22F82 UUID-gated offsets.
+        if (macws_sl_wctx_trace_enabled()) {
+            macws_install_skylight_wctx_trace_hooks(
+                (const struct mach_header_64 *)header);
+        }
+
+        // DIAGNOSTIC (always-on, fires only inside WindowServer where
+        // SLCADisplay exists): probe the server-side per-display update
+        // entry — does the Update carry client context records?
+        macws_install_skylight_beginupdate_hook(
+            (const struct mach_header_64 *)header);
+
         // NSLog(@"#### debugbydcmmc loadImageCallback SkyLight modified");
     } else if(!strncmp(info.dli_fname, IOMFBPath, strlen(IOMFBPath))) {
         const MacWSIOMFBABI *iomfbAbi = MacWSIOMFBABIResolve(
@@ -6314,6 +6466,20 @@ void loadImageCallback(const struct mach_header* header, intptr_t vmaddr_slide) 
         BOOL isWindowServer = NO;
         if(_NSGetExecutablePath(exe, &exelen) == 0) {
             isWindowServer = (strstr(exe, "SkyLight.framework/Resources/WindowServer") != NULL);
+        }
+        // DIAGNOSTIC: render-server context inclusion trace (WindowServer
+        // only, MACWS_RS_CTX_TRACE=1).  Read-only; see comment block at the
+        // installer for the RE-confirmed offsets.
+        if (isWindowServer && macws_rs_ctx_trace_enabled()) {
+            macws_install_quartzcore_ctx_trace_hooks(
+                (const struct mach_header_64 *)header);
+        }
+        // DIAGNOSTIC: CAWindowContextDelegateCreate fires only when the
+        // client picked the CA (layer-backed) window path.  All client
+        // processes; MACWS_SL_WCTX_TRACE=1.  Read-only.
+        if (macws_sl_wctx_trace_enabled()) {
+            macws_install_qc_wctx_trace_hooks(
+                (const struct mach_header_64 *)header);
         }
         if(!isWindowServer && getenv("MACWS_KEEP_FORCE_ACCEL")) {
             // LAZY: forces CABackingStorePrepareUpdates_ to take the
@@ -7274,6 +7440,23 @@ void loadImageCallback(const struct mach_header* header, intptr_t vmaddr_slide) 
                             "#### MACWS_AGX_NATIVE tracing -[AGXBuffer initWithDevice:options:args:argsSize:] (nil preserved)\n");
                     }
                 }
+
+                // AGXBuffer is realized now — (re)install the
+                // initWithDevice:bytes:…pinnedGPUAddress: shim. The early
+                // call inside install_agx_init_redirect ran before this
+                // register pass and silently skipped on 22F82 (AGXBuffer
+                // was still unrealized → nil class). MetalTiledBacking's
+                // pinned-VA staging alloc needs this shim for its
+                // REDIRECT-iOS-NATIVE path.
+                extern void macws_agxbuffer_install_bytes_pin_swizzle(void);
+                macws_agxbuffer_install_bytes_pin_swizzle();
+#if !defined(__arm64e__)
+                // Same realization-order fix for the AGXTexture iosurface
+                // init hook: the class only exists after this register pass,
+                // and 22F82 SkyLight calls the texture init directly.
+                extern void macws_install_agxtex_iosurf_init_hook(void);
+                macws_install_agxtex_iosurf_init_hook();
+#endif
             }
 
             // Probe what libobjc class-registration symbols are exposed in this
@@ -7459,6 +7642,15 @@ void loadImageCallback(const struct mach_header* header, intptr_t vmaddr_slide) 
         }
         }
 
+    } else if(!strncmp(info.dli_fname, CoreGraphicsPath,
+                      strlen(CoreGraphicsPath))) {
+        // DIAGNOSTIC: __CGWindowContextDelegateCreate fires only when
+        // SLWindowContextCreate picked the RIP (CPU-bitmap) window path.
+        // All client processes; MACWS_SL_WCTX_TRACE=1.  Read-only.
+        if (macws_sl_wctx_trace_enabled()) {
+            macws_install_cg_wctx_trace_hooks(
+                (const struct mach_header_64 *)header);
+        }
     }
 }
 
@@ -8885,6 +9077,65 @@ static BOOL macws_vnc_proxy_scroll(MacWSInputRecord record, CGPoint point) {
     return YES;
 }
 
+// 22F82 runtime witness: CGPostMouseEvent returns
+// kCGErrorInvalidConnection (1002) for every post whose complete button set
+// is false — pure motion, button release and idle warps — while the same
+// call with any button asserted returns 0. OSXvnc's scroll channel already
+// proves CGEventPost(kCGSessionEventTap) reaches WindowServer from this
+// exact process, so every global pointer post is translated into a typed
+// session-tap CGEvent whose type is derived from the tracked button
+// transition. One atomic mask covers both the proxy thread and the RFB
+// handler because WindowServer exposes a single shared mouse state.
+static _Atomic unsigned int macws_vnc_session_buttons = 0;
+
+static int32_t macws_vnc_session_mouse_post(CGPoint point,
+        bool left, bool right, bool middle) {
+    typedef CFTypeRef (*CreateMouse)(CFTypeRef, uint32_t, CGPoint, uint32_t);
+    typedef void (*SetInteger)(CFTypeRef, uint32_t, int64_t);
+    typedef void (*PostEvent)(uint32_t, CFTypeRef);
+    static CreateMouse createMouse;
+    static SetInteger setInteger;
+    static PostEvent postEvent;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        createMouse = (CreateMouse)dlsym(RTLD_DEFAULT,
+            "CGEventCreateMouseEvent");
+        setInteger = (SetInteger)dlsym(RTLD_DEFAULT,
+            "CGEventSetIntegerValueField");
+        postEvent = (PostEvent)dlsym(RTLD_DEFAULT, "CGEventPost");
+    });
+    if (!createMouse || !setInteger || !postEvent) return -1;
+    unsigned int previous = atomic_load_explicit(
+        &macws_vnc_session_buttons, memory_order_acquire);
+    bool prevLeft = (previous & 1u) != 0;
+    bool prevRight = (previous & 2u) != 0;
+    bool prevMiddle = (previous & 4u) != 0;
+    uint32_t type;
+    uint32_t button = 0;
+    if (left && !prevLeft) type = 1;            // leftMouseDown
+    else if (!left && prevLeft) type = 2;       // leftMouseUp
+    else if (right && !prevRight) { type = 3; button = 1; }
+    else if (!right && prevRight) { type = 4; button = 1; }
+    else if (middle && !prevMiddle) { type = 25; button = 2; }
+    else if (!middle && prevMiddle) { type = 26; button = 2; }
+    else if (left) type = 6;                    // leftMouseDragged
+    else if (right) { type = 7; button = 1; }   // rightMouseDragged
+    else if (middle) { type = 27; button = 2; } // otherMouseDragged
+    else type = 5;                              // mouseMoved
+    CFTypeRef event = createMouse(NULL, type, point, button);
+    if (!event) return -2;
+    // OSXvnc itself selects the HID event tap for this console session
+    // ("Using Smart Event Tap -- HID"). kCGSessionEventTap posts returned
+    // 0/0 without reaching WindowServer here; the HID tap is the deeper
+    // injection point real hardware input uses.
+    postEvent(0 /* kCGHIDEventTap */, event);
+    CFRelease(event);
+    atomic_store_explicit(&macws_vnc_session_buttons,
+        (left ? 1u : 0u) | (right ? 2u : 0u) | (middle ? 4u : 0u),
+        memory_order_release);
+    return 0;
+}
+
 typedef struct {
     MacWSVNCPostLegacyMouseEvent postMouse;
     CGPoint point;
@@ -8893,7 +9144,7 @@ typedef struct {
 static int32_t macws_vnc_atomic_pointer_post(void *opaque, bool left,
                                             bool right) {
     const MacWSVNCAtomicPointerContext *context = opaque;
-    return context->postMouse(context->point, true, 3, left, right, false);
+    return macws_vnc_session_mouse_post(context->point, left, right, false);
 }
 
 static void macws_vnc_atomic_pointer_pause(void *opaque,
@@ -9033,7 +9284,8 @@ static void *macws_vnc_pointer_proxy_listener(void *unused) {
                 // Scroll cannot cancel an unrelated held mouse button.
                 if (leftDown) continue;
                 if (record.flags & MacWSInputFlagScrollBegan)
-                    (void)postMouse(point, true, 3, false, false, false);
+                    (void)macws_vnc_session_mouse_post(
+                        point, false, false, false);
                 (void)macws_vnc_proxy_scroll(record, point);
                 macws_vnc_note_interaction();
                 continue;
@@ -9041,8 +9293,8 @@ static void *macws_vnc_pointer_proxy_listener(void *unused) {
                 // A replacement contact is a real device-boundary recovery:
                 // release the prior button before starting the new stream.
                 if (leftDown && activeContact != record.contactID) {
-                    (void)postMouse(lastPoint, true, 3,
-                                    false, false, false);
+                    (void)macws_vnc_session_mouse_post(
+                        lastPoint, false, false, false);
                 }
                 // Match the runtime-recorded RFB transaction boundary. Its
                 // first packet moved the global cursor with every button up;
@@ -9051,33 +9303,33 @@ static void *macws_vnc_pointer_proxy_listener(void *unused) {
                 // Dock uses that pre-hover to publish the current Mission
                 // Control card/layer context; beginning with the down at a
                 // new point only selected and reopened the card.
-                (void)postMouse(point, true, 3,
-                                false, false, false);
+                (void)macws_vnc_session_mouse_post(
+                    point, false, false, false);
                 // The native post uses Quartz points, but activation's wire
                 // coordinates must retain the original producer extent.
                 (void)macws_vnc_coordinate_activation(&record);
                 activeContact = record.contactID;
                 leftDown = YES;
-                firstResult = postMouse(point, true, 3,
-                                        true, false, false);
+                firstResult = macws_vnc_session_mouse_post(
+                    point, true, false, false);
                 break;
             case MacWSInputKindTouchMove:
                 if (leftDown && activeContact != record.contactID) continue;
-                firstResult = postMouse(point, true, 3,
-                                        leftDown, false, false);
+                firstResult = macws_vnc_session_mouse_post(
+                    point, leftDown, false, false);
                 break;
             case MacWSInputKindTouchUp:
             case MacWSInputKindTouchCancel:
                 if (leftDown && activeContact != record.contactID) continue;
-                firstResult = postMouse(point, true, 3,
-                                        false, false, false);
+                firstResult = macws_vnc_session_mouse_post(
+                    point, false, false, false);
                 leftDown = NO;
                 activeContact = 0;
                 break;
             case MacWSInputKindHover:
             case MacWSInputKindMenuHover:
-                firstResult = postMouse(point, true, 3,
-                                        leftDown, false, false);
+                firstResult = macws_vnc_session_mouse_post(
+                    point, leftDown, false, false);
                 break;
             case MacWSInputKindTap:
             case MacWSInputKindSecondaryTap: {
@@ -9109,7 +9361,8 @@ static void *macws_vnc_pointer_proxy_listener(void *unused) {
         }
     }
     if (leftDown) {
-        (void)postMouse(lastPoint, true, 3, false, false, false);
+        (void)macws_vnc_session_mouse_post(
+            lastPoint, false, false, false);
     }
     close(socketFD);
     (void)unlink(MACWS_VNC_POINTER_PROXY_SOCKET_PATH);
@@ -10714,9 +10967,19 @@ static void macws_new_vnc_handle_mouse(id self, SEL command,
             if (secondaryGesture) {
                 // Keep OSXvnc's cursor/client bookkeeping but leave the right
                 // button out of its asynchronous global CG stream.
+                unsigned int nativeButtons = pointerButtons & ~4u & 7u;
                 macws_orig_vnc_handle_mouse(
                     self, command, pointerButtons & ~4u,
                                             quartzPoint, client);
+                if (nativeButtons == 0) {
+                    // orig's all-false CGPostMouseEvent is dead on 22F82
+                    // (1002); complete it on the proven session-tap channel.
+                    (void)macws_vnc_session_mouse_post(
+                        quartzPoint, false, false, false);
+                } else {
+                    atomic_store_explicit(&macws_vnc_session_buttons,
+                        nativeButtons, memory_order_release);
+                }
                 if (secondaryRelease && macws_vnc_secondary_pending) {
                     macws_vnc_gesture_id++;
                     if (macws_vnc_gesture_id == 0) macws_vnc_gesture_id++;
@@ -10746,6 +11009,19 @@ static void macws_new_vnc_handle_mouse(id self, SEL command,
                 // give each wheel impulse one AppInput semantic owner below.
                 macws_orig_vnc_handle_mouse(self, command, pointerButtons,
                                             quartzPoint, client);
+                // 22F82: orig's internal CGPostMouseEvent returns 1002 for
+                // every all-false button set, so releases and pure motion
+                // never leave the RFB handler. Complete orig's stream on the
+                // session-tap channel its scroll path already proves. Asserted
+                // buttons still ride orig's legacy post; mirror that state so
+                // the session helper derives the correct transition type.
+                if (pointerButtons == 0) {
+                    (void)macws_vnc_session_mouse_post(
+                        quartzPoint, false, false, false);
+                } else {
+                    atomic_store_explicit(&macws_vnc_session_buttons,
+                        pointerButtons & 7u, memory_order_release);
+                }
             }
             if (wheelPressed != 0) {
                 float horizontal = 0.0f;
@@ -11202,6 +11478,46 @@ static void macws_new_rfbGetFBRect(int x, int y, int w, int h) {
     macws_vnc_fill_test(x, y, w, h);
 }
 
+// Resolve one symbol from an image's in-memory LC_SYMTAB (nlist_64).
+// An unstripped OSXvnc-server build (such as the locally rebuilt arm64
+// binary) exposes every file-scope name here, letting the hooks bind by
+// name instead of trusting the original author's build-specific offsets.
+// Returns the runtime address or NULL when the image carries no symtab or
+// the name is absent.
+static void *macws_vnc_symtab_lookup(const struct mach_header *mh,
+                                     intptr_t slide, const char *name) {
+    if (!mh || !name) return NULL;
+    const struct load_command *lc =
+        (const struct load_command *)((const char *)mh + sizeof(*mh));
+    const struct symtab_command *symtab = NULL;
+    const struct segment_command_64 *linkedit = NULL;
+    for (uint32_t i = 0; i < mh->ncmds; i++) {
+        if (lc->cmd == LC_SYMTAB)
+            symtab = (const struct symtab_command *)lc;
+        else if (lc->cmd == LC_SEGMENT_64 &&
+                 strncmp(((const struct segment_command_64 *)lc)->segname,
+                         "__LINKEDIT", 16) == 0)
+            linkedit = (const struct segment_command_64 *)lc;
+        lc = (const struct load_command *)((const char *)lc + lc->cmdsize);
+    }
+    if (!symtab || !linkedit || linkedit->filesize == 0) return NULL;
+    uintptr_t linkeditBase =
+        (uintptr_t)slide + linkedit->vmaddr - linkedit->fileoff;
+    const struct nlist_64 *syms =
+        (const struct nlist_64 *)(linkeditBase + symtab->symoff);
+    const char *strings = (const char *)(linkeditBase + symtab->stroff);
+    if ((uintptr_t)syms < (uintptr_t)mh ||
+        (uintptr_t)strings < (uintptr_t)mh) return NULL;
+    for (uint32_t i = 0; i < symtab->nsyms; i++) {
+        if (syms[i].n_un.n_strx == 0 ||
+            (syms[i].n_type & N_STAB) != 0) continue;
+        const char *candidate = strings + syms[i].n_un.n_strx;
+        if (strcmp(candidate, name) == 0)
+            return (void *)(syms[i].n_value + slide);
+    }
+    return NULL;
+}
+
 static void macws_install_osxvnc_hooks(void) {
     const char *prog = getprogname();
     if (!prog || !strstr(prog, "OSXvnc")) return;
@@ -11229,27 +11545,54 @@ static void macws_install_osxvnc_hooks(void) {
         macws_vnc_input_mode = MacWSVNCInputModeStock;
     }
     const struct mach_header *mh = NULL;
+    intptr_t slide = 0;
     uint32_t n = _dyld_image_count();
     for (uint32_t i = 0; i < n; i++) {
         const char *nm = _dyld_get_image_name(i);
-        if (nm && strstr(nm, "OSXvnc-server")) { mh = _dyld_get_image_header(i); break; }
+        if (nm && strstr(nm, "OSXvnc-server")) {
+            mh = _dyld_get_image_header(i);
+            slide = _dyld_get_image_vmaddr_slide(i);
+            break;
+        }
     }
     if (!mh) mh = _dyld_get_image_header(0);
     if (!mh) return;
     char *base = (char *)mh;
-    macws_rfbScreen = (int *)(base + 0x79bf8);
-    macws_rfbBackingScale = (double *)(base + 0x7a1e8);
+    // Prefer the image's own symbol table so a rebuilt OSXvnc-server binds
+    // by name; the absolute offsets remain as the fallback for the original
+    // author's (possibly stripped) build documented above.
+    void *symRfbScreen = macws_vnc_symtab_lookup(mh, slide, "_rfbScreen");
+    void *symBackingScale =
+        macws_vnc_symtab_lookup(mh, slide, "_displayScale");
+    if (!symBackingScale)
+        symBackingScale =
+            macws_vnc_symtab_lookup(mh, slide, "_rfbBackingScaleFactor");
+    if (!symBackingScale)
+        symBackingScale =
+            macws_vnc_symtab_lookup(mh, slide, "_backingScaleFactor");
+    macws_rfbScreen = symRfbScreen ? (int *)symRfbScreen
+                                 : (int *)(base + 0x79bf8);
+    macws_rfbBackingScale = symBackingScale ? (double *)symBackingScale
+                                          : (double *)(base + 0x7a1e8);
     BOOL traceClientMessages =
         getenv("MACWS_VNC_TRACE_CLIENT_MESSAGES") != NULL;
     if (traceClientMessages) {
-        MSHookFunction(base + 0x169d8,
+        void *readExact = macws_vnc_symtab_lookup(mh, slide, "_ReadExact");
+        if (!readExact) readExact = base + 0x169d8;
+        void *processNormal = macws_vnc_symtab_lookup(
+            mh, slide, "_rfbProcessNormalMessage");
+        if (!processNormal) processNormal = base + 0x14380;
+        MSHookFunction(readExact,
             (void *)macws_new_vnc_read_exact,
             (void **)&macws_orig_vnc_read_exact);
-        MSHookFunction(base + 0x14380,
+        MSHookFunction(processNormal,
             (void *)macws_new_vnc_process_normal_message,
             (void **)&macws_orig_vnc_process_normal_message);
     }
-    MSHookFunction(base + 0xd114,
+    void *refreshCallback = macws_vnc_symtab_lookup(
+        mh, slide, "_refreshCallback");
+    if (!refreshCallback) refreshCallback = base + 0xd114;
+    MSHookFunction(refreshCallback,
         (void *)macws_new_vnc_refresh_callback,
         (void **)&macws_vnc_refresh_callback);
     void *cgWidth = dlsym(RTLD_DEFAULT, "CGDisplayPixelsWide");
@@ -11260,9 +11603,19 @@ static void macws_install_osxvnc_hooks(void) {
     if (cgHeight) MSHookFunction(cgHeight,
         (void *)macws_new_CGDisplayPixelsHigh,
         (void **)&macws_orig_CGDisplayPixelsHigh);
-    MSHookFunction(base + 0xd9d4, (void *)macws_new_rfbGetFB,     (void **)&macws_orig_rfbGetFB);
-    MSHookFunction(base + 0xdc28, (void *)macws_new_rfbGetFBRect, (void **)&macws_orig_rfbGetFBRect);
-    MSHookFunction(base + 0x14e38,
+    void *rfbGetFB = macws_vnc_symtab_lookup(mh, slide, "_rfbGetFramebuffer");
+    if (!rfbGetFB) rfbGetFB = base + 0xd9d4;
+    void *rfbGetFBRect = macws_vnc_symtab_lookup(
+        mh, slide, "_rfbGetFramebufferUpdateInRect");
+    if (!rfbGetFBRect) rfbGetFBRect = base + 0xdc28;
+    void *rfbSendFBU = macws_vnc_symtab_lookup(
+        mh, slide, "_rfbSendFramebufferUpdate");
+    if (!rfbSendFBU) rfbSendFBU = base + 0x14e38;
+    MSHookFunction(rfbGetFB, (void *)macws_new_rfbGetFB,
+        (void **)&macws_orig_rfbGetFB);
+    MSHookFunction(rfbGetFBRect, (void *)macws_new_rfbGetFBRect,
+        (void **)&macws_orig_rfbGetFBRect);
+    MSHookFunction(rfbSendFBU,
         (void *)macws_new_rfb_send_framebuffer_update,
         (void **)&macws_orig_rfb_send_framebuffer_update);
     Class serverClass = objc_getClass("VNCServer");
@@ -11398,6 +11751,12 @@ extern kern_return_t bootstrap_look_up(
 extern mach_port_t bootstrap_port;
 
 __attribute__((constructor)) void InitStuff() {
+    // DIAGNOSTIC canary: raw write() before any hook runs.  Two consecutive
+    // WS instances (9830, 12945) loaded this dylib with working interposes
+    // but produced ZERO InitStuff output — determine whether dyld skipped
+    // the initializer or the prints were lost.  Remove once answered.
+    { static const char canary[] = "#### MACWS-CTOR-CANARY InitStuff entered\n";
+      (void)write(STDERR_FILENO, canary, sizeof(canary) - 1); }
     // Diagnostic: MACWS_BOOTSTRAP_PROBE dumps the inherited bootstrap port and
     // a control bootstrap_look_up of the LaunchServices endpoint before any
     // other hook runs, so we can tell a dead bootstrap context apart from a
@@ -11618,6 +11977,8 @@ __attribute__((constructor)) void InitStuff() {
             raise(SIGSTOP);
         }
     }
+    { static const char canary2[] = "#### MACWS-CTOR-CANARY InitStuff done\n";
+      (void)write(STDERR_FILENO, canary2, sizeof(canary2) - 1); }
 }
 
 extern int gpu_bundle_find_trusted(const char *name, char *trusted_path, size_t trusted_path_len);
@@ -12370,6 +12731,218 @@ macws_core_services_task_descriptor(
     return descriptor;
 }
 
+// DIAGNOSTIC: MACWS_MACH_MSG_ALL=1 logs every outgoing mach_msg send for
+// this process (id/bits/remote/size). Used to observe which render-server
+// MIG requests a CAContext commit actually emits. Not for production.
+static bool macws_mach_msg_all_enabled(void) {
+    if (!atomic_load_explicit(&g_macws_libsystem_runtime_ready,
+                              memory_order_acquire)) {
+        return false;
+    }
+    static _Atomic int cached = -1;
+    int value = atomic_load_explicit(&cached, memory_order_acquire);
+    if (value < 0) {
+        value = getenv("MACWS_MACH_MSG_ALL") ? 1 : 0;
+        atomic_store_explicit(&cached, value, memory_order_release);
+    }
+    return value != 0;
+}
+
+static _Atomic unsigned g_macws_mach_send_seq = 0;
+static void macws_trace_all_mach_sends(const mach_msg_header_t *message,
+                                       mach_msg_option_t option) {
+    if (!message || !(option & MACH_SEND_MSG)) return;
+    unsigned sequence = atomic_fetch_add_explicit(&g_macws_mach_send_seq, 1,
+                                                  memory_order_relaxed);
+    if (sequence >= 8192) return;
+    char line[192];
+    int length = snprintf(
+        line, sizeof(line),
+        "#### MACH-ALL-SEND seq=%u pid=%d id=%d bits=%#x remote=%u "
+        "local=%u\n",
+        sequence, getpid(), message->msgh_id, message->msgh_bits,
+        message->msgh_remote_port, message->msgh_local_port);
+    if (length > 0) {
+        size_t writeLength = (size_t)length < sizeof(line)
+            ? (size_t)length : sizeof(line) - 1;
+        (void)write(STDERR_FILENO, line, writeLength);
+    }
+}
+
+// DIAGNOSTIC: logs each (thread, receive_name) pair exactly once at
+// receive-call ENTRY.  A parked receive otherwise never appears in the
+// trace, so without this we cannot tell which port set the render-server
+// thread is blocked on.  Deduped by (tid, rcvname); bounded table.
+static void macws_trace_all_mach_listen(mach_msg_option_t option,
+                                        mach_port_name_t receive_name) {
+    if (!(option & MACH_RCV_MSG)) return;
+    uint64_t tid = 0;
+    pthread_threadid_np(NULL, &tid);
+    static _Atomic uint64_t seen[512];
+    static _Atomic unsigned seenCount;
+    uint64_t key = (tid & 0xffffffffffULL) << 24 |
+                   (uint64_t)(receive_name & 0xffffff);
+    unsigned count = atomic_load_explicit(&seenCount, memory_order_acquire);
+    if (count > 512) count = 512;
+    for (unsigned i = 0; i < count; i++) {
+        if (atomic_load_explicit(&seen[i], memory_order_acquire) == key)
+            return;
+    }
+    unsigned slot = atomic_fetch_add_explicit(&seenCount, 1,
+                                              memory_order_acq_rel);
+    if (slot >= 512) return;
+    atomic_store_explicit(&seen[slot], key, memory_order_release);
+    char line[192];
+    int length = snprintf(
+        line, sizeof(line),
+        "#### MACH-ALL-LISTEN slot=%u pid=%d tid=%llu rcvname=%u "
+        "option=%#llx\n",
+        slot, getpid(), (unsigned long long)tid, receive_name,
+        (unsigned long long)option);
+    if (length > 0) {
+        size_t writeLength = (size_t)length < sizeof(line)
+            ? (size_t)length : sizeof(line) - 1;
+        (void)write(STDERR_FILENO, line, writeLength);
+    }
+}
+
+// DIAGNOSTIC: paired with MACH-ALL-SEND.  Logs the kernel's result for
+// sends so we can tell "sent" from "silently rejected at the port".
+static void macws_trace_all_mach_send_results(
+    const mach_msg_header_t *message, mach_msg_option_t option,
+    mach_msg_return_t result) {
+    if (!message || !(option & MACH_SEND_MSG)) return;
+    if (result == MACH_MSG_SUCCESS) return;
+    static _Atomic unsigned traceCount = 0;
+    unsigned sequence = atomic_fetch_add_explicit(&traceCount, 1,
+                                                  memory_order_relaxed);
+    if (sequence >= 1024) return;
+    char line[224];
+    int length = snprintf(
+        line, sizeof(line),
+        "#### MACH-ALL-SENDFAIL seq=%u pid=%d id=%d remote=%u local=%u "
+        "result=0x%x\n",
+        sequence, getpid(), message->msgh_id, message->msgh_remote_port,
+        message->msgh_local_port, result);
+    if (length > 0) {
+        size_t writeLength = (size_t)length < sizeof(line)
+            ? (size_t)length : sizeof(line) - 1;
+        (void)write(STDERR_FILENO, line, writeLength);
+    }
+}
+
+// DIAGNOSTIC companion to the send trace: logs completed receives so a
+// server process (WindowServer) can be observed receiving render-server
+// MIG requests.  Same MACWS_MACH_MSG_ALL gate, capped separately.
+static void macws_trace_all_mach_recvs(const mach_msg_header_t *message,
+                                       mach_msg_option_t option,
+                                       mach_msg_return_t result,
+                                       mach_port_name_t receive_name) {
+    if (!message || !(option & MACH_RCV_MSG)) return;
+    static _Atomic unsigned traceCount = 0;
+    unsigned sequence = atomic_fetch_add_explicit(&traceCount, 1,
+                                                  memory_order_relaxed);
+    if (sequence >= 8192) return;
+    if (result != KERN_SUCCESS && result != MACH_RCV_TOO_LARGE) return;
+    mach_msg_id_t id = message->msgh_id;
+    if (id < 40000 || id > 41000) return;  // render-server subsystem only
+    uint64_t tid = 0;
+    pthread_threadid_np(NULL, &tid);
+    char line[224];
+    int length = snprintf(
+        line, sizeof(line),
+        "#### MACH-ALL-RECV seq=%u pid=%d tid=%llu id=%d bits=%#x "
+        "remote=%u local=%u size=%u on=%u\n",
+        sequence, getpid(), (unsigned long long)tid, id,
+        message->msgh_bits,
+        message->msgh_remote_port, message->msgh_local_port,
+        message->msgh_size, receive_name);
+    if (length > 0) {
+        size_t writeLength = (size_t)length < sizeof(line)
+            ? (size_t)length : sizeof(line) - 1;
+        (void)write(STDERR_FILENO, line, writeLength);
+    }
+    /* DIAGNOSTIC: hexdump the head of large 40002 commit messages so the
+       x-stream record structure on the wire can be compared against the
+       server-side record parser (tag 0x1e = context-inclusion record).
+       Capped to avoid log flood. */
+    if (id == 40002 && message->msgh_size > 512) {
+        static _Atomic unsigned dumpCount = 0;
+        if (atomic_fetch_add_explicit(&dumpCount, 1, memory_order_relaxed)
+                < 32) {
+            const unsigned char *body =
+                (const unsigned char *)message + sizeof(mach_msg_header_t);
+            unsigned bodyLen = message->msgh_size -
+                (unsigned)sizeof(mach_msg_header_t);
+            if (bodyLen > 120) bodyLen = 120;
+            char hex[320];
+            char *p = hex;
+            for (unsigned i = 0; i < bodyLen; i++) {
+                p += snprintf(p, sizeof(hex) - (size_t)(p - hex),
+                              "%02x", body[i]);
+                if ((i & 7) == 7 && (size_t)(p - hex) < sizeof(hex) - 8)
+                    *p++ = ' ';
+            }
+            /* For complex messages, try to also dump the first OOL
+               descriptor's pointee (u64 addr at +4 within a 16-byte
+               descriptor).  Locate it heuristically: descriptor array
+               starts at body+4; each descriptor's type byte identifies
+               it.  Guard the dereference range to mapped userspace. */
+            char ohex[160] = {0};
+            if (message->msgh_bits & MACH_MSGH_BITS_COMPLEX &&
+                bodyLen >= 20) {
+                uint32_t nd;
+                memcpy(&nd, body, 4);
+                const unsigned char *desc = body + 4;
+                const unsigned char *end = body + bodyLen;
+                for (uint32_t di = 0; di < nd && di < 6 && desc + 12 <= end;
+                     di++) {
+                    uint8_t type11 = desc[11];
+                    uint8_t type15 = desc[15];
+                    if (type11 == MACH_MSG_OOL_DESCRIPTOR ||
+                        type11 == MACH_MSG_OOL_VOLATILE_DESCRIPTOR) {
+                        /* ool desc is 16 bytes: addr u64 @0, pad/dealloc/
+                           copy/type, size u32 @12 */
+                        uint64_t a;
+                        memcpy(&a, desc, 8);
+                        uint32_t sz;
+                        memcpy(&sz, desc + 12, 4);
+                        /* Sender-side OOL addresses may be unmapped or
+                           sentinel values; same guard as the +0x848
+                           walker (2026-10-12-233621.ips). */
+                        if (a >= 0x100000000ull &&
+                            a < 0x8000000000000000ull && sz > 8) {
+                            const unsigned char *op =
+                                (const unsigned char *)(uintptr_t)a;
+                            unsigned on = sz < 64 ? sz : 64;
+                            char *q = ohex;
+                            for (unsigned i = 0; i < on; i++) {
+                                q += snprintf(q,
+                                    sizeof(ohex) - (size_t)(q - ohex),
+                                    "%02x", op[i]);
+                            }
+                        }
+                        break;
+                    }
+                    desc += 12;
+                    (void)type15;
+                }
+            }
+            char l2[640];
+            int l2len = snprintf(l2, sizeof(l2),
+                "#### MACH-40002-DUMP seq=%u size=%u bits=%#x len=%u "
+                "hex=%s ohex=%s\n",
+                sequence, message->msgh_size, message->msgh_bits,
+                bodyLen, hex, ohex);
+            if (l2len > 0) {
+                (void)write(STDERR_FILENO, l2,
+                    (size_t)l2len < sizeof(l2) ? (size_t)l2len
+                                              : sizeof(l2) - 1);
+            }
+        }
+    }
+}
+
 mach_msg_return_t mach_msg_new(mach_msg_header_t *message,
                                mach_msg_option_t option,
                                mach_msg_size_t send_size,
@@ -12380,6 +12953,10 @@ mach_msg_return_t mach_msg_new(mach_msg_header_t *message,
     bool machTraceEnabled = macws_mach_msg_trace_enabled();
     if (machTraceEnabled)
         macws_trace_core_services_session_send(message, option, send_size);
+    if (macws_mach_msg_all_enabled()) {
+        macws_trace_all_mach_sends(message, option);
+        macws_trace_all_mach_listen(option, receive_name);
+    }
     bool tracePostRendezvous = machTraceEnabled && message &&
         atomic_load_explicit(&g_macws_steam_mojo_rendezvous_received,
                              memory_order_acquire);
@@ -12508,6 +13085,10 @@ mach_msg_return_t mach_msg_new(mach_msg_header_t *message,
         result = mach_msg(message, option, send_size, receive_limit,
                           receive_name, timeout, notify);
     }
+    if (macws_mach_msg_all_enabled()) {
+        macws_trace_all_mach_send_results(message, option, result);
+        macws_trace_all_mach_recvs(message, option, result, receive_name);
+    }
     if (usingCoreServicesMapBridge) {
         // A failed combined send leaves the outbound request intact. Restore
         // it for the caller's error path; a successful receive has replaced
@@ -12626,6 +13207,138 @@ mach_msg_return_t mach_msg_new(mach_msg_header_t *message,
             size_t write_length = (size_t)length < sizeof(line) ?
                 (size_t)length : sizeof(line) - 1;
             write(STDERR_FILENO, line, write_length);
+        }
+    }
+    return result;
+}
+
+// DIAGNOSTIC: the render-server receive loop may use mach_msg_overwrite
+// rather than mach_msg; observe it under the same MACWS_MACH_MSG_ALL gate.
+extern mach_msg_return_t mach_msg_overwrite(
+    mach_msg_header_t *message, mach_msg_option_t option,
+    mach_msg_size_t send_size, mach_msg_size_t receive_limit,
+    mach_port_name_t receive_name, mach_msg_timeout_t timeout,
+    mach_port_name_t notify, mach_msg_header_t *receive_buffer,
+    mach_msg_size_t receive_buffer_size);
+
+mach_msg_return_t mach_msg_overwrite_new(
+    mach_msg_header_t *message, mach_msg_option_t option,
+    mach_msg_size_t send_size, mach_msg_size_t receive_limit,
+    mach_port_name_t receive_name, mach_msg_timeout_t timeout,
+    mach_port_name_t notify, mach_msg_header_t *receive_buffer,
+    mach_msg_size_t receive_buffer_size) {
+    if (macws_mach_msg_all_enabled()) {
+        macws_trace_all_mach_sends(message, option);
+        macws_trace_all_mach_listen(option, receive_name);
+    }
+    mach_msg_return_t result = mach_msg_overwrite(
+        message, option, send_size, receive_limit, receive_name,
+        timeout, notify, receive_buffer, receive_buffer_size);
+    if (macws_mach_msg_all_enabled()) {
+        macws_trace_all_mach_send_results(message, option, result);
+        if (result == MACH_MSG_SUCCESS && (option & MACH_RCV_MSG) &&
+            receive_buffer) {
+            static _Atomic unsigned traceCount = 0;
+            unsigned sequence = atomic_fetch_add_explicit(
+                &traceCount, 1, memory_order_relaxed);
+            if (sequence < 4096 &&
+                receive_buffer->msgh_id >= 40000 &&
+                receive_buffer->msgh_id < 41000) {
+                uint64_t tid = 0;
+                pthread_threadid_np(NULL, &tid);
+                char line[224];
+                int length = snprintf(
+                    line, sizeof(line),
+                    "#### MACH-ALL-OVWR-RECV seq=%u pid=%d tid=%llu id=%d "
+                    "bits=%#x remote=%u local=%u size=%u on=%u\n",
+                    sequence, getpid(), (unsigned long long)tid,
+                    receive_buffer->msgh_id,
+                    receive_buffer->msgh_bits,
+                    receive_buffer->msgh_remote_port,
+                    receive_buffer->msgh_local_port,
+                    receive_buffer->msgh_size, receive_name);
+                if (length > 0) {
+                    size_t writeLength = (size_t)length < sizeof(line)
+                        ? (size_t)length : sizeof(line) - 1;
+                    (void)write(STDERR_FILENO, line, writeLength);
+                }
+            }
+        }
+    }
+    return result;
+}
+
+// DIAGNOSTIC: dispatch_mach_msg_get_msg's worker loop receives through
+// mach_msg2, which neither mach_msg nor mach_msg_overwrite observes.
+// RE-confirmed via xnu-8792.81.2 osfmk/mach/message.h:1326 — the real
+// prototype packs header fields into registers:
+//   x2 = {send_size:hi32, msgh_bits:lo32}
+//   x3 = {msgh_local_port:hi32, msgh_remote_port:lo32}
+//   x4 = {msgh_id:hi32, msgh_voucher_port:lo32}
+//   x5 = {rcv_name:hi32, descriptor_count:lo32}
+//   x6 = {priority:hi32, rcv_size:lo32}
+// `data` is only the message body buffer; on a successful receive the
+// kernel writes the received header at data+0.
+extern mach_msg_return_t mach_msg2_internal(
+    void *data, uint64_t option64, uint64_t bits_and_send_size,
+    uint64_t remote_and_local_port, uint64_t voucher_and_id,
+    uint64_t desc_count_and_rcv_name, uint64_t rcv_size_and_priority,
+    uint64_t timeout);
+
+mach_msg_return_t mach_msg2_internal_new(
+    void *data, uint64_t option64, uint64_t bits_and_send_size,
+    uint64_t remote_and_local_port, uint64_t voucher_and_id,
+    uint64_t desc_count_and_rcv_name, uint64_t rcv_size_and_priority,
+    uint64_t timeout) {
+    bool trace = macws_mach_msg_all_enabled();
+    if (trace && (option64 & MACH_SEND_MSG)) {
+        mach_msg_header_t sendHeader = {0};
+        sendHeader.msgh_bits =
+            (mach_msg_bits_t)(uint32_t)bits_and_send_size;
+        sendHeader.msgh_remote_port =
+            (mach_port_name_t)(uint32_t)remote_and_local_port;
+        sendHeader.msgh_local_port =
+            (mach_port_name_t)(uint32_t)(remote_and_local_port >> 32);
+        sendHeader.msgh_id =
+            (mach_msg_id_t)(uint32_t)(voucher_and_id >> 32);
+        macws_trace_all_mach_sends(&sendHeader, (mach_msg_option_t)option64);
+    }
+    if (trace && (option64 & MACH_RCV_MSG)) {
+        macws_trace_all_mach_listen(
+            (mach_msg_option_t)option64,
+            (mach_port_name_t)(uint32_t)(desc_count_and_rcv_name >> 32));
+    }
+    mach_msg_return_t result = mach_msg2_internal(
+        data, option64, bits_and_send_size, remote_and_local_port,
+        voucher_and_id, desc_count_and_rcv_name, rcv_size_and_priority,
+        timeout);
+    if (trace && (option64 & MACH_RCV_MSG) && data &&
+        result == MACH_MSG_SUCCESS) {
+        const mach_msg_header_t *received =
+            (const mach_msg_header_t *)data;
+        if (received->msgh_id >= 40000 && received->msgh_id < 41000) {
+            static _Atomic unsigned traceCount = 0;
+            unsigned sequence = atomic_fetch_add_explicit(
+                &traceCount, 1, memory_order_relaxed);
+            if (sequence < 4096) {
+                uint64_t tid = 0;
+                pthread_threadid_np(NULL, &tid);
+                char line[224];
+                int length = snprintf(
+                    line, sizeof(line),
+                    "#### MACH-ALL-MSG2-RECV seq=%u pid=%d tid=%llu id=%d "
+                    "bits=%#x remote=%u local=%u size=%u on=%u\n",
+                    sequence, getpid(), (unsigned long long)tid,
+                    received->msgh_id, received->msgh_bits,
+                    received->msgh_remote_port,
+                    received->msgh_local_port, received->msgh_size,
+                    (unsigned)(uint32_t)(desc_count_and_rcv_name >> 32));
+                if (length > 0) {
+                    size_t writeLength = (size_t)length < sizeof(line)
+                        ? (size_t)length : sizeof(line) - 1;
+                    (void)write(STDERR_FILENO, line, writeLength);
+                }
+            }
         }
     }
     return result;
@@ -14451,6 +15164,8 @@ DYLD_INTERPOSE(macws_fileport_makefd, fileport_makefd);
 DYLD_INTERPOSE(macws_fileport_makeport, fileport_makeport);
 DYLD_INTERPOSE(mach_port_construct_new, mach_port_construct);
 DYLD_INTERPOSE(mach_msg_new, mach_msg);
+DYLD_INTERPOSE(mach_msg_overwrite_new, mach_msg_overwrite);
+DYLD_INTERPOSE(mach_msg2_internal_new, mach_msg2_internal);
 DYLD_INTERPOSE(macws_dispatch_mig_server, dispatch_mig_server);
 DYLD_INTERPOSE(audit_token_to_asid_new, audit_token_to_asid);
 DYLD_INTERPOSE(audit_token_to_auid_new, audit_token_to_auid);
@@ -14785,6 +15500,24 @@ static const char *macws_private_bootstrap_service_name(const char *name) {
         return CORESERVICESD_SERVICE_NEW;
     if (!strcmp(name, DOCK_HELPER_SERVICE_ORIG))
         return DOCK_HELPER_SERVICE_NEW;
+    // filecoordinationd claims its endpoints through bootstrap_check_in
+    // (RE-confirmed: /usr/sbin/filecoordinationd+0x2cf0 checks in
+    // "com.apple.FileCoordination.kernel.ipc" directly; the FileCoordination
+    // and ProgressReporting listeners enter through the same name-bearing
+    // check-in path).  The job plist publishes collision-free macosbooter
+    // names, so the stock names must translate here just like every other
+    // shared-cache lookup — without this the daemon's check-ins land on the
+    // iPadOS-owned public names, are rejected, and the declared endpoints
+    // stay launchd-held with active=0.  Clients of the public names are
+    // already steered to the per-client proxy bundles by the earlier
+    // xpc_connection_create_mach_service intercept, which matches on the
+    // original name before this table runs.
+    if (!strcmp(name, "com.apple.FileCoordination"))
+        return "com.apple.macosbooter.FileCoordination";
+    if (!strcmp(name, "com.apple.ProgressReporting"))
+        return "com.apple.macosbooter.ProgressReporting";
+    if (!strcmp(name, "com.apple.FileCoordination.kernel.ipc"))
+        return "com.apple.macosbooter.FileCoordination.kernel.ipc";
     const char *lsdEndpoint = macws_private_bootstrap_lsd_service_name(name);
     if (lsdEndpoint != name) return lsdEndpoint;
     // Ventura's four desktop CoreLocation endpoints are a different protocol
@@ -18723,6 +19456,39 @@ static void macws_enable_frame_info_tag_list(
                 ((const char *)display + abi->enabledOffset) != 0
             : NO;
     }
+    /* DIAGNOSTIC scaffold (env-gated, not a fix): on the virtual display
+       the +0x9a4 u64 holds a code pointer rather than the enabled flag,
+       so bit35 is clear and registration is skipped even though QC did
+       call enable_frame_info_tag_list.  MACWS_IOMFB_FORCE_REG=1 forces
+       the registration so we can test whether missing frame completions
+       are what stalls the render path.  Log the flag bytes either way. */
+    static int force_reg = -1;
+    if (force_reg < 0)
+        force_reg = getenv("MACWS_IOMFB_FORCE_REG") ? 1 : 0;
+    /* Always log the first calls: without this, a production-profile run
+       cannot distinguish "hook never invoked" from "invoked, gated off".
+       Capped so the log stays bounded on a live desktop. */
+    static _Atomic unsigned tag_list_calls = 0;
+    unsigned tlc = atomic_fetch_add(&tag_list_calls, 1);
+    if (tlc < 8) {
+        fprintf(stderr,
+            "#### IOMFB enable-tag-list call#%u server=%p disp=%p fb=%p "
+            "enabled=%d force=%d f9a4=%016llx\n",
+            tlc, server, display, framebuffer, (int)frame_info_enabled,
+            force_reg,
+            display ? *(const volatile unsigned long long *)
+                ((const char *)display + abi->enabledOffset) : 0);
+    }
+    if (macws_runtime_diagnostics_enabled() && display) {
+        fprintf(stderr,
+            "#### IOMFB enable-tag-list gate fb=%p enabled=%d force=%d "
+            "f9a4=%016llx\n",
+            framebuffer, (int)frame_info_enabled, force_reg,
+            *(const volatile unsigned long long *)
+                ((const char *)display + abi->enabledOffset));
+    }
+    if (force_reg && display && framebuffer)
+        frame_info_enabled = YES;
     if (!frame_info_enabled || !framebuffer)
         return;
 
@@ -18761,6 +19527,14 @@ static void macws_enable_frame_info_tag_list(
                 last_presentation_time};
     }
     pthread_mutex_unlock(&g_macws_iomfb_frame_lock);
+    static _Atomic unsigned reg_logged = 0;
+    if (atomic_fetch_add(&reg_logged, 1) < 8) {
+        fprintf(stderr,
+            "#### IOMFB REGISTERED fb=%p client=%u callback=%p ctx=%p "
+            "slot=%u total=%u\n",
+            framebuffer, client, callback, server, registration_slot,
+            g_macws_iomfb_frame_reg_count);
+    }
     if (macws_runtime_diagnostics_enabled()) {
         if (abi->diagFieldsValid) {
             fprintf(stderr,
@@ -18781,6 +19555,94 @@ static void macws_enable_frame_info_tag_list(
                 framebuffer, client, callback, server, registration_slot);
         }
     }
+}
+
+/* Diagnostic probes read object fields whose contents can be small
+   sentinels (e.g. 0xfffffffe "empty list" — WindowServer-2026-10-12-
+   233621.ips), packed non-pointer values (0x1100000000 = count<<32,
+   2346xx crash), or PAC-tagged pointers (0x7c5200xx________) rather
+   than mapped pointers.  Range checks cannot prove readability —
+   mach_vm_read_overwrite on self asks the kernel and fails cleanly. */
+static BOOL macws_safe_read(const void *addr, void *out, size_t size) {
+    if (!addr || !out || !size) return NO;
+    mach_vm_size_t outsize = 0;
+    return mach_vm_read_overwrite(mach_task_self(),
+        (mach_vm_address_t)addr, (mach_vm_size_t)size,
+        (mach_vm_address_t)out, &outsize) == KERN_SUCCESS &&
+        outsize == size;
+}
+#ifndef MACWS_PLAUSIBLE_PTR
+#define MACWS_PLAUSIBLE_PTR(p) \
+        ((uintptr_t)(p) >= 0x100000000ull && \
+         (uintptr_t)(p) < 0x8000000000000000ull)
+#endif
+/* Extracted registration step: given the IOMFBServer object that
+   enable_frame_info_tag_list was (or would have been) invoked on, pull
+   display (server+0x58) -> framebuffer (display+0x300 on 13.4) ->
+   client (fb+0x14) and insert the frame-info registration so the
+   cancel-completion shim can pace synthetic completions for this display.
+   Returns 1 when a registration now exists. */
+static int macws_iomfb_register_from_server(void *server) {
+    const MacWSQCFrameInfoABI *abi = g_macws_qc_frame_info_abi;
+    if (!server || !g_macws_quartzcore_header || !abi)
+        return 0;
+    void *display_holder = NULL;
+    if (!macws_safe_read((const char *)server + 0x58,
+                         &display_holder, sizeof(display_holder)))
+        return 0;
+    MacwsIOMobileFramebufferRef framebuffer = NULL;
+    if (!MACWS_PLAUSIBLE_PTR(display_holder) ||
+        !macws_safe_read((const char *)display_holder + abi->displayFbOffset,
+                         &framebuffer, sizeof(framebuffer)))
+        framebuffer = NULL;
+    if (!MACWS_PLAUSIBLE_PTR(framebuffer)) {
+        static _Atomic unsigned noreg_logged = 0;
+        if (atomic_fetch_add(&noreg_logged, 1) < 8)
+            fprintf(stderr,
+                "#### IOMFB REGISTER-SKIP server=%p disp=%p no fb\n",
+                server, display_holder);
+        return 0;
+    }
+    io_connect_t client = 0;
+    if (!macws_safe_read((const char *)framebuffer + 0x14,
+                         &client, sizeof(client)) || !client) {
+        static _Atomic unsigned noclient_logged = 0;
+        if (atomic_fetch_add(&noclient_logged, 1) < 8)
+            fprintf(stderr,
+                "#### IOMFB REGISTER-SKIP server=%p fb=%p no client\n",
+                server, framebuffer);
+        return 0;
+    }
+    MacwsIOMFBFrameInfoCallback callback =
+        (MacwsIOMFBFrameInfoCallback)(g_macws_quartzcore_header +
+            abi->frameInfoCallbackOffset);
+    pthread_mutex_lock(&g_macws_iomfb_frame_lock);
+    unsigned slot = 0;
+    for (; slot < g_macws_iomfb_frame_reg_count; slot++) {
+        if (g_macws_iomfb_frame_regs[slot].framebuffer == framebuffer)
+            break;
+    }
+    if (slot == g_macws_iomfb_frame_reg_count &&
+        slot < sizeof(g_macws_iomfb_frame_regs) /
+                sizeof(g_macws_iomfb_frame_regs[0])) {
+        g_macws_iomfb_frame_reg_count++;
+    }
+    uint64_t last_presentation_time =
+        g_macws_iomfb_frame_regs[slot].last_presentation_time;
+    g_macws_iomfb_frame_regs[slot] =
+        (struct macws_iomfb_frame_registration){
+            framebuffer, client, callback, server,
+            last_presentation_time};
+    pthread_mutex_unlock(&g_macws_iomfb_frame_lock);
+    static _Atomic unsigned reg_logged2 = 0;
+    if (atomic_fetch_add(&reg_logged2, 1) < 8) {
+        fprintf(stderr,
+            "#### IOMFB REGISTERED* fb=%p client=%u callback=%p ctx=%p "
+            "slot=%u total=%u\n",
+            framebuffer, client, callback, server, slot,
+            g_macws_iomfb_frame_reg_count);
+    }
+    return 1;
 }
 
 static void macws_install_quartzcore_frame_info_hook(
@@ -18975,6 +19837,1591 @@ static void macws_install_quartzcore_coexist_pacing_hooks(
     }
 }
 
+// ---------------------------------------------------------------------------
+// DIAGNOSTIC (opt-in via MACWS_RS_CTX_TRACE=1, WindowServer only):
+// render-server context inclusion trace.  Read-only observation of the three
+// QuartzCore pipeline points that decide whether a client CA::Render::Context
+// reaches the display composite.  No argument, return value, object field or
+// ordering is changed; the wrappers only log and tail-call the original.
+//
+// RE-confirmed against the exact macOS 13.4 QuartzCore image
+//   UUID CF853BBD-01B6-3F46-ADA1-EC70FD2DC9DC, __TEXT vmaddr 0x1879be000:
+//     Context::root_layer_handle          img+0x80d24
+//     Update::add_context(Context*)       img+0x866a0
+//     Context::set_display_info(uint32_t) img+0x84ba4
+//     Update::add_included_context        img+0x17fc20
+//     Context+0x2c8 = display id field (ldr w8,[x0,#0x2c8] at img+0x84bcc
+//     inside set_display_info itself)
+// ---------------------------------------------------------------------------
+static bool macws_rs_ctx_trace_enabled(void) {
+    static _Atomic int cached = -1;
+    int value = atomic_load_explicit(&cached, memory_order_acquire);
+    if (value < 0) {
+        value = getenv("MACWS_RS_CTX_TRACE") ? 1 : 0;
+        atomic_store_explicit(&cached, value, memory_order_release);
+    }
+    return value != 0;
+}
+
+typedef void *(*MacWSRootLayerHandleFunction)(void *context);
+static MacWSRootLayerHandleFunction g_macws_root_layer_handle;
+
+typedef void (*MacWSUpdateAddContextFunction)(void *update, void *context);
+static MacWSUpdateAddContextFunction g_macws_orig_update_add_context;
+static void macws_update_add_context_diag(void *update, void *context) {
+    static _Atomic unsigned count;
+    unsigned seq = atomic_fetch_add_explicit(&count, 1, memory_order_relaxed);
+    if (seq < 768 || (seq % 8192) == 0) {
+        uint32_t displayId = context
+            ? *(const volatile uint32_t *)((const char *)context + 0x2c8) : 0;
+        void *root = (context && g_macws_root_layer_handle)
+            ? g_macws_root_layer_handle(context) : NULL;
+        uint64_t tid = 0;
+        pthread_threadid_np(NULL, &tid);
+        fprintf(stderr,
+            "#### RS-CTX-ADD seq=%u tid=%llu update=%p ctx=%p "
+            "display=%u root=%p\n",
+            seq, (unsigned long long)tid, update, context, displayId, root);
+    }
+    g_macws_orig_update_add_context(update, context);
+}
+
+typedef void (*MacWSAddIncludedContextFunction)(void *update, void *context,
+                                                unsigned arg2, unsigned arg3);
+static MacWSAddIncludedContextFunction g_macws_orig_add_included_context;
+static void macws_add_included_context_diag(void *update, void *context,
+                                            unsigned arg2, unsigned arg3) {
+    static _Atomic unsigned count;
+    unsigned seq = atomic_fetch_add_explicit(&count, 1, memory_order_relaxed);
+    if (seq < 768 || (seq % 8192) == 0) {
+        uint32_t displayId = context
+            ? *(const volatile uint32_t *)((const char *)context + 0x2c8) : 0;
+        uint32_t f5c = context
+            ? *(const volatile uint32_t *)((const char *)context + 0x5c) : 0;
+        /* RE-corrected layout (0x17d184-0x17d5c0): the work object at
+           x20 owns a record ARRAY via +0x80: [x20+0x80] = array hdr,
+           *hdr = first record; records are 0x20-byte slots iterated by
+           post-indexed load; tag byte at rec+0xc; tag 0x1e = context
+           record that leads to the include=1 site.  Probe update+0x80
+           on this (possibly same) object and dump the first few tags. */
+        uint32_t tag0 = 0, tag1 = 0, tag2 = 0, tag3 = 0, tag4 = 0, tag5 = 0;
+        uint32_t ncount = 0;
+        uint64_t hdr2 = 0;
+        void *listp = NULL;
+        if (MACWS_PLAUSIBLE_PTR(update))
+            (void)macws_safe_read((const char *)update + 0x80,
+                                  &listp, sizeof(listp));
+        uintptr_t rec = (uintptr_t)listp;
+        if (macws_safe_read((void *)(rec + 0x8), &hdr2, sizeof(hdr2))) {
+            uintptr_t first = 0;
+            if (macws_safe_read((void *)rec, &first, sizeof(first))) {
+                rec = first;
+                for (int i = 0; i < 6 && MACWS_PLAUSIBLE_PTR(rec);
+                     i++, rec += 0x20) {
+                    uint8_t t = 0;
+                    if (!macws_safe_read((void *)(rec + 0xc),
+                                         &t, sizeof(t)))
+                        break;
+                    switch (i) {
+                        case 0: tag0 = t; break; case 1: tag1 = t; break;
+                        case 2: tag2 = t; break; case 3: tag3 = t; break;
+                        case 4: tag4 = t; break; default: tag5 = t; break;
+                    }
+                    ncount++;
+                }
+            }
+        }
+        uint64_t tid = 0;
+        pthread_threadid_np(NULL, &tid);
+        fprintf(stderr,
+            "#### RS-CTX-INCLUDED seq=%u tid=%llu update=%p ctx=%p "
+            "display=%u a2=%u a3=%u f5c=%08x tags=%02x,%02x,%02x,%02x,%02x,%02x "
+            "n=%u lp=%p h8=%llx\n",
+            seq, (unsigned long long)tid, update, context, displayId,
+            arg2, arg3, f5c, tag0, tag1, tag2, tag3, tag4, tag5,
+            ncount, listp, (unsigned long long)hdr2);
+    }
+    g_macws_orig_add_included_context(update, context, arg2, arg3);
+}
+
+typedef void (*MacWSSetDisplayInfoFunction)(void *context, uint32_t display);
+static MacWSSetDisplayInfoFunction g_macws_orig_set_display_info;
+static void macws_set_display_info_diag(void *context, uint32_t display) {
+    static _Atomic unsigned count;
+    unsigned seq = atomic_fetch_add_explicit(&count, 1, memory_order_relaxed);
+    if (seq < 1024) {
+        uint32_t oldId = context
+            ? *(const volatile uint32_t *)((const char *)context + 0x2c8) : 0;
+        uint64_t tid = 0;
+        pthread_threadid_np(NULL, &tid);
+        fprintf(stderr,
+            "#### RS-CTX-SETDISPLAY seq=%u tid=%llu ctx=%p old=%u new=%u\n",
+            seq, (unsigned long long)tid, context, oldId, display);
+    }
+    g_macws_orig_set_display_info(context, display);
+}
+
+// CA::WindowServer::Server::context_created (img+0x287428 on the 13.4
+// image) is the SkyLight-side binding between a fresh
+// CA::Render::Context and a Display.  Argument order is RE-confirmed via
+// attach_contexts (img+0x288a70), which calls it as
+//   context_created(ctx_from_copy_all_contexts, displayObj):
+// entry gates: (ctx+0xc & 0x4200) must equal 0x4000, ctx+0x18 (the client-
+// supplied options dictionary) must be non-NULL, and the display object
+// id at ((x1+0x58)+0x10) must match the dictionary's display id/name
+// before set_display_info runs.  Log the gate inputs at entry so a bail
+// path is distinguishable from never being called.  Read-only diagnostic.
+typedef void (*MacWSContextCreatedFunction)(void *context, void *displayObj,
+                                            void *unused1, void *unused2);
+static MacWSContextCreatedFunction g_macws_orig_context_created;
+static void macws_context_created_diag(void *context, void *displayObj,
+                                       void *unused1, void *unused2) {
+    static _Atomic unsigned count;
+    unsigned seq = atomic_fetch_add_explicit(&count, 1, memory_order_relaxed);
+    if (seq < 1024) {
+        uint32_t flags = context
+            ? *(const volatile uint32_t *)((const char *)context + 0xc) : 0;
+        const void *options = context
+            ? *(void *const *)((const char *)context + 0x18) : NULL;
+        const void *displayRef = displayObj
+            ? *(void *const *)((const char *)displayObj + 0x58) : NULL;
+        uint32_t displayId = 0;
+        if (MACWS_PLAUSIBLE_PTR(displayRef))
+            (void)macws_safe_read((const char *)displayRef + 0x10,
+                                  &displayId, sizeof(displayId));
+        uint64_t tid = 0;
+        pthread_threadid_np(NULL, &tid);
+        fprintf(stderr,
+            "#### RS-CTX-CREATED seq=%u tid=%llu ctx=%p flags=%#x "
+            "options=%p displayObj=%p displayId=%u\n",
+            seq, (unsigned long long)tid, context, flags, options,
+            displayObj, displayId);
+    }
+    g_macws_orig_context_created(context, displayObj, unused1, unused2);
+}
+
+// attach_contexts (img+0x288a70) re-binds every live Context to this
+// Display — the fallback path that runs on display (re)initialisation.
+// Log each invocation so "context_created never fired" can be told apart
+// from "attach_contexts never ran".
+typedef void (*MacWSAttachContextsFunction)(void *displayObj);
+static MacWSAttachContextsFunction g_macws_orig_attach_contexts;
+static void macws_attach_contexts_diag(void *displayObj) {
+    static _Atomic unsigned count;
+    unsigned seq = atomic_fetch_add_explicit(&count, 1, memory_order_relaxed);
+    if (seq < 1024) {
+        uint64_t tid = 0;
+        pthread_threadid_np(NULL, &tid);
+        fprintf(stderr, "#### RS-CTX-ATTACH seq=%u tid=%llu displayObj=%p\n",
+                seq, (unsigned long long)tid, displayObj);
+    }
+    g_macws_orig_attach_contexts(displayObj);
+}
+
+// CA::Render::post_notification (img+0x3b0e4) is the single emit point
+// for all render notifications.  Context::Context posts name=0x1 from
+// its constructor; the WindowServer::Server ctor registers
+// context_created as the 0x1 observer.  With commits flowing but zero
+// context_created hits, log the notification stream to tell "0x1 never
+// posted" apart from "observer dispatch broken".  Read-only diagnostic.
+typedef void (*MacWSPostNotificationFunction)(unsigned name, void *object,
+                                              void *arg, int flag);
+static MacWSPostNotificationFunction g_macws_orig_post_notification;
+static void macws_post_notification_diag(unsigned name, void *object,
+                                         void *arg, int flag) {
+    static _Atomic unsigned count;
+    unsigned seq = atomic_fetch_add_explicit(&count, 1, memory_order_relaxed);
+    if (seq < 4096) {
+        uint64_t tid = 0;
+        pthread_threadid_np(NULL, &tid);
+        fprintf(stderr,
+            "#### RS-CTX-NOTIFY seq=%u tid=%llu name=%u obj=%p arg=%p "
+            "flag=%d\n",
+            seq, (unsigned long long)tid, name, object, arg, flag);
+    }
+    g_macws_orig_post_notification(name, object, arg, flag);
+}
+
+// CA::Render::Server::register_client (img+0x1d0c34) is the server-side
+// entry for CASRegisterClient.  If commits arrive but post_notification
+// stays silent, this is the first place that can prove whether any
+// server-side Render::Context is ever created.  Read-only diagnostic.
+typedef void *(*MacWSRegisterClientFunction)(unsigned a1, unsigned a2,
+    int a3, unsigned a4, unsigned a5, unsigned a6,
+    const void *options, unsigned *o1, unsigned *o2, unsigned *o3,
+    unsigned a7);
+static MacWSRegisterClientFunction g_macws_orig_register_client;
+static void *macws_register_client_diag(unsigned a1, unsigned a2, int a3,
+    unsigned a4, unsigned a5, unsigned a6, const void *options,
+    unsigned *o1, unsigned *o2, unsigned *o3, unsigned a7) {
+    static _Atomic unsigned count;
+    unsigned seq = atomic_fetch_add_explicit(&count, 1, memory_order_relaxed);
+    void *ctx = g_macws_orig_register_client(a1, a2, a3, a4, a5, a6,
+        options, o1, o2, o3, a7);
+    if (seq < 1024) {
+        uint64_t tid = 0;
+        pthread_threadid_np(NULL, &tid);
+        fprintf(stderr,
+            "#### RS-CTX-REG seq=%u tid=%llu a1=%u a2=%u a3=%d a4=%u "
+            "a5=%u a6=%u options=%p -> ctx=%p\n",
+            seq, (unsigned long long)tid, a1, a2, a3, a4, a5, a6,
+            options, ctx);
+    }
+    return ctx;
+}
+
+// CA::Render::Context::context_by_server_port (img+0x156d90) resolves
+// the receive port on every 40002 commit.  Log port->context so a
+// stream of commits that resolve to NULL is distinguishable from real
+// server-side contexts.  Read-only diagnostic.
+typedef void *(*MacWSContextByServerPortFunction)(unsigned port);
+static MacWSContextByServerPortFunction g_macws_orig_ctx_by_port;
+static void *macws_ctx_by_port_diag(unsigned port) {
+    void *ctx = g_macws_orig_ctx_by_port(port);
+    static _Atomic unsigned count;
+    unsigned seq = atomic_fetch_add_explicit(&count, 1, memory_order_relaxed);
+    if (seq < 1024) {
+        uint64_t tid = 0;
+        pthread_threadid_np(NULL, &tid);
+        fprintf(stderr, "#### RS-CTX-LOOKUP seq=%u tid=%llu port=%u -> %p\n",
+                seq, (unsigned long long)tid, port, ctx);
+    }
+    return ctx;
+}
+
+// CA::WindowServer::VirtualServer::render_surface (img+0xecf3c on 13.4)
+// rasterizes a single WindowServer::Surface — the point where a client
+// context's layer tree is drawn into the surface's IOSurface.  Signature
+// (this, Update*, Surface*, Bounds*, bool): log surface ptr + bounds so
+// "client surfaces never rasterized" is provable against live output.
+// Read-only diagnostic.
+typedef void (*MacWSVRenderSurfaceFunction)(void *self, void *update,
+                                            void *surface, void *bounds,
+                                            int flag);
+static MacWSVRenderSurfaceFunction g_macws_orig_vrender_surface;
+static void macws_vrender_surface_diag(void *self, void *update,
+                                       void *surface, void *bounds,
+                                       int flag) {
+    static _Atomic unsigned count;
+    unsigned seq = atomic_fetch_add_explicit(&count, 1, memory_order_relaxed);
+    if (seq < 1024) {
+        const volatile float *b = (const volatile float *)bounds;
+        uint64_t tid = 0;
+        pthread_threadid_np(NULL, &tid);
+        fprintf(stderr,
+            "#### RS-SURF-RENDER seq=%u tid=%llu srv=%p upd=%p surf=%p "
+            "b=[%g %g %g %g] flag=%d\n",
+            seq, (unsigned long long)tid, self, update, surface,
+            b ? b[0] : -1.f, b ? b[1] : -1.f, b ? b[2] : -1.f,
+            b ? b[3] : -1.f, flag);
+    }
+    g_macws_orig_vrender_surface(self, update, surface, bounds, flag);
+}
+
+// CA::WindowServer::Display::render_surface (img+0x158824 on 13.4)
+// composites one window surface into the display framebuffer.
+// Signature (this, Renderer*, Surface*, Update*, Bounds*, bool):
+// x2 = surface, x4 = bounds.  Fires per composited surface — seeing
+// client-sized surfaces here proves they reach the framebuffer pass.
+// Read-only diagnostic.
+typedef void (*MacWSDRenderSurfaceFunction)(void *self, void *renderer,
+                                            void *surface, void *update,
+                                            void *bounds, int flag);
+static MacWSDRenderSurfaceFunction g_macws_orig_drender_surface;
+static void macws_drender_surface_diag(void *self, void *renderer,
+                                       void *surface, void *update,
+                                       void *bounds, int flag) {
+    static _Atomic unsigned count;
+    unsigned seq = atomic_fetch_add_explicit(&count, 1, memory_order_relaxed);
+    if (seq < 1024) {
+        const volatile float *b = (const volatile float *)bounds;
+        uint64_t tid = 0;
+        pthread_threadid_np(NULL, &tid);
+        fprintf(stderr,
+            "#### RS-DISP-SURF seq=%u tid=%llu disp=%p rend=%p surf=%p "
+            "upd=%p b=[%g %g %g %g] flag=%d\n",
+            seq, (unsigned long long)tid, self, renderer, surface, update,
+            b ? b[0] : -1.f, b ? b[1] : -1.f, b ? b[2] : -1.f,
+            b ? b[3] : -1.f, flag);
+    }
+    g_macws_orig_drender_surface(self, renderer, surface, update, bounds,
+                                 flag);
+}
+
+// The three functions that directly call CA::WindowServer::Display::
+// render_surface (img+0x158824).  None of them has fired so far — hooking
+// each caller shows whether the display composite pass ever reaches the
+// surface-compositing stage at all.  Signatures unconfirmed; log the
+// first six argument registers read-only.  0x179658 is the update worker
+// that calls add_included_context (img+0x17fc20) at +0x3b74.
+typedef void (*MacWSGenericSixFunction)(void *self, void *a1, void *a2,
+                                        void *a3, void *a4, void *a5);
+static void macws_generic_six_diag(const char *tag, void *self, void *a1,
+                                   void *a2, void *a3, void *a4, void *a5,
+                                   _Atomic unsigned *count) {
+    unsigned seq = atomic_fetch_add_explicit(count, 1, memory_order_relaxed);
+    if (seq < 1024) {
+        uint64_t tid = 0;
+        pthread_threadid_np(NULL, &tid);
+        fprintf(stderr,
+            "#### %s seq=%u tid=%llu self=%p a1=%p a2=%p a3=%p a4=%p "
+            "a5=%p\n",
+            tag, seq, (unsigned long long)tid, self, a1, a2, a3, a4, a5);
+    }
+}
+static MacWSGenericSixFunction g_macws_orig_dcaller_7b798;
+static MacWSGenericSixFunction g_macws_orig_dcaller_10af24;
+static MacWSGenericSixFunction g_macws_orig_dcaller_192af8;
+static MacWSGenericSixFunction g_macws_orig_updworker_179658;
+static _Atomic unsigned g_macws_dcaller_7b798_n;
+static _Atomic unsigned g_macws_dcaller_10af24_n;
+static _Atomic unsigned g_macws_dcaller_192af8_n;
+static _Atomic unsigned g_macws_updworker_179658_n;
+static void macws_dcaller_7b798_diag(void *self, void *a1, void *a2,
+                                     void *a3, void *a4, void *a5) {
+    macws_generic_six_diag("RS-DCALL-A", self, a1, a2, a3, a4, a5,
+                           &g_macws_dcaller_7b798_n);
+    g_macws_orig_dcaller_7b798(self, a1, a2, a3, a4, a5);
+}
+static void macws_dcaller_10af24_diag(void *self, void *a1, void *a2,
+                                      void *a3, void *a4, void *a5) {
+    macws_generic_six_diag("RS-DCALL-B", self, a1, a2, a3, a4, a5,
+                           &g_macws_dcaller_10af24_n);
+    g_macws_orig_dcaller_10af24(self, a1, a2, a3, a4, a5);
+}
+static void macws_dcaller_192af8_diag(void *self, void *a1, void *a2,
+                                      void *a3, void *a4, void *a5) {
+    macws_generic_six_diag("RS-DCALL-C", self, a1, a2, a3, a4, a5,
+                           &g_macws_dcaller_192af8_n);
+    g_macws_orig_dcaller_192af8(self, a1, a2, a3, a4, a5);
+}
+static void macws_updworker_179658_diag(void *self, void *a1, void *a2,
+                                        void *a3, void *a4, void *a5) {
+    unsigned seq = atomic_fetch_add_explicit(&g_macws_updworker_179658_n,
+                                             1, memory_order_relaxed);
+    if (seq < 1024) {
+        uint64_t tid = 0;
+        pthread_threadid_np(NULL, &tid);
+        /* RE-confirmed: the worker's include=1 call site iterates
+           x20+0x848 (pending node list, node tag at +0xc0 must be 0x1e).
+           x20 is most plausibly a0 or a1 — dump both candidates and walk
+           up to 4 node tags when a list head is present. */
+        void *l0 = NULL, *l1 = NULL;
+        if (MACWS_PLAUSIBLE_PTR(self))
+            (void)macws_safe_read((const char *)self + 0x848,
+                                  &l0, sizeof(l0));
+        if (MACWS_PLAUSIBLE_PTR(a1))
+            (void)macws_safe_read((const char *)a1 + 0x848,
+                                  &l1, sizeof(l1));
+        uint32_t tags[4] = {0, 0, 0, 0};
+        uintptr_t h0 = 0, h1 = 0;
+        uintptr_t node = (uintptr_t)l0;
+        if (macws_safe_read((void *)node, &h0, sizeof(h0)) &&
+            macws_safe_read((void *)(node + 8), &h1, sizeof(h1))) {
+            node = h0;
+            for (int i = 0; i < 4 && MACWS_PLAUSIBLE_PTR(node); i++) {
+                if (!macws_safe_read((void *)(node + 0xc0),
+                                     &tags[i], sizeof(tags[i])))
+                    break;
+                uintptr_t next = 0;
+                if (!macws_safe_read((void *)node, &next, sizeof(next)))
+                    break;
+                node = next;
+            }
+        }
+        fprintf(stderr,
+            "#### RS-UPDWORKER seq=%u tid=%llu self=%p a1=%p a2=%p "
+            "l0=%p l1=%p h0=%lx h1=%lx tags=%x,%x,%x,%x\n",
+            seq, (unsigned long long)tid, self, a1, a2, l0, l1,
+            h0, h1, tags[0], tags[1], tags[2], tags[3]);
+    }
+    g_macws_orig_updworker_179658(self, a1, a2, a3, a4, a5);
+}
+static MacWSGenericSixFunction g_macws_orig_frameentry_28dbd4;
+static _Atomic unsigned g_macws_frameentry_28dbd4_n;
+static void macws_frameentry_28dbd4_diag(void *self, void *a1, void *a2,
+                                         void *a3, void *a4, void *a5) {
+    macws_generic_six_diag("RS-FRAME-ENTRY", self, a1, a2, a3, a4, a5,
+                           &g_macws_frameentry_28dbd4_n);
+    g_macws_orig_frameentry_28dbd4(self, a1, a2, a3, a4, a5);
+}
+// The IOMFBDisplay vtable slot +0x158 points at func-0x28dbd4+0x2c ==
+// img+0x28dc00 (a mid-function tail entry, not a pacibsp start).  Hook
+// the exact slot target so the per-frame display work is counted even
+// if callers enter past the prologue.  Read-only diagnostic.
+static MacWSGenericSixFunction g_macws_orig_frameentry_28dc00;
+static _Atomic unsigned g_macws_frameentry_28dc00_n;
+static void macws_frameentry_28dc00_diag(void *self, void *a1, void *a2,
+                                         void *a3, void *a4, void *a5) {
+    macws_generic_six_diag("RS-FRAME-VSLOT", self, a1, a2, a3, a4, a5,
+                           &g_macws_frameentry_28dc00_n);
+    g_macws_orig_frameentry_28dc00(self, a1, a2, a3, a4, a5);
+}
+// img+0x28f470: the vsync handler's per-display work function.  It gates
+// the frame call on three conditions in order: byte+0x324 (set by
+// disp-signal — confirmed firing), a global byte, byte+0x325, then
+// member+0x288 != NULL before calling this->vtable[0x158].  Log the exact
+// gate inputs so the failing condition is identified, not guessed.
+// Read-only diagnostic.
+static void *macws_resolve_adrp(const void *ins_addr);
+static MacWSGenericSixFunction g_macws_orig_dispwork_28f470;
+static _Atomic unsigned g_macws_dispwork_28f470_n;
+static void macws_dispwork_28f470_diag(void *self, void *a1, void *a2,
+                                       void *a3, void *a4, void *a5) {
+    unsigned seq = atomic_fetch_add_explicit(&g_macws_dispwork_28f470_n,
+                                             1, memory_order_relaxed);
+    if (seq < 1024) {
+        volatile uint8_t *b = (volatile uint8_t *)self;
+        volatile void *m298 = NULL, *m288 = NULL;
+        volatile uint8_t g483 = 0xff;
+        if ((uintptr_t)self > 0x1000) {
+            m298 = *(void *volatile *)((volatile char *)self + 0x298);
+            m288 = *(void *volatile *)((volatile char *)self + 0x288);
+        }
+        if (g_macws_quartzcore_header) {
+            void *pg = macws_resolve_adrp(
+                (const char *)g_macws_quartzcore_header + 0x28f4a0);
+            if (pg)
+                g483 = *(volatile uint8_t *)((volatile char *)pg + 0x483);
+        }
+        uint64_t tid = 0;
+        pthread_threadid_np(NULL, &tid);
+        fprintf(stderr,
+            "#### RS-DISP-WORK seq=%u tid=%llu self=%p f324=%u f325=%u "
+            "g483=%u m298=%p m288=%p lr=%p\n",
+            seq, (unsigned long long)tid, self,
+            (uintptr_t)self > 0x1000 ? b[0x324] : 0xff,
+            (uintptr_t)self > 0x1000 ? b[0x325] : 0xff,
+            g483, m298, m288, __builtin_return_address(0));
+    }
+    g_macws_orig_dispwork_28f470(self, a1, a2, a3, a4, a5);
+}
+
+// img+0x28eaa0: lazily creates the display pipeline member at +0x288 —
+// the exact field the vsync work function reads before its vtable[0x158]
+// frame call.  Runtime evidence shows m288 stays NULL while disp-signal
+// fires ~270x per run.  Zero hits here means the creator is never
+// invoked; hits with m288 still NULL means the inner create call fails.
+// Read-only diagnostic.
+static MacWSGenericSixFunction g_macws_orig_pipecreate_28eaa0;
+static _Atomic unsigned g_macws_pipecreate_28eaa0_n;
+static void macws_pipecreate_28eaa0_diag(void *self, void *a1, void *a2,
+                                         void *a3, void *a4, void *a5) {
+    volatile void *m288_pre = NULL, *m298_pre = NULL, *m58 = NULL;
+    volatile uint8_t f325 = 0;
+    if ((uintptr_t)self > 0x1000) {
+        m288_pre = *(void *volatile *)((volatile char *)self + 0x288);
+        m298_pre = *(void *volatile *)((volatile char *)self + 0x298);
+        m58   = *(void *volatile *)((volatile char *)self + 0x58);
+        f325  = *(uint8_t volatile *)((volatile char *)self + 0x325);
+    }
+    void *lr = __builtin_return_address(0);
+    g_macws_orig_pipecreate_28eaa0(self, a1, a2, a3, a4, a5);
+    unsigned seq = atomic_fetch_add_explicit(&g_macws_pipecreate_28eaa0_n,
+                                             1, memory_order_relaxed);
+    if (seq < 1024) {
+        volatile void *m288 = NULL, *m298 = NULL;
+        if ((uintptr_t)self > 0x1000) {
+            m288 = *(void *volatile *)((volatile char *)self + 0x288);
+            m298 = *(void *volatile *)((volatile char *)self + 0x298);
+        }
+        uint64_t tid = 0;
+        pthread_threadid_np(NULL, &tid);
+        fprintf(stderr,
+            "#### RS-PIPE-CREATE seq=%u tid=%llu self=%p f325=0x%x "
+            "m288=%p->%p m298=%p->%p m58=%p lr=%p\n",
+            seq, (unsigned long long)tid, self, f325,
+            m288_pre, m288, m298_pre, m298, m58, lr);
+    }
+}
+
+// Resolve an adrp instruction at runtime: given the address of an adrp
+// instruction, decode immhi:immlo and return its page target.  Used to
+// find image-relative globals (mode bytes) without hardcoding bases.
+static void *macws_resolve_adrp(const void *ins_addr) {
+    uint32_t w = *(const uint32_t *)ins_addr;
+    if ((w & 0x9f000000) != 0x90000000)
+        return NULL;
+    int64_t imm = (int64_t)(((w >> 3) & 0x1ffffc) | ((w >> 29) & 3));
+    if (imm & 0x200000)
+        imm |= ~0x1fffffLL;
+    uintptr_t page = ((uintptr_t)ins_addr & ~0xfffULL) + (imm << 12);
+    return (void *)page;
+}
+
+// img+0x2e4ae8: callee of the per-frame display work path (reached from
+// the g483 alternate branch at 0x28f5d8 and two other display sites).
+// Fires every frame if the frame path executes real work.
+// img+0x2e7818 / img+0x2e86d0: vtable-dispatched callers of
+// Display::render_surface via 0x192af8 — the last hop before surface
+// rasterization.  Zero hits = the display's virtual render methods are
+// never invoked.  Read-only diagnostics.
+static MacWSGenericSixFunction g_macws_orig_dispcommit_2e4ae8;
+static _Atomic unsigned g_macws_dispcommit_2e4ae8_n;
+static void macws_dispcommit_2e4ae8_diag(void *self, void *a1, void *a2,
+                                         void *a3, void *a4, void *a5) {
+    unsigned seq = atomic_fetch_add_explicit(&g_macws_dispcommit_2e4ae8_n,
+                                             1, memory_order_relaxed);
+    if (seq < 1024) {
+        uint64_t tid = 0;
+        pthread_threadid_np(NULL, &tid);
+        fprintf(stderr,
+            "#### RS-DCOMMIT seq=%u tid=%llu self=%p a1=%p a2=%p lr=%p\n",
+            seq, (unsigned long long)tid, self, a1, a2,
+            __builtin_return_address(0));
+    }
+    g_macws_orig_dispcommit_2e4ae8(self, a1, a2, a3, a4, a5);
+}
+
+static MacWSGenericSixFunction g_macws_orig_rsurfv_2e7818;
+static _Atomic unsigned g_macws_rsurfv_2e7818_n;
+static void macws_rsurfv_2e7818_diag(void *self, void *a1, void *a2,
+                                     void *a3, void *a4, void *a5) {
+    unsigned seq = atomic_fetch_add_explicit(&g_macws_rsurfv_2e7818_n,
+                                             1, memory_order_relaxed);
+    if (seq < 1024) {
+        uint64_t tid = 0;
+        pthread_threadid_np(NULL, &tid);
+        fprintf(stderr,
+            "#### RS-RSURFV-A seq=%u tid=%llu self=%p a1=%p a2=%p\n",
+            seq, (unsigned long long)tid, self, a1, a2);
+    }
+    g_macws_orig_rsurfv_2e7818(self, a1, a2, a3, a4, a5);
+}
+
+static MacWSGenericSixFunction g_macws_orig_rsurfv_2e86d0;
+static _Atomic unsigned g_macws_rsurfv_2e86d0_n;
+static void macws_rsurfv_2e86d0_diag(void *self, void *a1, void *a2,
+                                     void *a3, void *a4, void *a5) {
+    unsigned seq = atomic_fetch_add_explicit(&g_macws_rsurfv_2e86d0_n,
+                                             1, memory_order_relaxed);
+    if (seq < 1024) {
+        uint64_t tid = 0;
+        pthread_threadid_np(NULL, &tid);
+        fprintf(stderr,
+            "#### RS-RSURFV-B seq=%u tid=%llu self=%p a1=%p a2=%p\n",
+            seq, (unsigned long long)tid, self, a1, a2);
+    }
+    g_macws_orig_rsurfv_2e86d0(self, a1, a2, a3, a4, a5);
+}
+
+// img+0x164cb4: the "benchmark mode" gate consulted by the pipeline
+// creator right before the inner create stub call (env probes for
+// CA_BENCHMARK / LK_BENCHMARK strings).  A nonzero return skips the
+// create+store entirely — distinguish that gate from an inner NULL.
+// Read-only diagnostic; logs the real return value.
+typedef uintptr_t (*MacWSOneArgFunction)(void *a0);
+static MacWSOneArgFunction g_macws_orig_benchchk_164cb4;
+static _Atomic unsigned g_macws_benchchk_164cb4_n;
+static uintptr_t macws_benchchk_164cb4_diag(void *a0) {
+    uintptr_t rc = g_macws_orig_benchchk_164cb4(a0);
+    unsigned seq = atomic_fetch_add_explicit(&g_macws_benchchk_164cb4_n,
+                                             1, memory_order_relaxed);
+    if (seq < 64) {
+        void *lr = __builtin_return_address(0);
+        uint64_t tid = 0;
+        pthread_threadid_np(NULL, &tid);
+        fprintf(stderr,
+            "#### RS-BENCHCHK seq=%u tid=%llu a0=%p rc=%#lx lr=%p\n",
+            seq, (unsigned long long)tid, a0, (unsigned long)rc, lr);
+    }
+    return rc;
+}
+
+// img+0x28ee7c: the display wake/signal function — sets the pending-work
+// byte at display+0x324 that the vsync handler (0x28f470) requires
+// nonzero before issuing the vtable[0x158] frame call.  If it never
+// fires, updates never mark the display dirty and the compositor sits
+// idle despite a healthy vsync.  Read-only diagnostic.
+static MacWSGenericSixFunction g_macws_orig_dispsignal_28ee7c;
+static _Atomic unsigned g_macws_dispsignal_28ee7c_n;
+static void macws_dispsignal_28ee7c_diag(void *self, void *a1, void *a2,
+                                         void *a3, void *a4, void *a5) {
+    macws_generic_six_diag("RS-DISP-SIGNAL", self, a1, a2, a3, a4, a5,
+                           &g_macws_dispsignal_28ee7c_n);
+    g_macws_orig_dispsignal_28ee7c(self, a1, a2, a3, a4, a5);
+}
+
+// CA::WindowServer::VirtualServer::render_update (img+0xed068 on 13.4)
+// consumes one committed Update and rasterizes its included contexts.
+// RS-CTX-INCLUDED fires hundreds of times while both render_surface
+// probes stay at zero — this is the next function up the chain.  Zero
+// hits here means the update is collected but never submitted for
+// rasterization; hits mean the failure is inside it.  Read-only
+// diagnostic.
+typedef void (*MacWSVRenderUpdateFunction)(void *self, void *update);
+static MacWSVRenderUpdateFunction g_macws_orig_vrender_update;
+static void macws_vrender_update_diag(void *self, void *update) {
+    static _Atomic unsigned count;
+    unsigned seq = atomic_fetch_add_explicit(&count, 1, memory_order_relaxed);
+    if (seq < 1024) {
+        uint64_t tid = 0;
+        pthread_threadid_np(NULL, &tid);
+        fprintf(stderr,
+            "#### RS-VUPDATE seq=%u tid=%llu srv=%p upd=%p\n",
+            seq, (unsigned long long)tid, self, update);
+    }
+    g_macws_orig_vrender_update(self, update);
+}
+
+// QC image offset 0x28f0fc (13.4): the display thread's per-frame runloop
+// callback.  Runtime evidence: thread `com.apple.coreanimation.display.primary`
+// parks with its frame inside this function's initial lock acquisition
+// (LR == entry+0x4c) while hundreds of render-server commits stream in.
+// Whether this function EVER runs decides between two failure shapes:
+// zero hits means the display runloop is never signalled (updates are
+// queued but nothing wakes the compositor), hits mean the wakeup path is
+// fine and the queue/pop/render internals deserve the next look.
+// Signature is the CFRunLoop observer callback's (x0..x4 used); read-only.
+typedef void (*MacWSDispRunloopCbFunction)(void *a0, void *a1, void *a2,
+                                           void *a3, void *a4);
+static MacWSDispRunloopCbFunction g_macws_orig_disp_runloop_cb;
+static void macws_disp_runloop_cb_diag(void *a0, void *a1, void *a2,
+                                       void *a3, void *a4) {
+    static _Atomic unsigned count;
+    unsigned seq = atomic_fetch_add_explicit(&count, 1, memory_order_relaxed);
+    if (seq < 1024) {
+        uint64_t tid = 0;
+        pthread_threadid_np(NULL, &tid);
+        fprintf(stderr,
+            "#### RS-DISP-FRAME seq=%u tid=%llu a0=%p a1=%p a2=%p a3=%p "
+            "a4=%p\n",
+            seq, (unsigned long long)tid, a0, a1, a2, a3, a4);
+    }
+    g_macws_orig_disp_runloop_cb(a0, a1, a2, a3, a4);
+}
+
+// QC image offsets 0xcb990 / 0xcc984 / 0x10a88c (13.4): render-server
+// construction path.  The two factory wrappers read the display's flags
+// u64 at +0x9a4, allocate a 0x348-byte object and run the class ctor at
+// 0x10a88c, which is the ONLY function that calls
+// enable_frame_info_tag_list (0x29285c).  Runtime evidence: the live
+// virtual display's tag-list registration never happens (our shim sees
+// zero calls and the CANCEL-COMPLETION table stays empty), the render
+// surface vfuncs (0xecf3c / 0x158824 / 0xed068) never fire, and no
+// 0x348-byte server object exists in any scanned field.  Zero hits on
+// these probes means the server factory is never invoked -> the missing
+// invariant is upstream of the ctor; hits mean it ran and either failed
+// or stored the server somewhere we haven't looked.  Read-only diag.
+typedef uintptr_t (*MacWSFactoryFunction)(uintptr_t a0);
+static MacWSFactoryFunction g_macws_orig_srvfactory_a;
+static MacWSFactoryFunction g_macws_orig_srvfactory_b;
+static uintptr_t macws_srvfactory_a_diag(uintptr_t a0) {
+    uintptr_t ret = g_macws_orig_srvfactory_a(a0);
+    fprintf(stderr,
+        "#### RS-SRVFACT-A a0=%#lx flags9a4=%#llx ret=%#lx\n",
+        (unsigned long)a0,
+        a0 ? *(unsigned long long *)(a0 + 0x9a4) : 0ull,
+        (unsigned long)ret);
+    return ret;
+}
+static uintptr_t macws_srvfactory_b_diag(uintptr_t a0) {
+    uintptr_t ret = g_macws_orig_srvfactory_b(a0);
+    fprintf(stderr,
+        "#### RS-SRVFACT-B a0=%#lx flags9a4=%#llx ret=%#lx\n",
+        (unsigned long)a0,
+        a0 ? *(unsigned long long *)(a0 + 0x9a4) : 0ull,
+        (unsigned long)ret);
+    return ret;
+}
+typedef uintptr_t (*MacWSCtorFunction)(uintptr_t a0, uintptr_t a1);
+static MacWSCtorFunction g_macws_orig_srvctor;
+static uintptr_t macws_srvctor_diag(uintptr_t a0, uintptr_t a1) {
+    uintptr_t ret = g_macws_orig_srvctor(a0, a1);
+    fprintf(stderr,
+        "#### RS-SRVCTOR obj=%#lx a1=%#lx ret=%#lx vt=%#lx\n",
+        (unsigned long)a0, (unsigned long)a1, (unsigned long)ret,
+        ret ? *(unsigned long *)ret : 0ul);
+    /* DIAGNOSTIC (env-gated): the ctor's own enable_frame_info_tag_list
+       calls at img+0x10ad70/0x10adb4 are skipped on the virtual display
+       (gate at img+0x10ab04 rejects this+0x9a4), so no registration is
+       ever recorded and every cancel-completion logs FAIL.  With
+       MACWS_IOMFB_FORCE_REG=1, register the server object right after
+       construction so the causal chain registration -> completion ->
+       present -> graphics_ready can be tested end-to-end. */
+    static int force_reg = -1;
+    if (force_reg < 0)
+        force_reg = getenv("MACWS_IOMFB_FORCE_REG") ? 1 : 0;
+    if (force_reg && g_macws_iomfb_frame_reg_count == 0) {
+        int ok = 0;
+        if (ret)
+            ok = macws_iomfb_register_from_server((void *)ret);
+        if (!ok && a0 && a0 != (uintptr_t)ret)
+            ok = macws_iomfb_register_from_server((void *)a0);
+        fprintf(stderr,
+            "#### RS-SRVCTOR force-register server=%p this=%p -> %d\n",
+            (void *)ret, (void *)a0, ok);
+    }
+    return ret;
+}
+
+// ---------------------------------------------------------------------------
+// DIAGNOSTIC (opt-in via MACWS_SL_WCTX_TRACE=1, any process loading the
+// images): client-side window-content pipeline trace.  Runtime evidence
+// (dock.log MACH-ALL histogram) shows Dock sends many 29xxx CGS window ops
+// but NEVER sends msgh_id 5395 — the multiplexed channel used by
+// SLSCreateLayerContext (0x1513), SLSBindSurface, SLSAddSurface,
+// SLSShapeSurface and SLSFlushSurface — and never sends 29464
+// (SLSSetWindowLayerContext).  On the client side, AppKit calls
+// CGWindowContextCreate -> SLWindowContextCreate, which chooses between
+// the CA delegate (CAWindowContextDelegateCreate, dlopen'd from
+// QuartzCore) and the RIP CPU-bitmap delegate
+// (__CGWindowContextDelegateCreate in CoreGraphics) based on a flag byte
+// computed from the CG_USE_CA_WINDOW_CONTEXT / SLWindowContextShouldUseCA
+// defaults and a CFBoolean inside the caller-supplied options dictionary
+// (RE-confirmed via SLWindowContextCreate at SkyLight img+0x2af610).
+// Logging entry+return on the decision point plus each downstream sender
+// answers "is the factory called, which delegate is chosen, does the
+// layer-context/surface family ever run" without changing behaviour.
+// Read-only diagnostic scaffolding.
+//
+// RE-confirmed against the 13.4.1/22F82 images actually deployed:
+//   SkyLight  UUID 96676A53-B1E0-3D7E-B98B-B73873CD1880
+//             __TEXT vmaddr 0x1850e5000
+//             SLWindowContextCreate      img+0x2af610
+//             SLSCreateLayerContext      img+0xb5ed8   (msgid 0x1513)
+//             SLSBindSurface             img+0xb0354   (msgid 0x1513)
+//             SLSAddSurface              img+0xaf8f0   (msgid 0x1513)
+//             SLSSetWindowLayerContext   img+0xa6b64   (msgid 0x7318)
+//   QuartzCore UUID CF853BBD-01B6-3F46-ADA1-EC70FD2DC9DC
+//             __TEXT vmaddr 0x1879be000
+//             CAWindowContextDelegateCreate img+0x110bb0
+//   CoreGraphics UUID FDC3C9F5-51DB-3AC8-81DA-CC9E19958B29
+//             __TEXT vmaddr 0x185511000
+//             __CGWindowContextDelegateCreate img+0x778d8
+// ---------------------------------------------------------------------------
+static bool macws_sl_wctx_trace_enabled(void) {
+    static _Atomic int cached = -1;
+    int value = atomic_load_explicit(&cached, memory_order_acquire);
+    if (value < 0) {
+        value = getenv("MACWS_SL_WCTX_TRACE") ? 1 : 0;
+        atomic_store_explicit(&cached, value, memory_order_release);
+    }
+    return value != 0;
+}
+
+static unsigned macws_sl_wctx_seq(void) {
+    static _Atomic unsigned count;
+    return atomic_fetch_add_explicit(&count, 1, memory_order_relaxed);
+}
+
+typedef void *(*MacWSSLWindowContextCreateFunction)(void *a0, void *a1,
+                                                    void *a2, void *a3);
+static MacWSSLWindowContextCreateFunction g_macws_orig_slwctx_create;
+static void *macws_slwctx_create_diag(void *a0, void *a1, void *a2,
+                                      void *a3) {
+    void *ret = g_macws_orig_slwctx_create(a0, a1, a2, a3);
+    unsigned seq = macws_sl_wctx_seq();
+    if (seq < 1024) {
+        void *impl = ret ? *(void *volatile *)ret : NULL;
+        uint64_t tid = 0;
+        pthread_threadid_np(NULL, &tid);
+        fprintf(stderr,
+            "#### SL-WCTX-CREATE seq=%u tid=%llu a0=%p a1=%p opts=%p "
+            "a3=%p -> ctx=%p impl=%p\n",
+            seq, (unsigned long long)tid, a0, a1, a2, a3, ret, impl);
+    }
+    return ret;
+}
+
+typedef long (*MacWSSLCreateLayerContextFunction)(void *a0, void *a1,
+                                                  void *a2);
+static MacWSSLCreateLayerContextFunction g_macws_orig_slcreatelayerctx;
+static long macws_slcreatelayerctx_diag(void *a0, void *a1, void *a2) {
+    long ret = g_macws_orig_slcreatelayerctx(a0, a1, a2);
+    unsigned seq = macws_sl_wctx_seq();
+    if (seq < 1024) {
+        uint64_t tid = 0;
+        pthread_threadid_np(NULL, &tid);
+        fprintf(stderr,
+            "#### SL-LAYERCTX seq=%u tid=%llu cid=%p o1=%p o2=%p -> %ld "
+            "out=[%u %u]\n",
+            seq, (unsigned long long)tid, a0, a1, a2, ret,
+            a1 ? *(volatile uint32_t *)a1 : 0,
+            a2 ? *(volatile uint32_t *)a2 : 0);
+    }
+    return ret;
+}
+
+typedef long (*MacWSSLBindSurfaceFunction)(void *a0, void *a1, void *a2,
+                                           void *a3, void *a4);
+static MacWSSLBindSurfaceFunction g_macws_orig_slbindsurface;
+static long macws_slbindsurface_diag(void *a0, void *a1, void *a2,
+                                     void *a3, void *a4) {
+    long ret = g_macws_orig_slbindsurface(a0, a1, a2, a3, a4);
+    unsigned seq = macws_sl_wctx_seq();
+    if (seq < 1024) {
+        uint64_t tid = 0;
+        pthread_threadid_np(NULL, &tid);
+        fprintf(stderr,
+            "#### SL-BINDSURF seq=%u tid=%llu a0=%p a1=%p a2=%p a3=%p "
+            "a4=%p -> %ld\n",
+            seq, (unsigned long long)tid, a0, a1, a2, a3, a4, ret);
+    }
+    return ret;
+}
+
+typedef long (*MacWSSLAddSurfaceFunction)(void *a0, void *a1, void *a2);
+static MacWSSLAddSurfaceFunction g_macws_orig_sladdsurface;
+static long macws_sladdsurface_diag(void *a0, void *a1, void *a2) {
+    long ret = g_macws_orig_sladdsurface(a0, a1, a2);
+    unsigned seq = macws_sl_wctx_seq();
+    if (seq < 1024) {
+        uint64_t tid = 0;
+        pthread_threadid_np(NULL, &tid);
+        fprintf(stderr,
+            "#### SL-ADDSURF seq=%u tid=%llu a0=%p a1=%p a2=%p -> %ld\n",
+            seq, (unsigned long long)tid, a0, a1, a2, ret);
+    }
+    return ret;
+}
+
+typedef long (*MacWSSLSetWinLayerCtxFunction)(void *a0, void *a1, void *a2);
+static MacWSSLSetWinLayerCtxFunction g_macws_orig_slsetwinlayerctx;
+static long macws_slsetwinlayerctx_diag(void *a0, void *a1, void *a2) {
+    long ret = g_macws_orig_slsetwinlayerctx(a0, a1, a2);
+    unsigned seq = macws_sl_wctx_seq();
+    if (seq < 1024) {
+        uint64_t tid = 0;
+        pthread_threadid_np(NULL, &tid);
+        fprintf(stderr,
+            "#### SL-SETWINCTX seq=%u tid=%llu cid=%p wid=%p ctx=%p -> "
+            "%ld\n",
+            seq, (unsigned long long)tid, a0, a1, a2, ret);
+    }
+    return ret;
+}
+
+// SkyLight img+0x17aed8 (22F82): WS::Displays::SLCADisplay::begin_update
+// — the server-side per-display frame entry that runtime stacks confirm is
+// the REAL working render path (run_timer_pass -> update_display_callback
+// -> UpdateDisplays -> begin_update -> currentSurface ->
+// IOMFBDisplay::current_page_surface -> Metal texture).  Hooks answer:
+// does the Update object carry context records (tag 0x1e in the +0x80
+// record array) for client windows, i.e. do Dock/Terminal contexts reach
+// the display's update at all?  Update layout per the worker-side layout
+// RE'd earlier: +0x80 holds an array header; records are 0x20 bytes;
+// type tag byte at +0xc.  Read-only diag.
+typedef void *(*MacWSSLBeginUpdateFunction)(void *a0, void *a1);
+static MacWSSLBeginUpdateFunction g_macws_orig_slbeginupdate;
+static void *macws_slbeginupdate_diag(void *a0, void *a1) {
+    unsigned seq = macws_sl_wctx_seq();
+    if (seq < 512 && a1) {
+        if (seq < 4) {
+            const volatile unsigned long *w =
+                (const volatile unsigned long *)a1;
+            fprintf(stderr, "#### SL-BEGINUPD-DUMP upd=%p "
+                "+0x00=%#lx +0x08=%#lx +0x10=%#lx +0x18=%#lx +0x20=%#lx "
+                "+0x28=%#lx +0x30=%#lx +0x38=%#lx +0x40=%#lx +0x48=%#lx "
+                "+0x50=%#lx +0x58=%#lx +0x60=%#lx +0x68=%#lx +0x70=%#lx "
+                "+0x78=%#lx +0x80=%#lx +0x88=%#lx +0x90=%#lx +0x98=%#lx "
+                "+0xa0=%#lx +0xa8=%#lx +0xb0=%#lx +0xb8=%#lx +0xc0=%#lx "
+                "+0xc8=%#lx +0xd0=%#lx +0xd8=%#lx +0xe0=%#lx +0xe8=%#lx "
+                "+0xf0=%#lx +0xf8=%#lx\n",
+                a1, w[0], w[1], w[2], w[3], w[4], w[5], w[6], w[7],
+                w[8], w[9], w[10], w[11], w[12], w[13], w[14], w[15],
+                w[16], w[17], w[18], w[19], w[20], w[21], w[22], w[23],
+                w[24], w[25], w[26], w[27], w[28], w[29], w[30], w[31]);
+        }
+        if (seq < 4 && a0) {
+            const volatile unsigned long *d =
+                (const volatile unsigned long *)a0;
+            fprintf(stderr, "#### SL-BEGINUPD-DISP disp=%p vt=%#lx "
+                "+0x98=%#lx +0xa8=%#lx +0xb0=%#lx +0x120=%#lx +0x128=%#lx "
+                "+0x130=%#lx +0x188=%#lx +0x190=%#lx +0x1e0=%#lx "
+                "+0x330=%#lx +0x3a0=%#lx +0x498=%#lx\n",
+                a0, d[0], d[0x98/8], d[0xa8/8], d[0xb0/8],
+                d[0x120/8], d[0x128/8], d[0x130/8],
+                d[0x188/8], d[0x190/8], d[0x1e0/8],
+                d[0x330/8], d[0x3a0/8], d[0x498/8]);
+        }
+        uintptr_t hdr = 0;
+        (void)macws_safe_read((const char *)a1 + 0x80,
+                              &hdr, sizeof(hdr));
+        unsigned n = 0, ctxrecs = 0;
+        uint8_t tags[16] = {0};
+        if (MACWS_PLAUSIBLE_PTR(hdr)) {
+            uintptr_t first = 0;
+            uint32_t total = 0;
+            if (macws_safe_read((void *)hdr, &first, sizeof(first)) &&
+                macws_safe_read((void *)(hdr + 0x8), &total,
+                                sizeof(total))) {
+                for (uintptr_t r = first;
+                     MACWS_PLAUSIBLE_PTR(r) && n < 16 && n < total;
+                     r += 0x20, n++) {
+                    uint8_t t = 0;
+                    if (!macws_safe_read((void *)(r + 0xc), &t,
+                                         sizeof(t)))
+                        break;
+                    tags[n] = t;
+                    if (t == 0x1e) ctxrecs++;
+                }
+                n = total < n ? total : n;
+            }
+        }
+        void *lr = __builtin_return_address(0);
+        uintptr_t imgbase = (uintptr_t)0; /* filled below lazily */
+        fprintf(stderr,
+            "#### SL-BEGINUPD seq=%u disp=%p upd=%p hdr=%#lx n=%u "
+            "ctxrecs=%u lr=%p tags=%02x,%02x,%02x,%02x,%02x,%02x\n",
+            seq, a0, a1, (unsigned long)hdr, n, ctxrecs, lr,
+            tags[0], tags[1], tags[2], tags[3], tags[4], tags[5]);
+        (void)imgbase;
+    }
+    return g_macws_orig_slbeginupdate(a0, a1);
+}
+
+// SkyLight 22F82 server-side update pipeline probes.  The confirmed live
+// path is: run_timer_pass -> update_display_callback -> UpdateDisplays
+// (0x294848) -> prepare_coreanimation (0x29b9e4, walks CGXWindowSubArray
+// calling ca_prepare_begin_window_update 0x2ab544 /
+// ca_prepare_begin_surface_update 0x2ac5f8 per window) -> per-display
+// begin_update (0x17aed8) -> render_update (0x179aa8) -> present_update
+// (0x178e9c); idle frames take commit_ca_empty_update (0x178ca8) instead.
+// Client surfaces should reach a display through surfacepool_insert
+// (0x177b94) and be enumerated by collect_surfaces (0x17254c).
+// Runtime evidence so far: begin_update fires every frame but the Update
+// carries zero records and every surface list on SLCADisplay is empty —
+// the compositor idles on commit_ca_empty_update.  These counters answer
+// which stage the client surfaces die at.  Read-only diag.
+typedef void *(*MacWSSLPipeFunction)(void *a0, void *a1, void *a2,
+                                     void *a3, void *a4, void *a5);
+static MacWSSLPipeFunction g_macws_orig_slcollect;
+static void *macws_slcollect_diag(void *a0, void *a1, void *a2,
+                                  void *a3, void *a4, void *a5) {
+    unsigned seq = macws_sl_wctx_seq();
+    if (seq < 512)
+        fprintf(stderr, "#### SL-COLLECT seq=%u disp=%p a1=%p a2=%p "
+                "a3=%p\n", seq, a0, a1, a2, a3);
+    return g_macws_orig_slcollect(a0, a1, a2, a3, a4, a5);
+}
+static MacWSSLPipeFunction g_macws_orig_slrenderupd;
+static void *macws_slrenderupd_diag(void *a0, void *a1, void *a2,
+                                    void *a3, void *a4, void *a5) {
+    unsigned seq = macws_sl_wctx_seq();
+    if (seq < 512)
+        fprintf(stderr, "#### SL-RENDERUPD seq=%u disp=%p upd=%p "
+                "comp=%p a3=%p a4=%p\n", seq, a0, a1, a2, a3, a4);
+    return g_macws_orig_slrenderupd(a0, a1, a2, a3, a4, a5);
+}
+static MacWSSLPipeFunction g_macws_orig_slpresentupd;
+static void *macws_slpresentupd_diag(void *a0, void *a1, void *a2,
+                                     void *a3, void *a4, void *a5) {
+    unsigned seq = macws_sl_wctx_seq();
+    if (seq < 512)
+        fprintf(stderr, "#### SL-PRESENTUPD seq=%u disp=%p upd=%p "
+                "sync=%p\n", seq, a0, a1, a2);
+    return g_macws_orig_slpresentupd(a0, a1, a2, a3, a4, a5);
+}
+static MacWSSLPipeFunction g_macws_orig_slemptyupd;
+static void *macws_slemptyupd_diag(void *a0, void *a1, void *a2,
+                                   void *a3, void *a4, void *a5) {
+    unsigned seq = macws_sl_wctx_seq();
+    if (seq < 512)
+        fprintf(stderr, "#### SL-EMPTYUPD seq=%u disp=%p\n", seq, a0);
+    return g_macws_orig_slemptyupd(a0, a1, a2, a3, a4, a5);
+}
+static MacWSSLPipeFunction g_macws_orig_slprepareca;
+static void *macws_slprepareca_diag(void *a0, void *a1, void *a2,
+                                    void *a3, void *a4, void *a5) {
+    unsigned seq = macws_sl_wctx_seq();
+    if (seq < 512) {
+        /* a2 = CGXWindowSubArray.  Args may be PAC-signed pointers —
+           never dereference them here (that was the 0xaaaaaaaa…0003
+           PAC fault that killed WS under this probe). */
+        fprintf(stderr, "#### SL-PREPARECA seq=%u state=%p sub=%p "
+                "a3=%p a4=%p\n", seq, a0, a2, a3, a4);
+    }
+    return g_macws_orig_slprepareca(a0, a1, a2, a3, a4, a5);
+}
+static MacWSSLPipeFunction g_macws_orig_slcaprepw;
+static void *macws_slcaprepw_diag(void *a0, void *a1, void *a2,
+                                  void *a3, void *a4, void *a5) {
+    unsigned seq = macws_sl_wctx_seq();
+    if (seq < 512)
+        fprintf(stderr, "#### SL-CAPREP-WIN seq=%u win=%p state=%p\n",
+                seq, a0, a1);
+    return g_macws_orig_slcaprepw(a0, a1, a2, a3, a4, a5);
+}
+static MacWSSLPipeFunction g_macws_orig_slcapreps;
+static void *macws_slcapreps_diag(void *a0, void *a1, void *a2,
+                                  void *a3, void *a4, void *a5) {
+    unsigned seq = macws_sl_wctx_seq();
+    if (seq < 512)
+        fprintf(stderr, "#### SL-CAPREP-SURF seq=%u win=%p state=%p\n",
+                seq, a0, a1);
+    return g_macws_orig_slcapreps(a0, a1, a2, a3, a4, a5);
+}
+/* surfacepool_insert head is NOT pacibsp; verify raw head words. */
+static MacWSSLPipeFunction g_macws_orig_slpoolinsert;
+static void *macws_slcollect_insert_diag(void *a0, void *a1, void *a2,
+                                         void *a3, void *a4, void *a5) {
+    unsigned seq = macws_sl_wctx_seq();
+    if (seq < 512)
+        fprintf(stderr, "#### SL-POOLINSERT seq=%u disp=%p surf=%p\n",
+                seq, a0, a1);
+    return g_macws_orig_slpoolinsert(a0, a1, a2, a3, a4, a5);
+}
+/* UpdateDisplays drivers — identify which scheduler actually runs. */
+static MacWSSLPipeFunction g_macws_orig_slupddisp;
+static void *macws_slupddisp_diag(void *a0, void *a1, void *a2,
+                                  void *a3, void *a4, void *a5) {
+    unsigned seq = macws_sl_wctx_seq();
+    if (seq < 512) {
+        uint64_t tid = 0;
+        pthread_threadid_np(NULL, &tid);
+        fprintf(stderr, "#### SL-UPDDISP seq=%u tid=%llu conn=%p a1=%p\n",
+                seq, (unsigned long long)tid, a0, a1);
+    }
+    return g_macws_orig_slupddisp(a0, a1, a2, a3, a4, a5);
+}
+static MacWSSLPipeFunction g_macws_orig_slupdcb;
+static void *macws_slupdcb_diag(void *a0, void *a1, void *a2,
+                                void *a3, void *a4, void *a5) {
+    unsigned seq = macws_sl_wctx_seq();
+    if (seq < 512) {
+        uint64_t tid = 0;
+        pthread_threadid_np(NULL, &tid);
+        fprintf(stderr, "#### SL-UPDCB seq=%u tid=%llu a0=%p a1=%p\n",
+                seq, (unsigned long long)tid, a0, a1);
+    }
+    return g_macws_orig_slupdcb(a0, a1, a2, a3, a4, a5);
+}
+static MacWSSLPipeFunction g_macws_orig_sltranstimer;
+static void *macws_sltranstimer_diag(void *a0, void *a1, void *a2,
+                                     void *a3, void *a4, void *a5) {
+    unsigned seq = macws_sl_wctx_seq();
+    if (seq < 512)
+        fprintf(stderr, "#### SL-TRANSTIMER seq=%u a0=%p a1=%p\n",
+                seq, a0, a1);
+    return g_macws_orig_sltranstimer(a0, a1, a2, a3, a4, a5);
+}
+static MacWSSLPipeFunction g_macws_orig_sldefupd;
+static void *macws_sldefupd_diag(void *a0, void *a1, void *a2,
+                                 void *a3, void *a4, void *a5) {
+    unsigned seq = macws_sl_wctx_seq();
+    if (seq < 512)
+        fprintf(stderr, "#### SL-DEFUPD seq=%u a0=%p a1=%p\n",
+                seq, a0, a1);
+    return g_macws_orig_sldefupd(a0, a1, a2, a3, a4, a5);
+}
+
+typedef void *(*MacWSCADelegateCreateFunction)(void *a0, void *a1,
+                                               void *a2, void *a3);
+static MacWSCADelegateCreateFunction g_macws_orig_ca_delegate_create;
+static void *macws_ca_delegate_create_diag(void *a0, void *a1, void *a2,
+                                           void *a3) {
+    void *ret = g_macws_orig_ca_delegate_create(a0, a1, a2, a3);
+    unsigned seq = macws_sl_wctx_seq();
+    if (seq < 1024) {
+        uint64_t tid = 0;
+        pthread_threadid_np(NULL, &tid);
+        fprintf(stderr,
+            "#### SL-CA-DELEGATE seq=%u tid=%llu a0=%p a1=%p a2=%p a3=%p "
+            "-> delegate=%p\n",
+            seq, (unsigned long long)tid, a0, a1, a2, a3, ret);
+    }
+    return ret;
+}
+
+typedef void *(*MacWSCGDelegateCreateFunction)(void *a0, void *a1,
+                                               void *a2, void *a3);
+static MacWSCGDelegateCreateFunction g_macws_orig_cg_delegate_create;
+static void *macws_cg_delegate_create_diag(void *a0, void *a1, void *a2,
+                                           void *a3) {
+    void *ret = g_macws_orig_cg_delegate_create(a0, a1, a2, a3);
+    unsigned seq = macws_sl_wctx_seq();
+    if (seq < 1024) {
+        uint64_t tid = 0;
+        pthread_threadid_np(NULL, &tid);
+        fprintf(stderr,
+            "#### SL-RIP-DELEGATE seq=%u tid=%llu a0=%p a1=%p a2=%p a3=%p "
+            "-> delegate=%p\n",
+            seq, (unsigned long long)tid, a0, a1, a2, a3, ret);
+    }
+    return ret;
+}
+
+// Manual inline hook for QuartzCore text in WindowServer.  Runtime
+// verification showed CydiaSubstrate MSHookFunction silently leaves
+// pacibsp prologues intact on this shared-cache mapping, so write the
+// standard 16-byte `ldr x16,#8 ; br x16 ; .quad diag` sequence through a
+// VM_PROT_COPY'd private page ourselves, and build a callable trampoline
+// (copied prologue + absolute jump back).  The orig pointer is pacia-0
+// signed so `blraaz` call sites accept it.  Diagnostic scaffolding only.
+#ifndef PAGE_MAX_SIZE
+#define PAGE_MAX_SIZE 0x4000
+#endif
+extern void sys_icache_invalidate(void *start, size_t length);
+static void *macws_qc_inline_hook(void *target, void *diag, void **orig_out,
+                                  const char *name) {
+#ifndef MAP_JIT
+#define MAP_JIT 0x0800
+#endif
+    uint8_t *tramp = mmap(NULL, 64, PROT_READ | PROT_WRITE | PROT_EXEC,
+        MAP_PRIVATE | MAP_ANON | MAP_JIT, -1, 0);
+    if (tramp == MAP_FAILED)
+        tramp = mmap(NULL, 64, PROT_READ | PROT_WRITE,
+            MAP_PRIVATE | MAP_ANON, -1, 0);
+    if (tramp == MAP_FAILED) {
+        fprintf(stderr, "#### RS-CTX-TRACE %s: tramp mmap failed\n", name);
+        return NULL;
+    }
+    memcpy(tramp, target, 16);
+    uint32_t *j = (uint32_t *)(tramp + 16);
+    j[0] = 0x58000050;                    // ldr x16, #8
+    j[1] = 0xd61f0200;                    // br  x16
+    *(uint64_t *)(j + 2) =
+        ((uint64_t)target & 0x00007fffffffffffULL) + 16;
+    if (vm_protect(mach_task_self(), (vm_address_t)tramp, 64, false,
+            VM_PROT_READ | VM_PROT_EXECUTE) != KERN_SUCCESS) {
+        fprintf(stderr, "#### RS-CTX-TRACE %s: tramp mprotect rx failed\n",
+                name);
+        return NULL;
+    }
+    sys_icache_invalidate(tramp, 64);
+    *orig_out = (void *)macws_pac_sign((uint64_t)tramp, 0, 0);
+
+    vm_address_t page = (vm_address_t)target & ~((vm_address_t)PAGE_MAX_SIZE - 1);
+    kern_return_t kr = vm_protect(mach_task_self(), page, PAGE_MAX_SIZE,
+        false, VM_PROT_READ | VM_PROT_WRITE | VM_PROT_COPY);
+    if (kr != KERN_SUCCESS)
+        kr = vm_protect(mach_task_self(), page, PAGE_MAX_SIZE, false,
+            VM_PROT_READ | VM_PROT_WRITE);
+    if (kr != KERN_SUCCESS) {
+        fprintf(stderr, "#### RS-CTX-TRACE %s: vm_protect kr=%d\n",
+                name, kr);
+        return NULL;
+    }
+    // The jump literal is consumed by `br x16`, an unauthenticated
+    // branch: strip PAC signature bits or the fetch faults.  diag can
+    // arrive signed when it was stored in a static initializer
+    // (signed-pointer __DATA_CONST slot).
+    ((uint32_t *)target)[0] = 0x58000050;
+    ((uint32_t *)target)[1] = 0xd61f0200;
+    *(uint64_t *)((char *)target + 8) =
+        (uint64_t)diag & 0x00007fffffffffffULL;
+    sys_icache_invalidate(target, 16);
+    vm_protect(mach_task_self(), page, PAGE_MAX_SIZE, false,
+        VM_PROT_READ | VM_PROT_EXECUTE);
+    fprintf(stderr, "#### RS-CTX-TRACE %s: armed first-word=%08x\n",
+            name, *(volatile uint32_t *)target);
+    return tramp;
+}
+
+static void macws_install_quartzcore_ctx_trace_hooks(
+    const struct mach_header_64 *header) {
+    static _Atomic int installed;
+    if (atomic_exchange_explicit(&installed, 1, memory_order_acq_rel))
+        return;
+    static const uint8_t qc_13_4_uuid[16] = {
+        0xcf, 0x85, 0x3b, 0xbd, 0x01, 0xb6, 0x3f, 0x46,
+        0xad, 0xa1, 0xec, 0x70, 0xfd, 0x2d, 0xc9, 0xdc };
+    static const struct {
+        uint32_t offset;
+        uint32_t prologue[4];
+        const char *name;
+    } targets[] = {
+        { 0x866a0,  { 0xd503237f, 0xa9be4ff4, 0xa9017bfd, 0x910043fd },
+          "Update::add_context" },
+        { 0x17fc20, { 0xd503237f, 0x6dbb23e9, 0xa9015ff8, 0xa90257f6 },
+          "Update::add_included_context" },
+        { 0x84ba4,  { 0xd503237f, 0xd10143ff, 0xa9034ff4, 0xa9047bfd },
+          "Context::set_display_info" },
+        { 0x287428, { 0xd503237f, 0xa9bd57f6, 0xa9014ff4, 0xa9027bfd },
+          "WindowServer::Server::context_created" },
+        { 0x288a70, { 0xd503237f, 0xa9bd57f6, 0xa9014ff4, 0xa9027bfd },
+          "WindowServer::Server::attach_contexts" },
+        { 0x3b0e4,  { 0xd503237f, 0xa9ba6ffc, 0xa90167fa, 0xa9025ff8 },
+          "Render::post_notification" },
+        { 0x1d0c34, { 0xd503237f, 0xa9ba6ffc, 0xa90167fa, 0xa9025ff8 },
+          "Server::register_client" },
+        { 0x156d90, { 0xd503237f, 0xa9be4ff4, 0xa9017bfd, 0x910043fd },
+          "Context::context_by_server_port" },
+        { 0x80d24,  { 0, 0, 0, 0 },
+          "Context::root_layer_handle" },
+        { 0xecf3c,  { 0xd503237f, 0xa9bd57f6, 0xa9014ff4, 0xa9027bfd },
+          "VirtualServer::render_surface" },
+        { 0x158824, { 0xd503237f, 0xd10303ff, 0xa90957f6, 0xa90a4ff4 },
+          "Display::render_surface" },
+        { 0x28f0fc, { 0xd503237f, 0xd10183ff, 0x6d0123e9, 0xa9025ff8 },
+          "disp_runloop_cb" },
+        { 0xed068,  { 0xd503237f, 0xa9be4ff4, 0xa9017bfd, 0x910043fd },
+          "VirtualServer::render_update" },
+        { 0x7b798,  { 0xd503237f, 0xd10603ff, 0xa9126ffc, 0xa91367fa },
+          "dsurf-caller-A" },
+        { 0x10af24, { 0xd503237f, 0xd10203ff, 0xa9045ff8, 0xa90557f6 },
+          "dsurf-caller-B" },
+        { 0x192af8, { 0xd503237f, 0xd102c3ff, 0xa9056ffc, 0xa90667fa },
+          "dsurf-caller-C" },
+        { 0x179658, { 0xd503237f, 0x6db63bef, 0x6d0133ed, 0x6d022beb },
+          "update-worker" },
+        { 0x28dbd4, { 0xd503237f, 0x6db923e9, 0xa9016ffc, 0xa90267fa },
+          "frame-entry" },
+        { 0x28dc00, { 0xaa0003f5, 0xb0276fc8, 0xf9461d08, 0xf9400108 },
+          "frame-vslot" },
+        { 0x28ee7c, { 0xd503237f, 0xa9bd57f6, 0xa9014ff4, 0xa9027bfd },
+          "disp-signal" },
+        { 0x28f470, { 0xd503237f, 0xa9bd57f6, 0xa9014ff4, 0xa9027bfd },
+          "disp-work" },
+        { 0x28eaa0, { 0xd503237f, 0xd101c3ff, 0x6d0323e9, 0xa90457f6 },
+          "pipe-create" },
+        { 0xcb990, { 0xd503237f, 0xa9be4ff4, 0xa9017bfd, 0x910043fd },
+          "srvfactory-A" },
+        { 0xcc984, { 0xd503237f, 0xa9be4ff4, 0xa9017bfd, 0x910043fd },
+          "srvfactory-B" },
+        { 0x10a88c, { 0xd503237f, 0xd10303ff, 0xa9085ff8, 0xa90957f6 },
+          "srvctor" },
+    };
+    if (!header || !macws_macho_uuid_matches(header, qc_13_4_uuid)) {
+        fprintf(stderr, "#### RS-CTX-TRACE skipped: QuartzCore UUID "
+                "mismatch (13.4 offsets only)\n");
+        atomic_store_explicit(&installed, 0, memory_order_release);
+        return;
+    }
+    for (unsigned i = 0;
+         i < sizeof(targets) / sizeof(targets[0]); i++) {
+        if (targets[i].prologue[0] == 0)
+            continue;
+        const uint32_t *site =
+            (const uint32_t *)((const char *)header + targets[i].offset);
+        if (memcmp(site, targets[i].prologue,
+                   sizeof(targets[i].prologue)) != 0) {
+            fprintf(stderr,
+                "#### RS-CTX-TRACE skipped: %s prologue mismatch "
+                "%#x %#x %#x %#x\n",
+                targets[i].name, site[0], site[1], site[2], site[3]);
+            atomic_store_explicit(&installed, 0, memory_order_release);
+            return;
+        }
+    }
+    g_macws_root_layer_handle = (MacWSRootLayerHandleFunction)
+        ((const char *)header + 0x80d24);
+    macws_qc_inline_hook((void *)((const char *)header + 0x866a0),
+        (void *)macws_update_add_context_diag,
+        (void **)&g_macws_orig_update_add_context, "add_context");
+    macws_qc_inline_hook((void *)((const char *)header + 0x17fc20),
+        (void *)macws_add_included_context_diag,
+        (void **)&g_macws_orig_add_included_context, "add_included");
+    macws_qc_inline_hook((void *)((const char *)header + 0x84ba4),
+        (void *)macws_set_display_info_diag,
+        (void **)&g_macws_orig_set_display_info, "set_display_info");
+    macws_qc_inline_hook((void *)((const char *)header + 0x287428),
+        (void *)macws_context_created_diag,
+        (void **)&g_macws_orig_context_created, "context_created");
+    macws_qc_inline_hook((void *)((const char *)header + 0x288a70),
+        (void *)macws_attach_contexts_diag,
+        (void **)&g_macws_orig_attach_contexts, "attach_contexts");
+    macws_qc_inline_hook((void *)((const char *)header + 0x3b0e4),
+        (void *)macws_post_notification_diag,
+        (void **)&g_macws_orig_post_notification, "post_notification");
+    macws_qc_inline_hook((void *)((const char *)header + 0x1d0c34),
+        (void *)macws_register_client_diag,
+        (void **)&g_macws_orig_register_client, "register_client");
+    macws_qc_inline_hook((void *)((const char *)header + 0x156d90),
+        (void *)macws_ctx_by_port_diag,
+        (void **)&g_macws_orig_ctx_by_port, "ctx_by_port");
+    macws_qc_inline_hook((void *)((const char *)header + 0xecf3c),
+        (void *)macws_vrender_surface_diag,
+        (void **)&g_macws_orig_vrender_surface, "vrender_surface");
+    macws_qc_inline_hook((void *)((const char *)header + 0x158824),
+        (void *)macws_drender_surface_diag,
+        (void **)&g_macws_orig_drender_surface, "drender_surface");
+    macws_qc_inline_hook((void *)((const char *)header + 0x28f0fc),
+        (void *)macws_disp_runloop_cb_diag,
+        (void **)&g_macws_orig_disp_runloop_cb, "disp_runloop_cb");
+    macws_qc_inline_hook((void *)((const char *)header + 0xed068),
+        (void *)macws_vrender_update_diag,
+        (void **)&g_macws_orig_vrender_update, "vrender_update");
+    macws_qc_inline_hook((void *)((const char *)header + 0x7b798),
+        (void *)macws_dcaller_7b798_diag,
+        (void **)&g_macws_orig_dcaller_7b798, "dsurf-caller-A");
+    macws_qc_inline_hook((void *)((const char *)header + 0x10af24),
+        (void *)macws_dcaller_10af24_diag,
+        (void **)&g_macws_orig_dcaller_10af24, "dsurf-caller-B");
+    macws_qc_inline_hook((void *)((const char *)header + 0x192af8),
+        (void *)macws_dcaller_192af8_diag,
+        (void **)&g_macws_orig_dcaller_192af8, "dsurf-caller-C");
+    macws_qc_inline_hook((void *)((const char *)header + 0x179658),
+        (void *)macws_updworker_179658_diag,
+        (void **)&g_macws_orig_updworker_179658, "update-worker");
+    macws_qc_inline_hook((void *)((const char *)header + 0x28dbd4),
+        (void *)macws_frameentry_28dbd4_diag,
+        (void **)&g_macws_orig_frameentry_28dbd4, "frame-entry");
+    macws_qc_inline_hook((void *)((const char *)header + 0x28dc00),
+        (void *)macws_frameentry_28dc00_diag,
+        (void **)&g_macws_orig_frameentry_28dc00, "frame-vslot");
+    macws_qc_inline_hook((void *)((const char *)header + 0x28ee7c),
+        (void *)macws_dispsignal_28ee7c_diag,
+        (void **)&g_macws_orig_dispsignal_28ee7c, "disp-signal");
+    macws_qc_inline_hook((void *)((const char *)header + 0x28f470),
+        (void *)macws_dispwork_28f470_diag,
+        (void **)&g_macws_orig_dispwork_28f470, "disp-work");
+    macws_qc_inline_hook((void *)((const char *)header + 0x28eaa0),
+        (void *)macws_pipecreate_28eaa0_diag,
+        (void **)&g_macws_orig_pipecreate_28eaa0, "pipe-create");
+    macws_qc_inline_hook((void *)((const char *)header + 0x164cb4),
+        (void *)macws_benchchk_164cb4_diag,
+        (void **)&g_macws_orig_benchchk_164cb4, "bench-chk");
+    macws_qc_inline_hook((void *)((const char *)header + 0x2e4ae8),
+        (void *)macws_dispcommit_2e4ae8_diag,
+        (void **)&g_macws_orig_dispcommit_2e4ae8, "disp-commit");
+    macws_qc_inline_hook((void *)((const char *)header + 0x2e7818),
+        (void *)macws_rsurfv_2e7818_diag,
+        (void **)&g_macws_orig_rsurfv_2e7818, "rsurfv-A");
+    macws_qc_inline_hook((void *)((const char *)header + 0x2e86d0),
+        (void *)macws_rsurfv_2e86d0_diag,
+        (void **)&g_macws_orig_rsurfv_2e86d0, "rsurfv-B");
+    macws_qc_inline_hook((void *)((const char *)header + 0xcb990),
+        (void *)macws_srvfactory_a_diag,
+        (void **)&g_macws_orig_srvfactory_a, "srvfactory-A");
+    macws_qc_inline_hook((void *)((const char *)header + 0xcc984),
+        (void *)macws_srvfactory_b_diag,
+        (void **)&g_macws_orig_srvfactory_b, "srvfactory-B");
+    macws_qc_inline_hook((void *)((const char *)header + 0x10a88c),
+        (void *)macws_srvctor_diag,
+        (void **)&g_macws_orig_srvctor, "srvctor");
+    fprintf(stderr,
+        "#### RS-CTX-TRACE installed add_context=%p included=%p "
+        "set_display_info=%p context_created=%p attach_contexts=%p "
+        "post_notification=%p register_client=%p ctx_by_port=%p "
+        "root_layer_handle=%p\n",
+        (const char *)header + 0x866a0, (const char *)header + 0x17fc20,
+        (const char *)header + 0x84ba4, (const char *)header + 0x287428,
+        (const char *)header + 0x288a70, (const char *)header + 0x3b0e4,
+        (const char *)header + 0x1d0c34, (const char *)header + 0x156d90,
+        (const char *)header + 0x80d24);
+}
+
+// Client-side window-content pipeline trace (MACWS_SL_WCTX_TRACE=1).
+// Arms the five SkyLight entry points that move a window's content to
+// the compositor: the delegate-selecting factory, the two surface bind
+// paths and the direct context bind.  Read-only; see comment block on
+// the wrappers for the RE-confirmed offsets.
+static void macws_install_skylight_wctx_trace_hooks(
+    const struct mach_header_64 *header) {
+    static _Atomic int installed;
+    if (atomic_exchange_explicit(&installed, 1, memory_order_acq_rel))
+        return;
+    static const uint8_t sl_22f82_uuid[16] = {
+        0x96, 0x67, 0x6a, 0x53, 0xb1, 0xe0, 0x3d, 0x7e,
+        0xb9, 0x8b, 0xb7, 0x38, 0x73, 0xcd, 0x18, 0x80 };
+    static const struct {
+        uint32_t offset;
+        uint32_t prologue[4];
+        const char *name;
+        void *diag;
+        void **orig;
+    } targets[] = {
+        { 0x2af610, { 0xd503237f, 0xd10183ff, 0xa9025ff8, 0xa90357f6 },
+          "SLWindowContextCreate",
+          (void *)macws_slwctx_create_diag,
+          (void **)&g_macws_orig_slwctx_create },
+        { 0xb5ed8,  { 0xd503237f, 0xd10203ff, 0xa90557f6, 0xa9064ff4 },
+          "SLSCreateLayerContext",
+          (void *)macws_slcreatelayerctx_diag,
+          (void **)&g_macws_orig_slcreatelayerctx },
+        { 0xb0354,  { 0xd503237f, 0xd10183ff, 0xa90167fa, 0xa9025ff8 },
+          "SLSBindSurface",
+          (void *)macws_slbindsurface_diag,
+          (void **)&g_macws_orig_slbindsurface },
+        { 0xaf8f0,  { 0xd503237f, 0xd10203ff, 0xa9045ff8, 0xa90557f6 },
+          "SLSAddSurface",
+          (void *)macws_sladdsurface_diag,
+          (void **)&g_macws_orig_sladdsurface },
+        { 0xa6b64,  { 0xd503237f, 0xd101c3ff, 0xa9035ff8, 0xa90457f6 },
+          "SLSSetWindowLayerContext",
+          (void *)macws_slsetwinlayerctx_diag,
+          (void **)&g_macws_orig_slsetwinlayerctx },
+    };
+    if (!header || !macws_macho_uuid_matches(header, sl_22f82_uuid)) {
+        fprintf(stderr, "#### SL-WCTX-TRACE skipped: SkyLight UUID "
+                "mismatch (22F82 offsets only)\n");
+        atomic_store_explicit(&installed, 0, memory_order_release);
+        return;
+    }
+    for (unsigned i = 0;
+         i < sizeof(targets) / sizeof(targets[0]); i++) {
+        const uint32_t *site =
+            (const uint32_t *)((const char *)header + targets[i].offset);
+        if (memcmp(site, targets[i].prologue,
+                   sizeof(targets[i].prologue)) != 0) {
+            fprintf(stderr,
+                "#### SL-WCTX-TRACE skipped: %s prologue mismatch "
+                "%#x %#x %#x %#x\n",
+                targets[i].name, site[0], site[1], site[2], site[3]);
+            atomic_store_explicit(&installed, 0, memory_order_release);
+            return;
+        }
+    }
+    for (unsigned i = 0;
+         i < sizeof(targets) / sizeof(targets[0]); i++) {
+        macws_qc_inline_hook(
+            (void *)((const char *)header + targets[i].offset),
+            targets[i].diag, targets[i].orig, targets[i].name);
+    }
+    fprintf(stderr, "#### SL-WCTX-TRACE installed (SkyLight)\n");
+}
+
+// Server-side update pipeline probes — unconditional install (they only
+// fire inside WindowServer where SLCADisplay/Updater paths are reachable).
+static void macws_install_skylight_beginupdate_hook(
+    const struct mach_header_64 *header) {
+    static _Atomic int installed;
+    if (atomic_exchange_explicit(&installed, 1, memory_order_acq_rel))
+        return;
+    static const uint8_t sl_22f82_uuid[16] = {
+        0x96, 0x67, 0x6a, 0x53, 0xb1, 0xe0, 0x3d, 0x7e,
+        0xb9, 0x8b, 0xb7, 0x38, 0x73, 0xcd, 0x18, 0x80 };
+    static const struct {
+        uint32_t offset;
+        uint32_t prologue[4];
+        const char *name;
+        void *diag;
+        void **orig;
+    } targets[] = {
+        { 0x17aed8, { 0xd503237f, 0x6db63bef, 0x6d0133ed, 0x6d022beb },
+          "begin_update",
+          (void *)macws_slbeginupdate_diag,
+          (void **)&g_macws_orig_slbeginupdate },
+        { 0x17254c, { 0xd503237f, 0xd10243ff, 0xa9036ffc, 0xa90467fa },
+          "collect_surfaces",
+          (void *)macws_slcollect_diag,
+          (void **)&g_macws_orig_slcollect },
+        { 0x177b94, { 0x3949e008, 0x11000508, 0x3909e008, 0x12001d09 },
+          "surfacepool_insert",
+          (void *)macws_slcollect_insert_diag,
+          (void **)&g_macws_orig_slpoolinsert },
+        { 0x178ca8, { 0xd503237f, 0xd10183ff, 0x6d0323e9, 0xa9044ff4 },
+          "commit_ca_empty_update",
+          (void *)macws_slemptyupd_diag,
+          (void **)&g_macws_orig_slemptyupd },
+        { 0x178e9c, { 0xd503237f, 0xd10543ff, 0x6d0e23e9, 0xa90f6ffc },
+          "present_update",
+          (void *)macws_slpresentupd_diag,
+          (void **)&g_macws_orig_slpresentupd },
+        { 0x179aa8, { 0xd503237f, 0x6db733ed, 0x6d012beb, 0x6d0223e9 },
+          "render_update",
+          (void *)macws_slrenderupd_diag,
+          (void **)&g_macws_orig_slrenderupd },
+        { 0x29b9e4, { 0xd503237f, 0x6db63bef, 0x6d0133ed, 0x6d022beb },
+          "prepare_coreanimation",
+          (void *)macws_slprepareca_diag,
+          (void **)&g_macws_orig_slprepareca },
+        { 0x2ab544, { 0xd503237f, 0x6db82beb, 0x6d0123e9, 0xa9026ffc },
+          "ca_prepare_begin_window_update",
+          (void *)macws_slcaprepw_diag,
+          (void **)&g_macws_orig_slcaprepw },
+        { 0x2ac5f8, { 0xd503237f, 0x6db63bef, 0x6d0133ed, 0x6d022beb },
+          "ca_prepare_begin_surface_update",
+          (void *)macws_slcapreps_diag,
+          (void **)&g_macws_orig_slcapreps },
+        { 0x294848, { 0xd503237f, 0x6db63bef, 0x6d0133ed, 0x6d022beb },
+          "UpdateDisplays",
+          (void *)macws_slupddisp_diag,
+          (void **)&g_macws_orig_slupddisp },
+        { 0x289d0c, { 0xd503237f, 0xd10343ff, 0x6d052beb, 0x6d0623e9 },
+          "update_display_callback",
+          (void *)macws_slupdcb_diag,
+          (void **)&g_macws_orig_slupdcb },
+        { 0x1d1944, { 0xd503237f, 0x6db923e9, 0xa9016ffc, 0xa90267fa },
+          "transitionTimerCallback",
+          (void *)macws_sltranstimer_diag,
+          (void **)&g_macws_orig_sltranstimer },
+        { 0x28b41c, { 0xd503237f, 0xa9bd57f6, 0xa9014ff4, 0xa9027bfd },
+          "WSSchedulerRunDeferredUpdate",
+          (void *)macws_sldefupd_diag,
+          (void **)&g_macws_orig_sldefupd },
+    };
+    if (!header || !macws_macho_uuid_matches(header, sl_22f82_uuid)) {
+        atomic_store_explicit(&installed, 0, memory_order_release);
+        return;
+    }
+    for (unsigned i = 0;
+         i < sizeof(targets) / sizeof(targets[0]); i++) {
+        const uint32_t *site =
+            (const uint32_t *)((const char *)header + targets[i].offset);
+        if (memcmp(site, targets[i].prologue,
+                   sizeof(targets[i].prologue)) != 0) {
+            fprintf(stderr,
+                "#### SL-PIPE skipped: %s prologue mismatch "
+                "%#x %#x %#x %#x\n",
+                targets[i].name, site[0], site[1], site[2], site[3]);
+            atomic_store_explicit(&installed, 0, memory_order_release);
+            return;
+        }
+    }
+    for (unsigned i = 0;
+         i < sizeof(targets) / sizeof(targets[0]); i++) {
+        macws_qc_inline_hook(
+            (void *)((const char *)header + targets[i].offset),
+            targets[i].diag, targets[i].orig, targets[i].name);
+    }
+    fprintf(stderr, "#### SL-PIPE installed begin_update + 12 probes\n");
+}
+
+// QuartzCore side of the same diagnostic: CAWindowContextDelegateCreate
+// fires when SLWindowContextCreate picks the CA (layer-backed) path.
+static void macws_install_qc_wctx_trace_hooks(
+    const struct mach_header_64 *header) {
+    static _Atomic int installed;
+    if (atomic_exchange_explicit(&installed, 1, memory_order_acq_rel))
+        return;
+    static const uint8_t qc_13_4_uuid[16] = {
+        0xcf, 0x85, 0x3b, 0xbd, 0x01, 0xb6, 0x3f, 0x46,
+        0xad, 0xa1, 0xec, 0x70, 0xfd, 0x2d, 0xc9, 0xdc };
+    static const uint32_t prologue[4] =
+        { 0xd503237f, 0xa9bc5ff8, 0xa90157f6, 0xa9024ff4 };
+    if (!header || !macws_macho_uuid_matches(header, qc_13_4_uuid)) {
+        atomic_store_explicit(&installed, 0, memory_order_release);
+        return;
+    }
+    const uint32_t *site =
+        (const uint32_t *)((const char *)header + 0x110bb0);
+    if (memcmp(site, prologue, sizeof(prologue)) != 0) {
+        fprintf(stderr, "#### SL-WCTX-TRACE skipped: "
+                "CAWindowContextDelegateCreate prologue mismatch\n");
+        atomic_store_explicit(&installed, 0, memory_order_release);
+        return;
+    }
+    macws_qc_inline_hook((void *)site,
+        (void *)macws_ca_delegate_create_diag,
+        (void **)&g_macws_orig_ca_delegate_create,
+        "CAWindowContextDelegateCreate");
+    fprintf(stderr, "#### SL-WCTX-TRACE installed (QuartzCore)\n");
+}
+
+// CoreGraphics side: __CGWindowContextDelegateCreate fires when
+// SLWindowContextCreate picks the RIP (CPU-bitmap) path instead.
+static void macws_install_cg_wctx_trace_hooks(
+    const struct mach_header_64 *header) {
+    static _Atomic int installed;
+    if (atomic_exchange_explicit(&installed, 1, memory_order_acq_rel))
+        return;
+    static const uint8_t cg_22f82_uuid[16] = {
+        0xfd, 0xc3, 0xc9, 0xf5, 0x51, 0xdb, 0x3a, 0xc8,
+        0x81, 0xda, 0xcc, 0x9e, 0x19, 0x95, 0x8b, 0x29 };
+    static const uint32_t prologue[4] =
+        { 0xd503237f, 0xa9bd57f6, 0xa9014ff4, 0xa9027bfd };
+    if (!header || !macws_macho_uuid_matches(header, cg_22f82_uuid)) {
+        atomic_store_explicit(&installed, 0, memory_order_release);
+        return;
+    }
+    const uint32_t *site =
+        (const uint32_t *)((const char *)header + 0x778d8);
+    if (memcmp(site, prologue, sizeof(prologue)) != 0) {
+        fprintf(stderr, "#### SL-WCTX-TRACE skipped: "
+                "__CGWindowContextDelegateCreate prologue mismatch\n");
+        atomic_store_explicit(&installed, 0, memory_order_release);
+        return;
+    }
+    macws_qc_inline_hook((void *)site,
+        (void *)macws_cg_delegate_create_diag,
+        (void **)&g_macws_orig_cg_delegate_create,
+        "__CGWindowContextDelegateCreate");
+    fprintf(stderr, "#### SL-WCTX-TRACE installed (CoreGraphics)\n");
+}
+
 static dispatch_queue_t macws_iomfb_gpu_completion_queue(void) {
     static dispatch_once_t once;
     static dispatch_queue_t queue;
@@ -19002,14 +21449,13 @@ static void macws_iomfb_complete_cancelled_swap(
 
     BOOL diagnostics = macws_runtime_diagnostics_enabled();
     static _Atomic unsigned long scheduled_count = 0;
-    unsigned long sequence = diagnostics
-        ? atomic_fetch_add(&scheduled_count, 1) + 1 : 0;
+    unsigned long sequence = atomic_fetch_add(&scheduled_count, 1) + 1;
     if (!registration.callback) {
-        if (sequence && (sequence <= 16 || (sequence % 600) == 0)) {
+        if (sequence <= 16 || (sequence % 600) == 0) {
             fprintf(stderr,
                 "#### IOMFB CANCEL-COMPLETION schedule #%lu swapID=%u "
-                "client=%u FAIL no registration\n",
-                sequence, swap_id, client);
+                "client=%u FAIL no registration (regs=%u)\n",
+                sequence, swap_id, client, g_macws_iomfb_frame_reg_count);
         }
         return;
     }
@@ -19079,6 +21525,14 @@ static void macws_iomfb_complete_cancelled_swap(
         };
         registration.callback(registration.framebuffer, swap_id,
             (__bridge CFDictionaryRef)cancelInfo, registration.context);
+        // The frame-info callback was consumed by QuartzCore: the display
+        // producer round-trip (swap submitted, kernel processed, completion
+        // delivered and accepted) is complete.  On this virtual-display
+        // pipeline that delivered completion — not MetalContext::EndUpdate,
+        // which never runs here — is the real first-producer-completion
+        // witness the launcher gates on.
+        extern void macws_publish_graphics_ready(void);
+        macws_publish_graphics_ready();
         uintptr_t pending_begin_after = display_holder
             ? *(const volatile uintptr_t *)((char *)display_holder + 0x510) : 0;
         uintptr_t pending_end_after = display_holder

@@ -6334,6 +6334,15 @@ static void macws_publish_graphics_ready_once(void) {
     close(fd);
 }
 
+// Cross-TU entry for the same publisher.  On this Ventura virtual-display
+// build the producer pipeline presents through the IOMFB swap chain, not
+// MetalContext::EndUpdate — the first delivered frame-info completion is the
+// honest "display producer produced and completed a frame" witness
+// (QC consumed it; pending swap count decremented 1->0).
+void macws_publish_graphics_ready(void) {
+    macws_publish_graphics_ready_once();
+}
+
 extern IOSurfaceRef IOSurfaceCreate(CFDictionaryRef properties);
 extern void *IOSurfaceGetBaseAddress(IOSurfaceRef);
 // Present in the iOS 16 IOSurface binary but omitted from this Theos SDK's
@@ -6646,6 +6655,71 @@ static void macws_iogpu_dump_error_user_info(id error) {
     }
 }
 
+// 22F82 diagnostic: SkyLight's frame pipeline no longer reaches the hooked
+// MetalContext::EndUpdate/EndCurrentComposite, so the completion-observation
+// drain that feeds macws_vnc_publish_owned_texture() never runs. The owned
+// scanout texture is created by the direct AGXTexture init hook; the first
+// completed AGX command buffer after a wrap is the terminal-state witness we
+// can reuse — a buffer completion on the same serial queue guarantees all
+// prior submissions (including the composite that rendered the owned surface)
+// have finished. Retry once per wrap generation plus periodically until the
+// content validator publishes; each attempt is a bounded CPU-side mmap scan.
+static BOOL macws_vnc_publish_owned_texture(id<MTLTexture> texture);
+static IOSurfaceRef macws_vnc_bound_surface(id<MTLTexture> texture);
+static _Atomic(id) g_owned_publish_texture = nil;
+static _Atomic(uint64_t) g_owned_publish_gen = 0;
+static _Atomic(uint64_t) g_owned_try_gen = 0;
+static _Atomic(uint64_t) g_owned_clean_seen = 0;
+__attribute__((unused))
+static void macws_owned_publish_note_wrap(id texture) {
+    [texture retain];
+    id old = atomic_exchange_explicit(&g_owned_publish_texture, texture,
+                                      memory_order_acq_rel);
+    [old release];
+    atomic_fetch_add_explicit(&g_owned_publish_gen, 1,
+                              memory_order_release);
+}
+static void macws_owned_publish_try_on_clean(void) {
+    uint64_t gen = atomic_load_explicit(&g_owned_publish_gen,
+                                        memory_order_acquire);
+    if (!gen) return;
+    uint64_t seen = atomic_fetch_add_explicit(&g_owned_clean_seen, 1,
+                                              memory_order_relaxed) + 1;
+    // Live mode: once the first validated frame went out, republish the same
+    // canonical surface every fourth clean completion (~15-30Hz at observed
+    // WS submission rates). The surface mutates in place and the receiver is
+    // latest-state, so each send just signals "new pixels available".
+    BOOL live = MacWSFinalCompositePublisherPublishedSequence() > 0;
+    BOOL due = live ? (seen & 3) == 0
+                    : (gen != atomic_load_explicit(&g_owned_try_gen,
+                                                   memory_order_relaxed) ||
+                       (seen & 31) == 0);
+    if (!due) return;
+    id texture = atomic_load_explicit(&g_owned_publish_texture,
+                                      memory_order_acquire);
+    if (!texture) return;
+    atomic_store_explicit(&g_owned_try_gen, gen, memory_order_relaxed);
+    static dispatch_queue_t ownedQueue;
+    static dispatch_once_t ownedQueueOnce;
+    dispatch_once(&ownedQueueOnce, ^{
+        ownedQueue = dispatch_queue_create(
+            "com.macwsguide.owned-publish", DISPATCH_QUEUE_SERIAL);
+    });
+    [texture retain];
+    dispatch_async(ownedQueue, ^{
+        if (MacWSFinalCompositePublisherPublishedSequence() > 0) {
+            IOSurfaceRef surface = macws_vnc_bound_surface(texture);
+            if (surface) {
+                (void)MacWSFinalCompositePublisherPublishSurface(
+                    surface, (uint32_t)[texture pixelFormat]);
+            }
+        } else {
+            (void)macws_vnc_publish_owned_texture(texture);
+        }
+        [texture release];
+    });
+}
+
 static void macws_iogpu_queue_complete(id self, SEL selector,
                                        id command_buffer, NSInteger status) {
     if (macws_iogpu_callback_diag_enabled()) {
@@ -6826,6 +6900,7 @@ static void macws_iogpu_buffer_complete(id self, SEL selector,
                 (__bridge const void *)self, submit_serial);
         }
     }
+    if (!error) macws_owned_publish_try_on_clean();
     g_macws_orig_iogpu_buffer_complete(
         self, selector, start_time, end_time, error);
 }
@@ -8085,9 +8160,20 @@ static IOSurfaceRef macws_vnc_bound_surface(id<MTLTexture> texture) {
 // sampling interval). Requiring six such non-menu rows admits a small real
 // window but rejects a title bar or thin window outline. The diversity check
 // independently rejects AGX's spatially constant recovery image.
-static BOOL macws_vnc_content_ready(size_t sampled, size_t different,
+//
+// Runtime evidence (2026-10-13): a genuine dark-theme composite fails the
+// dense-row test. The published seq=1 frame decoded to a real macOS desktop
+// (menu bar + full Dock over black) yet sampled only rgb=204/21888 with
+// denseRows=0 -- dithered dark pixels carry alpha but no RGB bits. An empty
+// or constant recovery frame shows different~0; this frame showed
+// different=21886/21888. Treat strong spatial diversity plus a modest RGB
+// floor as equivalent proof of real content.
+static BOOL macws_vnc_content_ready(size_t sampled, size_t rgbNonzero,
+                                    size_t different,
                                     size_t denseContentRows) {
-    return sampled > 0 && different >= 4 && denseContentRows >= 6;
+    if (!sampled || different < 4) return NO;
+    if (denseContentRows >= 6) return YES;
+    return different >= sampled / 4 && rgbNonzero >= 64;
 }
 
 // The owned scanout is already an uncompressed, linear BGRA IOSurface. Once
@@ -8150,7 +8236,7 @@ static BOOL macws_vnc_publish_owned_texture(id<MTLTexture> texture) {
         }
     }
     BOOL valid = readable && macws_vnc_content_ready(
-        sampled, different, denseContentRows);
+        sampled, rgbNonzero, different, denseContentRows);
     if (valid) {
         MacWSFinalCompositePublisherMarkContentValidated();
     }
@@ -8438,7 +8524,7 @@ void macws_vnc_on_composite(id<MTLTexture> dest) {
                                     }
                                     BOOL contentVisible =
                                         macws_vnc_content_ready(
-                                            sampled, different,
+                                            sampled, rgbNonzero, different,
                                             denseContentRows);
                                     void *vb = contentVisible
                                         ? macws_vnc_mmap_begin_frame(w, h) : NULL;
@@ -8860,7 +8946,7 @@ static BOOL macws_vnc_publish_inband_destination(id<MTLTexture> destination) {
 
     uint64_t generation = macws_vnc_capture_generation();
     BOOL contentVisible = macws_vnc_content_ready(
-        sampled, different, denseContentRows);
+        sampled, rgbNonzero, different, denseContentRows);
     if (generation && contentVisible) {
         if (macws_vnc_capture_generation() == generation)
             (void)unlink("/tmp/macws_capture_final");
@@ -9404,7 +9490,7 @@ static void macws_vnc_capture_final(id<MTLTexture> src) {
         // small Terminal is below the old 5% threshold, while a title-only or
         // outline-only frame does not span enough dense non-menu rows.
         BOOL contentVisible = macws_vnc_content_ready(
-            sampled, different, denseContentRows);
+            sampled, rgbNonzero, different, denseContentRows);
         if (contentVisible) {
             void *shared = macws_vnc_mmap_begin_frame(outw, outh);
             if (shared) {
@@ -12732,6 +12818,21 @@ static MTLTextureDescriptor *macws_native_agx_texture_descriptor(
                     (long)retainAfterTexture);
             }
         } else {
+            if (desc && iosurface && desc.width >= 1000 &&
+                desc.height >= 600) {
+                static _Atomic uint64_t ownedRejectCount = 0;
+                uint64_t reject = atomic_fetch_add(
+                    &ownedRejectCount, 1) + 1;
+                if (reject <= 24) {
+                    fprintf(stderr,
+                        "#### VNC-OWNED reject #%llu iosurface=%p id=%u "
+                        "%zux%zu format=%#x\n",
+                        (unsigned long long)reject, (void *)iosurface,
+                        (unsigned)IOSurfaceGetID(iosurface), desc.width,
+                        desc.height,
+                        (unsigned)IOSurfaceGetPixelFormat(iosurface));
+                }
+            }
             result = [self hooked_newTextureWithDescriptor:desc
                                                   iosurface:iosurface
                                                       plane:plane];
@@ -23229,6 +23330,147 @@ static Class *macws_copy_agx_driver_classes(unsigned int *count) {
     return NULL;
 }
 
+static void macws_agx_noop_alert_methods(Class agx);
+void macws_agxbuffer_install_bytes_pin_swizzle(void);
+
+#if !defined(__arm64e__)
+// 22F82 native-AGX path: SkyLight's CASurface::metal_texture calls
+// -[AGXTexture initWithDevice:desc:iosurface:plane:] DIRECTLY on the texture
+// class (runtime-confirmed stack: IOGPUMetalTexture init <- AGXTexture
+// initWithDevice:desc:iosurface:plane: <- CASurface::metal_texture), so the
+// device-level newTextureWithDescriptor:iosurface: swizzle never runs and no
+// owned scanout is substituted -> no final-composite publish.  This hook
+// performs the same owned substitution at the texture-init site.  It uses
+// method_setImplementation (no MTLFakeDevice) so it works in both slices.
+typedef id (*macws_agxtex_iosurf_init_t)(id self, SEL _cmd, id device,
+    id desc, IOSurfaceRef iosurface, NSUInteger plane);
+static macws_agxtex_iosurf_init_t macws_orig_agxtex_iosurf_init = NULL;
+
+static id macws_hook_agxtex_iosurf_init(id self, SEL _cmd, id device,
+    id desc, IOSurfaceRef iosurface, NSUInteger plane) {
+    if (!macws_orig_agxtex_iosurf_init || !desc || !iosurface) {
+        return macws_orig_agxtex_iosurf_init
+            ? macws_orig_agxtex_iosurf_init(
+                  self, _cmd, device, desc, iosurface, plane)
+            : nil;
+    }
+    NSUInteger w = ((NSUInteger (*)(id, SEL))objc_msgSend)(
+        desc, @selector(width));
+    NSUInteger h = ((NSUInteger (*)(id, SEL))objc_msgSend)(
+        desc, @selector(height));
+    IOSurfaceRef owned =
+        macws_owned_scanout_for_original(iosurface, w, h);
+    if (!owned) {
+        if (w >= 1000 && h >= 600) {
+            static _Atomic uint64_t texinitRejects = 0;
+            uint64_t r = atomic_fetch_add(&texinitRejects, 1) + 1;
+            if (r <= 24) {
+                fprintf(stderr,
+                    "#### VNC-OWNED texinit reject #%llu ios=%p id=%u "
+                    "%lux%lu fcc=%#x\n",
+                    (unsigned long long)r, (void *)iosurface,
+                    (unsigned)IOSurfaceGetID(iosurface),
+                    (unsigned long)w, (unsigned long)h,
+                    (unsigned)IOSurfaceGetPixelFormat(iosurface));
+            }
+        }
+        return macws_orig_agxtex_iosurf_init(
+            self, _cmd, device, desc, iosurface, plane);
+    }
+    NSUInteger origPF = ((NSUInteger (*)(id, SEL))objc_msgSend)(
+        desc, @selector(pixelFormat));
+    uint32_t origSID = macws_get_current_iosurface_id();
+    NSUInteger origPlane = macws_get_current_iosurface_plane();
+    uint64_t origSpan =
+        macws_get_current_iosurface_compression_header_span();
+    ((void (*)(id, SEL, NSUInteger))objc_msgSend)(
+        desc, @selector(setPixelFormat:), MTLPixelFormatBGRA8Unorm);
+    macws_set_current_iosurface_id(IOSurfaceGetID(owned));
+    macws_set_current_iosurface_plane(0);
+    macws_set_current_iosurface_compression_header_span(0);
+    id result = macws_orig_agxtex_iosurf_init(
+        self, _cmd, device, desc, owned, 0);
+    if (result) {
+        objc_setAssociatedObject(
+            result, &g_macws_owned_texture_association_key,
+            @YES, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        macws_owned_publish_note_wrap(result);
+    }
+    macws_set_current_iosurface_id(origSID);
+    macws_set_current_iosurface_plane(origPlane);
+    macws_set_current_iosurface_compression_header_span(origSpan);
+    ((void (*)(id, SEL, NSUInteger))objc_msgSend)(
+        desc, @selector(setPixelFormat:), origPF);
+    {
+        static _Atomic uint64_t wrapDiag = 0;
+        uint64_t wn = atomic_fetch_add(&wrapDiag, 1) + 1;
+        if (wn <= 4) {
+            void *frames[8] = {0};
+            int fc = backtrace(frames, 8);
+            for (int fi = 1; fi < fc && fi <= 5; fi++) {
+                Dl_info di = {0};
+                dladdr(frames[fi], &di);
+                intptr_t fslide = 0;
+                for (uint32_t fj = 0; fj < _dyld_image_count(); fj++)
+                    if (_dyld_get_image_header(fj) == di.dli_fbase)
+                        fslide = _dyld_get_image_vmaddr_slide(fj);
+                fprintf(stderr,
+                    "#### VNC-OWNED texinit-caller #%llu f%d=%p %s+%#lx\n",
+                    (unsigned long long)wn, fi, frames[fi],
+                    di.dli_fname ? (strrchr(di.dli_fname,'/')+1) : "?",
+                    di.dli_saddr
+                        ? (unsigned long)((uintptr_t)frames[fi] -
+                                          (uintptr_t)di.dli_saddr)
+                        : (unsigned long)((uintptr_t)frames[fi] -
+                                          (uintptr_t)di.dli_fbase - fslide));
+            }
+        }
+    }
+    fprintf(stderr,
+        "#### VNC-OWNED texinit wrap ios=%p id=%u -> owned=%p id=%u "
+        "texture=%p\n",
+        (void *)iosurface, (unsigned)IOSurfaceGetID(iosurface),
+        (void *)owned, (unsigned)IOSurfaceGetID(owned), (void *)result);
+    CFRelease(owned);  // caller reservation; orig retained on success
+    return result;
+}
+
+void macws_install_agxtex_iosurf_init_hook(void) {
+    static int installed = 0;
+    if (installed) return;
+    SEL sel = sel_registerName("initWithDevice:desc:iosurface:plane:");
+    Class classes[] = {
+        objc_getClass("AGXG13GFamilyTexture"),
+        objc_getClass("AGXTexture"),
+        NULL,
+    };
+    // Hook the first class that carries the selector.  A subclass that
+    // inherits AGXTexture's method returns the same Method object, so a
+    // single hook covers the whole hierarchy when the implementation is
+    // shared.  SkyLight instantiates AGXG13GFamilyTexture, so resolving on
+    // it first also picks up any family-specific override.
+    for (int i = 0; classes[i]; i++) {
+        Method m = class_getInstanceMethod(classes[i], sel);
+        if (!m) continue;
+        macws_orig_agxtex_iosurf_init =
+            (macws_agxtex_iosurf_init_t)method_getImplementation(m);
+        method_setImplementation(m, (IMP)macws_hook_agxtex_iosurf_init);
+        fprintf(stderr,
+            "#### MACWS_AGX_NATIVE hooked %s "
+            "initWithDevice:desc:iosurface:plane:\n",
+            class_getName(classes[i]));
+        break;
+    }
+    if (!macws_orig_agxtex_iosurf_init) {
+        fprintf(stderr,
+            "#### MACWS_AGX_NATIVE initWithDevice:desc:iosurface:plane: "
+            "NOT FOUND on AGX texture classes\n");
+        return;
+    }
+    installed = 1;
+}
+#endif // !arm64e
+
 static void install_agx_init_redirect(Class agx) {
     install_agx_initimpl_hook();  // install diag hook on texture class
     install_iogpu_init_hook();    // install diag hook on IOGPUMetalTexture super-init
@@ -23616,7 +23858,56 @@ static void install_agx_init_redirect(Class agx) {
     }
 #endif // !arm64e || !on-device — MTLFakeDevice unavailable on arm64e on-device
 
-    // Public NoCopy buffers retain their original CPU allocation. The former
+#if !defined(__arm64e__)
+    macws_install_agxtex_iosurf_init_hook();
+#endif
+    macws_agx_noop_alert_methods(agx);
+    macws_agxbuffer_install_bytes_pin_swizzle();
+}
+
+static void macws_agx_noop_alert_methods(Class agx) {
+    // No-op methods that crash in chroot because their setup dependencies
+    // (timers, mempools, dispatch sources, etc.) require kernel state that
+    // wasn't fully initialized. Downstream code may not actually need them.
+    // setupDeferred: the dispatch_once block crashes in chroot; the AGXMetal13_3
+    // binary cmp/b.hi patches in mac_hooks.m skip its mempool grow calls, but
+    // post-grow code still reads uninitialized ivars. As a workaround, no-op
+    // the ObjC method entirely — combined with proper init redirect this allows
+    // newBuffer/newTexture/newCommandQueue/newCommandBuffer to succeed (probe7
+    // stages 1-6+8). Texture/buffer creation reads OTHER ivars set by the 2-arg
+    // init, not the deferred mempool ivars.
+    // Note: setupDeferred is NOT noop'd here anymore. Texture init reads
+    // mempool storage that setupDeferred populates (see crash in
+    // AGX::Mempool<...ImageStateEncoderGen6...>::grow when WS creates an
+    // IOSurface-backed texture). The alert* methods are still noop'd because
+    // their dispatch_source setup fails in chroot but no other code uses them.
+    const char *noopMethods[] = {
+        "alertCommandBufferActivityStart",
+        "alertCommandBufferActivityComplete",
+        NULL
+    };
+    IMP noop = imp_implementationWithBlock(^void(id self) {
+        // silently
+    });
+    for (int i = 0; noopMethods[i]; i++) {
+        SEL s = sel_registerName(noopMethods[i]);
+        Method m = class_getInstanceMethod(agx, s);
+        if (m) {
+            method_setImplementation(m, noop);
+            fprintf(stderr, "#### MACWS_AGX_NATIVE noop'd %s\n", noopMethods[i]);
+        }
+    }
+}
+
+// Install the AGXBuffer initWithDevice:bytes:…pinnedGPUAddress: shim. The
+// class is only realized after MACWS_AGX_REGISTER_CLASSES walks AGXMetal13_3's
+// __objc_classlist — on 22F82 the first call (from install_agx_init_redirect)
+// happens BEFORE that pass, so objc_getClass returns nil and the swizzle was
+// silently skipped. The post-register site in mac_hooks.m calls this again;
+// the installed-guard makes repeat calls no-ops.
+void macws_agxbuffer_install_bytes_pin_swizzle(void) {
+    static int installed = 0;
+    if (installed) return;
     // copy-and-early-deallocate redirect breaks that contract (and Office's
     // DirectSharedBuffer). Native PRIVATE mmap pages work: the measured
     // incompatibility is the producer's extra alignment slot in ResCreate.
@@ -23786,38 +24077,7 @@ static void install_agx_init_redirect(Class agx) {
             fprintf(stderr, "#### MACWS_AGX_NATIVE AGXBuffer initWithDevice:bytes:length:options:deallocator:pinnedGPUAddress: NOT FOUND\n");
         }
     }
-
-    // No-op methods that crash in chroot because their setup dependencies
-    // (timers, mempools, dispatch sources, etc.) require kernel state that
-    // wasn't fully initialized. Downstream code may not actually need them.
-    // setupDeferred: the dispatch_once block crashes in chroot; the AGXMetal13_3
-    // binary cmp/b.hi patches in mac_hooks.m skip its mempool grow calls, but
-    // post-grow code still reads uninitialized ivars. As a workaround, no-op
-    // the ObjC method entirely — combined with proper init redirect this allows
-    // newBuffer/newTexture/newCommandQueue/newCommandBuffer to succeed (probe7
-    // stages 1-6+8). Texture/buffer creation reads OTHER ivars set by the 2-arg
-    // init, not the deferred mempool ivars.
-    // Note: setupDeferred is NOT noop'd here anymore. Texture init reads
-    // mempool storage that setupDeferred populates (see crash in
-    // AGX::Mempool<...ImageStateEncoderGen6...>::grow when WS creates an
-    // IOSurface-backed texture). The alert* methods are still noop'd because
-    // their dispatch_source setup fails in chroot but no other code uses them.
-    const char *noopMethods[] = {
-        "alertCommandBufferActivityStart",
-        "alertCommandBufferActivityComplete",
-        NULL
-    };
-    IMP noop = imp_implementationWithBlock(^void(id self) {
-        // silently
-    });
-    for (int i = 0; noopMethods[i]; i++) {
-        SEL s = sel_registerName(noopMethods[i]);
-        Method m = class_getInstanceMethod(agx, s);
-        if (m) {
-            method_setImplementation(m, noop);
-            fprintf(stderr, "#### MACWS_AGX_NATIVE noop'd %s\n", noopMethods[i]);
-        }
-    }
+    installed = 1;
 }
 
 @interface MTLTextureDescriptorInternal : MTLTextureDescriptor

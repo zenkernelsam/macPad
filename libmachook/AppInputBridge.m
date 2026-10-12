@@ -125,6 +125,7 @@ typedef void (*MacWSPostCGEvent)(uint32_t, MacWSCGEventRef);
 // secondary events while leaving the real primary state stuck down.
 typedef int32_t (*MacWSPostLegacyMouseEvent)(CGPoint, int32_t, uint32_t,
                                              int32_t, ...);
+typedef int32_t (*MacWSMoveCursorToPoint)(uint32_t, CGPoint);
 typedef int32_t (*MacWSPostLegacyScrollEvent)(uint32_t, int32_t, ...);
 typedef int32_t (*MacWSPostLegacyKeyboardEvent)(uint16_t, uint16_t, int32_t);
 typedef id (*MacWSEventFromCGEvent)(id, SEL, MacWSCGEventRef);
@@ -187,6 +188,9 @@ static char MacWSWindowConfigureAckKey;
 static char MacWSWindowScreenConstraintPolicyKey;
 static void MacWSPublishWindowMetrics(void);
 static void MacWSEnqueueAppInputRecord(MacWSInputRecord record);
+static BOOL MacWSDeliverDockPointerEvent(MacWSInputRecord record,
+                                         CGPoint quartzPoint,
+                                         uint32_t windowNumber);
 extern void MacWSInstallPreviewCoreImageRendererAdapter(void);
 static void MacWSNotifyDisplayCatalogChanged(uint8_t reason);
 static void MacWSNotifyDisplayGeometryChanged(uint32_t windowID, id window,
@@ -5755,6 +5759,77 @@ static MacWSPostLegacyMouseEvent MacWSLegacySystemMousePoster(void) {
     return postMouse;
 }
 
+// 22F82 runtime probe: CGPostMouseEvent's position-update payload is rejected
+// with kCGErrorInvalidConnection (1002) from every tested connection class,
+// while CGDisplayMoveCursorToPoint still warps the real global cursor.
+// Establish the global position through the warp API first, then post button
+// transitions with updateMouseCursorPosition=false. Runtime witness:
+// warp=0 down=0 up=0 cursor=(325,242); before the warp the cursor stayed at
+// (0,0) and every pure-move post returned 1002.
+static int32_t MacWSWarpSystemCursor(uint32_t displayID, CGPoint point) {
+    static MacWSMoveCursorToPoint moveCursor;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        moveCursor = (MacWSMoveCursorToPoint)dlsym(
+            RTLD_DEFAULT, "CGDisplayMoveCursorToPoint");
+        if (!moveCursor) {
+            void *coreGraphics = dlopen(
+                "/System/Library/Frameworks/CoreGraphics.framework/CoreGraphics",
+                RTLD_LAZY | RTLD_LOCAL);
+            if (coreGraphics) moveCursor = (MacWSMoveCursorToPoint)dlsym(
+                coreGraphics, "CGDisplayMoveCursorToPoint");
+        }
+    });
+    return moveCursor ? moveCursor(displayID, point) : -1;
+}
+
+// Single-display convenience: every system-pointer site in this chroot owns
+// the one virtual display, and the warp doubles as the connection bootstrap
+// that unblocks CGPostMouseEvent's updateMouseCursorPosition payload.
+static int32_t MacWSWarpSystemCursorOnMainDisplay(CGPoint point) {
+    typedef uint32_t (*MacWSMainDisplayID)(void);
+    static MacWSMainDisplayID mainDisplayID;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        mainDisplayID = (MacWSMainDisplayID)dlsym(
+            RTLD_DEFAULT, "CGMainDisplayID");
+    });
+    if (!mainDisplayID) return -1;
+    return MacWSWarpSystemCursor(mainDisplayID(), point);
+}
+
+// The legacy CGPostMouseEvent route on this WindowServer rejects every post
+// whose three button states are all false: pure moves and — critically —
+// button releases return kCGErrorInvalidConnection while asserted-button
+// posts succeed (runtime witness on Dock 33576: tap down=0 up=1002; hover
+// buttons=0 -> 1002 vs buttons=1 -> 0). CGEventPost(kCGSessionEventTap) is a
+// different transport that carries a fully-typed CGEvent object; the scroll
+// proxy in mac_hooks already posts through it. Route the transition the
+// legacy call cannot express (mouseMoved / buttonUp) through the session
+// tap instead of dropping the release server-side.
+typedef void *(*MacWSCreateMouseEvent)(void *source, int32_t eventType,
+                                       CGPoint point, int32_t button);
+typedef void (*MacWSSessionEventPost)(uint32_t tap, void *event);
+static int32_t MacWSPostSessionMouseTransition(CGPoint point,
+                                             int32_t eventType,
+                                             int32_t button) {
+    static MacWSCreateMouseEvent createEvent;
+    static MacWSSessionEventPost sessionPost;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        createEvent = (MacWSCreateMouseEvent)dlsym(
+            RTLD_DEFAULT, "CGEventCreateMouseEvent");
+        sessionPost = (MacWSSessionEventPost)dlsym(
+            RTLD_DEFAULT, "CGEventPost");
+    });
+    if (!createEvent || !sessionPost) return -1;
+    void *event = createEvent(NULL, eventType, point, button);
+    if (!event) return -2;
+    sessionPost(1 /* kCGSessionEventTap */, event);
+    CFRelease(event);
+    return 0;
+}
+
 // Catalyst and Electron own process-local scrolling implementations and accept
 // the precise pixel NSEvent built below. Native AppKit must use its connected
 // WindowServer route when possible: Finder-2026-09-08-113319.ips records the
@@ -5955,7 +6030,8 @@ static BOOL MacWSPostSystemScrollEvent(
             };
             // Button-free pointer motion synchronizes WindowServer's wheel
             // hit point without exposing its independently hidden cursor.
-            (void)postMouse(quartzPoint, true, 3, false, false, false);
+            (void)MacWSWarpSystemCursorOnMainDisplay(quartzPoint);
+            (void)postMouse(quartzPoint, false, 3, false, false, false);
         }
     }
     if (activeWindowNumber != windowNumber) return NO;
@@ -6075,6 +6151,15 @@ static BOOL MacWSPostLegacySystemPointerEvent(
     // per-window AppKit dispatcher below; retain this system route only for
     // zero-window fallback pixels such as uncatalogued system surfaces.
     uint32_t exactWindow = MacWSInputWindowIDForScene(record.sceneID);
+    // 22F82 runtime: the legacy/global system-pointer post is dead in every
+    // process — CGPostMouseEvent returns 0 for asserted buttons but no event
+    // ever reaches WindowServer (8-second held down at the Apple menu left
+    // an identical framebuffer), all-false posts return 1002, and typed
+    // CGEventPost session/HID-tap events are silently dropped. Returning NO
+    // for exact-window records lets the per-window AppKit dispatcher below
+    // own them, matching the contract above.
+    if (exactWindow != 0)
+        return NO;
     BOOL exactContinuation = exactWindow != 0 &&
         MacWSExactSystemPointerActive &&
         MacWSExactSystemPointerContact == record.contactID &&
@@ -6096,6 +6181,8 @@ static BOOL MacWSPostLegacySystemPointerEvent(
     static BOOL rightDown;
     BOOL atomicTap = NO;
     BOOL secondary = NO;
+    BOOL wasLeftDown = leftDown;
+    BOOL wasRightDown = rightDown;
     switch ((MacWSInputKind)record.kind) {
         case MacWSInputKindTouchDown:
             leftDown = YES;
@@ -6125,6 +6212,7 @@ static BOOL MacWSPostLegacySystemPointerEvent(
     };
     int32_t firstResult = 0;
     int32_t secondResult = 0;
+    int32_t warpResult = -9999;
     BOOL latencyMarker = atomicTap &&
         MacWSWriteSystemInputLatencyMarker(record,
             exactWindow != 0 ? exactWindow : (uint32_t)windowNumber);
@@ -6141,7 +6229,8 @@ static BOOL MacWSPostLegacySystemPointerEvent(
         // in NSMenu/Chromium popup windows. Keep the real global pointer state
         // coherent here; WindowServer's cursor sprite is hidden independently
         // at the completed-composite boundary.
-        firstResult = postMouse(quartzPoint, true, 3,
+        warpResult = MacWSWarpSystemCursorOnMainDisplay(quartzPoint);
+        firstResult = postMouse(quartzPoint, false, 3,
             secondary ? false : true, secondary ? true : false, false);
         // CGPostMouseEvent preserves call order and button transitions are
         // not coalesced. The former 8-ms hold added almost one complete iPad
@@ -6150,8 +6239,11 @@ static BOOL MacWSPostLegacySystemPointerEvent(
         // small 2-ms separation for trackers that sample pressedMouseButtons,
         // while avoiding an artificial frame of input latency.
         usleep(2000);
-        secondResult = postMouse(quartzPoint, true, 3,
+        secondResult = postMouse(quartzPoint, false, 3,
             false, false, false);
+        if (secondResult != 0)
+            secondResult = MacWSPostSessionMouseTransition(
+                quartzPoint, secondary ? 4 : 2, secondary ? 1 : 0);
     } else {
         // An interoperability probe creates a real Finder source-drag solely
         // to populate NSDragPboard. A button release is a DROP, not a cancel:
@@ -6178,8 +6270,30 @@ static BOOL MacWSPostLegacySystemPointerEvent(
                 getpid(), exactWindow, record.contactID, cancelDown, cancelUp);
             fflush(stderr);
         }
-        firstResult = postMouse(quartzPoint, true, 3,
-            leftDown, rightDown, false);
+        warpResult = MacWSWarpSystemCursorOnMainDisplay(quartzPoint);
+        BOOL releaseTransition = (wasLeftDown || wasRightDown) &&
+                                 !leftDown && !rightDown;
+        if (releaseTransition) {
+            // A release is an all-false post the legacy route always rejects;
+            // try it first, then the session-tap typed mouseUp so the
+            // WindowServer-side button state actually comes back up.
+            firstResult = postMouse(quartzPoint, false, 3,
+                false, false, false);
+            if (firstResult != 0)
+                firstResult = MacWSPostSessionMouseTransition(
+                    quartzPoint, wasRightDown ? 4 : 2,
+                    wasRightDown ? 1 : 0);
+        } else if (!leftDown && !rightDown) {
+            // Pure hover/move carries no button state; the legacy all-false
+            // post is rejected outright while the warp above already owns
+            // the global cursor position. Use the session-tap typed
+            // mouseMoved as the real delivery and log its result.
+            firstResult = MacWSPostSessionMouseTransition(
+                quartzPoint, 5 /* kCGEventMouseMoved */, 0);
+        } else {
+            firstResult = postMouse(quartzPoint, false, 3,
+                leftDown, rightDown, false);
+        }
     }
     BOOL posted = firstResult == 0 && secondResult == 0;
     if (!posted && latencyMarker)
@@ -6204,13 +6318,13 @@ static BOOL MacWSPostLegacySystemPointerEvent(
         fprintf(stderr,
             "#### APP-INPUT SYSTEM-POINTER pid=%d window=%ld kind=%u "
             "buttons=%u/%u appkit=(%.2f,%.2f) quartz=(%.2f,%.2f) "
-            "exact-start=%s exact-continuation=%s result=%d/%d\n",
+            "exact-start=%s exact-continuation=%s result=%d/%d warp=%d\n",
             getpid(), (long)windowNumber, record.kind,
             leftDown ? 1u : 0u, rightDown ? 1u : 0u,
             screenPoint.x, screenPoint.y, quartzPoint.x, quartzPoint.y,
             allowExactSystemStart ? "YES" : "NO",
             exactContinuation ? "YES" : "NO",
-            firstResult, secondResult);
+            firstResult, secondResult, warpResult);
         fflush(stderr);
     }
     return posted;
@@ -6827,6 +6941,174 @@ static BOOL MacWSPostDockSystemInput(MacWSInputRecord record) {
         fflush(stderr);
     }
     return posted;
+}
+
+// Dock links no AppKit: it drains CGEventCreateNextEvent on its run loop and
+// routes each CGEvent through one internal dispatcher. RE-confirmed on the
+// shipped Ventura 13.4 / 22F82 arm64e Dock image (UUID
+// 2B02F563-15F3-38D6-96CD-CB6DD77A816C): the batch loop at __TEXT+0x1dc74
+// calls CGEventGetType and hands (event, type) to __TEXT+0x3afa0, whose
+// type-1..0x1c jump table covers left/right down, up, dragged and moved.
+// Delivering a genuine CGEvent there is the same abstraction boundary
+// WindowServer's event queue already feeds; Dock's own hit test, hover,
+// magnification and click handling stay intact.
+typedef void (*MacWSDockEventDispatch)(void *, int64_t);
+
+static MacWSDockEventDispatch MacWSDockEventDispatchFunction(void) {
+    static MacWSDockEventDispatch cached;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        static const uint8_t expectedUUID[16] = {
+            0x2b, 0x02, 0xf5, 0x63, 0x15, 0xf3, 0x38, 0xd6,
+            0x96, 0xcd, 0xcb, 0x6d, 0xd7, 0x7a, 0x81, 0x6c,
+        };
+        static const uint8_t expectedPrologue[] = {
+            0x7f, 0x23, 0x03, 0xd5, 0xff, 0x43, 0x03, 0xd1,
+            0xeb, 0x2b, 0x05, 0x6d, 0xe9, 0x23, 0x06, 0x6d,
+            0xfc, 0x6f, 0x07, 0xa9, 0xfa, 0x67, 0x08, 0xa9,
+            0xf8, 0x5f, 0x09, 0xa9, 0xf6, 0x57, 0x0a, 0xa9,
+        };
+        uint32_t imageCount = _dyld_image_count();
+        for (uint32_t index = 0; index < imageCount; index++) {
+            const char *name = _dyld_get_image_name(index);
+            if (!name || !strstr(name, "/Dock.app/Contents/MacOS/Dock"))
+                continue;
+            const struct mach_header_64 *header =
+                (const struct mach_header_64 *)_dyld_get_image_header(index);
+            const uint8_t *candidate =
+                header ? (const uint8_t *)header + 0x3afa0 : NULL;
+            if (MacWSMachHeaderHasUUID(header, expectedUUID) && candidate &&
+                memcmp(candidate, expectedPrologue,
+                       sizeof(expectedPrologue)) == 0) {
+                cached = (MacWSDockEventDispatch)
+                    ptrauth_sign_unauthenticated(
+                        (void *)candidate, ptrauth_key_function_pointer, 0);
+            } else if (MacWSRuntimeDiagnosticsEnabled()) {
+                fprintf(stderr,
+                    "#### APP-INPUT DOCK-ROUTER unsupported pid=%d "
+                    "image=%s\n", getpid(), name);
+                fflush(stderr);
+            }
+            break;
+        }
+        if (!cached && MacWSRuntimeDiagnosticsEnabled()) {
+            fprintf(stderr,
+                "#### APP-INPUT DOCK-ROUTER unavailable pid=%d\n", getpid());
+            fflush(stderr);
+        }
+    });
+    return cached;
+}
+
+// One genuine CGEvent per pointer phase, built with the same field layout
+// MacWSCreateAppMouseEvent already verifies for AppKit delivery: type,
+// Quartz location, button, click state, buttons, pressure and the
+// exact-window identity fields 91/92. Modifiers come from the record scene
+// so chorded clicks keep their semantics.
+static BOOL MacWSDeliverDockPointerEvent(MacWSInputRecord record,
+                                         CGPoint quartzPoint,
+                                         uint32_t windowNumber) {
+    MacWSDockEventDispatch dispatchEvent = MacWSDockEventDispatchFunction();
+    static MacWSCreateMouseCGEvent createMouse;
+    static MacWSSetCGEventFlags setFlags;
+    static MacWSSetCGEventIntegerField setInteger;
+    static MacWSSetCGEventDoubleField setDouble;
+    static MacWSSetCGEventTimestamp setTimestamp;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        createMouse = (MacWSCreateMouseCGEvent)dlsym(
+            RTLD_DEFAULT, "CGEventCreateMouseEvent");
+        setFlags = (MacWSSetCGEventFlags)dlsym(
+            RTLD_DEFAULT, "CGEventSetFlags");
+        setInteger = (MacWSSetCGEventIntegerField)dlsym(
+            RTLD_DEFAULT, "CGEventSetIntegerValueField");
+        setDouble = (MacWSSetCGEventDoubleField)dlsym(
+            RTLD_DEFAULT, "CGEventSetDoubleValueField");
+        setTimestamp = (MacWSSetCGEventTimestamp)dlsym(
+            RTLD_DEFAULT, "CGEventSetTimestamp");
+    });
+    if (!dispatchEvent || !createMouse || !setInteger) return NO;
+
+    // Button state lives on the main thread: every delivery arrives through
+    // the single FIFO drain so down/up/drag ordering is the record order.
+    static BOOL dockLeftDown;
+    static BOOL dockRightDown;
+    uint32_t firstType = 0;
+    uint32_t secondType = 0;
+    uint32_t button = 0;
+    switch ((MacWSInputKind)record.kind) {
+        case MacWSInputKindTouchDown:
+            dockLeftDown = YES;
+            firstType = 1;
+            break;
+        case MacWSInputKindTouchMove:
+            firstType = dockLeftDown ? 6 : (dockRightDown ? 7 : 5);
+            break;
+        case MacWSInputKindTouchUp:
+        case MacWSInputKindTouchCancel:
+            dockLeftDown = NO;
+            dockRightDown = NO;
+            firstType = 2;
+            break;
+        case MacWSInputKindHover:
+        case MacWSInputKindMenuHover:
+            firstType = 5;
+            break;
+        case MacWSInputKindTap:
+            firstType = 1;
+            secondType = 2;
+            break;
+        case MacWSInputKindSecondaryTap:
+            firstType = 3;
+            secondType = 4;
+            button = 1;
+            break;
+        default:
+            return NO;
+    }
+
+    MacWSCGEventRef events[2] = {
+        createMouse(NULL, firstType, quartzPoint, button),
+        secondType ? createMouse(NULL, secondType, quartzPoint, button)
+                   : NULL,
+    };
+    if (!events[0] || (secondType && !events[1])) {
+        if (events[0]) CFRelease(events[0]);
+        if (events[1]) CFRelease(events[1]);
+        return NO;
+    }
+    NSUInteger count = secondType ? 2 : 1;
+    for (NSUInteger index = 0; index < count; index++) {
+        MacWSCGEventRef event = events[index];
+        if (setFlags)
+            setFlags(event, MacWSInputModifiersForScene(record.sceneID));
+        setInteger(event, 1 /* click state */,
+                   (record.flags & MacWSInputFlagDoubleClick) ? 2 : 1);
+        setInteger(event, 3 /* button number */, button);
+        if (windowNumber != 0) {
+            setInteger(event, 91 /* window under pointer */, windowNumber);
+            setInteger(event, 92 /* window that can handle */, windowNumber);
+        }
+        if (setDouble && (firstType == 1 || firstType == 3 ||
+                          firstType == 6 || firstType == 7))
+            setDouble(event, 2 /* pressure */,
+                      record.pressure > 0.0f ? record.pressure : 1.0f);
+        if (setTimestamp && record.timestamp > 0.0)
+            setTimestamp(event,
+                         (uint64_t)llround(record.timestamp * 1.0e9));
+        dispatchEvent((void *)event,
+                      index == 0 ? firstType : secondType);
+        CFRelease(event);
+    }
+    if (MacWSRuntimeDiagnosticsEnabled()) {
+        fprintf(stderr,
+            "#### APP-INPUT DOCK-NATIVE pid=%d kind=%u type=%u/%u "
+            "quartz=(%.2f,%.2f) window=%u\n",
+            getpid(), record.kind, firstType, secondType,
+            quartzPoint.x, quartzPoint.y, windowNumber);
+        fflush(stderr);
+    }
+    return YES;
 }
 
 // UIKit has already classified this physical sequence as a double tap.  A
@@ -7697,8 +7979,9 @@ static void MacWSPostDirectTrackingRecord(
                     snapshot.screenFrame.size.height - screenPoint.y,
             };
             BOOL leftDown = record.kind == MacWSInputKindTouchMove;
+            (void)MacWSWarpSystemCursorOnMainDisplay(quartzPoint);
             int32_t result = postMouse
-                ? postMouse(quartzPoint, true, 3,
+                ? postMouse(quartzPoint, false, 3,
                             leftDown, false, false)
                 : -1;
             if (MacWSRuntimeDiagnosticsEnabled()) {
@@ -7741,8 +8024,9 @@ static void MacWSPostDirectTrackingRecord(
                 snapshot.screenFrame.origin.y +
                     snapshot.screenFrame.size.height - screenPoint.y,
             };
+            (void)MacWSWarpSystemCursorOnMainDisplay(quartzPoint);
             int32_t result = postMouse
-                ? postMouse(quartzPoint, true, 3, false, false, false)
+                ? postMouse(quartzPoint, false, 3, false, false, false)
                 : -1;
             if (result == 0) {
                 if (MacWSRuntimeDiagnosticsEnabled()) {
@@ -9274,6 +9558,43 @@ static void MacWSPostInputOnMainThread(MacWSInputRecord record) {
                 pthread_main_np() ? "YES" : "NO");
         fflush(stderr);
     }
+    if (MacWSAppInputIsDockEndpoint() && record.frameWidth != 0 &&
+        record.frameHeight != 0) {
+        typedef uint32_t (*MacWSMainDisplayID)(void);
+        typedef CGRect (*MacWSDisplayBounds)(uint32_t);
+        static MacWSMainDisplayID mainDisplayID;
+        static MacWSDisplayBounds displayBounds;
+        static dispatch_once_t onceToken;
+        dispatch_once(&onceToken, ^{
+            mainDisplayID = (MacWSMainDisplayID)dlsym(
+                RTLD_DEFAULT, "CGMainDisplayID");
+            displayBounds = (MacWSDisplayBounds)dlsym(
+                RTLD_DEFAULT, "CGDisplayBounds");
+        });
+        if (mainDisplayID && displayBounds) {
+            CGRect frame = displayBounds(mainDisplayID());
+            if (isfinite(frame.origin.x) && isfinite(frame.origin.y) &&
+                isfinite(frame.size.width) &&
+                isfinite(frame.size.height) && frame.size.width > 0.0 &&
+                frame.size.height > 0.0) {
+                CGFloat normalizedX = record.x / (CGFloat)record.frameWidth;
+                CGFloat normalizedY =
+                    record.y / (CGFloat)record.frameHeight;
+                CGPoint appKitPoint = {
+                    frame.origin.x + normalizedX * frame.size.width,
+                    frame.origin.y + (1.0 - normalizedY) * frame.size.height,
+                };
+                CGPoint quartzPoint = {
+                    appKitPoint.x,
+                    frame.origin.y + frame.size.height - appKitPoint.y,
+                };
+                if (MacWSDeliverDockPointerEvent(
+                        record, quartzPoint,
+                        MacWSInputWindowIDForScene(record.sceneID)))
+                    return;
+            }
+        }
+    }
     Class applicationClass = objc_getClass("NSApplication");
     if (!applicationClass) {
         fprintf(stderr,
@@ -10258,6 +10579,7 @@ static void MacWSPostInputOnMainThread(MacWSInputRecord record) {
         MacWSInputWindowIDForScene(record.sceneID);
     BOOL globalSystemSurface = requestedWindowNumber != 0 &&
         (record.flags & MacWSInputFlagGlobalSystemSurface) != 0;
+    BOOL globalPostFailed = NO;
     if (globalSystemSurface) {
         // Fullscreen Dock/WindowServer layers can be interactive without an
         // NSApplication endpoint of their own. Host preserves complete-desktop
@@ -10324,12 +10646,20 @@ static void MacWSPostInputOnMainThread(MacWSInputRecord record) {
         }
         if (MacWSRuntimeDiagnosticsEnabled()) {
             fprintf(stderr,
-                "#### APP-INPUT GLOBAL-SURFACE-DROP pid=%d requested=%u "
-                "reason=unsupported-kind kind=%u\n",
-                getpid(), requestedWindowNumber, record.kind);
+                "#### APP-INPUT GLOBAL-SURFACE-FALLBACK pid=%d requested=%u "
+                "kind=%u point=(%.2f,%.2f)\n",
+                getpid(), requestedWindowNumber, record.kind,
+                globalPoint.x, globalPoint.y);
             fflush(stderr);
         }
-        return;
+        // 22F82 runtime evidence: the process-local CGS post above returns
+        // kCGErrorInvalidConnection for button-free transitions and completes
+        // API-side without visible effect for asserted ones. The encoded
+        // window still names this process's real NSWindow, so degrade the
+        // record to ordinary exact-window AppKit delivery below instead of
+        // dropping it. globalPostFailed keeps the desktop affine for the
+        // screen-space coordinates this record declared.
+        globalPostFailed = YES;
     }
     id window = nil;
     id requestedBaseWindow = nil;
@@ -10407,7 +10737,7 @@ static void MacWSPostInputOnMainThread(MacWSInputRecord record) {
             MacWSExactSystemPointerActive &&
             MacWSExactSystemPointerContact == record.contactID &&
             MacWSExactSystemPointerWindow == requestedWindowNumber;
-        if (record.source == MacWSInputSourceVNC) {
+        if (record.source == MacWSInputSourceVNC || globalPostFailed) {
             // OSXvnc publishes x/y against its complete advertised Retina
             // framebuffer. macwsinputd resolves the live target and adds its
             // exact window ID, but it deliberately leaves that producer
@@ -10417,7 +10747,10 @@ static void MacWSPostInputOnMainThread(MacWSInputRecord record) {
             // window-local DisplayStream sample produced local (424,-115),
             // so Unity never armed the visible Play control. Preserve the
             // broker's exact window identity while mapping this one producer
-            // through the desktop affine it actually declared.
+            // through the desktop affine it actually declared. A global
+            // system-surface record degraded by the failed CGS post above
+            // declared the same complete-desktop geometry, so it shares this
+            // mapping.
             inputMappingFrame = screenFrame;
             screenPoint = (CGPoint){
                 screenFrame.origin.x +
@@ -11668,7 +12001,6 @@ static void MacWSDrainOneAppInputOnMainThread(void);
 
 static void MacWSScheduleAppInputDrain(void) {
     CFRunLoopRef mainRunLoop = CFRunLoopGetMain();
-    if (!mainRunLoop) return;
 
     // Some applications (runtime-confirmed with steam_osx PID 46986 on
     // 2026-08-21) drive AppKit through a nested
@@ -11677,13 +12009,33 @@ static void MacWSScheduleAppInputDrain(void) {
     // be serviced by that application's current, private mode. Queue the same
     // FIFO token in the mode that is actually active as well. Both copies
     // share this main-thread-only guard, so exactly one record is consumed.
-    CFStringRef activeMode = CFRunLoopCopyCurrentMode(mainRunLoop);
+    CFStringRef activeMode =
+        mainRunLoop ? CFRunLoopCopyCurrentMode(mainRunLoop) : NULL;
     __block BOOL consumed = NO;
     void (^drainOnce)(void) = ^{
+        if (MacWSRuntimeDiagnosticsEnabled()) {
+            fprintf(stderr,
+                "#### APP-INPUT DRAIN-FIRE pid=%d thread-main=%s\n",
+                getpid(), pthread_main_np() ? "YES" : "NO");
+            fflush(stderr);
+        }
         if (consumed) return;
         consumed = YES;
         MacWSDrainOneAppInputOnMainThread();
     };
+    // Dock's main loop services the main dispatch queue yet never runs a
+    // CFRunLoopPerformBlock token queued for kCFRunLoopDefaultMode: the
+    // 2026-10-11 Dock witness showed SCHEDULE route=current+common followed
+    // by silence while the runloop sat inside mach_msg, and the
+    // dispatch_sync-based modal path in the same process is the channel that
+    // actually executes. Queue the same guarded token on the main queue so
+    // every process drains through whichever of the two services its main
+    // loop really runs; consumed keeps exactly one execution.
+    dispatch_async(dispatch_get_main_queue(), drainOnce);
+    if (!mainRunLoop) {
+        if (activeMode) CFRelease(activeMode);
+        return;
+    }
     if (activeMode) {
         CFRunLoopPerformBlock(mainRunLoop, activeMode, drainOnce);
     }
@@ -12545,6 +12897,25 @@ static void *MacWSAppInputThread(void *unused) {
             BOOL valid = count == sizeof(record) &&
                 MacWSInputRecordIsValid(&record);
             BOOL posted = valid && MacWSPostDockSystemInput(record);
+            // 22F82 runtime evidence (screencapture A/B): every in-process
+            // CGS pointer post — CGPostMouseEvent, CGEventPost at the
+            // session and HID taps — completes API-side yet produces no
+            // visible WindowServer behavior. MacWSPostDockSystemInput
+            // therefore returns NO for records it cannot deliver. An
+            // exact-window record still names a real Dock NSWindow, so hand
+            // it to the ordinary per-window AppKit dispatcher instead of
+            // dropping it; that is the same NSEvent route which already
+            // delivers this process's scroll and key records. The modal
+            // Mission Control path keeps first refusal because
+            // MacWSPostDockSystemInput only fails after it declines.
+            // The native Dock CGEvent route delivers by screen coordinate,
+            // so a fullscreen system-surface record with window=0 is just as
+            // deliverable as an exact-window one. Queue every valid record
+            // the synchronous post declined.
+            if (!posted && valid) {
+                MacWSEnqueueAppInputRecord(record);
+                posted = YES;
+            }
             if ((MacWSRuntimeDiagnosticsEnabled() ||
                  record.contactID == MACWS_INPUT_CONTACT_DIAGNOSTIC) &&
                 record.kind != MacWSInputKindTouchMove &&
@@ -13401,9 +13772,12 @@ static void MacWSInstallAppInputBridgeNow(void) {
         if (!MacWSOriginalApplicationSendEvent ||
             !MacWSOriginalHandleActivatedEvent)
             MacWSScheduleApplicationKeyWitnessInstall(0);
-        MacWSAppInputPending = [NSMutableArray new];
         MacWSAppInputDeferredRFBMoveEvents = [NSMutableArray new];
     }
+    // The FIFO exists for the Dock endpoint too: exact-window system-surface
+    // records whose WindowServer post is declined drain through the
+    // CGEventCreateNextEvent-level dispatcher instead of AppKit sendEvent:.
+    MacWSAppInputPending = [NSMutableArray new];
     snprintf(MacWSAppInputPath, sizeof(MacWSAppInputPath),
              "/private/tmp/macws_app_input.%d.sock", getpid());
     snprintf(MacWSWindowMetricsPath, sizeof(MacWSWindowMetricsPath),
@@ -13431,6 +13805,24 @@ static void MacWSInstallAppInputBridgeNow(void) {
         return;
     }
     chmod(MacWSAppInputPath, 0600);
+    // Warm every diagnostics-flag cache on the installing thread before the
+    // input thread starts.  Lazy state that is first touched by the input
+    // thread (flag probes, symbol resolvers, dlopen) can enter bridged
+    // mach_msg paths that never complete from that context; evaluating them
+    // here keeps the receiver thread on syscalls only.
+    (void)MacWSRuntimeDiagnosticsEnabled();
+    (void)MacWSKeyboardLatencyDiagnosticsEnabled();
+    (void)MacWSGamePointerDiagnosticsEnabled();
+    // The system-mouse path lazily dlopens CoreGraphics on its first use.
+    // dlopen fires _loadImageCallback, which performs a bridged mach_msg that
+    // wedges when first reached from the input thread (observed 2026-10-11:
+    // Dock's input thread parked inside the resolver's blr chain).  Resolve
+    // the poster and warp entry points now; the single warm-up warp also
+    // bootstraps CGPostMouseEvent's connection state, and the cursor is
+    // host-rendered so the move is invisible.
+    if (MacWSLegacySystemMousePoster()) {
+        (void)MacWSWarpSystemCursorOnMainDisplay(CGPointMake(0.0, 0.0));
+    }
     pthread_t thread;
     if (pthread_create(&thread, NULL, MacWSAppInputThread, NULL) == 0) {
         pthread_detach(thread);

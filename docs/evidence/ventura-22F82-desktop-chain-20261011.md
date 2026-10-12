@@ -205,3 +205,112 @@ display-stack health (backboardd alive), then iterate.
 - Production preflight deny-list: `macws_diagnostic_flags.sh` pattern;
   leftover `MACWS_XPC_NAME_TRACE`/`MACWS_AUDIT_TRACE` in job plists
   blocks `macos_gui.sh start` — remove before starting
+
+## filecoordinationd check-in fix (2026-10-11, later)
+
+Root cause of the Dock main-thread wedge (runtime-confirmed, not theory):
+
+- Dock's main thread blocked forever in a synchronous XPC reply wait to
+  `com.apple.ProgressReporting` → ProgressReportingProxy → upstream
+  `com.apple.macosbooter.ProgressReporting`. `launchctl print` showed all
+  three `com.macwsguide.filecoordination` endpoints with `active = 0`
+  while `coreservicesd`'s endpoint had `active = 1` — i.e. launchd held
+  the ports and filecoordinationd had never claimed them, so every relayed
+  request was swallowed unanswered.
+
+- Why: `macws_private_bootstrap_service_name` had no mapping for the
+  FileCoordination/ProgressReporting names. Clients were steered to the
+  proxy bundles by the earlier `xpc_connection_create_mach_service`
+  intercept, but the daemon's own registration used the STOCK names:
+  `bootstrap_check_in("com.apple.FileCoordination.kernel.ipc")`
+  (RE-confirmed at filecoordinationd+0x2cf0; the FileCoordination and
+  ProgressReporting listeners check in through the same name path).
+  On iPadOS launchd those public names are not declared by the job, so
+  every check-in was rejected → `macosbooter.*` endpoints stayed
+  launchd-held → proxy upstream conn never answered.
+
+- Fix: three entries added to the rename table
+  (`com.apple.FileCoordination`, `com.apple.ProgressReporting`,
+  `com.apple.FileCoordination.kernel.ipc` → `macosbooter.*`).
+
+Verified after deploy + restart (all runtime witnesses):
+
+- `com.apple.macosbooter.FileCoordination` / `.ProgressReporting` now
+  `active = 1` (kernel.ipc stays 0 — on macOS it is `HostSpecialPort:30`
+  bound by launchd, not check-in; no client blocked on it).
+- progress-bridge.log: new proxy accepted client with NO
+  `upstream returned non-dictionary reply`.
+- Dock log: `LSXPC-CONN com.apple.ProgressReporting` request len=410
+  answered by reply len=202 with a real 32-byte plist payload — the full
+  Dock→proxy→filecoordinationd→reply chain completes.
+- Dock's input thread returned to socket read (was stuck in
+  dispatch_sync(main)); Dock continues doing iconservices XPC work.
+  The `chroot /var/mnt/rootfs /bin/echo HI` acceptance still passes.
+
+Remaining pointer item: `CGPostMouseEvent` all-false-button posts still
+return 1002 — the down post of a tap succeeds (0), the up post fails
+(1002). Warp (CGDisplayMoveCursorToPoint) returns 0 and moves the real
+cursor; whether hover highlighting now works through WS hit-testing of
+the warped cursor needs an on-screen look.
+
+## 2026-10-13 — Fullscreen pointer routing fix (input end-to-end proven)
+
+Symptom resolved: visible desktop (menu bar + Dock + Terminal), scroll
+worked, but every tap appeared dead. Runtime capture showed real taps
+reaching inputd with valid frame coords, `post=issued`, yet no app
+responded.
+
+Chain proven by log witnesses, then fixed and re-verified with synthetic
+`MacWSInputRecord` injections (kind=6, flags=0x40, targetPID=Dock,
+DIAG contact):
+
+- `macwsinputd` fullscreen block resolved the SLS route correctly
+  (`GLOBAL-POINTER ... route=app-input pid=68656 window=26` for a
+  Terminal point), but the next else-if in the same target-selection
+  chain (`record.targetPID > 1` → live Dock endpoint) overwrote
+  `eventTarget.pid` back to the fullscreen producer (Dock 68625),
+  keeping the SLS-resolved Terminal window number. The record then went
+  to Dock's socket stamped `{Dock, window=26}`.
+- Dock endpoint consumed it: `DOCK-SYSTEM ... route=system-mouse
+  posted=NO` (22F82: every in-process CGS pointer post completes
+  API-side with no visible WS effect) → `DOCK-RX posted=YES` enqueue
+  fallback → `DOCK-NATIVE type=1/2` on Dock's own windows — dropped as
+  out-of-strip content for app-window points. Taps that did land inside
+  Dock's strip DID work (verified: Freeform icon tap produced
+  `LS-APP-REQUEST /System/Applications/Freeform.app`, status -10810
+  already-running fallback launched YES).
+- Terminal's own bridge meanwhile received 999 records — all kind=14
+  scroll only; zero tap/hover ever arrived.
+
+Fix (macwsinputd/main.c): the `fullscreenGlobalPointerRecord` arm of the
+target chain now short-circuits to a no-op when the endpoint block
+already accepted the live SLS route (`endpointRouted`), instead of
+falling through to the producer-PID rewrite. The Dock-as-poster
+fallback is preserved for SLS misses / dead endpoints.
+
+Post-fix injection witnesses:
+
+- Terminal window point: `ROUTE route=appkit-socket pid=68656
+  window=26` → Terminal `RX kind=6` → `HIT local=(304.89,371.51)` →
+  `MOUSE-EVENT type=5/1/2 serial=1..3` + `MOUSE-RETURN` — a real
+  down/move/up pair dispatched through sendEvent.
+- Desktop center: routed Finder 68554 window 15 →
+  `HIT view=NSKVONotifying_TDesktopView` → real desktop click.
+- Dock strip: routed Dock 68625 window 25 → `DOCK-NATIVE` → Freeform
+  LS launch (reproducible).
+- Menu bar point: routed Finder window 12 → `DROP
+  reason=target-window-closed` — menu-bar activation needs the existing
+  ActivateTarget/system-menu preflight path, not a window dispatch.
+  Same outcome as before the fix (Dock poster also discarded it);
+  tracked separately, not a regression.
+
+Deployed: macwsinputd arm64 (Theos macosx target), CDHash
+49f830b17f42dd0c4a0d83b6a7f9d8a91f6c03b6 registered via jbctl;
+both /var/jb/usr/macOS/bin and /var/mnt/rootfs/usr/local/bin copies
+updated atomically; job reloaded via procursus launchctl.
+
+Remaining to verify with a physical finger: UIKit-sourced taps now take
+the identical path (earlier real records had the same shape: scene
+0x80000000, flags 0x40, targetPID=Dock). Hover records now also route
+to the SLS owner instead of Dock, which should restore Dock
+magnification/highlight behavior.
