@@ -867,7 +867,16 @@ static void UpdateWorkspaceGraphState(MacWSDisplayClient *client,
             wallpaper = layer;
         } else if ([layer.ownerName isEqualToString:@"Dock"] &&
                    layer.skyLightLayer > 0 &&
-                   [layer.windowName isEqualToString:@"Dock"] &&
+                   ([layer.windowName isEqualToString:@"Dock"] ||
+                    // Runtime-confirmed on the 22F82 workspace (2026-10-13):
+                    // the Dock strip layer arrives in the on-screen catalog
+                    // with an empty kCGWindowName while the wallpaper layer
+                    // (same owner, negative SkyLight level) is named
+                    // "Desktop Picture - ...".  The positive-level
+                    // canvas-sized Dock layer is uniquely the strip, so an
+                    // unnamed candidate that covers the canvas is still the
+                    // Dock rather than a generic missed layer.
+                    (layer.windowName.length == 0 && canvasDestination)) &&
                    (!dock || (canvasDestination && canvasSurface))) {
             dock = layer;
         } else if ([layer.ownerName isEqualToString:@"Window Server"] &&
@@ -877,20 +886,34 @@ static void UpdateWorkspaceGraphState(MacWSDisplayClient *client,
             menubar = layer;
         } else if ([layer.ownerName isEqualToString:@"Window Server"] &&
                    layer.skyLightLayer < 0 &&
-                   [layer.windowName isEqualToString:@"Desktop"] &&
+                   ([layer.windowName isEqualToString:@"Desktop"] ||
+                    // Same 22F82 catalog behavior as the Dock strip: the
+                    // WindowServer-owned negative backing layer reports an
+                    // empty kCGWindowName here even though it is the unique
+                    // negative canvas-sized Window Server surface.
+                    (layer.windowName.length == 0 && canvasDestination)) &&
                    (!windowServerBacking ||
                     (canvasDestination && canvasSurface))) {
             windowServerBacking = layer;
         }
     }
 
+    // When the final composite is live it already carries the Dock strip and
+    // desktop backing pixels; their per-layer captures are then suppressed by
+    // LayerNeedsIndependentFinalCompositeCapture, so latestSurface stays NULL
+    // by design. Requiring a surface there left the graph permanently in
+    // "recovering", which in turn churned topology reconciles and kept
+    // invalidating the very composite that supplies those pixels.
+    BOOL compositeCoversLayer = FinalCompositeSurface != NULL &&
+        FinalCompositeRecord.completionTime != 0;
     BOOL wallpaperReady = wallpaper &&
         MacWSLayerDestinationMatchesCanvas(wallpaper, canvasWidth,
                                            canvasHeight) &&
         MacWSLayerSurfaceMatchesSize(wallpaper, canvasWidth, canvasHeight);
     BOOL dockReady = dock &&
         MacWSLayerDestinationMatchesCanvas(dock, canvasWidth, canvasHeight) &&
-        MacWSLayerSurfaceMatchesSize(dock, canvasWidth, canvasHeight);
+        (MacWSLayerSurfaceMatchesSize(dock, canvasWidth, canvasHeight) ||
+         compositeCoversLayer);
     BOOL menubarReady = menubar && menubar.latestSurface &&
         fabs(menubar.destinationBounds.origin.x) <= 0.5 &&
         fabs(menubar.destinationBounds.origin.y) <= 0.5 &&
@@ -900,8 +923,9 @@ static void UpdateWorkspaceGraphState(MacWSDisplayClient *client,
     BOOL backingReady = windowServerBacking &&
         MacWSLayerDestinationMatchesCanvas(windowServerBacking, canvasWidth,
                                            canvasHeight) &&
-        MacWSLayerSurfaceMatchesSize(windowServerBacking, canvasWidth,
-                                     canvasHeight) &&
+        (MacWSLayerSurfaceMatchesSize(windowServerBacking, canvasWidth,
+                                      canvasHeight) ||
+         compositeCoversLayer) &&
         windowServerBacking.ownerPID > 1;
     // Runtime-confirmed after Stray fullscreen teardown on iPad13,6: the Host
     // automation screenshot at 1787730807 was pixel-complete while the graph

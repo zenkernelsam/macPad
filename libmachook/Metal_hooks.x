@@ -8315,6 +8315,130 @@ static BOOL macws_vnc_publish_owned_texture(id<MTLTexture> texture) {
     return YES;
 }
 
+// Swap-completion-driven scanout publish.  On this coexistence build every
+// physical IOMFB swap is cancelled and SkyLight's MetalContext::EndUpdate is
+// never invoked, so the command-buffer observation pipeline is permanently
+// dead (runtime: GPU-FENCE unavailable on all swaps, ENDUPDATE-DIAG = 0).
+// The composited pixels are nevertheless final inside the owned scanout
+// IOSurface by the time each synthetic frame-info completion is delivered to
+// QuartzCore.  Re-scan that surface once per delivered completion so
+// displayd receives a real per-frame final-composite sequence carrying the
+// current desktop instead of replaying the first published frame forever.
+static IOSurfaceRef macws_latest_owned_scanout(void) {
+    if (!g_macws_owned_scanout_lock) return NULL;
+    IOSurfaceRef latest = NULL;
+    uint64_t latestStamp = 0;
+    @synchronized(g_macws_owned_scanout_lock) {
+        for (NSArray *shapeEntries in g_macws_owned_scanout_pool.allValues) {
+            for (NSDictionary *entry in shapeEntries) {
+                IOSurfaceRef surface =
+                    (IOSurfaceRef)[entry[@"surface"] pointerValue];
+                uint64_t stamp = [entry[@"last"] unsignedLongLongValue];
+                if (surface && stamp >= latestStamp) {
+                    latestStamp = stamp;
+                    latest = surface;
+                }
+            }
+        }
+        if (latest) CFRetain(latest);
+    }
+    return latest;
+}
+
+void macws_publish_scanout_after_swap(void) {
+    IOSurfaceRef surface = macws_latest_owned_scanout();
+    if (!surface) return;
+    static _Atomic uint64_t lastScanTicks = 0;
+    static _Atomic uint64_t lastPublishTicks = 0;
+    static mach_timebase_info_data_t timebase;
+    static dispatch_once_t timebaseOnce;
+    dispatch_once(&timebaseOnce, ^{
+        (void)mach_timebase_info(&timebase);
+    });
+    uint64_t now = mach_absolute_time();
+    uint64_t lastScan = atomic_load_explicit(&lastScanTicks,
+                                             memory_order_relaxed);
+    // Cap the CPU scan at ~30 Hz.  Delivered completions pace at the display
+    // cadence during animation bursts; the scan cost is inside WindowServer's
+    // main queue so it must stay bounded.
+    if (lastScan && timebase.denom) {
+        long double elapsedNS = (long double)(now - lastScan) *
+            timebase.numer / timebase.denom;
+        if (elapsedNS < 33.0e6L) {
+            CFRelease(surface);
+            return;
+        }
+    }
+    atomic_store_explicit(&lastScanTicks, now, memory_order_relaxed);
+    size_t width = IOSurfaceGetWidth(surface);
+    size_t height = IOSurfaceGetHeight(surface);
+    size_t bytesPerRow = IOSurfaceGetBytesPerRow(surface);
+    uint32_t ioPixelFormat = IOSurfaceGetPixelFormat(surface);
+    if (width < 1000 || height < 600 ||
+        (ioPixelFormat != 0 && ioPixelFormat != 0x42475241u /* 'BGRA' */) ||
+        IOSurfaceLock(surface, kIOSurfaceLockReadOnly, NULL) != 0) {
+        CFRelease(surface);
+        return;
+    }
+    const char *base = (const char *)IOSurfaceGetBaseAddress(surface);
+    BOOL readable = base && bytesPerRow >= width * 4;
+    size_t sampled = 0, rgbNonzero = 0, different = 0, denseContentRows = 0;
+    uint32_t first = 0;
+    BOOL haveFirst = NO;
+    uint32_t contentHash = 2166136261u;
+    if (readable) {
+        for (size_t y = 0; y < height; y += 16) {
+            const uint32_t *row = (const uint32_t *)(base + y * bytesPerRow);
+            size_t rowRGB = 0;
+            for (size_t x = 0; x < width; x += 16) {
+                uint32_t pixel = row[x];
+                sampled++;
+                contentHash = (contentHash ^ pixel) * 16777619u;
+                if ((pixel & 0x00ffffffu) != 0) {
+                    rgbNonzero++;
+                    rowRGB++;
+                }
+                if (!haveFirst) { first = pixel; haveFirst = YES; }
+                else if (pixel != first) different++;
+            }
+            if (y >= 64 && rowRGB >= 4) denseContentRows++;
+        }
+    }
+    BOOL valid = readable && macws_vnc_content_ready(
+        sampled, rgbNonzero, different, denseContentRows);
+    if (valid) {
+        if (!MacWSFinalCompositePublisherCanPublish())
+            MacWSFinalCompositePublisherMarkContentValidated();
+        BOOL committed = NO;
+        if (macws_vnc_share_enabled())
+            (void)macws_vnc_mmap_publish_bgra_if_changed(
+                base, bytesPerRow, width, height, &committed);
+        // Republish when the sampled content actually changed, plus a bounded
+        // keepalive so a late displayd relaunch still observes a live record.
+        static _Atomic uint32_t lastContentHash = 0;
+        uint32_t previousHash = atomic_exchange_explicit(
+            &lastContentHash, contentHash, memory_order_relaxed);
+        BOOL changed = contentHash != previousHash;
+        uint64_t lastPublish = atomic_load_explicit(&lastPublishTicks,
+                                                    memory_order_relaxed);
+        BOOL keepaliveDue = lastPublish == 0;
+        if (!keepaliveDue && timebase.denom && now >= lastPublish) {
+            long double elapsedNS = (long double)(now - lastPublish) *
+                timebase.numer / timebase.denom;
+            keepaliveDue = elapsedNS >= 4.0e9L;
+        }
+        if (changed || keepaliveDue) {
+            if (MacWSFinalCompositePublisherPublishSurface(
+                    surface, 80 /* MTLPixelFormatBGRA8Unorm */)) {
+                atomic_store_explicit(&lastPublishTicks, now,
+                                      memory_order_relaxed);
+            }
+        }
+    }
+    IOSurfaceUnlock(surface, kIOSurfaceLockReadOnly, NULL);
+    CFRelease(surface);
+}
+
 void macws_vnc_on_composite(id<MTLTexture> dest) {
     if (!macws_vnc_share_enabled() || !dest) return;
 

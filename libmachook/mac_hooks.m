@@ -9333,6 +9333,15 @@ static void *macws_vnc_pointer_proxy_listener(void *unused) {
                 break;
             case MacWSInputKindTap:
             case MacWSInputKindSecondaryTap: {
+                // A tap is the collapsed form of down/up and previously
+                // skipped the TouchDown preamble: the pre-move publishes the
+                // pointer location, and coordinate_activation performs the
+                // bounded ActivateTarget round-trip so the menubar's front
+                // process runs its SetRootMenu preflight before the first
+                // native down reaches WindowServer.
+                (void)macws_vnc_session_mouse_post(
+                    point, false, false, false);
+                (void)macws_vnc_coordinate_activation(&record);
                 MacWSVNCAtomicPointerContext context = {postMouse, point};
                 MacWSAtomicPointerClickResult click = MacWSPostAtomicPointerClick(
                     record.kind == MacWSInputKindSecondaryTap, leftDown,
@@ -21533,6 +21542,14 @@ static void macws_iomfb_complete_cancelled_swap(
         // witness the launcher gates on.
         extern void macws_publish_graphics_ready(void);
         macws_publish_graphics_ready();
+        // The same boundary is the only per-frame point at which the owned
+        // scanout surface is guaranteed to hold the completed composite on
+        // this build: the Metal command-buffer observation path is dead
+        // because EndUpdate is never invoked.  Publish the just-presented
+        // scanout to displayd from here so the final-composite channel
+        // carries real per-frame pixels.
+        extern void macws_publish_scanout_after_swap(void);
+        macws_publish_scanout_after_swap();
         uintptr_t pending_begin_after = display_holder
             ? *(const volatile uintptr_t *)((char *)display_holder + 0x510) : 0;
         uintptr_t pending_end_after = display_holder

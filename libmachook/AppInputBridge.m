@@ -8355,6 +8355,123 @@ static BOOL MacWSWindowPresentationIsOnScreen(id window, BOOL *knownOut) {
     return onScreen;
 }
 
+// WindowServer can route a point to a real CGS window that owns no
+// enumerable NSWindow in the receiving process — the Finder menubar is the
+// observed 22F82 case: NSWindow.windowNumberAtPoint: proves the hit while
+// NSApplication.windows omits the object entirely. Recover that window's
+// real frame and owning PID from the same CGWindowList the compositor
+// publishes so the record can still be delivered to its exact window number
+// through mouseEventWithType:...windowNumber: + sendEvent:.
+static BOOL MacWSCGWindowGeometryForWindowNumber(
+        NSInteger windowNumber, CGRect *boundsOut, pid_t *ownerPIDOut) {
+    if (windowNumber <= 0 || (uint64_t)windowNumber > UINT32_MAX) return NO;
+    static MacWSCGWindowListCopyWindowInfo copyWindowInfo;
+    static id boundsKey;
+    static id ownerKey;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        void *coreGraphics = dlopen(
+            "/System/Library/Frameworks/CoreGraphics.framework/CoreGraphics",
+            RTLD_LAZY | RTLD_LOCAL);
+        if (!coreGraphics) return;
+        copyWindowInfo = (MacWSCGWindowListCopyWindowInfo)dlsym(
+            coreGraphics, "CGWindowListCopyWindowInfo");
+        CFStringRef *boundsSymbol = (CFStringRef *)dlsym(
+            coreGraphics, "kCGWindowBounds");
+        CFStringRef *ownerSymbol = (CFStringRef *)dlsym(
+            coreGraphics, "kCGWindowOwnerPID");
+        if (boundsSymbol) boundsKey = [(id)*boundsSymbol retain];
+        if (ownerSymbol) ownerKey = [(id)*ownerSymbol retain];
+    });
+    if (!copyWindowInfo || !boundsKey || !ownerKey) return NO;
+    // kCGWindowListOptionIncludingWindow == 8: the menubar surface must be
+    // resolvable by number regardless of the on-screen list's filtering.
+    CFArrayRef copied = copyWindowInfo(8, (uint32_t)windowNumber);
+    if (!copied) return NO;
+    BOOL found = NO;
+    CGRect bounds = CGRectZero;
+    pid_t owner = 0;
+    for (NSDictionary *description in (NSArray *)copied) {
+        NSDictionary *value = description[boundsKey];
+        if (![value isKindOfClass:[NSDictionary class]]) continue;
+        // kCGWindowBounds is {"X","Y","Width","Height"}; parse it directly so
+        // no additional CoreGraphics symbol is linked into libmachook.
+        id x = value[@"X"], y = value[@"Y"];
+        id w = value[@"Width"], h = value[@"Height"];
+        if (!x || !y || !w || !h) continue;
+        bounds = CGRectMake([x doubleValue], [y doubleValue],
+                            [w doubleValue], [h doubleValue]);
+        owner = [description[ownerKey] intValue];
+        found = YES;
+        break;
+    }
+    CFRelease(copied);
+    if (!found) return NO;
+    if (boundsOut) *boundsOut = bounds;
+    if (ownerPIDOut) *ownerPIDOut = owner;
+    return YES;
+}
+
+// A record can name a CGS surface that no NSApplication in this process can
+// enumerate because WindowServer owns it — the 22F82 menubar is exactly this
+// (CGWindowList: 1366x24@(0,0), owner=WindowServer pid). SLS routing picks the
+// frontmost application as the receiver, but its bridge cannot synthesize an
+// NSEvent for a window it does not own. The OSXvnc pointer-proxy owns the
+// only real CGPostMouseEvent channel on this build, so hand the record back
+// as an untargeted global-surface pointer event; WindowServer then hit-tests
+// and dispatches the menubar down to the correct HIToolbox tracker itself,
+// matching the native VNC transaction.
+static BOOL MacWSForwardRecordToSystemPointerProxy(
+        const MacWSInputRecord *record) {
+    if (!record) return NO;
+    switch (record->kind) {
+        case MacWSInputKindScroll:
+        case MacWSInputKindTouchDown:
+        case MacWSInputKindTouchMove:
+        case MacWSInputKindTouchUp:
+        case MacWSInputKindTouchCancel:
+        case MacWSInputKindHover:
+        case MacWSInputKindMenuHover:
+        case MacWSInputKindTap:
+        case MacWSInputKindSecondaryTap:
+            break;
+        default:
+            return NO;
+    }
+    MacWSInputRecord forwarded = *record;
+    // The proxy contract requires the untargeted global-surface form: strip
+    // the broker-encoded owner window from sceneID and keep only the
+    // modifier bits it also carries.
+    forwarded.sceneID = MACWS_INPUT_WINDOW_SCENE_FLAG |
+        (uint64_t)MacWSInputModifiersForScene(record->sceneID);
+    forwarded.flags |= MacWSInputFlagGlobalSystemSurface;
+    int socketFD = socket(AF_UNIX, SOCK_DGRAM, 0);
+    if (socketFD < 0) return NO;
+    (void)fcntl(socketFD, F_SETFD, FD_CLOEXEC);
+    struct sockaddr_un address = {0};
+    address.sun_family = AF_UNIX;
+    strlcpy(address.sun_path, MACWS_VNC_POINTER_PROXY_SOCKET_PATH,
+            sizeof(address.sun_path));
+    ssize_t sent = sendto(socketFD, &forwarded, sizeof(forwarded),
+                          MSG_DONTWAIT,
+                          (const struct sockaddr *)&address,
+                          sizeof(address));
+    int savedError = errno;
+    close(socketFD);
+    if (sent != (ssize_t)sizeof(forwarded)) {
+        if (MacWSRuntimeDiagnosticsEnabled()) {
+            fprintf(stderr,
+                "#### APP-INPUT SURFACE-PROXY pid=%d kind=%u window=%u "
+                "sent=NO errno=%d\n",
+                getpid(), record->kind,
+                MacWSInputWindowIDForScene(record->sceneID), savedError);
+            fflush(stderr);
+        }
+        return NO;
+    }
+    return YES;
+}
+
 // Return the frontmost real popup-menu-level window that is visible but does
 // not contain this click. CGWindowLevelForKey(kCGPopUpMenuWindowLevelKey) is
 // the public source of the level value; no application/class name participates
@@ -10665,6 +10782,8 @@ static void MacWSPostInputOnMainThread(MacWSInputRecord record) {
     id requestedBaseWindow = nil;
     id outsidePopupWindow = nil;
     BOOL routedToTransientWindow = NO;
+    CGRect systemSurfaceWindowFrame = CGRectZero;
+    BOOL windowlessSystemSurface = NO;
     BOOL exactGestureContinuation =
         (record.kind == MacWSInputKindTouchMove ||
          record.kind == MacWSInputKindTouchUp ||
@@ -10688,12 +10807,92 @@ static void MacWSPostInputOnMainThread(MacWSInputRecord record) {
             ? (__bridge id)MacWSAppInputGestureWindow
             : requestedBaseWindow;
         if (!requestedBaseWindow || !window) {
-            fprintf(stderr,
-                "#### APP-INPUT DROP pid=%d reason=target-window-closed "
-                "window=%u kind=%u\n",
-                getpid(), requestedWindowNumber, record.kind);
-            fflush(stderr);
-            return;
+            // A verified global system surface can name a real CGS window
+            // that no enumerable NSWindow represents in this process — the
+            // 22F82 Finder menubar is the observed case: the independent
+            // windowNumberAtPoint: check above already proved
+            // requestedWindowNumber sits under this exact point, yet
+            // NSApplication.windows omits the menubar object. Recover its
+            // frame/owner from CGWindowList and continue delivering to the
+            // exact window number; AppKit resolves the internal menubar
+            // window inside sendEvent:. The owner-PID check keeps this from
+            // re-admitting a record the owning process itself dropped.
+            if (!requestedBaseWindow && globalPostFailed) {
+                CGRect surfaceBounds = CGRectZero;
+                pid_t surfaceOwner = 0;
+                BOOL gotSurface = MacWSCGWindowGeometryForWindowNumber(
+                    (NSInteger)requestedWindowNumber, &surfaceBounds,
+                    &surfaceOwner);
+                if (MacWSRuntimeDiagnosticsEnabled()) {
+                    fprintf(stderr,
+                        "#### APP-INPUT CGS-SURFACE-LOOKUP pid=%d "
+                        "requested=%u found=%d owner=%d "
+                        "bounds=%.1fx%.1f@(%.1f,%.1f)\n",
+                        getpid(), requestedWindowNumber, gotSurface,
+                        surfaceOwner, surfaceBounds.size.width,
+                        surfaceBounds.size.height,
+                        surfaceBounds.origin.x, surfaceBounds.origin.y);
+                    fflush(stderr);
+                }
+                if (gotSurface && surfaceOwner > 1 &&
+                    surfaceOwner != getpid()) {
+                    // Another process owns this CGS surface (the WindowServer-
+                    // owned menubar is the runtime-confirmed case). The broker
+                    // delivered here only because the frontmost app is the
+                    // semantic owner; a synthesized NSEvent cannot represent
+                    // a foreign surface. Re-post it through the native proxy
+                    // so WindowServer performs the real hit-test and routes
+                    // the event to the owning tracker.
+                    if (record.kind == MacWSInputKindTap ||
+                        record.kind == MacWSInputKindSecondaryTap ||
+                        record.kind == MacWSInputKindTouchDown) {
+                        // Same root-menu refresh the ActivateTarget menubar
+                        // preflight performs before OSXvnc's native down: the
+                        // foreign surface enters a stale HIToolbox tracker
+                        // unless SetRootMenu/RecalcBar runs under this app's
+                        // current ownership first.
+                        (void)MacWSRepairFrontUIApplication(
+                            application, "foreign-surface-preflight");
+                    }
+                    BOOL proxied = MacWSForwardRecordToSystemPointerProxy(
+                        &record);
+                    if (MacWSRuntimeDiagnosticsEnabled()) {
+                        fprintf(stderr,
+                            "#### APP-INPUT SURFACE-PROXY pid=%d kind=%u "
+                            "window=%u owner=%d proxied=%s\n",
+                            getpid(), record.kind, requestedWindowNumber,
+                            surfaceOwner, proxied ? "YES" : "NO");
+                        fflush(stderr);
+                    }
+                    if (proxied) return;
+                }
+                if (gotSurface &&
+                    surfaceOwner == getpid() &&
+                    surfaceBounds.size.width > 0.0 &&
+                    surfaceBounds.size.height > 0.0) {
+                    windowlessSystemSurface = YES;
+                    // CGWindowList publishes top-left display coordinates
+                    // while NSWindow.frame is bottom-left anchored. Flip the
+                    // recovered bounds around the AppKit screen's maxY.
+                    systemSurfaceWindowFrame = (CGRect){
+                        .origin = {
+                            surfaceBounds.origin.x,
+                            screenFrame.origin.y + screenFrame.size.height -
+                                surfaceBounds.origin.y -
+                                surfaceBounds.size.height,
+                        },
+                        .size = surfaceBounds.size,
+                    };
+                }
+            }
+            if (!windowlessSystemSurface) {
+                fprintf(stderr,
+                    "#### APP-INPUT DROP pid=%d reason=target-window-closed "
+                    "window=%u kind=%u\n",
+                    getpid(), requestedWindowNumber, record.kind);
+                fflush(stderr);
+                return;
+            }
         }
         // Window DisplayStream coordinates are top-left backing pixels. Map
         // them through the producer's real backing scale, not by normalizing
@@ -10704,8 +10903,10 @@ static void MacWSPostInputOnMainThread(MacWSInputRecord record) {
         // unreachable even though Host correctly composited those pixels.
         // The base window stays top-left anchored, so its current maxY and
         // origin remain the stable screen-space origin during live resizing.
-        CGRect windowFrame = ((MacWSMsgRect)objc_msgSend)(
-            requestedBaseWindow, sel_registerName("frame"));
+        CGRect windowFrame = windowlessSystemSurface
+            ? systemSurfaceWindowFrame
+            : ((MacWSMsgRect)objc_msgSend)(
+                requestedBaseWindow, sel_registerName("frame"));
         CGFloat backingScale = 0.0;
         SEL backingScaleSelector = sel_registerName("backingScaleFactor");
         if (((MacWSMsgBoolSEL)objc_msgSend)(
@@ -10800,7 +11001,7 @@ static void MacWSPostInputOnMainThread(MacWSInputRecord record) {
         // real sheetParent / parentWindow / modalWindow relation resolves it
         // back to this Scene's requested base window. This preserves Scene
         // isolation between unrelated same-process document windows.
-        if (!reusedGestureRoute &&
+        if (!windowlessSystemSurface && !reusedGestureRoute &&
             record.kind != MacWSInputKindRelativePointer) {
             id hitWindow = MacWSWindowForScreenPoint(application, screenPoint);
             if (hitWindow && hitWindow != requestedBaseWindow) {
@@ -10840,17 +11041,18 @@ static void MacWSPostInputOnMainThread(MacWSInputRecord record) {
                 (1.0 - normalizedY) * screenFrame.size.height,
         };
     }
-    if (!window && record.kind != MacWSInputKindTouchDown &&
+    if (!window && !windowlessSystemSurface &&
+        record.kind != MacWSInputKindTouchDown &&
         record.kind != MacWSInputKindHover &&
         record.kind != MacWSInputKindMenuHover &&
         record.kind != MacWSInputKindTap &&
         record.kind != MacWSInputKindSecondaryTap &&
         MacWSAppInputGestureWindow) {
         window = (__bridge id)MacWSAppInputGestureWindow;
-    } else if (!window) {
+    } else if (!window && !windowlessSystemSurface) {
         window = MacWSWindowForScreenPoint(application, screenPoint);
     }
-    if (!window) {
+    if (!window && !windowlessSystemSurface) {
         fprintf(stderr,
                 "#### APP-INPUT DROP pid=%d reason=no-window screen=(%.2f,%.2f)\n",
                 getpid(), screenPoint.x, screenPoint.y);
@@ -11022,15 +11224,22 @@ static void MacWSPostInputOnMainThread(MacWSInputRecord record) {
             fflush(stderr);
         }
     }
-    NSInteger windowNumber = ((MacWSMsgInteger)objc_msgSend)(window,
-        sel_registerName("windowNumber"));
+    NSInteger windowNumber = window
+        ? ((MacWSMsgInteger)objc_msgSend)(window,
+            sel_registerName("windowNumber"))
+        : (NSInteger)requestedWindowNumber;
     id keyWindowBeforeEvent = ((MacWSMsgID)objc_msgSend)(
         application, sel_registerName("keyWindow"));
     NSInteger keyWindowNumberBeforeEvent = keyWindowBeforeEvent
         ? ((MacWSMsgInteger)objc_msgSend)(keyWindowBeforeEvent,
             sel_registerName("windowNumber")) : 0;
-    CGPoint windowPoint = ((MacWSMsgPointPoint)objc_msgSend)(window,
-        sel_registerName("convertPointFromScreen:"), screenPoint);
+    CGPoint windowPoint = window
+        ? ((MacWSMsgPointPoint)objc_msgSend)(window,
+            sel_registerName("convertPointFromScreen:"), screenPoint)
+        : (CGPoint){
+            screenPoint.x - systemSurfaceWindowFrame.origin.x,
+            screenPoint.y - systemSurfaceWindowFrame.origin.y,
+        };
     if (record.kind == MacWSInputKindRelativePointer) {
         // Pointer lock keeps the public cursor anchored while only dx/dy
         // advances the game's camera. Preserve that anchor for Unity's
