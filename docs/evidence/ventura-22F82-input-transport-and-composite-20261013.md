@@ -151,7 +151,9 @@ server-side.
 
 ### 4.1 The HID event server port does not exist
 
-Runtime probes inside the chroot (`/tmp/evport_probe2`-style):
+Runtime probes inside the chroot — the ad-hoc `/tmp` probes from this
+session are now committed as `misc/macos_ws_event_probe.c` (build/deploy
+recipe in its header comment) and `misc/macws_inject_record.py`:
 
 ```text
 bootstrap_look_up com.apple.windowserver          -> rc=0 port=6659
@@ -186,8 +188,11 @@ SLSPostEventRecord(connID, record, recordSize, flags):
   fill session field via CGSConnectionGetEventState
   fill timestamp via SLSCurrentEventTimestamp when zero
   tccPostEventService()->requestAccess()   // TCC post-event check
-  CGSEncodeEventRecord -> mach_msg(conn->send_port, msgid 0x1513)
+  CGSEncodeEventRecord -> mach_msg(conn->send_port, bits=0x1513
+                                   = MACH_SEND_MSG|MACH_RCV_MSG|MACH_SEND_TIMEOUT)
   reply: w19 = reply[+0x20]        // = WindowServer's return code
+  // (0x1513 is the mach_msg OPTION BITS field, NOT a msgid; the actual
+  //  CGS MIG msgids observed on the wire are small ids like 1012/1023/1025)
 ```
 
 **The transport works**: `mach_msg` succeeds; `rc` is WS's reply. So when a
@@ -272,20 +277,22 @@ answers: scroll goes through a different WS message (it shares the funnel but
 the payload differs — wheel events may be routed by a different handler that
 doesn't require the event pipeline), or the scroll's `CGPostScrollWheelEvent`
 dispatch doesn't need the missing subsystem at all. Verify by tracing which
-WS-side handler acks msgid `0x1513` for type 0x16 vs types 1-8.
+WS-side demux handler processes the encoded event-record request for
+type 0x16 (scroll) vs types 1-8 (mouse) and where each verdict is set.
 
 ### 4.8 Next concrete steps (in order)
 
 1. **RE `SLXServer`'s init sequence** in SkyLight — find where
-   `com.apple.WindowServer.HIDEvents` is registered (search string xrefs for
-   `3d3e04` in the binary) and what condition gates it (likely a
-   `loginwindow`/audit-session/display-ownership check). That gate is the
+   `com.apple.WindowServer.HIDEvents` is registered (string xref on the
+   service name inside the SkyLight/WindowServer binaries) and what
+   condition gates it (likely a `loginwindow`/audit-session/display-
+   ownership check). That gate is the
    upstream fix point — everything else is plumbing around its absence.
 2. If the gate can't be satisfied cheaply, **look for the WS-side record
-   handler** for msgid `0x1513` and see what produces `0x3ea` for mouse
-   types — there may be a session-context check that can be satisfied by
-   registering the caller's session differently (e.g., `SLPSPostEventRecordTo`
-   targeting WS's own connection).
+   demux** that answers the encoded event-record request and see what
+   produces `0x3ea` for mouse types — there may be a session-context check
+   that can be satisfied by registering the caller's session differently
+   (e.g., `SLPSPostEventRecordTo` targeting WS's own connection).
 3. If WS dispatch can't be revived, the **fallback design**: route menubar
    clicks as process-local NSEvents to the front app's `sendEvent:` with the
    menubar windowNumber — AppKit/HIToolbox has a private path for the
@@ -346,6 +353,9 @@ State at `macos_gui.sh stop` time: clean shutdown, no lingering daemons.
 
 ## Evidence file cross-refs
 
+- `docs/porting/ventura-22F82-session-reproduction-20261013.md` — the
+  cold-start reproduction runbook: device map, build/deploy recipes,
+  launch sequence, verification ladder, tool index, landmine list
 - `docs/evidence/ventura-22F82-desktop-chain-20261011.md` — LaunchServices/XPC
   chain + privileged-flag fix + earlier desktop chain witnesses
 - `analysis/MacWSBootingGuide/docs/evidence/vnc-usability-stability-20260729/`

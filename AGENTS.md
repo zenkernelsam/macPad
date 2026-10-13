@@ -121,6 +121,9 @@ subsystem never registers `com.apple.WindowServer.HIDEvents` under
 `SLSPostEventRecord` returns WS's explicit 1002 rejection. See
 `docs/evidence/ventura-22F82-input-transport-and-composite-20261013.md` for
 the full dead-end map, the deployment inode landmine, and the next RE steps.
+`docs/porting/ventura-22F82-session-reproduction-20261013.md` is the
+cold-start reproduction runbook (device map, deploy recipe, verification
+ladder, tool index) — new agents should start there.
 Previous update (2026-10-11): LaunchServices/XPC chain fully working (Dock
 obtains a real ASN). See
 `docs/evidence/ventura-22F82-desktop-chain-20261011.md` for the privileged-
