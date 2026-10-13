@@ -3,7 +3,7 @@
 #
 # Applies (or restores) the "make the 15.6.1 cache layout fit inside the 4 GB
 # iOS shared region" patch set.  Rationale + evidence:
-#   docs/porting/STATIC-cache-layout-exceeds-4gb-shared-region.md
+#   docs/porting/archive/macos15-roots/STATIC-cache-layout-exceeds-4gb-shared-region.md
 #
 # Patch set (per file, always via a NEW INODE so the kernel cannot serve stale
 # pages/blobs; the project learned that lesson the hard way):

@@ -1139,20 +1139,33 @@ runaway loop to ~10 seconds of high CPU.
 
 ## Session-State Recovery (do this FIRST after context loss)
 
-If the conversation was summarized/interrupted, **read
-`docs/porting/dyld-15.6.1-state.md` before doing anything else.** It holds
-the live patch ledger, fat-offset rules, confirmed root causes, bisect
-results, and next steps for the macOS 15.6.1 dyld shared-cache bring-up.
-Keep that file updated as ground truth; do not re-derive state from
-scratch.
+If the conversation was summarized/interrupted, read in this order:
+
+1. `docs/porting/PROJECT-ARCHAEOLOGY.md` — the full project timeline;
+   which era you're in and why.
+2. `docs/porting/ventura-22F82-session-reproduction-20261013.md` — the
+   operational runbook for the current Ventura 22F82 work.
+3. `docs/porting/ventura-22F82-bringup-state.md` — the live state file
+   for the current branch (keep IT updated as ground truth).
+4. `docs/evidence/ventura-22F82-input-transport-and-composite-20261013.md`
+   — the current frontier (input dispatch dead at the WS event server).
+
+The macOS 15.6.1 branch is FROZEN (see the archaeology doc for why); its
+live-state file is now
+`docs/porting/archive/macos15-roots/dyld-15.6.1-state.md`, kept for the
+detailed 15.6.1 archaeology in `docs/porting/ARCHAEOLOGY-15.6.1.md` —
+consult it only when resuming that frozen branch, never to re-derive
+current state.
 
 ## Milestone Documentation (load-bearing rule — write docs at EVERY milestone)
 
 **Hard rule: every milestone, hard-coded value, or proven test result gets
-written to `docs/porting/dyld-15.6.1-state.md` IMMEDIATELY — before
-continuing to the next experiment.** Context gets compressed; undocumented
-work gets re-derived from scratch and burns sessions. A future agent must
-be able to reproduce the full pipeline from docs alone.
+written to the CURRENT branch's state file —
+`docs/porting/ventura-22F82-bringup-state.md` for the 22F82 work —
+IMMEDIATELY — before continuing to the next experiment.** Context gets
+compressed; undocumented work gets re-derived from scratch and burns
+sessions. A future agent must be able to reproduce the full pipeline from
+docs alone.
 
 Record, verbatim:
 

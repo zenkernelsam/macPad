@@ -121,13 +121,15 @@ live final composite as authoritative for suppressed layers. Graph now holds
 was written (00:17), and the wallpaper layer had a real surface
 (`frame-first ... surface=2732x2048`) — yet the composite rendered pure black.
 
-### Root cause (runtime-confirmed)
+### Root cause (fix-witnessed; decode-path is inference)
 
 Dock renders `file:///System/Library/CoreServices/DefaultDesktop.heic` — the
-**dynamic Solar-variant HEIC**. In the chroot, HEIC decode produced black
-(pixel readback probe showed the surface contents black while the file itself
-decodes to 6016×6016 on a real decode path — the chroot's decoder fails on
-this variant's dynamic payload).
+**dynamic Solar-variant HEIC**. The wallpaper surface existed in the catalog
+(`layer=22 owner=Dock surf=169`) yet rendered black. A direct IOSurface
+pixel readback was NOT possible (cross-process surface lookup unavailable
+in this environment), so "the decode produced black" is inference from the
+fix, not a measured pixel: the file itself decodes (6016×6016) on a real
+path, but Dock's render of it is black in the chroot.
 
 ### Fix applied (device-side only — not yet in build-rootfs)
 
@@ -155,15 +157,25 @@ Runtime probes inside the chroot — the ad-hoc `/tmp` probes from this
 session are now committed as `misc/macos_ws_event_probe.c` (build/deploy
 recipe in its header comment) and `misc/macws_inject_record.py`:
 
+Verbatim probe output (2026-10-13, inside the chroot):
+
 ```text
-bootstrap_look_up com.apple.windowserver          -> rc=0 port=6659
-bootstrap_look_up com.apple.windowserver.active   -> rc=0 port=3075
-bootstrap_look_up com.apple.WindowServer.HIDEvents -> rc=1102 (unknown-service)
-bootstrap_look_up com.apple.windowserver.session   -> rc=1102
-bootstrap_look_up com.apple.iohid                  -> rc=1102
-_SLSGetEventPort = 1000 (0x3e8)
-mach_port_type(1000) -> rc=15 KERN_INVALID_NAME type=0x0
+probe: com.apple.windowserver                    -> rc=0(OK) port=6659
+probe: com.apple.windowserver.active             -> rc=0(OK) port=3075
+probe: com.apple.windowserver.session            -> rc=1102(unknown-service) port=0
+probe: com.apple.windowserver.session.check-in   -> rc=1102(unknown-service) port=0
+probe: com.apple.WindowServer.HIDEvents          -> rc=1102(unknown-service) port=0
+probe: com.apple.private.SkyLight.event.monitor  -> rc=1102(unknown-service) port=0
+probe: com.apple.iohid                           -> rc=1102(unknown-service) port=0
+probe: com.apple.multitouch.user-access          -> rc=1102(unknown-service) port=0
+probe: com.apple.windowserver.displays           -> rc=1102(unknown-service) port=0
+probe: event port=1000
+probe: mach_port_type rc=15 type=0x0 (send=0 recv=0 sendonce=0 deadname=0)
 ```
+
+Every session/event/display service is absent — not just the HID port.
+The core `com.apple.windowserver` lookup and the `.active` endpoint DO
+resolve, which is why CGS connections, cursor warp and compositing work.
 
 WindowServer simply never created/registered its event server port. Every
 `CGEventPost` variant — `kCGHIDEventTap`, `kCGSessionEventTap`,
@@ -226,15 +238,19 @@ validation path WS doesn't accept for buttons — consistent with the 1002.
 (type=0x16 at +0x08, wheel units at +0x88/+0xa8.., session=-1 at +0x38,
 scoreboard point at +0x10/+0x18) and calls
 `SLSPostEventRecord(SLSMainConnectionID, rec, 0xf8, 0)` — **the identical
-funnel**, and user-verified scrolling works in this build. So WS accepts and
-dispatches *some* posted event types. Mouse/keyboard records are rejected —
-suggesting type-specific gating in WS's record handler (or the pointer
-injection privilege — the TCC `postEvent` service is checked client-side and
-WS-side policy may require it).
+funnel**. The in-tree comment at `AppInputBridge.m` ~6007 asserts the
+legacy `CGPostScrollWheelEvent` "still reaches WindowServer from this same
+CGS-connected process", and scrolling was user-observed working in this
+build — but note the bridge also has an `NSWindow.sendEvent`-discrete
+process-local fallback (`SCROLL-CAPABILITY` log picks the route), so the
+WS-side scroll acceptance is inferred, not isolated. Mouse/keyboard
+records are rejected — suggesting type-specific gating in WS's record
+handler (or the pointer-injection privilege — the TCC `postEvent` service
+is checked client-side and WS-side policy may require it).
 
 ### 4.5 `CGPostMouseEvent` partial result
 
-From Terminal's own connection (pid 93780):
+From the Terminal process's own connection (pid 88250):
 
 ```text
 legacy down -> rc=0      (accepted by WS)
@@ -243,6 +259,16 @@ legacy up   -> rc=1002   (rejected)
 
 No `APP-INPUT WS-DISPATCH` witness fired either way — WS never dispatched a
 mouse event to any app's event queue during the whole test matrix.
+
+The same verdict came back from the standalone probe (`SLSPostEvent` /
+`SLSPostEventRecord` on the probe's own connection):
+
+```text
+probe: cid=225283 displays=1
+probe: SLSPostEvent move -> rc=1002
+probe: cursor-after-SLSmove=(600.00,500.00)   # unchanged — no dispatch
+probe: SLS menubar click rc=1002/1002
+```
 
 ### 4.6 New delivery witness (file-gated)
 
@@ -327,12 +353,25 @@ fires.
 
 ```text
 WindowServer            pid 87761  -virtualonly -daemon   (composites alive)
-macwsdisplayd           pid 88080  state=ready, seq advancing
-Dock                    pid 88216  owns surface 157, launches via LS requests
-Terminal                pid 93780  new libmachook + WS-DISPATCH witness armed
-OSXvnc                  pid 91779  rfbnoauth :5900, session-tap post path
-libmachook              deployed arm64+arm64e+fat, trustcache-registered
-wallpaper               static PNG rendered (was dynamic HEIC -> black)
+macwsdisplayd           pid 88080  state=ready, seq advancing (publisher)
+Dock                    pid 88216  owns wallpaper layer=22 surf=169 +
+                                   Dock strip layer=26; LS launch requests live
+Terminal                pid 88250  layer=27 1140x742; WS-DISPATCH witness armed
+OSXvnc-server           pid 83507  -rfbnoauth -swapbuttons -deferupdate 0
+Finder                  pid 88150  layer=16 fullscreen surface
+Control Center          pid 88156  menubar extras layers 17-21,24
+libmachook              deployed thin arm64+arm64e slices, trustcache-registered
+wallpaper               static payload rendered (was dynamic HEIC -> black)
+```
+
+The `workspace-graph-state` file at that moment:
+
+```text
+state=ready windowserver=87761 publisher=88080
+wallpaper=22/88216/169/0,0,2732,2048
+dock=26/88216/0/0,0,2732,2048
+menubar=13/87761/112/0,0,2732,48
+backing=2/87761/0/0,2732,2048
 ```
 
 State at `macos_gui.sh stop` time: clean shutdown, no lingering daemons.

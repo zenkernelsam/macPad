@@ -15,7 +15,7 @@ echo "=== build start: $(date) ==="
 
 mkdir -p "$STAGE"
 # rsync exits 23 when a few root-only files can't be read (we run without
-# sudo). Those are logged + tolerable — see docs/porting/rootfs-15.6.1-install.md.
+# sudo). Those are logged + tolerable — see docs/porting/archive/macos15-roots/rootfs-15.6.1-install.md.
 RSYNC() { rsync -aEHx "$@" || { rc=$?; [ $rc -eq 23 ] || return $rc; }; }
 RSYNCX() { rsync -aEH "$@" || { rc=$?; [ $rc -eq 23 ] || return $rc; }; }
 

@@ -25617,7 +25617,7 @@ bool MacWSAGXNoCopyABIReady(const void *agx_initializer,
     //   13.4:   AGX 727C250E +0x1f4bb4, IOGPU CE2B5551 +0x1c24
     //   15.6.1: AGX B303B4E8 +0x16c178, IOGPU 68B70E83 +0x1b14
     // Both are the no-copy designated initializers RE-confirmed in the
-    // respective images (see docs/porting/re-analysis-15.6.1.md).
+    // respective images (see docs/porting/archive/macos15-roots/re-analysis-15.6.1.md).
     static const struct {
         uint8_t agx_uuid[16], iogpu_uuid[16];
         uintptr_t agx_off, iogpu_off;

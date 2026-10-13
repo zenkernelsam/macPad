@@ -26,7 +26,9 @@ Canonical refs: `AGENTS.md`, `analysis/MacWSBootingGuide/` subtree,
 ## Era 1 — macOS 15.6.1 / 24G90 CLI research (09-26 → 10-04, FROZEN)
 
 Goal: real `chroot /var/mnt/rootfs /bin/echo HI` on a macOS **15.6.1**
-userspace + dyld + shared cache.
+userspace + dyld + shared cache. The detailed era narrative is
+`ARCHAEOLOGY-15.6.1.md`; **all docs cited in this era's table live in
+`docs/porting/archive/macos15-roots/`**.
 
 | date | milestone | doc |
 |---|---|---|
@@ -64,7 +66,8 @@ frozen rather than patched around.
 
 ## Era 2 — Ventura 13.4.1 / 22F82 pivot and `echo HI` (10-04 → 10-07)
 
-`HANDOVER-MACOS13-VENTURA-2026-10-04.md` records the decision: 22F82 is the
+`archive/handover-chain/HANDOVER-MACOS13-VENTURA-2026-10-04.md` records the
+decision: 22F82 is the
 newest build inside the author-validated Ventura family (13.4/22F66 and
 13.4.1/22F82 share one cache CDHash pair in postinst/macos_gui); 13.7.x is
 outside the validated family and was rejected as a target. 13.2.1 assets
@@ -108,7 +111,7 @@ Canonical docs: `ventura-22F82-desktop-chain-20261011.md`,
 | trustcache restore on cold boot | `bringup-state` §10-07 + 10-11 evidence |
 | dynamic HEIC → static payload | 10-13 evidence §3 (+ TODO: bake into build-rootfs) |
 | nominal rc ≠ delivery; WS-DISPATCH is the acceptance test | 10-13 evidence §4.6 + runbook §9 |
-| 15.6.1 kernel boundary (why we left) | `HANDOVER-MACOS15-FROZEN-2026-10-04.md` |
+| 15.6.1 kernel boundary (why we left) | `archive/macos15-roots/HANDOVER-MACOS15-FROZEN-2026-10-04.md` |
 
 ## Current frontier — one paragraph
 

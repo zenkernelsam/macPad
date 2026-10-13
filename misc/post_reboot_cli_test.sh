@@ -4,7 +4,7 @@
 # Why a reboot: the kernel's shared region is created once from the cache's
 # declared size and then persists across processes, so the cache-header patch
 # only takes effect after the region is recreated (= a reboot).
-# Evidence/procedure: docs/porting/STATIC-cache-layout-exceeds-4gb-shared-region.md
+# Evidence/procedure: docs/porting/archive/macos15-roots/STATIC-cache-layout-exceeds-4gb-shared-region.md
 #
 # What it does, in order (all idempotent, mv-only, nothing deleted):
 #   0. preflight: jbctl alive + every required file present

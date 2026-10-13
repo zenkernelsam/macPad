@@ -157,9 +157,11 @@ Why each step exists (all runtime-confirmed):
   they never see the fix.
 
 `macos_gui.sh start` itself runs `restore_cold_boot_trust` (~83s,
-`BOOT-TRUST {"added": 3728+}`) — the dynamic trustcache is volatile across
-jailbreak refresh/reboot, so the first start after any trust event MUST go
-through `macos_gui.sh`, not manual daemon starts.
+`BOOT-TRUST {"added": 3728+}`). Note the corrected semantics (runtime,
+10-07): `jbctl trustcache add` entries **survive reboot** on this Dopamine
+build — but a jailbreak refresh/re-jailbreak can still lose them, and any
+newly signed file needs `--readd` anyway. Treat the restore step as
+verification+repair, always, via `macos_gui.sh` rather than manual starts.
 
 ## 5. Launch
 
@@ -234,8 +236,8 @@ pixel-format message, fixed in-tree.
 - `misc/host_input_matrix.py` — full input matrix with InputLab
   cross-validation (heavier, for regression passes).
 - `misc/vnc_capture.py` — RFB framebuffer → PNG.
-- `misc/cg_window_list.py` (device-side copy exists) — CGWindowList dump
-  inside the chroot for layer/surface identity.
+- `misc/cg_window_list.py` — CGWindowList dump inside the chroot for
+  layer/surface identity (deploy under `/var/mnt/rootfs` and run chrooted).
 - `misc/ls_menubar_owner_probe.c` — LS menu-bar ownership preflight state.
 
 Log-first debugging rule for input: a `sent kind=6 ...` line only proves

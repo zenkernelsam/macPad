@@ -1,7 +1,7 @@
 # M1 private-cache pager investigation: format 13
 
 Status: format-13 incompatibility confirmed AND the m3 fault attribution is now
-RE-backed, not THEORY — see `docs/porting/STATIC-m3-dyld-pager-format13.md`
+RE-backed, not THEORY — see `docs/porting/archive/macos15-roots/STATIC-m3-dyld-pager-format13.md`
 (2026-09-30): the device kernel's reject path is `ktriage_record(0x04000008
 DYLD_PAGER_SLIDE_ERROR) + KERN_FAILURE`, and it has NO printf (release kernels
 macro-out `printf` strings via `CONFIG_NO_PRINTF_STRINGS`), so "no printf in
