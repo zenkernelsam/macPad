@@ -124,6 +124,9 @@ the full dead-end map, the deployment inode landmine, and the next RE steps.
 `docs/porting/ventura-22F82-session-reproduction-20261013.md` is the
 cold-start reproduction runbook (device map, deploy recipe, verification
 ladder, tool index) — new agents should start there.
+`docs/porting/PROJECT-ARCHAEOLOGY.md` is the full project timeline
+(15.6.1 research era → Ventura pivot → echo HI → desktop chain → input
+dead-end) with per-era canonical docs and the lessons each era left.
 Previous update (2026-10-11): LaunchServices/XPC chain fully working (Dock
 obtains a real ASN). See
 `docs/evidence/ventura-22F82-desktop-chain-20261011.md` for the privileged-
