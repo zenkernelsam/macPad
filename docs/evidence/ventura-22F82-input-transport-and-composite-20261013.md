@@ -402,3 +402,267 @@ State at `macos_gui.sh stop` time: clean shutdown, no lingering daemons.
   WS generation, not `-virtualonly` chroot)
 - `analysis/MacWSBootingGuide/AGENTS.md` — patch/evidence discipline this
   document follows
+
+---
+
+## 7. 2026-10-14 session-layer findings (new, runtime + RE confirmed)
+
+The §4.7 hypothesis was tested end-to-end. Result: the gate is NOT the
+HIDEvents port — it is the **empty session registry** on the WS side.
+Every piece below was measured on-device (Cs-Pad-2.local, WS=59329,
+stack started via `macos_gui.sh start coexist`).
+
+### 7.1 The event port is real (correcting §4.1's read)
+
+`SLSGetEventPort` is `kern_return_t fn(uint32_t cid, mach_port_t *out)`.
+With the CGS connection established first it returns `rc=0 port=4111`,
+and `mach_port_type(4111)` → `rc=0 type=0x30000` (send-once + receive).
+The earlier "port invalid" line was the probe calling the API before a
+connection existed; the `1000` seen for remote conns is the CGX-OK
+convention (CGX returns 1000-family codes where `1000 == success`), not
+an error. runtime-confirmed via ws_evprobeC output.
+
+### 7.2 Connection session state vs WS session registry
+
+```
+SLSCopyCurrentSessionDictionary ->
+  { kCGSSessionAuditIDKey=5068627, kCGSSessionGroupIDKey=88,
+    kCGSSessionIDKey=257, kCGSSessionOnConsoleKey=1,
+    kCGSSessionUserIDKey=88,   // _windowserver
+    kCGSSessionUserNameKey="unknown", kCGSessionLoginDoneKey=0 }
+SLSCopySessionList -> CFArray count=0     // EMPTY
+SLSGetSessionUID -> 0x10000003
+```
+
+Our connection reports the synthetic pre-login session 257 owned by
+`_windowserver` (uid 88) that never finished login — and WS's session
+list contains **zero sessions**. This is the first structural anomaly
+with a clean causal path to the post rejections.
+
+### 7.3 Session creation is accepted but produces nothing
+
+```
+SLSSetLoginwindowConnection(cid) -> rc=1000   // CGX-OK (or default)
+SLSCreateLoginSession -> rc=1000 sid=0        // accepted, sid empty
+SessionList stays count=0 after both
+```
+
+`SLSCreateLoginSession` → MIG `CreateSession` (msgid `0x7148`). The stub
+(`RE: 0x1854473dc`) resolves the caller audit token, calls
+`SessionGetInfo`, then needs the session-owner object at global
+`0x1d8ba6460`. That global has exactly **one** writer site in all of
+SkyLight (`str x22,[x19,#0x460]` at `0x1852850ac`, inside a vtable-heavy
+installer at `0x185284d90`) — it was apparently never populated in this
+environment, so the create path yields `sid=0`.
+
+### 7.4 TCC post-event access is denied
+
+`SLPreflightPostEventAccess` returns `0` — RE (`0x18520cee8`) shows it
+reads a lazily built TCC-client object's `+0x19` byte = granted flag.
+Adding `kTCCServicePostEvent` to `com.apple.private.tcc.allow` on the
+probe did NOT flip it (still 0). The only tccd running is iPadOS's
+(`mobile`, outside chroot) — the evaluation either can't reach a chroot
+tccd or isn't entitlement-driven at this layer. Unresolved whether this
+is *the* 1002 gate or a parallel one.
+
+### 7.5 Every record post returns 1002 — uniformly
+
+| call | result |
+|---|---|
+| `SLSPostEventRecord` mouseMoved/down/up | 1002 |
+| `SLSPostEventRecord` canonical `SLEventGetEventRecord` record | 1002 |
+| `SLSPostEventRecord` scroll-wheel record | 1002 |
+| `CGPostScrollWheelEvent` issued | no WS-DISPATCH witness |
+| `SLEventTapPostEvent(tap=0)` | garbage rc (needs real tap obj) |
+
+Scroll on device works through **AppInputBridge's local `sendEvent`
+injection**, proven now — `SLSPostEventRecord(scroll)` = 1002 and
+`CGPostScrollWheelEvent` produced no dispatch witness. The earlier
+"scroll posts reach WS" inference is retracted.
+
+### 7.6 Where the 1002 is generated (RE-confirmed)
+
+CGX msgid table decoded: base `0x7148`, 40-byte descriptors at
+`0x1dd49fd80`, layout `{stub@0, size@8, ?, impl@0x18, argc@0x20}`,
+routine for msgid `m` = `*(table + (m-0x7147)*0x28)`. Name table
+decoded the whole family:
+
+```
+0x7148 CreateSession        stub 0x1854473dc (validates, SessionGetInfo)
+0x7212 SetLoginwindowConnection  (stub=0 generic, impl 0x18546aa7c)
+0x7287 PostEventRecordTo    impl 0x185461d14
+0x7288 PostEventRecord      impl 0x1854618b4 (generic demarshal)
+```
+
+`PostEventRecordTo` impl `0x185461d14`, RE verbatim:
+
+```
+ldr w8,[x0,#0xc]            // target id from request
+bl  0x1851ea104             // registry lookup
+cbz x0 → mov w8,#0x3ea → [reply+0x20] = 1002
+```
+
+`0x1851ea104` = `std::map<uint32_t,obj*>::find` — a global
+id→object registry (guard-initialized singleton). The 1002 is the
+**registry lookup miss** — consistent with the empty session registry:
+the target object can't be resolved because the session/conn tree WS
+maintains is unpopulated.
+
+`postCGSEventToProcess` log lines: **zero occurrences** in
+WindowServer.err — rejection happens before event processing.
+
+### 7.7 SLPSPostEventRecordTo ABI resolved
+
+`_SLPSPostEventRecordTo(uint32_t target, const void *record, size, fl)`:
+- resolves a cached WS port via `0x1853de23c` (global `0x1db438f50`,
+  once-init; deallocated after use)
+- encodes TLV request via `0x185227924`, callback `0x1853e006c`
+- sends msgid `0x7287` (`PostEventRecordTo`), expects reply `0x72ec`
+  (this subsystem uses reply = request + 0x65)
+- earlier probe deaths (status 9) were child-process kills on malformed
+  arg0 — the call shape `(targetID, rec, 0xf8, 0)` is correct; the
+  server rejects on the registry miss above
+
+### 7.8 What still needs the answer
+
+1. **The conn-port dispatcher** — `SLSPostEventRecord` (0x7288) goes to
+   the *connection's* send port; its impl mapping suggests a generic
+   demarshal that may share the same registry lookup. The 1002 site for
+   it specifically wasn't pinned yet (impl `0x1854618b4` shows no direct
+   0x3ea in its first ~110 insns — the miss is one frame deeper).
+2. **Who populates `0x1d8ba6460`** — the single writer's caller chain.
+   `SLSSetLoginwindowConnection` returning 1000 but doing nothing
+   suggests a feature-gate byte (`[0x1db438b00]`, tbz early-out at
+   `0x185368408`) that is OFF here — find what turns it on.
+3. **Audit session requirement** — `SLSessionOwnerCreateNewSessionWith-
+   AuditSessionID` needs a real kernel audit session id. Whether
+   `audit_session_join`/`session_create` works in the chroot is untested.
+4. **22F66 vs 22F82** — upstream ran 22F66 where dispatch worked. Either
+   a behavior delta between builds or a missing env piece (e.g. a
+   session service the upstream stack had). No 22F66 SkyLight in repo;
+   compare when one is available.
+
+### 7.9 Things now definitively dead (do not retry)
+
+- `CGEventPost` all taps — confirmed again today, no dispatch
+- `CGPostScrollWheelEvent` as a WS-dispatch path — no witness
+- `kTCCServicePostEvent` entitlement flip — Preflight still 0
+- `SLSSetLoginwindowConnection` + `SLSCreateLoginSession` alone —
+  accepted, produces no session
+
+---
+
+## 8. 2026-10-14 (evening): the instrumentation was never silent — it was filtered
+
+The "CGXSYNTH-INSTALL never appears" mystery from earlier today is
+solved, and it was not a missing callback at all.
+
+### 8.1 `fprintf(stderr, …)` in mac_hooks.m is filtered (RE-confirmed in source)
+
+`libmachook/mac_hooks.m:331` — every `fprintf` is macro'd to
+`macws_filtered_fprintf`, which **drops stderr output entirely** unless
+`MACWS_RUNTIME_DIAGNOSTICS` is in env or `/tmp/macws_runtime_diagnostics`
+exists inside the chroot (`/var/mnt/rootfs/tmp/macws_runtime_diagnostics`
+on the iOS side). The `#### MACWS-CTOR-CANARY` lines survive because they
+use raw `write()`. Every `#### CGXSYNTH*` line used fprintf → invisible.
+
+Consequence: the diagnostic hook was probably installing correctly in
+earlier runs; we could not see it. To observe any `####` trace from
+libmachook, `touch /var/mnt/rootfs/tmp/macws_runtime_diagnostics` first.
+
+### 8.2 `MSFindSymbol` returns NULL for local `t` symbols here
+
+`MSFindSymbol(header, "_CGXSenderCanSynthesizeEvents")` → `NULL`
+(runtime: `CGXSYNTH-INSTALL gate=0x0` in the fname_probe run). On
+shared-cache SkyLight, local symbols are not reachable through
+Substrate's lookup. Resolved by image-relative offset instead, exactly
+like the audit slot:
+
+```
+gate = header + (0x1853fd464 - 0x1850e5000)   // = +0x318464
+```
+
+RE-confirmed via capstone at that offset: `pacibsp; …; adrp x8,0x1d8ba6000;
+ldr x8,[x8,#0x1b8]; cbz → return 0; ldr w9,[x8,#4]; cmp w9,#0x34` —
+reads `gCurMsgAudit` (`0x1d8ba61b8`) and applies the ≥0x34 credential-size
+gate. Identical structure to the earlier RE notes.
+
+### 8.3 New deployment landmines hit and fixed (distinct from the inode bug)
+
+| Landmine | Symptom | Fix |
+|---|---|---|
+| `ldid -S <space> ent.plist binary` on device | `Unknown header magic` — `-S` must be the **concatenated** form `-S/path`; the space form signs nothing and can leave a corrupt/adhoc signature → SIGKILL(137) / SIGTRAP(133) flapping | always `ldid -S/var/jb/usr/macOS/bin/entitlements.plist <bin>` |
+| fresh cross-built dylib missing platform fix | dyld insert: `incompatible platform (have 'iOS', need 'macOS')` | `python3 misc/set_macos_version.py <dylib>` before signing, every rebuild |
+| trustcache degradation mid-session | everything chroot → SIGKILL/SIGTRAP | `macws_boot_trust.py /var/mnt/rootfs` full restore re-added **1612** hashes |
+| fat dylib at `/usr/local/lib/libmachook.dylib` | dyld rejects fat `DYLD_INSERT_LIBRARIES` in this chroot | ship thin slices: `libmachook.dylib`=arm64e, `libmachook_arm64.dylib`=arm64 |
+
+### 8.4 Live witness: gate hook IS installed in real WindowServer
+
+With the sentinel file present and the thin arm64 slice deployed:
+
+```
+WS pid 626: #### CGXSYNTH-INSTALL gate=0x1977e9464 slot=0x1eaf921b8
+            hdr=0x1974d1000
+```
+
+`_dyld_register_func_for_add_image` replay works normally (verified: a
+probe-side callback sees all 244 images; dyld-1286.10 source
+`APIs::_dyld_register_func_for_add_image` replays unconditionally, even
+from constructors).
+
+### 8.5 The remaining anomaly: hooked gate never fires during real posts
+
+Four `SLSPostEventRecord` posts from ws_evprobeG → four WS replies
+(msgid `29421`, `bits=0x12`, successful sends — replies DID reach the
+client with the 1002 payload). But **zero** `#### CGXSYNTH` gate lines.
+
+`_XPostEventRecord` (22F82, `0x18546de64`) re-disassembled:
+
+```
+ldr w8,[x0+4]  request size must be in [0x38,0x4038]   else w0=-0x130
+ldr w21,[x0+0x34] recordLen; (len+0x3b)&~3 must == size else -0x130
+bl  0x1851ea104                  // CGXConnectionForPort → x22 (unchecked!)
+bl  0x1853fd464                  // CGXSenderCanSynthesizeEvents(conn, cred)
+cbz w0 → 0x18546df94: mov w0,#0x3ea → reply[0x20]=1002
+```
+
+The gate call is **unconditional** once request validation passes. So a
+1002 reply provably transited `CGXSenderCanSynthesizeEvents` — yet the
+hook did not log. Options remaining, in order of likelihood:
+
+1. `MSHookFunction` silently failed on the gate in the WS process
+   (INSTALL only proves the call was attempted; Substrate can no-op on
+   unrelocatable prologues). Verify by reading bytes at gate — a hooked
+   function starts with a `b` to the trampoline, not `pacibsp`.
+2. The replies (`id=29421`) belong to a different routine than
+   `PostEventRecord` — the msgid arithmetic for this subsystem was
+   `reply = request + 0x65` (§7.7), so request `29320 = 0x7288` matches,
+   but the msgid→impl table decode should be re-verified.
+3. The demux routes to a second copy/alias of the impl.
+
+**Next action**: extend the diag — hook `_XPostEventRecord` itself
+(`header + 0x388e64`) for an entry counter, plus a readback of the
+gate's first 8 bytes after `MSHookFunction` to prove/disprove the
+trampoline.
+
+### 8.6 Diagnostic code state in tree (all labeled DIAGNOSTIC)
+
+- `macws_diag_sender_can_synth` + install block (mac_hooks.m ~5890-6040):
+  logs `cred`, cred size, audit euid/pid, gate return.
+- `#### IMGCB` print at top of `loadImageCallback`: fires for NULL
+  `dli_fname`, SkyLight, and ImageIO image adds — the proof the add-image
+  callback path works at all.
+- Both are gated behind `macws_runtime_diagnostics_enabled` like every
+  other `####` fprintf — sentinel file `/tmp/macws_runtime_diagnostics`
+  in chroot `/tmp` is currently present on device.
+- `ws_evprobeG` (device `/usr/local/bin/ws_evprobeG`) run with arg
+  `postrecord` does the minimal SLS conn + 4× SLSPostEventRecord posts.
+
+### 8.7 Process state at shutdown
+
+macPad stack fully stopped (WindowServer bootout'd, macws* daemons +
+MacWSHost killed, probes killed). Deployed artifacts on device:
+`libmachook.dylib` (thin arm64e) + `libmachook_arm64.dylib` (thin arm64)
+both = current tree + diagnostics, signed + trustcach'd. Trustcache
+restored to 5690-hash closure this session.
+

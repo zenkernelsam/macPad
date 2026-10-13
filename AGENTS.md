@@ -110,7 +110,20 @@ historical bring-up knowledge. If an older section conflicts with this one,
 the current source, focused tests, dated evidence under `docs/evidence/`, and
 this section take precedence—in that order.
 
-**Latest dated update (2026-10-13):** desktop compositor is alive —
+**Latest dated update (2026-10-14):** the session-layer map is complete
+(§7 of the evidence doc: empty WS session registry, `CGXConnectionForPort`
+miss → 1002, `SLSCreateLoginSession` produces `sid=0`), and the
+`CGXSenderCanSynthesizeEvents` diagnostic hook is now verifiably INSTALLED
+in live WindowServer. Two load-bearing tooling discoveries: every
+`fprintf(stderr,…)` in `mac_hooks.m` is silently dropped unless
+`/tmp/macws_runtime_diagnostics` exists in the chroot (the `####`
+canaries only ever worked via raw `write()`), and `MSFindSymbol` returns
+NULL for local `t` symbols on shared-cache SkyLight — resolve those by
+image-relative offset. See the same evidence doc §8 for the deploy
+landmines fixed (concatenated `ldid -Spath`, per-rebuild
+`set_macos_version.py`, thin-slice requirement) and the open anomaly
+(hooked gate provably installed but never fires during posts).
+Previous update (2026-10-13): desktop compositor is alive —
 `state=ready` plus continuous final-composite delivery via
 `macws_publish_scanout_after_swap` (EndUpdate never runs on this build);
 wallpaper fixed by substituting a static payload for the dynamic HEIC that

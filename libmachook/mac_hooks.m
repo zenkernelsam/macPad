@@ -5887,9 +5887,46 @@ static void macws_configure_controlcenter_airplay_settings_route(void) {
     fflush(stderr);
 }
 
+// DIAGNOSTIC (2026-10-14, not a fix): _XPostEventRecord returns 1002 for
+// every event post.  RE shows its gate CGXSenderCanSynthesizeEvents
+// (SkyLight-22F82 va 0x1853fd464) first reads gCurMsgAudit at
+// __DATA+0x1d8ba61b8; a NULL/undersized slot returns 0 before the
+// (already hooked) audit_token_check_tcc_access is ever reached.  The
+// ONLY writer of gCurMsgAudit is PKGTransactionDecodeCAPayload, which
+// points it at conn+0x208 for the duration of a transaction decode —
+// so a raw MIG post runs with the slot NULL.  Log the slot + creds at
+// every gate call to confirm which sub-case fires, then keep %orig.
+static void **g_macws_cgx_audit_slot;   // &SkyLight gCurMsgAudit
+static int (*macws_orig_sender_can_synth)(void *, void *);
+static int macws_diag_sender_can_synth(void *a0, void *a1) {
+    void *cred = g_macws_cgx_audit_slot ? *g_macws_cgx_audit_slot : NULL;
+    uint32_t sz = cred ? *(volatile uint32_t *)((char *)cred + 4) : 0;
+    uint32_t apid = (cred && sz >= 0x34)
+        ? *(volatile uint32_t *)((char *)cred + 0x28) : 0; // audit.pid
+    uint32_t aeuid = (cred && sz >= 0x34)
+        ? *(volatile uint32_t *)((char *)cred + 0x18) : 0; // audit.euid
+    int r = macws_orig_sender_can_synth(a0, a1);
+    fprintf(stderr,
+            "#### CGXSYNTH cred=%p size=%u euid=%u pid=%u rc=%d\n",
+            cred, sz, aeuid, apid, r);
+    fflush(stderr);
+    return r;
+}
+
 void loadImageCallback(const struct mach_header* header, intptr_t vmaddr_slide) {
     Dl_info info = {};
     (void)dladdr(header, &info);
+    // DIAGNOSTIC (2026-10-14): CGXSYNTH-INSTALL never appears even though
+    // SkyLight is loaded. Determine whether the add-image callback fires at
+    // all and what dli_fname the SkyLight image reports.
+    if (!info.dli_fname ||
+        strstr(info.dli_fname, "SkyLight") != NULL ||
+        strstr(info.dli_fname, "ImageIO") != NULL) {
+        fprintf(stderr, "#### IMGCB hdr=%p slide=%#lx fname=%s\n",
+                (void *)header, (long)vmaddr_slide,
+                info.dli_fname ?: "<nil>");
+        fflush(stderr);
+    }
     if (info.dli_fname &&
         strstr(info.dli_fname, "/AirPlaySupport.framework/") != NULL) {
         macws_configure_controlcenter_airplay_settings_route();
@@ -5981,6 +6018,28 @@ void loadImageCallback(const struct mach_header* header, intptr_t vmaddr_slide) 
         
         // grant all permissions
         MSHookFunction(MSFindSymbol((MSImageRef)header, "_audit_token_check_tcc_access"), hooked_return_1, NULL);
+
+        // DIAGNOSTIC (see definition): observe gCurMsgAudit at the
+        // CGXSenderCanSynthesizeEvents gate.  Runtime witness: MSFindSymbol
+        // returns NULL for the local `t` symbol on the 22F82 shared-cache
+        // SkyLight, so resolve by the same RE'd image-relative offset the
+        // audit slot already uses (SkyLight-22F82 va 0x1853fd464).
+        {
+            void *gate = (void *)((uintptr_t)header +
+                                  (0x1853fd464ull - 0x1850e5000ull));
+            g_macws_cgx_audit_slot = (void **)(
+                (uintptr_t)header +
+                (0x1d8ba61b8ull - 0x1850e5000ull));
+            fprintf(stderr,
+                    "#### CGXSYNTH-INSTALL gate=%p slot=%p hdr=%p\n",
+                    gate, g_macws_cgx_audit_slot, (void *)header);
+            fflush(stderr);
+            if (gate) {
+                MSHookFunction(gate,
+                               (void *)macws_diag_sender_can_synth,
+                               (void **)&macws_orig_sender_can_synth);
+            }
+        }
             
         // NSLog(@"#### debugbydcmmc loadImageCallback before OFF_SkyLight_WSSystemCanCompositeWithMetal");
 #if FORCE_SW_RENDER
