@@ -9124,11 +9124,15 @@ static int32_t macws_vnc_session_mouse_post(CGPoint point,
     else type = 5;                              // mouseMoved
     CFTypeRef event = createMouse(NULL, type, point, button);
     if (!event) return -2;
-    // OSXvnc itself selects the HID event tap for this console session
-    // ("Using Smart Event Tap -- HID"). kCGSessionEventTap posts returned
-    // 0/0 without reaching WindowServer here; the HID tap is the deeper
-    // injection point real hardware input uses.
-    postEvent(0 /* kCGHIDEventTap */, event);
+    // 22F82 runtime witness (2026-10-13): the HID event port that
+    // kCGHIDEventTap targets is never registered in this chroot's bootstrap
+    // (bootstrap_look_up com.apple.WindowServer.HIDEvents = unknown-service),
+    // and mach_port_type on the port SLSGetEventPort hands out returns
+    // KERN_INVALID_NAME — so HID-tap posts silently die at mach_msg. The
+    // session event tap instead rides the caller's live CGS connection
+    // (SLSMainConnectionID → connection send port), the same transport the
+    // scroll proxy already uses to deliver wheel phases to WindowServer.
+    postEvent(1 /* kCGSessionEventTap */, event);
     CFRelease(event);
     atomic_store_explicit(&macws_vnc_session_buttons,
         (left ? 1u : 0u) | (right ? 2u : 0u) | (middle ? 4u : 0u),

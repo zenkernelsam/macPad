@@ -2705,6 +2705,26 @@ static void MacWSAppInputApplicationSendEvent(id self, SEL command, id event) {
     }
     BOOL processLocalMouseEvent = event && type >= 1 && type <= 7 &&
         MacWSIsProcessLocalMouseEvent(event);
+    // Diagnostic witness: a mouse event arriving here that is NOT one of the
+    // bridge's process-local fabrications can only have come from
+    // WindowServer's event dispatch — the authoritative proof that a posted
+    // event survived the session queue and hit-test. File-gated so the
+    // witness can be armed/disarmed without rebuilding.
+    if (event && ((type >= 1 && type <= 8) ||
+                  (type >= 22 && type <= 24) || type == 30 || type == 31) &&
+        !processLocalMouseEvent &&
+        access("/tmp/macws_ws_dispatch_witness", F_OK) == 0) {
+        CGPoint evLoc = ((MacWSMsgPoint)objc_msgSend)(
+            event, sel_registerName("locationInWindow"));
+        NSInteger evWindow = ((MacWSMsgInteger)objc_msgSend)(
+            event, sel_registerName("windowNumber"));
+        fprintf(stderr,
+            "#### APP-INPUT WS-DISPATCH pid=%d type=%lu window=%ld "
+            "loc=(%.1f,%.1f)\n",
+            getpid(), (unsigned long)type, (long)evWindow,
+            evLoc.x, evLoc.y);
+        fflush(stderr);
+    }
     // leftMouseDragged/rightMouseDragged already encode which hardware button
     // must be held.  Ventura's AppKit queue preserves that NSEvent type but,
     // in this launchd-created chroot session, its global button mask remains
@@ -5810,6 +5830,48 @@ static int32_t MacWSWarpSystemCursorOnMainDisplay(CGPoint point) {
 typedef void *(*MacWSCreateMouseEvent)(void *source, int32_t eventType,
                                        CGPoint point, int32_t button);
 typedef void (*MacWSSessionEventPost)(uint32_t tap, void *event);
+// WindowServer never registers its HID event server port in this chroot
+// (bootstrap_look_up com.apple.WindowServer.HIDEvents = unknown-service and
+// SLSGetEventPort returns a name that mach_port_type rejects), so both
+// CGEventPost taps die client-side. SLSPostEventRecord instead MIG-sends the
+// 248-byte SLSEventRecord on the caller's own CGS connection port — the same
+// funnel SLPostScrollWheelEvent uses to deliver working wheel phases. The
+// record layout below is taken verbatim from
+// SLSPostMouseEventsVButtons' stack construction (RE-confirmed at
+// SkyLight-22F82 __TEXT+0x156f34..0x156fd8): version=3 at +0x00,
+// length=0xf8 at +0x04 (must equal arg2), CGEventType at +0x08,
+// double point at +0x10/+0x18, session=-1 at +0x38 (resolved from the
+// connection's event state), timestamp=0 at +0x50 (auto), button index
+// at +0x91.
+typedef uint32_t (*MacWSMainConnectionID)(void);
+typedef int32_t (*MacWSPostEventRecord)(uint32_t connID, const void *record,
+                                        uint32_t recordSize, int64_t flags);
+static int32_t MacWSPostConnectionMouseRecord(CGPoint point,
+                                              int32_t eventType,
+                                              int32_t button) {
+    static MacWSMainConnectionID mainConn;
+    static MacWSPostEventRecord postRecord;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        mainConn = (MacWSMainConnectionID)dlsym(
+            RTLD_DEFAULT, "SLSMainConnectionID");
+        postRecord = (MacWSPostEventRecord)dlsym(
+            RTLD_DEFAULT, "SLSPostEventRecord");
+    });
+    if (!mainConn || !postRecord) return -1;
+    uint32_t connID = mainConn();
+    if (!connID) return -2;
+    uint8_t record[0xf8];
+    memset(record, 0, sizeof(record));
+    *(uint32_t *)(record + 0x00) = 3;
+    *(uint32_t *)(record + 0x04) = 0xf8;
+    *(uint32_t *)(record + 0x08) = (uint32_t)eventType;
+    *(double *)(record + 0x10) = point.x;
+    *(double *)(record + 0x18) = point.y;
+    *(int32_t *)(record + 0x38) = -1;
+    *(uint8_t *)(record + 0x91) = (uint8_t)button;
+    return postRecord(connID, record, 0xf8, 0);
+}
 static int32_t MacWSPostSessionMouseTransition(CGPoint point,
                                              int32_t eventType,
                                              int32_t button) {
@@ -10853,6 +10915,55 @@ static void MacWSPostInputOnMainThread(MacWSInputRecord record) {
                         // current ownership first.
                         (void)MacWSRepairFrontUIApplication(
                             application, "foreign-surface-preflight");
+                    }
+                    // In parallel, post the pointer transition through this
+                    // process's own CGS connection. SLSPostEventRecord is the
+                    // only still-live transport: it MIG-sends the encoded
+                    // record on our connection port, the same funnel the
+                    // working legacy scroll post uses, while both CGEventPost
+                    // taps route to WindowServer's unregistered HID event
+                    // port. A menubar event posted here is authorized by the
+                    // front app's connection and hit-tested globally, so
+                    // WindowServer dispatches the hit back to this process —
+                    // the APP-INPUT WS-DISPATCH line is the delivery witness.
+                    if (record.kind == MacWSInputKindTap ||
+                        record.kind == MacWSInputKindSecondaryTap) {
+                        CGPoint postPoint = { record.x, record.y };
+                        BOOL secondaryTap =
+                            record.kind == MacWSInputKindSecondaryTap;
+                        int32_t downRc = MacWSPostConnectionMouseRecord(
+                            postPoint, secondaryTap ? 3 : 1,
+                            secondaryTap ? 1 : 0);
+                        int32_t upRc = MacWSPostConnectionMouseRecord(
+                            postPoint, secondaryTap ? 4 : 2,
+                            secondaryTap ? 1 : 0);
+                        // Same funnel through the state-tracking helper: the
+                        // button transition path posts via
+                        // CGSMouseStatePostMouseButtonsChangedEvents rather
+                        // than a raw record, so compare its return and watch
+                        // for the WS-DISPATCH witness either path may yield.
+                        MacWSPostLegacyMouseEvent legacyPost =
+                            MacWSLegacySystemMousePoster();
+                        int32_t legacyDown = -1;
+                        int32_t legacyUp = -1;
+                        if (legacyPost) {
+                            legacyDown = legacyPost(postPoint, false, 3,
+                                secondaryTap ? false : true,
+                                secondaryTap ? true : false, false);
+                            usleep(2000);
+                            legacyUp = legacyPost(postPoint, false, 3,
+                                false, false, false);
+                        }
+                        if (MacWSRuntimeDiagnosticsEnabled()) {
+                            fprintf(stderr,
+                                "#### APP-INPUT CONN-POST pid=%d kind=%u "
+                                "point=(%.1f,%.1f) down=%d up=%d "
+                                "legacy=%d/%d\n",
+                                getpid(), record.kind,
+                                postPoint.x, postPoint.y, downRc, upRc,
+                                legacyDown, legacyUp);
+                            fflush(stderr);
+                        }
                     }
                     BOOL proxied = MacWSForwardRecordToSystemPointerProxy(
                         &record);
