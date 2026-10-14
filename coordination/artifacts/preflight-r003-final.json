@@ -1,0 +1,11 @@
+{
+  "started": "2026-10-14T22:35:31.728373+08:00",
+  "finished": "2026-10-14T22:35:32.168419+08:00",
+  "command": "ls -la /var/mnt/rootfs/usr/local/lib/ 2>&1; ls -la /var/mnt/rootfs/tmp/macos_ws_event_probe /var/mnt/rootfs/tmp/mshook_provider_probe 2>&1; mount | grep -i mnt || echo NO_MNT_MOUNT",
+  "command_sha256": "5eec15c118cb8ee092e6f9e1ad8c56ec957dba6c37eb4a030cb7469e68cfedb2",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "total 6572\ndrwxr-xr-x 8 root wheel     256 Oct 14 22:19 .\ndrwxr-xr-x 8 root wheel     256 Oct  8 13:36 ..\n-rwxr-xr-x 1 root wheel 1159472 Oct 14 22:19 libmachook.dylib\n-rwxr-xr-x 1 root wheel 1610720 Oct 14 03:28 libmachook.dylib.old\n-rwxr-xr-x 1 root wheel 1159680 Oct 14 22:19 libmachook_arm64.dylib\n-rwxr-xr-x 1 root wheel 1613232 Oct 14 03:28 libmachook_arm64.dylib.old\n-rwxr-xr-x 1 root wheel 1159488 Oct 14 22:19 libmachook_arm64e.dylib\n-rwxr-xr-x 1 root wheel    9955 Oct 12 20:40 libmachook_ent.plist\n-rw-r--r-- 1 root wheel 53520 Oct 14 22:34 /var/mnt/rootfs/tmp/macos_ws_event_probe\n-rwxr-xr-x 1 root wheel 51792 Oct 14 22:19 /var/mnt/rootfs/tmp/mshook_provider_probe\ndevfs on /private/var/mnt/efi-test (devfs, local, nosuid)\n/var/jb/usr on /private/var/mnt/rootfs/private/var/jb/usr (bindfs, local, nosuid, read-only, nobrowse)\ndevfs on /private/var/mnt/rootfs/dev (devfs, local, nosuid)\n",
+  "stderr": "",
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

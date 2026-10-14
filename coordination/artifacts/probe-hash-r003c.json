@@ -1,0 +1,11 @@
+{
+  "started": "2026-10-14T22:34:38.601015+08:00",
+  "finished": "2026-10-14T22:34:38.977425+08:00",
+  "command": "/var/jb/usr/bin/python3 -c \"import hashlib;print(\\\"DEVICE:\\\",hashlib.sha256(open(\\\"/var/mnt/rootfs/tmp/macos_ws_event_probe\\\",\\\"rb\\\").read()).hexdigest())\"",
+  "command_sha256": "e7a9da4fa607b1987e4f4a8a0575121cfface8cb8ad184d6b31085fdac610240",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "DEVICE: 68481510d02040697c7f622d6d9b434f383e77831ad80ba5247e66b361746a12\n",
+  "stderr": "",
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

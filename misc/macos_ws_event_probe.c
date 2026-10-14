@@ -123,11 +123,16 @@ int main(int argc, char **argv) {
     probe_bootstrap_service("macwsguide.windowserver.final-composite-replay");
 
     // ── Phase 1b (R001): identity pins + tccd reachability.
-    // SkyLight's loaded UUID must match the RE binary before any
-    // image-relative offset is trusted.  tccd lookup proves only that
-    // the service is reachable from this bootstrap domain — Mach port
+    // SkyLight's loaded UUID is COMPARED against the expected 22F82
+    // build before any private slot/VA read below — the probe fails
+    // closed on an unknown binary.  tccd lookup proves only that the
+    // service is reachable from this bootstrap domain — Mach port
     // names are PER-TASK, so this port number cannot be compared with
     // remote= fields in WindowServer's own MACH-ALL-SEND log lines.
+    static const uint8_t kSkyUUID[16] = {
+        0x96,0x67,0x6a,0x53,0xb1,0xe0,0x3d,0x7e,
+        0xb9,0x8b,0xb7,0x38,0x73,0xcd,0x18,0x80 };
+    int sky_uuid_ok = 0;
     {
         for (uint32_t i = 0; i < _dyld_image_count(); i++) {
             const char *n = _dyld_get_image_name(i);
@@ -138,9 +143,12 @@ int main(int argc, char **argv) {
                 for (uint32_t c = 0; c < h->ncmds; c++) {
                     if (lc->cmd == LC_UUID) {
                         const struct uuid_command *u = (const void *)lc;
+                        sky_uuid_ok =
+                            (memcmp(u->uuid, kSkyUUID, 16) == 0);
                         printf("SkyLight loaded uuid ");
                         for (int b = 0; b < 16; b++) printf("%02X", u->uuid[b]);
-                        printf(" (expect 96676A53B1E03D7EB98BB73873CD1880)\n");
+                        printf(" (expect 96676A53B1E03D7EB98BB73873CD1880)"
+                               " match=%d\n", sky_uuid_ok);
                         break;
                     }
                     lc = (const void *)((const char *)lc + lc->cmdsize);
@@ -173,7 +181,15 @@ int main(int argc, char **argv) {
     // interposed replacements, our compat layer may be producing the
     // denial key.  Read-only: resolve the slots' bound pointers in this
     // process and dladdr them for symbol+image names.
-    {
+    //
+    // FAIL-CLOSED: every address below is only valid for the pinned
+    // 22F82 build.  If Phase 1b's UUID comparison failed, skip the
+    // whole phase rather than read offsets from an unknown image.
+    if (!sky_uuid_ok) {
+        printf("Phase1c SKIPPED: loaded SkyLight uuid != expected "
+               "22F82 build — refusing private-slot reads on an "
+               "unknown image\n");
+    } else {
         const struct mach_header *sky = NULL;
         for (uint32_t i = 0; i < _dyld_image_count(); i++) {
             const char *n = _dyld_get_image_name(i);

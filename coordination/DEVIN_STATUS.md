@@ -352,23 +352,39 @@ read.
 - WS log tail shows only normal teardown noise (SENDFAIL on dying
   ports). Rootfs 44% used, unchanged.
 
-**Still open (explicitly NOT accepted):**
-- The identity of the lazily-resolved checker + what populates the
-  per-{pid,pidversion} rights cache in WS (leading suspect remains the
-  loginwindow/session-owner registration path; needs IDA or a
-  WS-side read, not assumptions).
-- Whether the `checker` call result feeds `rc` directly or via the
-  write-back path at dispatcher+0x184.
-- Input success: still none. `SLSPostEventRecord(canonical) -> 1002`,
-  cursor unmoved. Session registry empty; `LoginDone=0`.
-- Push: `git push origin main` → `could not read Username` (https,
-  no credential helper entry), `git@github.com` → publickey denied,
-  `gh` absent. HEAD locally committed at `b7aea48`+ follow-ups;
-  **push remains unauthenticated — not fabricated**.
+**Final acceptance runs (this build, zero remote pipes):**
+- `artifacts/provider-probe-r003-final.json` (normal, real exit 0,
+  full streams) and `…-final-orig.json` (orig mode, exit 0,
+  `via_orig_returned=1`).  Numbers: `nopermit-strip res()=42`,
+  `nopermit-raw res()=42`, 16-byte unchanged, `permit-wronguuid -> -2`,
+  `VERDICT=INSTALLED`.
+- `artifacts/probe-inventory-r003-final.json` (exit 0): UUID compare
+  `match=1` gates Phase 1c — first private read happens only after
+  identity pin passes.  All 8 dispatcher stubs resolved live.
+- `artifacts/final-state-r003.json`: device post-sign SHA256 for all
+  six deployed artifacts + clean snapshot (sentinel absent, no WS/
+  probe/mshook processes).
+- IMPORTANT caveat (reviewer-noted): stub/rightDesc/cache reads occur
+  in the **probe's own** SkyLight instance.  `rightsCache=0`,
+  `lazyChecker=0` in the probe prove NOTHING about WindowServer's
+  live globals; `checker-name`/`checker-aux` VA misses are mapping
+  facts of the probe address space, not protocol facts.
 
-**Git state:** committed `685624f` (R003 impl+evidence) +
-`b7aea48` (reviewer addenda). Working tree clean except ignored
-analysis binary.
+**Still open (explicitly NOT accepted):**
+- Identity of the lazily-resolved checker and what populates WS's
+  per-{pid,pidversion} rights cache — needs IDA MCP or WS-side
+  debugger, not present.
+- Input success: still none.  `SLSPostEventRecord(canonical) -> 1002`.
+- `SecTask.SkyLight.loginwindow -> 0x0` in final inventory: the probe
+  lacks the loginwindow entitlement (relevant to R004 handshake work,
+  not an acceptance criterion here).
+- Push: `git push origin main` → `could not read Username` (https),
+  `git@github.com` → publickey denied, `gh` absent.
+  **Push remains unauthenticated — not fabricated.**
+
+**Git state:** `685624f` impl, `b7aea48` addenda, `71ea1ae` evidence,
+plus one diagnostic checkpoint commit on top (this status + final
+artifacts).  Labeled diagnostic checkpoint, not acceptance.
 
 Review inputs: `reviews/R003-20261014.md` (F01–F05) and
 `reviews/R003-addendum-20261014.md` (identity pin, refusal contract,

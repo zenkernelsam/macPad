@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-14T22:36:26.815849+08:00",
+  "finished": "2026-10-14T22:36:27.473324+08:00",
+  "command": "set -eu\nfor f in /var/mnt/rootfs/System/Library/Frameworks/CydiaSubstrate.framework/CydiaSubstrate \\\n         /var/mnt/rootfs/usr/local/lib/libmachook.dylib \\\n         /var/mnt/rootfs/usr/local/lib/libmachook_arm64e.dylib \\\n         /var/mnt/rootfs/usr/local/lib/libmachook_arm64.dylib \\\n         /var/mnt/rootfs/tmp/mshook_provider_probe \\\n         /var/mnt/rootfs/tmp/macos_ws_event_probe; do\n  /var/jb/usr/bin/python3 -c \"import hashlib,sys;print(sys.argv[1],hashlib.sha256(open(sys.argv[1],'rb').read()).hexdigest())\" \"$f\"\ndone\necho \"=== sentinel ===\"\nls /tmp/macws_runtime_diagnostics 2>&1 || echo \"sentinel absent (good)\"\necho \"=== processes ===\"\nps aux | grep -iE \"windowserver|evprobe|mshook\" | grep -v grep || echo \"(none)\"\n",
+  "command_sha256": "01b50b6d66ef5db0c45fc96dcf96e5c442b416c7e193b67164ccdd42e60d9946",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "/var/mnt/rootfs/System/Library/Frameworks/CydiaSubstrate.framework/CydiaSubstrate 1d3c525afdf8a38e110127a8985fd030ec0c226d1e82e7e2b45dcc7e40c446ee\n/var/mnt/rootfs/usr/local/lib/libmachook.dylib cbc277d2a5aa44adce91fc045e8a94c98f758844029d21155d9e35de7371291b\n/var/mnt/rootfs/usr/local/lib/libmachook_arm64e.dylib 68ff88c31ff099c11a19fd7ea43d4af6a63dc670258b64c3db52060471865627\n/var/mnt/rootfs/usr/local/lib/libmachook_arm64.dylib c805fb2770a129569a2355a86d21cc32a9b59699bdd9d72b3e82fe2f5de01f93\n/var/mnt/rootfs/tmp/mshook_provider_probe 077f466fa0a162072a047c3a3f63d4b23d7c80d649f0051ffa244dcf738f394f\n/var/mnt/rootfs/tmp/macos_ws_event_probe 68481510d02040697c7f622d6d9b434f383e77831ad80ba5247e66b361746a12\n=== sentinel ===\nls: cannot access '/tmp/macws_runtime_diagnostics': No such file or directory\nsentinel absent (good)\n=== processes ===\n(none)\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}
