@@ -80,12 +80,17 @@ Cleanup: `macos_gui.sh stop` (iOS restored), sentinel absent in BOTH
 
 ### Still open
 
-- checker identity / rights-cache producer → IDA on
-  `analysis/SkyLight_22F82` (UUID 96676A53-…, sha256 `13d7a0ca…`) —
-  static RE channel still pending user-side.
-- `com.apple.SkyLight.loginwindow` entitlement absent on probe —
-  candidate blocker for session-aware post acceptance.
-- Input acceptance: unresolved (`1002`).
+- Static RE now RE-confirmed against `analysis/SkyLight_22F82`
+  (capstone, no IDA needed): the impl's lazy checker IS
+  `TCCAccessPreflightWithAuditToken` resolved via real dlopen+dlsym, and
+  the post right is `kTCCServicePostEvent`.  Full dumps + analysis:
+  `docs/evidence/r004b-gate-dispatcher-impl-disasm-20261015.md`,
+  artifacts `r004b-disasm-*.txt`.
+- Remaining: who grants/produces the TCC `kTCCServicePostEvent` right for
+  a real sender in-session (loginwindow/session path), since
+  self-pid posts are pre-allowed and cached denies fold back.
+- Input acceptance: unresolved (`1002` — TCC preflight denies the
+  sender's audit token; no `SkyLight.loginwindow` entitlement).
 
 ## R004A revised delivery
 
