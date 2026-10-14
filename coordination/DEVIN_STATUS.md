@@ -312,14 +312,63 @@ and the checker says no. Open: which checker symbol resolves
 (lazy-bound; not yet dladdr'd inside WS) and what populates the cache
 (loginwindow registration path is the leading candidate).
 
-### R003 candidate state
+### R003 candidate state — REVISING (not self-declared READY)
 
-Stable and reproducible across 3 WS generations. Deployed artifacts
-(post-ldid device hashes): see section above; this final build's local
-pre-sign hashes: CydiaSubstrate `ccf7575f…`, libmachook e `2b423d7e…`,
-arm64 `2cd2fc5c…`, provider probe `df4fcb7a…`, event probe
-`071ed6af…`. Every build/deploy command recorded with real exit codes
-via `DevinWatchdog_mac/macpad_ssh.py --record` artifacts.
+**RE channel disclosure (required by review):** no IDA process and no
+IDA MCP listener is running on this host (verified: `mcp_list_servers`
+returns none; reviewer confirmed 127.0.0.1:13337-13339 quiet).  All
+static disasm in this round was **capstone on the extracted file**
+`/tmp/SkyLight_22F82` — now copied by reviewer to
+`analysis/SkyLight_22F82` (git-ignored), UUID
+`96676A53-B1E0-3D7E-B98B-B73873CD1880`, SHA256
+`13d7a0ca010a9808234c71c34fd650b26329de99d1aceaeb5ddbb58f8b906c61`.
+Offset/VA facts that name real runtime objects (stub slots, gate
+address) were additionally **runtime-confirmed** by probe `dladdr`/
+read-backs; symbolic names of internal helpers came from live bound
+pointers, not byte guessing.  The lazily-resolved checker NAME (impl
+string operand) is **not yet identified** — pending IDA or a WS-side
+read.
+
+**Closed this round (with clean full-stream records):**
+- Refusal orig-callable: `nopermit-strip res()=42`,
+  `nopermit-raw res()=42` — artifacts
+  `artifacts/provider-probe-r003-v3.json` (exit 0) and
+  `-orig.json` (exit 0), raw stdout+stderr, no remote pipe.
+- ABI versioning: `MACWSHookPermitV2` live (`permit=0` armed in WS;
+  `permit-wronguuid -> -2`; `dlsym` capability lookup fails closed on
+  old providers; probe exit 8 reserved for mixed-version detection).
+- All install-failure paths return the callable original (code review;
+  fault-injection paths not exercisable without induced failures —
+  listed as contract-reviewed, not runtime-proven).
+- Inventory probe run: `artifacts/probe-inventory-r003c.json`
+  (real exit 0, full streams).
+
+**Device cleanup snapshot (post-experiment):**
+- WindowServer (46364) booted out — no WS/launchd orphans.
+- `/tmp/macws_runtime_diagnostics` sentinel removed (diag output and
+  the CGXSYNTH hook both go quiet next boot — fail-safe default).
+- `thermalmonitord`/`watchdogd` in ps are stock iPadOS daemons, not
+  ours. MacWSHost (15797, mobile) is the user's host app — left alone.
+- WS log tail shows only normal teardown noise (SENDFAIL on dying
+  ports). Rootfs 44% used, unchanged.
+
+**Still open (explicitly NOT accepted):**
+- The identity of the lazily-resolved checker + what populates the
+  per-{pid,pidversion} rights cache in WS (leading suspect remains the
+  loginwindow/session-owner registration path; needs IDA or a
+  WS-side read, not assumptions).
+- Whether the `checker` call result feeds `rc` directly or via the
+  write-back path at dispatcher+0x184.
+- Input success: still none. `SLSPostEventRecord(canonical) -> 1002`,
+  cursor unmoved. Session registry empty; `LoginDone=0`.
+- Push: `git push origin main` → `could not read Username` (https,
+  no credential helper entry), `git@github.com` → publickey denied,
+  `gh` absent. HEAD locally committed at `b7aea48`+ follow-ups;
+  **push remains unauthenticated — not fabricated**.
+
+**Git state:** committed `685624f` (R003 impl+evidence) +
+`b7aea48` (reviewer addenda). Working tree clean except ignored
+analysis binary.
 
 Review inputs: `reviews/R003-20261014.md` (F01–F05) and
 `reviews/R003-addendum-20261014.md` (identity pin, refusal contract,

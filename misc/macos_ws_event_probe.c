@@ -189,8 +189,12 @@ int main(int argc, char **argv) {
                 0x1dff3f360, // stub 0x18547c52c — audit decode B
                 0x1dfef4b98, // stub 0x18547cb2c — comparison source
                 0x1dff00d20, // stub 0x18547982c — map lookup
+                0x1dfef4428, // stub 0x18547c99c — checker-name resolver
+                0x1dfef4440, // stub 0x18547c9ac — resolver call
+                0x1dfef5ba8, // stub 0x18547d27c — os_log-type check
+                0x1dfef2678, // stub 0x18547c2ec — stackcheck fail
             };
-            for (unsigned i = 0; i < 4; i++) {
+            for (unsigned i = 0; i < 8; i++) {
                 const void *slot = (const void *)(slot_vas[i] + slide);
                 void *fn = *(void * const *)slot;   // bound pointer
                 Dl_info dfi;
@@ -202,6 +206,101 @@ int main(int argc, char **argv) {
                        (unsigned long long)slot_vas[i], fn,
                        base ? base + 1 : img,
                        ok && dfi.dli_sname ? dfi.dli_sname : "?");
+            }
+            // The authoritative checker's lazily-resolved NAME string
+            // (impl @0x185425da4 loads it from VA 0x1854dc3e) and the
+            // gate's rightDesc object (VA 0x1d3dcb6c8): dump both.
+            // Guard every VA with vm_region first — a wrong VA must
+            // degrade to a printout, not crash the probe.
+            static const struct { const char *tag; uint64_t va; }
+                reads[] = {
+                {"checker-name", 0x1854dc3e},
+                {"checker-aux",  0x1854dc5f},
+                {"rightDesc",    0x1d3dcb6c8},
+            };
+            for (unsigned r = 0; r < 3; r++) {
+                vm_address_t a = (vm_address_t)(reads[r].va + slide);
+                vm_address_t rg = a; vm_size_t rsz = 0;
+                vm_region_basic_info_data_64_t bi;
+                mach_msg_type_number_t bc = VM_REGION_BASIC_INFO_COUNT_64;
+                mach_port_t obj = MACH_PORT_NULL;
+                kern_return_t rr = vm_region_64(mach_task_self(), &rg,
+                    &rsz, VM_REGION_BASIC_INFO_64, (vm_region_info_t)&bi,
+                    &bc, &obj);
+                if (rr != KERN_SUCCESS || !(bi.protection & VM_PROT_READ)
+                    || a < rg || a >= rg + rsz) {
+                    printf("%s @%#llx: UNMAPPED/protected (rr=%d)\n",
+                           reads[r].tag, (unsigned long long)a, rr);
+                    continue;
+                }
+                if (r < 2) {
+                    char cbuf[129];
+                    memcpy(cbuf, (const void *)a, 128);
+                    cbuf[128] = 0;
+                    printf("%s @%p: \"%.100s\"\n", reads[r].tag,
+                           (void *)a, cbuf);
+                } else {
+                    const uint64_t *rd = (const uint64_t *)a;
+                    printf("rightDesc @%p: [0]=%#llx [+8]=%#llx "
+                           "[+0x10]=%#llx [+0x18]=%#llx [+0x20]=%#llx\n",
+                           rd,
+                           (unsigned long long)rd[0],
+                           (unsigned long long)rd[1],
+                           (unsigned long long)rd[2],
+                           (unsigned long long)rd[3],
+                           (unsigned long long)rd[4]);
+                    if (rd[0]) {
+                        Dl_info di2; memset(&di2, 0, sizeof(di2));
+                        dladdr((const void *)rd[0], &di2);
+                        printf("rightDesc[0] -> %s (image %s)\n",
+                               di2.dli_sname ? di2.dli_sname : "?",
+                               di2.dli_fname ? di2.dli_fname : "?");
+                        CFTypeRef cfv = (CFTypeRef)rd[0];
+                        if (CFGetTypeID(cfv) == CFStringGetTypeID())
+                            CFShow(cfv);
+                    }
+                }
+            }
+            // Rights-cache dict + lazy-checker cache globals (all in
+            // SkyLight __DATA — same readability gate).
+            {
+                static const struct { const char *tag; uint64_t va; }
+                    globals[] = {
+                    {"rightsCache",  0x1d8ba6b40},
+                    {"cacheSentinel",0x1d8ba6b48},
+                    {"lazyChecker",  0x1d8ba6b50},
+                    {"lazyAux",      0x1d8ba6b58},
+                };
+                for (unsigned g = 0; g < 4; g++) {
+                    vm_address_t a =
+                        (vm_address_t)(globals[g].va + slide);
+                    vm_address_t rg = a; vm_size_t rsz = 0;
+                    vm_region_basic_info_data_64_t bi;
+                    mach_msg_type_number_t bc =
+                        VM_REGION_BASIC_INFO_COUNT_64;
+                    mach_port_t obj = MACH_PORT_NULL;
+                    kern_return_t rr = vm_region_64(mach_task_self(),
+                        &rg, &rsz, VM_REGION_BASIC_INFO_64,
+                        (vm_region_info_t)&bi, &bc, &obj);
+                    if (rr != KERN_SUCCESS ||
+                        !(bi.protection & VM_PROT_READ) ||
+                        a < rg || a >= rg + rsz) {
+                        printf("%s @%#llx: UNMAPPED\n", globals[g].tag,
+                               (unsigned long long)a);
+                        continue;
+                    }
+                    void *val = *(void * const *)a;
+                    printf("%s @%p = %p", globals[g].tag,
+                           (void *)a, val);
+                    if (val) {
+                        Dl_info dg; memset(&dg, 0, sizeof(dg));
+                        if (dladdr(val, &dg))
+                            printf("  -> %s:%s",
+                                   dg.dli_fname ? dg.dli_fname : "?",
+                                   dg.dli_sname ? dg.dli_sname : "?");
+                    }
+                    printf("\n");
+                }
             }
         }
     }

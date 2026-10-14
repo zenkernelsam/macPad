@@ -1,0 +1,11 @@
+{
+  "started": "2026-10-14T22:24:26.410103+08:00",
+  "finished": "2026-10-14T22:24:27.049616+08:00",
+  "command": "set -e; mv /tmp/macos_ws_event_probe.new /var/mnt/rootfs/tmp/macos_ws_event_probe; /var/jb/usr/bin/ldid -S/var/jb/usr/macOS/bin/entitlements.plist /var/mnt/rootfs/tmp/macos_ws_event_probe; /var/jb/usr/bin/python3 /var/jb/usr/macOS/bin/macws_boot_trust.py --readd /var/mnt/rootfs/tmp/macos_ws_event_probe",
+  "command_sha256": "bb60aa9177f9a401316ba2982d0ce381ce2b25dca114b75bd619e5f4ba34f2cb",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "BOOT-TRUST {\"added\": 1, \"backend\": \"libjailbreak\", \"cached\": 0, \"files\": 1, \"hashes\": 1, \"images\": 1, \"resource_hits\": 0, \"scan_seconds\": 0.0, \"total_seconds\": 0.076}\n",
+  "stderr": "",
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}
