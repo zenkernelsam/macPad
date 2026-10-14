@@ -1,10 +1,10 @@
 (lldb) target create --arch arm64e analysis/TCC_22F82
 Current executable set to '/Users/ciscohe/Desktop/macPad/analysis/TCC_22F82' (arm64e).
 (lldb) image list
-[  0] 1238D7CA-719A-36A4-94B1-2F387E6B3BF1 0x00000001850c7000 /Users/ciscohe/Desktop/macPad/analysis/TCC_22F82 
+[  0] 1238D7CA-719A-36A4-94B1-2F387E6B3BF1 0x00000001850c7000 /Users/ciscohe/Desktop/macPad/analysis/TCC_22F82
 (lldb) disassemble --name TCCAccessPreflightWithAuditToken --bytes
 TCC_22F82`TCCAccessPreflightWithAuditToken:
-TCC_22F82[0x1850d03bc] <+0>:   0xd503237f   pacibsp 
+TCC_22F82[0x1850d03bc] <+0>:   0xd503237f   pacibsp
 TCC_22F82[0x1850d03c0] <+4>:   0xd103c3ff   sub    sp, sp, #0xf0
 TCC_22F82[0x1850d03c4] <+8>:   0x6d0b23e9   stp    d9, d8, [sp, #0xb0]
 TCC_22F82[0x1850d03c8] <+12>:  0xa90c57f6   stp    x22, x21, [sp, #0xc0]
@@ -101,11 +101,11 @@ TCC_22F82[0x1850d0530] <+372>: 0xa94d4ff4   ldp    x20, x19, [sp, #0xd0]
 TCC_22F82[0x1850d0534] <+376>: 0xa94c57f6   ldp    x22, x21, [sp, #0xc0]
 TCC_22F82[0x1850d0538] <+380>: 0x6d4b23e9   ldp    d9, d8, [sp, #0xb0]
 TCC_22F82[0x1850d053c] <+384>: 0x9103c3ff   add    sp, sp, #0xf0
-TCC_22F82[0x1850d0540] <+388>: 0xd65f0fff   retab  
+TCC_22F82[0x1850d0540] <+388>: 0xd65f0fff   retab
 TCC_22F82[0x1850d0544] <+392>: 0x94003e7b   bl     0x1850dff30               ; symbol stub for: __stack_chk_fail
 (lldb) disassemble --name tccd --bytes
 TCC_22F82`tccd:
-TCC_22F82[0x1850c9584] <+0>:   0xd503237f   pacibsp 
+TCC_22F82[0x1850c9584] <+0>:   0xd503237f   pacibsp
 TCC_22F82[0x1850c9588] <+4>:   0xd101c3ff   sub    sp, sp, #0x70
 TCC_22F82[0x1850c958c] <+8>:   0xa9035ff8   stp    x24, x23, [sp, #0x30]
 TCC_22F82[0x1850c9590] <+12>:  0xa90457f6   stp    x22, x21, [sp, #0x40]
@@ -208,7 +208,7 @@ TCC_22F82[0x1850c9710] <+396>: 0xa9454ff4   ldp    x20, x19, [sp, #0x50]
 TCC_22F82[0x1850c9714] <+400>: 0xa94457f6   ldp    x22, x21, [sp, #0x40]
 TCC_22F82[0x1850c9718] <+404>: 0xa9435ff8   ldp    x24, x23, [sp, #0x30]
 TCC_22F82[0x1850c971c] <+408>: 0x9101c3ff   add    sp, sp, #0x70
-TCC_22F82[0x1850c9720] <+412>: 0xd65f0fff   retab  
+TCC_22F82[0x1850c9720] <+412>: 0xd65f0fff   retab
 TCC_22F82[0x1850c9724] <+416>: 0xd02b1b60   adrp   x0, 353134
 TCC_22F82[0x1850c9728] <+420>: 0x913ca000   add    x0, x0, #0xf28            ; tcc_log_handle.onceToken
 TCC_22F82[0x1850c972c] <+424>: 0xd02c1e01   adrp   x1, 361410
@@ -218,7 +218,7 @@ TCC_22F82[0x1850c9738] <+436>: 0x17ffffb5   b      0x1850c960c               ; <
 TCC_22F82[0x1850c973c] <+440>: 0x940059fd   bl     0x1850dff30               ; symbol stub for: __stack_chk_fail
 (lldb) disassemble --name tccd_send_message --bytes
 TCC_22F82`tccd_send_message:
-TCC_22F82[0x1850c9740] <+0>:    0xd503237f   pacibsp 
+TCC_22F82[0x1850c9740] <+0>:    0xd503237f   pacibsp
 TCC_22F82[0x1850c9744] <+4>:    0xd10543ff   sub    sp, sp, #0x150
 TCC_22F82[0x1850c9748] <+8>:    0xa90f6ffc   stp    x28, x27, [sp, #0xf0]
 TCC_22F82[0x1850c974c] <+12>:   0xa91067fa   stp    x26, x25, [sp, #0x100]
@@ -625,7 +625,7 @@ TCC_22F82[0x1850c9d8c] <+1612>: 0xa9515ff8   ldp    x24, x23, [sp, #0x110]
 TCC_22F82[0x1850c9d90] <+1616>: 0xa95067fa   ldp    x26, x25, [sp, #0x100]
 TCC_22F82[0x1850c9d94] <+1620>: 0xa94f6ffc   ldp    x28, x27, [sp, #0xf0]
 TCC_22F82[0x1850c9d98] <+1624>: 0x910543ff   add    sp, sp, #0x150
-TCC_22F82[0x1850c9d9c] <+1628>: 0xd65f0fff   retab  
+TCC_22F82[0x1850c9d9c] <+1628>: 0xd65f0fff   retab
 TCC_22F82[0x1850c9da0] <+1632>: 0xd02b1b60   adrp   x0, 353134
 TCC_22F82[0x1850c9da4] <+1636>: 0x913ca000   add    x0, x0, #0xf28            ; tcc_log_handle.onceToken
 TCC_22F82[0x1850c9da8] <+1640>: 0xd02c1e01   adrp   x1, 361410
@@ -694,7 +694,7 @@ TCC_22F82[0x1850c9ea0] <+1888>: 0x94005884   bl     0x1850e00b0               ; 
 TCC_22F82[0x1850c9ea4] <+1892>: 0x17fffff3   b      0x1850c9e70               ; <+1840>
 (lldb) disassemble --start-address 0x1850ccebc --count 110 --bytes
 TCC_22F82`:
-TCC_22F82[0x1850ccebc] <+0>:   0xd503237f   pacibsp 
+TCC_22F82[0x1850ccebc] <+0>:   0xd503237f   pacibsp
 TCC_22F82[0x1850ccec0] <+4>:   0xd101c3ff   sub    sp, sp, #0x70
 TCC_22F82[0x1850ccec4] <+8>:   0xa9035ff8   stp    x24, x23, [sp, #0x30]
 TCC_22F82[0x1850ccec8] <+12>:  0xa90457f6   stp    x22, x21, [sp, #0x40]
@@ -801,6 +801,6 @@ TCC_22F82[0x1850cd058] <+412>: 0xa9454ff4   ldp    x20, x19, [sp, #0x50]
 TCC_22F82[0x1850cd05c] <+416>: 0xa94457f6   ldp    x22, x21, [sp, #0x40]
 TCC_22F82[0x1850cd060] <+420>: 0xa9435ff8   ldp    x24, x23, [sp, #0x30]
 TCC_22F82[0x1850cd064] <+424>: 0x9101c3ff   add    sp, sp, #0x70
-TCC_22F82[0x1850cd068] <+428>: 0xd65f0fff   retab  
+TCC_22F82[0x1850cd068] <+428>: 0xd65f0fff   retab
 TCC_22F82[0x1850cd06c] <+432>: 0x39410268   ldrb   w8, [x19, #0x40]
 TCC_22F82[0x1850cd070] <+436>: 0x35fff5a8   cbnz   w8, 0x1850ccf24           ; <+104>

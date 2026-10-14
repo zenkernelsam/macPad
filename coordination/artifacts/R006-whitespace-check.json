@@ -1,0 +1,47 @@
+{
+  "time": "2026-10-15T02:40:26.439444+08:00",
+  "checks": [
+    {
+      "argv": [
+        "git",
+        "diff",
+        "--check",
+        "ff602469"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "git",
+        "ls-files",
+        "analysis/TCC_22F82"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "git",
+        "check-ignore",
+        "analysis/TCC_22F82",
+        "tmp/local-history/R006-review-static-raw/exact-tcc-functions.txt"
+      ],
+      "exit": 0,
+      "stdout": "analysis/TCC_22F82\ntmp/local-history/R006-review-static-raw/exact-tcc-functions.txt\n",
+      "stderr": ""
+    }
+  ]
+}

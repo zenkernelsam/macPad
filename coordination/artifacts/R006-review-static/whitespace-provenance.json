@@ -1,0 +1,21 @@
+{
+  "time": "2026-10-15T02:39:54.968136+08:00",
+  "reason": "git show --format= --check 0436512 exited 2 for trailing whitespace in these LLDB outputs; the earlier check must not be called passing.",
+  "transformation": "Only trailing ASCII space/tab removed from each line; all instruction words, addresses, symbols and line boundaries preserved. Exact raw copies remain in ignored tmp and in commit 0436512.",
+  "files": [
+    {
+      "path": "coordination/artifacts/R006-review-static/exact-tcc-functions.txt",
+      "raw_backup": "tmp/local-history/R006-review-static-raw/exact-tcc-functions.txt",
+      "raw_sha256": "0c05c3b09ca910606092000ddeb1cb659f98b715b49b820a96c89caf3df4eaee",
+      "normalized_sha256": "fa9e3d4308ac53a08883e1123d954519544674f2714613b609593a9021a7b20f",
+      "changed_lines": 9
+    },
+    {
+      "path": "coordination/artifacts/R006-review-static/preflight-completions.txt",
+      "raw_backup": "tmp/local-history/R006-review-static-raw/preflight-completions.txt",
+      "raw_sha256": "571192cc2d186a389eafbd5205ed768823fdf26718080c8450a97b8433cafc5b",
+      "normalized_sha256": "b5ad0062fc0327bb27b3d3e61904fd6e5f22e2e9ce53ea74bf606297a5a5f0ab",
+      "changed_lines": 3
+    }
+  ]
+}
