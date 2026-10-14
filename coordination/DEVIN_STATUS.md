@@ -64,13 +64,15 @@ Single canonical post (`macos_ws_event_probe post`, PROBE_RC=0):
 #### CGXSYNTH cred=0x16b177228 size=52 euid=0 pid=53213 rc=0 seq=2
 ```
 
-**LOADER-OBS records emitted: 0.**  The original gate fired twice during
-the post and made *no observed public `dlsym` calls* — the lazy checker
-resolution does not go through public `dlsym` on this path
-(`r004b-canonical-post2.json`).  Result is an honest negative, not a
-root cause: `dlopen` is deliberately unobserved, and `dlsym` silence does
-not exclude loader activity via private/internal entry points.  Input
-remains `SLSPostEventRecord → 1002`; no input acceptance claimed.
+**LOADER-OBS records emitted: 0 → INCONCLUSIVE.**  The original gate
+fired twice during the post (seq=1, seq=2) and made *no observed public
+`dlsym` calls* inside those two executions.  This only proves absence in
+the observed window: it does NOT show the checker doesn't exist, isn't
+initialized, or resolved earlier; and since `dlopen` was deliberately
+unobserved after the `@loader_path` regression, no claim is made that the
+gate issued no loader calls of any kind.  `dlsym` silence also does not
+exclude private/internal loader entry points (`r004b-canonical-post2.json`).
+Input remains `SLSPostEventRecord → 1002`; no acceptance claimed.
 
 Cleanup: `macos_gui.sh stop` (iOS restored), sentinel absent in BOTH
 `/var/mnt/rootfs/tmp/` and `/tmp/` namespaces, zero WS/probe orphans

@@ -1,8 +1,9 @@
-DELIVERED R004B — 2026-10-14
+FROZEN R004B — 2026-10-14 (awaiting review → R005)
 Bounded TLS loader observation around the real CGXSYNTH gate.
-Outcome: gate fired (seq=1,2, rc=0); ZERO public dlsym calls observed.
+Outcome: gate fired (seq=1,2, rc=0); ZERO public dlsym calls in window —
+INCONCLUSIVE by design (dlopen unobserved; no claim about checker).
 dlopen interpose REMOVED — proven to corrupt @loader_path (launchservicesd
 pipeline failure, real evidence). 26/26 fixture checks ALL-PASS.
 Deployed post-sign: arm64e c408dc94…, arm64 56224d25…; baseline HI rc=0.
-Stack stopped; sentinels absent in both namespaces; no orphans.
-Not acceptance — input still 1002.  Git writes released to Devin.
+Stack stopped; sentinels absent both namespaces; no orphans.
+Input still 1002 — no acceptance.  Git writes released to Devin.

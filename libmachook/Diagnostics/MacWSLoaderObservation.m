@@ -120,13 +120,16 @@ void MacWSLoaderObservationSetSink(void (*sink)(const char *)) {
 
 // NOTE (2026-10-14, runtime-confirmed): there is intentionally NO dlopen
 // interposer here.  dyld resolves `@loader_path` relative to the image that
-// *calls* dlopen; an interposed shim makes libmachook the caller, so every
-// caller-relative open breaks (observed: legacy launchservicesd's
-// `dlopen("@loader_path/launchservicesd.dylib")` resolved under
-// /usr/local/lib instead of /System/Library/CoreServices).  Observing the
-// RESULT also forces an extra frame — a transparent forward is impossible
-// through the public ABI.  dlsym takes an explicit handle and has no
-// caller-relative semantics, so its interposer (in MacWSRandomDiagnostics.m)
-// stays.  NoteDlopen remains available for any future caller that can note
-// without interposing.
+// *calls* dlopen; an interposed shim makes libmachook the caller, so
+// launchservicesd's `dlopen("@loader_path/launchservicesd.dylib")` resolved
+// under /usr/local/lib instead of /System/Library/CoreServices and the
+// whole gui-start pipeline failed (artifacts/r004b-gui-start.json).
+// Observing the RESULT forces an extra frame — a transparent forward is
+// impossible through the public ABI.  The pre-existing dlsym interposer in
+// MacWSRandomDiagnostics.m is kept as-is; dlsym handles are NOT universally
+// caller-independent either (RTLD_NEXT/RTLD_SELF walk the caller's image
+// list), so no general safety claim is made — only that its interposer
+// predates this observer and unchanged behavior is test-covered.
+// NoteDlopen remains available for direct callers that can note without
+// interposing.
 
