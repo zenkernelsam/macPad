@@ -122,7 +122,15 @@ NULL for local `t` symbols on shared-cache SkyLight — resolve those by
 image-relative offset. See the same evidence doc §8 for the deploy
 landmines fixed (concatenated `ldid -Spath`, per-rebuild
 `set_macos_version.py`, thin-slice requirement) and the open anomaly
-(hooked gate provably installed but never fires during posts).
+(hooked gate provably installed but never fires during posts) —
+RESOLVED 2026-10-15: the deployed CydiaSubstrate MSHookFunction was a
+no-op scaffold; `misc/cydiasubstrate_macos.m` now carries a real
+16-byte trampoline implementation (fail-closed on PC-relative windows,
+PAC-safe), verified live by `misc/macos_mshook_provider_probe.c`
+(VERDICT=INSTALLED). Gate telemetry now fires: `#### CGXSYNTH` shows
+gCurMsgAudit populated (size=52, sender creds) and the genuine check
+chain (gate→dispatcher 0x1854257ec→impl) returns 0 → 1002. See
+coordination/DEVIN_STATUS.md R002 section.
 Previous update (2026-10-13): desktop compositor is alive —
 `state=ready` plus continuous final-composite delivery via
 `macws_publish_scanout_after_swap` (EndUpdate never runs on this build);
