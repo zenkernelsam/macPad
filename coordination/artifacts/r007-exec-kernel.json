@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T03:20:04.882299+08:00",
+  "finished": "2026-10-15T03:20:17.600390+08:00",
+  "command": "launchctl kickstart -k system/com.macwsguide.execprobeB 2>&1; sleep 1; launchctl kickstart user/501/com.macwsguide.execprobeB 2>&1 | tail -3; sleep 2; log show --last 2m --predicate \"eventMessage CONTAINS[c] \\\"tccd\\\" OR eventMessage CONTAINS[c] \\\"execprobeB\\\"\" 2>/dev/null | tail -25; echo \"=== crash reports ===\"; ls -lt /private/var/mobile/Library/Logs/CrashReporter/ 2>/dev/null | head -8; ls -lt /Library/Logs/DiagnosticReports/ 2>/dev/null | grep -i tccd | head -5",
+  "command_sha256": "62face861e702c299c9f3b19f628cf91c1c749900ea2985d27ca0aa94339bb55",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "Warning: Please switch to user/foreground/com.macwsguide.execprobeB service identifier\n=== crash reports ===\ntotal 860\n-rw-rw----    1 root   _analyticsusers  4078 Oct 15 03:06 ExcUserFault_lsregister-2026-10-15-030644.ips\n-rw-rw----    1 root   _analyticsusers  4172 Oct 15 03:06 ExcUserFault_com.apple.quicklook.ThumbnailsAgent-2026-10-15-030636.0007.ips\n-rw-rw----    1 root   _analyticsusers  4802 Oct 15 03:06 ExcUserFault_lsd-2026-10-15-030636.0006.ips\n-rw-rw----    1 root   _analyticsusers  4807 Oct 15 03:06 ExcUserFault_lsd-2026-10-15-030636.0005.ips\n-rw-rw----    1 root   _analyticsusers  4886 Oct 15 03:06 ExcUserFault_lsd-2026-10-15-030636.0004.ips\n-rw-rw----    1 root   _analyticsusers  4895 Oct 15 03:06 ExcUserFault_lsd-2026-10-15-030636.0003.ips\n-rw-rw----    1 root   _analyticsusers  4105 Oct 15 03:06 ExcUserFault_quicklookd-2026-10-15-030636.0002.ips\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

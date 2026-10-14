@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T03:47:53.686088+08:00",
+  "finished": "2026-10-15T03:47:57.712583+08:00",
+  "command": "cp /var/mnt/rootfs/usr/local/bin/tccd_noent /var/jb/var/mobile/tccd_noent_local; cd /var/jb/var/mobile; ./tccd_noent_local system >/dev/null 2>&1 & P=$!; sleep 2; kill -0 $P 2>/dev/null && echo \"IOS-SIDE ALIVE\" || echo \"IOS-SIDE DEAD\"; kill $P 2>/dev/null; echo \"=== fs for noent chroot exec ===\"; fs_usage -w -f exec,proc 2>/dev/null > /var/jb/var/mobile/fs6.log & FS=$!; sleep 1; /var/jb/usr/bin/chroot /var/mnt/rootfs /usr/local/bin/tccd_noent system 2>/dev/null; sleep 0.5; kill $FS 2>/dev/null; grep -nE \"execve.*tccd_noent|exit.*tccd\" /var/jb/var/mobile/fs6.log | tail -6",
+  "command_sha256": "4d76334b35e807070bc3662830ac7a12d1ea518d1c407afbaa02f6caa9fc8d00",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "IOS-SIDE DEAD\n=== fs for noent chroot exec ===\n34274:03:47:57.168166  execve                 [  1]           /usr/local/bin/tccd_noent                                                                                                                                             0.000463   chroot.4035125\n34276:03:47:57.168173  exit                                                                                                                                                                                                         0.000006   tccd_noent.4035125\n34277:03:47:57.168201  exit                                                                                                                                                                                                         0.000009   tccd_noent.4035128\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T04:25:45.446668+08:00",
+  "finished": "2026-10-15T04:25:45.920943+08:00",
+  "command": "cp /var/mnt/rootfs/System/Library/PrivateFrameworks/TCC.framework/Support/tccd /var/mnt/rootfs/usr/local/bin/tccd_q && /var/jb/usr/bin/ldid -Hsha256 -S/var/jb/var/mobile/tccd_full.plist /var/mnt/rootfs/usr/local/bin/tccd_q && for H in $(/var/jb/usr/bin/ldid -h /var/mnt/rootfs/usr/local/bin/tccd_q | grep \"^CDHash=\" | cut -d= -f2); do /var/jb/usr/bin/jbctl trustcache add $H >/dev/null; done; DYLD_INSERT_LIBRARIES=/usr/local/lib/libmachook.dylib /var/jb/usr/bin/spawnreason3 /var/mnt/rootfs /usr/local/bin/tccd_q system 2>&1 | tail -3",
+  "command_sha256": "a580a85f76c07481975ca8199b7d717359c123538c42253e10a5190111343b14",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "child=71873 si_code=2 si_status=5 waitst=0x5 | pinfo_rc=24 err=0 ns=2 code=5 flags=0x0\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

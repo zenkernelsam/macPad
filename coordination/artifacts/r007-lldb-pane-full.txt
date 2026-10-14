@@ -1,0 +1,866 @@
+Cs-Pad-2:~ root# export PATH=/var/jb/usr/bin:/var/jb/usr/lib/llvm-16/bin:$PATH; /var/jb/usr/lib/llvm-16/bin/lldb -p 75144
+(lldb) process attach --pid 75144
+warning: libobjc.A.dylib is being read from process memory. This indicates that LLDB could not read from the host's in-memory shared cache. This will likely reduce debugging performance.
+
+Process 75144 stopped
+* thread #1, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = signal SIGSTOP
+    frame #0: 0x00000001927b4834 libsystem_kernel.dylib`poll + 8
+libsystem_kernel.dylib`poll:
+->  0x1927b4834 <+8>:  b.lo   0x1927b4854               ; <+40>
+    0x1927b4838 <+12>: pacibsp
+    0x1927b483c <+16>: stp    x29, x30, [sp, #-0x10]!
+    0x1927b4840 <+20>: mov    x29, sp
+Target 0: (WindowServer) stopped.
+Executable module set to "/System/Library/PrivateFrameworks/SkyLight.framework/Versions/A/Resources/WindowServer".
+Architecture set to: arm64-apple-ios-.
+(lldb) image list -o -f
+[  0] 0x00000000123ec000 /usr/lib/dyld(0x000000019248e000)
+[  1] 0x0000000002b30000 /System/Library/PrivateFrameworks/SkyLight.framework/Versions/A/Resources/WindowServer(0x0000000102b30000)
+[  2] 0x0000000102db0000 /usr/local/lib/libmachook_arm64.dylib(0x0000000102db0000)
+[  3] 0x00000000123ec000 /System/Library/PrivateFrameworks/SkyLight.framework/Versions/A/SkyLight(0x00000001974d1000)
+[  4] 0x00000000123ec000 /System/Library/PrivateFrameworks/RunningBoardServices.framework/Versions/A/RunningBoardServices(0x0000000198b86000)
+[  5] 0x00000000123ec000 /usr/lib/libMobileGestalt.dylib(0x0000000197434000)
+[  6] 0x00000000123ec000 /System/Library/PrivateFrameworks/IOSurfaceAccelerator.framework/Versions/A/IOSurfaceAccelerator(0x00000001ab569000)
+[  7] 0x00000000123ec000 /System/Library/PrivateFrameworks/WatchdogClient.framework/Versions/A/WatchdogClient(0x00000001a04a7000)
+[  8] 0x00000000123ec000 /usr/lib/libSystem.B.dylib(0x000000019e176000)
+[  9] 0x00000000123ec000 /usr/lib/libcompression.dylib(0x000000019e412000)
+[ 10] 0x00000000123ec000 /usr/lib/libDiagnosticMessagesClient.dylib(0x000000019991c000)
+[ 11] 0x00000000123ec000 /System/Library/Frameworks/Foundation.framework/Versions/C/Foundation(0x00000001937e5000)
+[ 12] 0x00000000123ec000 /System/Library/Frameworks/CoreFoundation.framework/Versions/A/CoreFoundation(0x000000019284b000)
+[ 13] 0x00000000123ec000 /System/Library/Frameworks/SystemConfiguration.framework/Versions/A/SystemConfiguration(0x00000001934b2000)
+[ 14] 0x00000000123ec000 /System/Library/Frameworks/Accelerate.framework/Versions/A/Accelerate(0x00000001a57bf000)
+[ 15] 0x00000000123ec000 /System/Library/Frameworks/CoreServices.framework/Versions/A/CoreServices(0x00000001a550e000)
+[ 16] 0x00000000123ec000 /System/Library/Frameworks/CoreDisplay.framework/Versions/A/CoreDisplay(0x0000000194327000)
+[ 17] 0x00000000123ec000 /System/Library/Frameworks/CoreGraphics.framework/Versions/A/CoreGraphics(0x00000001978fd000)
+[ 18] 0x00000000123ec000 /System/Library/PrivateFrameworks/IOMobileFramebuffer.framework/Versions/A/IOMobileFramebuffer(0x000000019d40e000)
+[ 19] 0x00000000123ec000 /System/Library/Frameworks/CoreMedia.framework/Versions/A/CoreMedia(0x000000019be46000)
+[ 20] 0x00000000123ec000 /System/Library/PrivateFrameworks/IOAccelerator.framework/Versions/A/IOAccelerator(0x000000019bc2a000)
+[ 21] 0x00000000123ec000 /System/Library/Frameworks/IOKit.framework/Versions/A/IOKit(0x0000000195971000)
+[ 22] 0x00000000123ec000 /System/Library/Frameworks/IOSurface.framework/Versions/A/IOSurface(0x000000019bc12000)
+[ 23] 0x00000000123ec000 /System/Library/Frameworks/Metal.framework/Versions/A/Metal(0x000000019bc34000)
+[ 24] 0x00000000123ec000 /System/Library/Frameworks/CoreVideo.framework/Versions/A/CoreVideo(0x000000019a575000)
+[ 25] 0x00000000123ec000 /System/Library/Frameworks/MetalPerformanceShaders.framework/Versions/A/MetalPerformanceShaders(0x000000019e40a000)
+[ 26] 0x00000000123ec000 /System/Library/PrivateFrameworks/MultitouchSupport.framework/Versions/A/MultitouchSupport(0x00000001a04ab000)
+[ 27] 0x00000000123ec000 /System/Library/Frameworks/Security.framework/Versions/A/Security(0x0000000194f7c000)
+[ 28] 0x00000000123ec000 /System/Library/Frameworks/QuartzCore.framework/Versions/A/QuartzCore(0x0000000199daa000)
+[ 29] 0x00000000123ec000 /usr/lib/libbsm.0.dylib(0x000000019d732000)
+[ 30] 0x00000000123ec000 /System/Library/PrivateFrameworks/SoftLinking.framework/Versions/A/SoftLinking(0x000000019e17c000)
+[ 31] 0x00000000123ec000 /usr/lib/libz.1.dylib(0x000000019e0bc000)
+[ 32] 0x00000000123ec000 /System/Library/PrivateFrameworks/CoreAnalytics.framework/Versions/A/CoreAnalytics(0x00000001998ee000)
+[ 33] 0x00000000123ec000 /System/Library/Frameworks/VideoToolbox.framework/Versions/A/VideoToolbox(0x00000001a04e8000)
+[ 34] 0x00000000123ec000 /usr/lib/libobjc.A.dylib(0x0000000192448000)
+[ 35] 0x00000000123ec000 /usr/lib/libc++.1.dylib(0x0000000192702000)
+[ 36] 0x00000000123ec000 /System/Library/PrivateFrameworks/BaseBoard.framework/Versions/A/BaseBoard(0x0000000198ac3000)
+[ 37] 0x00000000123ec000 /System/Library/Frameworks/CFNetwork.framework/Versions/A/CFNetwork(0x0000000197055000)
+[ 38] 0x00000000123ec000 /System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/FSEvents.framework/Versions/A/FSEvents(0x000000019a404000)
+[ 39] 0x00000000123ec000 /System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/CarbonCore.framework/Versions/A/CarbonCore(0x00000001955ed000)
+[ 40] 0x00000000123ec000 /System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/Metadata.framework/Versions/A/Metadata(0x0000000199960000)
+[ 41] 0x00000000123ec000 /System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/OSServices.framework/Versions/A/OSServices(0x000000019de00000)
+[ 42] 0x00000000123ec000 /System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/SearchKit.framework/Versions/A/SearchKit(0x000000019e33e000)
+[ 43] 0x00000000123ec000 /System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/AE.framework/Versions/A/AE(0x0000000198be5000)
+[ 44] 0x00000000123ec000 /System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/LaunchServices.framework/Versions/A/LaunchServices(0x0000000192d25000)
+[ 45] 0x00000000123ec000 /System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/DictionaryServices.framework/Versions/A/DictionaryServices(0x000000019f607000)
+[ 46] 0x00000000123ec000 /System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/SharedFileList.framework/Versions/A/SharedFileList(0x000000019a411000)
+[ 47] 0x00000000123ec000 /usr/lib/libapple_nghttp2.dylib(0x000000019e3dc000)
+[ 48] 0x00000000123ec000 /usr/lib/libicucore.A.dylib(0x000000019532e000)
+[ 49] 0x00000000123ec000 /usr/lib/libnetwork.dylib(0x0000000197051000)
+[ 50] 0x00000000123ec000 /usr/lib/libsqlite3.dylib(0x0000000198894000)
+[ 51] 0x00000000123ec000 /System/Library/Frameworks/Network.framework/Versions/A/Network(0x0000000198c6c000)
+[ 52] 0x00000000123ec000 /System/Library/PrivateFrameworks/CoreServicesInternal.framework/Versions/A/CoreServicesInternal(0x00000001958f5000)
+[ 53] 0x0000000093360000 /usr/lib/liboah.dylib(0x000000019e145000)
+[ 54] 0x00000000123ec000 /usr/lib/libfakelink.dylib(0x000000019e178000)
+[ 55] 0x00000000123ec000 /usr/lib/libc++abi.dylib(0x000000019278f000)
+[ 56] 0x00000000123ec000 /usr/lib/system/libcache.dylib(0x000000019e170000)
+[ 57] 0x00000000123ec000 /usr/lib/system/libcommonCrypto.dylib(0x000000019e12c000)
+[ 58] 0x00000000123ec000 /usr/lib/system/libcompiler_rt.dylib(0x000000019e157000)
+[ 59] 0x00000000123ec000 /usr/lib/system/libcopyfile.dylib(0x000000019e14d000)
+[ 60] 0x00000000123ec000 /usr/lib/system/libcorecrypto.dylib(0x0000000192581000)
+[ 61] 0x00000000123ec000 /usr/lib/system/libdispatch.dylib(0x0000000192638000)
+[ 62] 0x00000000123ec000 /usr/lib/system/libdyld.dylib(0x00000001927f2000)
+[ 63] 0x00000000123ec000 /usr/lib/system/libkeymgr.dylib(0x000000019e166000)
+[ 64] 0x00000000123ec000 /usr/lib/system/libmacho.dylib(0x000000019e106000)
+[ 65] 0x00000000123ec000 /usr/lib/system/libquarantine.dylib(0x000000019d70b000)
+[ 66] 0x00000000123ec000 /usr/lib/system/libremovefile.dylib(0x000000019e163000)
+[ 67] 0x00000000123ec000 /usr/lib/system/libsystem_asl.dylib(0x000000019749b000)
+[ 68] 0x00000000123ec000 /usr/lib/system/libsystem_blocks.dylib(0x000000019251d000)
+[ 69] 0x00000000123ec000 /usr/lib/system/libsystem_c.dylib(0x0000000192683000)
+[ 70] 0x00000000123ec000 /usr/lib/system/libsystem_collections.dylib(0x000000019e15b000)
+[ 71] 0x00000000123ec000 /usr/lib/system/libsystem_configuration.dylib(0x000000019cb4a000)
+[ 72] 0x00000000123ec000 /usr/lib/system/libsystem_containermanager.dylib(0x000000019bbe0000)
+[ 73] 0x00000000123ec000 /usr/lib/system/libsystem_coreservices.dylib(0x000000019ddfa000)
+[ 74] 0x00000000123ec000 /usr/lib/system/libsystem_darwin.dylib(0x00000001955e2000)
+[ 75] 0x00000000123ec000 /usr/lib/system/libsystem_dnssd.dylib(0x000000019e167000)
+[ 76] 0x00000000123ec000 /usr/lib/system/libsystem_featureflags.dylib(0x0000000192680000)
+[ 77] 0x00000000123ec000 /usr/lib/system/libsystem_info.dylib(0x000000019281e000)
+[ 78] 0x00000000123ec000 /usr/lib/system/libsystem_m.dylib(0x000000019e0ce000)
+[ 79] 0x00000000123ec000 /usr/lib/system/libsystem_malloc.dylib(0x000000019260c000)
+[ 80] 0x00000000123ec000 /usr/lib/system/libsystem_networkextension.dylib(0x0000000197419000)
+[ 81] 0x00000000123ec000 /usr/lib/system/libsystem_notify.dylib(0x0000000195a4c000)
+[ 82] 0x00000000123ec000 /usr/lib/system/libsystem_sandbox.dylib(0x000000019cb4f000)
+[ 83] 0x00000000123ec000 /usr/lib/system/libsystem_secinit.dylib(0x000000019e160000)
+[ 84] 0x00000000123ec000 /usr/lib/system/libsystem_kernel.dylib(0x00000001927ab000)
+[ 85] 0x00000000123ec000 /usr/lib/system/libsystem_platform.dylib(0x0000000192817000)
+[ 86] 0x00000000123ec000 /usr/lib/system/libsystem_pthread.dylib(0x00000001927e5000)
+[ 87] 0x00000000123ec000 /usr/lib/system/libsystem_symptoms.dylib(0x0000000198c63000)
+[ 88] 0x00000000123ec000 /usr/lib/system/libsystem_trace.dylib(0x0000000192566000)
+[ 89] 0x00000000123ec000 /usr/lib/system/libunwind.dylib(0x000000019e13a000)
+[ 90] 0x00000000123ec000 /usr/lib/system/libxpc.dylib(0x0000000192522000)
+[ 91] 0x00000000123ec000 /usr/lib/libenergytrace.dylib(0x0000000197432000)
+[ 92] 0x00000000123ec000 /usr/lib/system/libkxld.dylib(0x000000019e10c000)
+[ 93] 0x00000000123ec000 /usr/lib/libCoreEntitlements.dylib(0x000000021ef37000)
+[ 94] 0x00000000123ec000 /System/Library/PrivateFrameworks/MessageSecurity.framework/Versions/A/MessageSecurity(0x000000020aeee000)
+[ 95] 0x00000000123ec000 /System/Library/PrivateFrameworks/ProtocolBuffer.framework/Versions/A/ProtocolBuffer(0x000000019887a000)
+[ 96] 0x00000000123ec000 /System/Library/PrivateFrameworks/AppleFSCompression.framework/Versions/A/AppleFSCompression(0x000000019dd28000)
+[ 97] 0x00000000123ec000 /usr/lib/libcoretls.dylib(0x000000019d71a000)
+[ 98] 0x00000000123ec000 /usr/lib/libcoretls_cfhelpers.dylib(0x000000019f677000)
+[ 99] 0x00000000123ec000 /usr/lib/libpam.2.dylib(0x000000019e40c000)
+[100] 0x00000000123ec000 /usr/lib/libxar.1.dylib(0x000000019f6e2000)
+[101] 0x00000000123ec000 /System/Library/PrivateFrameworks/CoreAutoLayout.framework/Versions/A/CoreAutoLayout(0x000000019a442000)
+[102] 0x00000000123ec000 /System/Library/Frameworks/DiskArbitration.framework/Versions/A/DiskArbitration(0x00000001999f8000)
+[103] 0x00000000123ec000 /usr/lib/libarchive.2.dylib(0x000000019e2b6000)
+[104] 0x00000000123ec000 /usr/lib/libxml2.2.dylib(0x000000019a48c000)
+[105] 0x00000000123ec000 /usr/lib/liblangid.dylib(0x000000019cb5b000)
+[106] 0x00000000123ec000 /System/Library/Frameworks/Combine.framework/Versions/A/Combine(0x00000001a3448000)
+[107] 0x00000000123ec000 /usr/lib/swift/libswiftCore.dylib(0x00000001a14fb000)
+[108] 0x00000000123ec000 /usr/lib/swift/libswiftCoreFoundation.dylib(0x00000001b5418000)
+[109] 0x00000000123ec000 /usr/lib/swift/libswiftDarwin.dylib(0x00000001b338b000)
+[110] 0x00000000123ec000 /usr/lib/swift/libswiftDispatch.dylib(0x00000001a6a59000)
+[111] 0x00000000123ec000 /usr/lib/swift/libswiftIOKit.dylib(0x00000001b5439000)
+[112] 0x00000000123ec000 /usr/lib/swift/libswiftObjectiveC.dylib(0x00000001a900e000)
+[113] 0x00000000123ec000 /usr/lib/swift/libswiftXPC.dylib(0x00000001b542c000)
+[114] 0x00000000123ec000 /usr/lib/swift/libswift_Concurrency.dylib(0x000000021fe4a000)
+[115] 0x00000000123ec000 /usr/lib/swift/libswift_StringProcessing.dylib(0x000000021ff98000)
+[116] 0x00000000123ec000 /usr/lib/swift/libswiftos.dylib(0x00000001a9012000)
+[117] 0x00000000123ec000 /System/Library/PrivateFrameworks/AppleSystemInfo.framework/Versions/A/AppleSystemInfo(0x000000019cb57000)
+[118] 0x00000000123ec000 /usr/lib/libpcap.A.dylib(0x000000019e17d000)
+[119] 0x00000000123ec000 /usr/lib/libdns_services.dylib(0x0000000198c59000)
+[120] 0x00000000123ec000 /usr/lib/liblzma.5.dylib(0x000000019f65e000)
+[121] 0x00000000123ec000 /usr/lib/libbz2.1.0.dylib(0x000000019dded000)
+[122] 0x00000000123ec000 /usr/lib/libiconv.2.dylib(0x000000019e1b2000)
+[123] 0x00000000123ec000 /usr/lib/libcharset.1.dylib(0x000000019e105000)
+[124] 0x00000000123ec000 /usr/lib/swift/libswift_RegexParser.dylib(0x000000021fee8000)
+[125] 0x00000000123ec000 /usr/lib/libheimdal-asn1.dylib(0x000000019fab1000)
+[126] 0x00000000123ec000 /usr/lib/libCheckFix.dylib(0x000000019d70e000)
+[127] 0x00000000123ec000 /System/Library/PrivateFrameworks/TCC.framework/Versions/A/TCC(0x00000001974b3000)
+[128] 0x00000000123ec000 /System/Library/PrivateFrameworks/CoreNLP.framework/Versions/A/CoreNLP(0x000000019cb5d000)
+[129] 0x00000000123ec000 /System/Library/PrivateFrameworks/MetadataUtilities.framework/Versions/A/MetadataUtilities(0x000000019991e000)
+[130] 0x00000000123ec000 /usr/lib/libmecab.dylib(0x000000019d744000)
+[131] 0x00000000123ec000 /usr/lib/libCRFSuite.dylib(0x000000019353c000)
+[132] 0x00000000123ec000 /usr/lib/libgermantok.dylib(0x000000019d7a0000)
+[133] 0x00000000123ec000 /usr/lib/libThaiTokenizer.dylib(0x000000019e3b5000)
+[134] 0x00000000123ec000 /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vImage.framework/Versions/A/vImage(0x0000000199a01000)
+[135] 0x00000000123ec000 /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/vecLib(0x00000001a54e5000)
+[136] 0x00000000123ec000 /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libvMisc.dylib(0x000000019f728000)
+[137] 0x00000000123ec000 /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libvDSP.dylib(0x000000019d30d000)
+[138] 0x00000000123ec000 /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libBLAS.dylib(0x00000001930dd000)
+[139] 0x00000000123ec000 /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libLAPACK.dylib(0x000000019e4e7000)
+[140] 0x00000000123ec000 /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libLinearAlgebra.dylib(0x000000019d7a3000)
+[141] 0x00000000123ec000 /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libSparseBLAS.dylib(0x000000019e3f7000)
+[142] 0x00000000123ec000 /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libQuadrature.dylib(0x000000019e4e2000)
+[143] 0x00000000123ec000 /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libBNNS.dylib(0x000000019cc52000)
+[144] 0x00000000123ec000 /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libSparse.dylib(0x000000019344a000)
+[145] 0x00000000123ec000 /System/Library/PrivateFrameworks/MIL.framework/Versions/A/MIL(0x000000020a11c000)
+[146] 0x00000000123ec000 /System/Library/Frameworks/OpenDirectory.framework/Versions/A/Frameworks/CFOpenDirectory.framework/Versions/A/CFOpenDirectory(0x000000019a3e4000)
+[147] 0x00000000123ec000 /System/Library/Frameworks/OpenDirectory.framework/Versions/A/OpenDirectory(0x000000019a3d4000)
+[148] 0x00000000123ec000 /System/Library/PrivateFrameworks/APFS.framework/Versions/A/APFS(0x000000019f679000)
+[149] 0x00000000123ec000 /System/Library/Frameworks/SecurityFoundation.framework/Versions/A/SecurityFoundation(0x000000019d649000)
+[150] 0x00000000123ec000 /usr/lib/libutil.dylib(0x000000019f6f1000)
+[151] 0x00000000123ec000 /System/Library/PrivateFrameworks/InstalledContentLibrary.framework/Versions/A/InstalledContentLibrary(0x0000000208f76000)
+[152] 0x00000000123ec000 /System/Library/PrivateFrameworks/CoreServicesStore.framework/Versions/A/CoreServicesStore(0x0000000195934000)
+[153] 0x00000000123ec000 /usr/lib/libapp_launch_measurement.dylib(0x000000019a43b000)
+[154] 0x00000000123ec000 /System/Library/PrivateFrameworks/AppleMobileFileIntegrity.framework/Versions/A/AppleMobileFileIntegrity(0x00000001ffcbe000)
+[155] 0x00000000123ec000 /usr/lib/libmis.dylib(0x00000001b53f8000)
+[156] 0x00000000123ec000 /System/Library/PrivateFrameworks/MobileSystemServices.framework/Versions/A/MobileSystemServices(0x00000001c35c1000)
+[157] 0x00000000123ec000 /System/Library/PrivateFrameworks/ConfigProfileHelper.framework/Versions/A/ConfigProfileHelper(0x00000001deafa000)
+[158] 0x00000000123ec000 /System/Library/PrivateFrameworks/AppleSauce.framework/Versions/A/AppleSauce(0x000000019e3b7000)
+[159] 0x00000000123ec000 /System/Library/PrivateFrameworks/LanguageModeling.framework/Versions/A/LanguageModeling(0x00000001941ab000)
+[160] 0x00000000123ec000 /usr/lib/libxslt.1.dylib(0x000000019f6f5000)
+[161] 0x00000000123ec000 /usr/lib/libcmph.dylib(0x000000019e2a4000)
+[162] 0x00000000123ec000 /System/Library/PrivateFrameworks/CoreEmoji.framework/Versions/A/CoreEmoji(0x000000019d3fb000)
+[163] 0x00000000123ec000 /System/Library/PrivateFrameworks/LinguisticData.framework/Versions/A/LinguisticData(0x000000019cc4c000)
+[164] 0x00000000123ec000 /System/Library/PrivateFrameworks/Lexicon.framework/Versions/A/Lexicon(0x0000000193402000)
+[165] 0x00000000123ec000 /System/Library/PrivateFrameworks/BackgroundTaskManagement.framework/Versions/A/BackgroundTaskManagement(0x000000019d6db000)
+[166] 0x00000000123ec000 /usr/lib/libTLE.dylib(0x000000021f0da000)
+[167] 0x00000000123ec000 /System/Library/Frameworks/ImageIO.framework/Versions/A/ImageIO(0x000000019c46c000)
+[168] 0x00000000123ec000 /System/Library/PrivateFrameworks/FontServices.framework/libFontParser.dylib(0x000000019bf6f000)
+[169] 0x00000000123ec000 /System/Library/PrivateFrameworks/FontServices.framework/libhvf.dylib(0x00000001a005f000)
+[170] 0x00000000123ec000 /System/Library/PrivateFrameworks/AppleJPEG.framework/Versions/A/AppleJPEG(0x00000001a0370000)
+[171] 0x00000000123ec000 /usr/lib/libexpat.1.dylib(0x000000019fa96000)
+[172] 0x00000000123ec000 /System/Library/Frameworks/ColorSync.framework/Versions/A/ColorSync(0x0000000197f44000)
+[173] 0x00000000123ec000 /System/Library/Frameworks/ImageIO.framework/Versions/A/Resources/libPng.dylib(0x00000001a0942000)
+[174] 0x00000000123ec000 /System/Library/Frameworks/ImageIO.framework/Versions/A/Resources/libTIFF.dylib(0x00000001a096d000)
+[175] 0x00000000123ec000 /System/Library/Frameworks/ImageIO.framework/Versions/A/Resources/libGIF.dylib(0x00000001a0a55000)
+[176] 0x00000000123ec000 /System/Library/Frameworks/ImageIO.framework/Versions/A/Resources/libJP2.dylib(0x00000001a03b6000)
+[177] 0x00000000123ec000 /usr/lib/libate.dylib(0x000000019f7a4000)
+[178] 0x00000000123ec000 /System/Library/Frameworks/ImageIO.framework/Versions/A/Resources/libJPEG.dylib(0x00000001a09fa000)
+[179] 0x00000000123ec000 /System/Library/Frameworks/ImageIO.framework/Versions/A/Resources/libRadiance.dylib(0x00000001a09f1000)
+[180] 0x00000000123ec000 /System/Library/PrivateFrameworks/GPUWrangler.framework/Versions/A/GPUWrangler(0x00000001a09ec000)
+[181] 0x00000000123ec000 /System/Library/PrivateFrameworks/IOPresentment.framework/Versions/A/IOPresentment(0x00000001a09cc000)
+[182] 0x00000000123ec000 /System/Library/PrivateFrameworks/DSExternalDisplay.framework/Versions/A/DSExternalDisplay(0x00000001a09f4000)
+[183] 0x00000000123ec000 /System/Library/PrivateFrameworks/GPUCompiler.framework/Versions/31001/Libraries/libllvm-flatbuffers.dylib(0x00000002055b5000)
+[184] 0x00000000123ec000 /System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libCoreFSCache.dylib(0x00000001f732f000)
+[185] 0x00000000123ec000 /System/Library/PrivateFrameworks/GPUCompiler.framework/Versions/31001/Libraries/libGPUCompilerUtils.dylib(0x00000002055b1000)
+[186] 0x00000000123ec000 /System/Library/PrivateFrameworks/CMCaptureCore.framework/Versions/A/CMCaptureCore(0x00000001a0a5b000)
+[187] 0x00000000123ec000 /usr/lib/libspindump.dylib(0x00000001a006a000)
+[188] 0x00000000123ec000 /System/Library/Frameworks/CoreAudio.framework/Versions/A/CoreAudio(0x00000001948e8000)
+[189] 0x00000000123ec000 /System/Library/Frameworks/ExtensionFoundation.framework/Versions/A/ExtensionFoundation(0x00000001f9cbd000)
+[190] 0x00000000123ec000 /System/Library/PrivateFrameworks/CoreTime.framework/Versions/A/CoreTime(0x00000001a7214000)
+[191] 0x00000000123ec000 /System/Library/PrivateFrameworks/AppServerSupport.framework/Versions/A/AppServerSupport(0x00000001a0055000)
+[192] 0x00000000123ec000 /System/Library/PrivateFrameworks/perfdata.framework/Versions/A/perfdata(0x00000001a2400000)
+[193] 0x00000000123ec000 /System/Library/PrivateFrameworks/AudioToolboxCore.framework/Versions/A/AudioToolboxCore(0x0000000194447000)
+[194] 0x00000000123ec000 /System/Library/PrivateFrameworks/caulk.framework/Versions/A/caulk(0x000000019be1d000)
+[195] 0x00000000123ec000 /usr/lib/libAudioStatistics.dylib(0x00000001a1cb7000)
+[196] 0x00000000123ec000 /System/Library/PrivateFrameworks/SystemPolicy.framework/Versions/A/SystemPolicy(0x00000001b483a000)
+[197] 0x00000000123ec000 /usr/lib/libSMC.dylib(0x00000001a1f57000)
+[198] 0x00000000123ec000 /System/Library/Frameworks/CoreMIDI.framework/Versions/A/CoreMIDI(0x00000001aac87000)
+[199] 0x00000000123ec000 /usr/lib/libAudioToolboxUtility.dylib(0x00000001a090f000)
+[200] 0x00000000123ec000 /System/Library/PrivateFrameworks/OSAServicesClient.framework/Versions/A/OSAServicesClient(0x00000001b04ba000)
+[201] 0x00000000123ec000 /usr/lib/libperfcheck.dylib(0x00000001a240e000)
+[202] 0x00000000123ec000 /System/Library/PrivateFrameworks/PlugInKit.framework/Versions/A/PlugInKit(0x000000019f981000)
+[203] 0x00000000123ec000 /System/Library/PrivateFrameworks/AssertionServices.framework/Versions/A/AssertionServices(0x000000019d63b000)
+[204] 0x00000000123ec000 /System/Library/Frameworks/OpenGL.framework/Versions/A/OpenGL(0x00000001f733c000)
+[205] 0x00000000123ec000 /System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGLU.dylib(0x00000001f7391000)
+[206] 0x00000000123ec000 /System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGFXShared.dylib(0x00000001f7350000)
+[207] 0x00000000123ec000 /System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib(0x00000001f752b000)
+[208] 0x00000000123ec000 /System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGLImage.dylib(0x00000001f7359000)
+[209] 0x00000000123ec000 /System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libCVMSPluginSupport.dylib(0x00000001f734d000)
+[210] 0x00000000123ec000 /System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libCoreVMClient.dylib(0x00000001f7336000)
+[211] 0x00000000123ec000 /System/Library/Frameworks/MetalPerformanceShaders.framework/Versions/A/Frameworks/MPSCore.framework/Versions/A/MPSCore(0x000000019cace000)
+[212] 0x00000000123ec000 /System/Library/Frameworks/MetalPerformanceShaders.framework/Versions/A/Frameworks/MPSImage.framework/Versions/A/MPSImage(0x000000019dc9e000)
+[213] 0x00000000123ec000 /System/Library/Frameworks/MetalPerformanceShaders.framework/Versions/A/Frameworks/MPSNeuralNetwork.framework/Versions/A/MPSNeuralNetwork(0x000000019d7b8000)
+[214] 0x00000000123ec000 /System/Library/Frameworks/MetalPerformanceShaders.framework/Versions/A/Frameworks/MPSMatrix.framework/Versions/A/MPSMatrix(0x000000019dba0000)
+[215] 0x00000000123ec000 /System/Library/Frameworks/MetalPerformanceShaders.framework/Versions/A/Frameworks/MPSRayIntersector.framework/Versions/A/MPSRayIntersector(0x000000019d9b2000)
+[216] 0x00000000123ec000 /System/Library/Frameworks/MetalPerformanceShaders.framework/Versions/A/Frameworks/MPSNDArray.framework/Versions/A/MPSNDArray(0x000000019dbcf000)
+[217] 0x00000000123ec000 /System/Library/Frameworks/MetalPerformanceShaders.framework/Versions/A/Frameworks/MPSFunctions.framework/Versions/A/MPSFunctions(0x00000001fb18d000)
+[218] 0x00000000123ec000 /System/Library/PrivateFrameworks/MetalTools.framework/Versions/A/MetalTools(0x0000000192fa2000)
+[219] 0x00000000123ec000 /System/Library/PrivateFrameworks/AggregateDictionary.framework/Versions/A/AggregateDictionary(0x000000019cb55000)
+[220] 0x00000000123ec000 /usr/lib/libIOReport.dylib(0x000000019f839000)
+[221] 0x00000000123ec000 /System/Library/Frameworks/CoreImage.framework/Versions/A/CoreImage(0x000000019c770000)
+[222] 0x00000000123ec000 /System/Library/PrivateFrameworks/ASEProcessing.framework/Versions/A/ASEProcessing(0x00000001a9e77000)
+[223] 0x00000000123ec000 /System/Library/Frameworks/CoreText.framework/Versions/A/CoreText(0x0000000194705000)
+[224] 0x00000000123ec000 /System/Library/PrivateFrameworks/PhotosensitivityProcessing.framework/Versions/A/PhotosensitivityProcessing(0x000000020df6f000)
+[225] 0x00000000123ec000 /System/Library/PrivateFrameworks/GraphVisualizer.framework/Versions/A/GraphVisualizer(0x000000019fbf3000)
+[226] 0x00000000123ec000 /System/Library/PrivateFrameworks/FontServices.framework/Versions/A/FontServices(0x00000002054d2000)
+[227] 0x00000000123ec000 /System/Library/Frameworks/UniformTypeIdentifiers.framework/Versions/A/UniformTypeIdentifiers(0x0000000196b66000)
+[228] 0x00000000123ec000 /System/Library/PrivateFrameworks/OTSVG.framework/Versions/A/OTSVG(0x00000001a0013000)
+[229] 0x00000000123ec000 /System/Library/Frameworks/ApplicationServices.framework/Versions/A/Frameworks/ATS.framework/Versions/A/Resources/libFontRegistry.dylib(0x000000019a128000)
+[230] 0x00000000123ec000 /System/Library/PrivateFrameworks/FontServices.framework/libXTFontStaticRegistryData.dylib(0x00000002054d3000)
+[231] 0x00000000123ec000 /usr/lib/swift/libswiftMetal.dylib(0x00000001bfc39000)
+[232] 0x00000000123ec000 /usr/lib/swift/libswiftsimd.dylib(0x00000001b82f1000)
+[233] 0x00000000123ec000 /System/Library/PrivateFrameworks/VideoToolboxParavirtualizationSupport.framework/Versions/A/VideoToolboxParavirtualizationSupport(0x0000000217f38000)
+[234] 0x00000000123ec000 /System/Library/PrivateFrameworks/AppleVA.framework/Versions/A/AppleVA(0x000000019fa4a000)
+[235] 0x0000000102bb4000 /System/Library/Frameworks/CydiaSubstrate.framework/CydiaSubstrate(0x0000000102bb4000)
+[236] 0x00000000123ec000 /System/Library/Frameworks/AudioToolbox.framework/Versions/A/AudioToolbox(0x00000001a1b1c000)
+[237] 0x00000000123ec000 /System/Library/PrivateFrameworks/AudioSession.framework/Versions/A/AudioSession(0x00000001a1c43000)
+[238] 0x00000000123ec000 /System/Library/PrivateFrameworks/MediaExperience.framework/Versions/A/MediaExperience(0x000000019fb4c000)
+[239] 0x00000000123ec000 /System/Library/PrivateFrameworks/AudioSession.framework/libSessionUtility.dylib(0x00000001a1ae2000)
+[240] 0x00000000123ec000 /System/Library/PrivateFrameworks/AudioResourceArbitration.framework/Versions/A/AudioResourceArbitration(0x00000001a20bc000)
+[241] 0x00000000123ec000 /System/Library/PrivateFrameworks/PowerLog.framework/Versions/A/PowerLog(0x00000001a6120000)
+[242] 0x00000000123ec000 /System/Library/Frameworks/CoreData.framework/Versions/A/CoreData(0x00000001984b3000)
+[243] 0x00000000123ec000 /System/Library/PrivateFrameworks/IOGPU.framework/Versions/A/IOGPU(0x00000001af504000)
+[244] 0x00000000123ec000 /System/Library/Frameworks/MediaToolbox.framework/Versions/A/MediaToolbox(0x00000001a0c77000)
+[245] 0x00000000123ec000 /System/Library/PrivateFrameworks/CoreAVCHD.framework/Versions/A/CoreAVCHD(0x00000001a633d000)
+[246] 0x00000000123ec000 /System/Library/Frameworks/MediaAccessibility.framework/Versions/A/MediaAccessibility(0x00000001a580a000)
+[247] 0x00000000123ec000 /System/Library/PrivateFrameworks/Mangrove.framework/Versions/A/Mangrove(0x00000001a6339000)
+[248] 0x00000000123ec000 /System/Library/PrivateFrameworks/CMPhoto.framework/Versions/A/CMPhoto(0x0000000200867000)
+[249] 0x00000000123ec000 /System/Library/Frameworks/ApplicationServices.framework/Versions/A/ApplicationServices(0x00000001a8bd8000)
+[250] 0x00000000123ec000 /System/Library/PrivateFrameworks/CoreAUC.framework/Versions/A/CoreAUC(0x00000001a632d000)
+[251] 0x00000000123ec000 /System/Library/Frameworks/ApplicationServices.framework/Versions/A/Frameworks/ATS.framework/Versions/A/ATS(0x00000001a1cf7000)
+[252] 0x00000000123ec000 /System/Library/Frameworks/ApplicationServices.framework/Versions/A/Frameworks/HIServices.framework/Versions/A/HIServices(0x0000000198036000)
+[253] 0x00000000123ec000 /System/Library/Frameworks/ApplicationServices.framework/Versions/A/Frameworks/PrintCore.framework/Versions/A/PrintCore(0x00000001a0a67000)
+[254] 0x00000000123ec000 /System/Library/Frameworks/ApplicationServices.framework/Versions/A/Frameworks/QD.framework/Versions/A/QD(0x00000001a20b0000)
+[255] 0x00000000123ec000 /System/Library/Frameworks/ApplicationServices.framework/Versions/A/Frameworks/ColorSyncLegacy.framework/Versions/A/ColorSyncLegacy(0x00000001a20a4000)
+[256] 0x00000000123ec000 /System/Library/Frameworks/ApplicationServices.framework/Versions/A/Frameworks/SpeechSynthesis.framework/Versions/A/SpeechSynthesis(0x00000001a1ccb000)
+[257] 0x00000000123ec000 /System/Library/Frameworks/ApplicationServices.framework/Versions/A/Frameworks/ATSUI.framework/Versions/A/ATSUI(0x00000001a0a25000)
+[258] 0x00000000123ec000 /usr/lib/libcups.2.dylib(0x00000001a2037000)
+[259] 0x00000000123ec000 /System/Library/Frameworks/Kerberos.framework/Versions/A/Kerberos(0x00000001a241c000)
+[260] 0x00000000123ec000 /System/Library/Frameworks/GSS.framework/Versions/A/GSS(0x00000001a242d000)
+[261] 0x00000000123ec000 /usr/lib/libresolv.9.dylib(0x00000001a1d69000)
+[262] 0x00000000123ec000 /System/Library/PrivateFrameworks/Heimdal.framework/Versions/A/Heimdal(0x00000001a006f000)
+[263] 0x00000000123ec000 /System/Library/Frameworks/Kerberos.framework/Versions/A/Libraries/libHeimdalProxy.dylib(0x00000001a8f90000)
+[264] 0x00000000123ec000 /System/Library/PrivateFrameworks/CommonAuth.framework/Versions/A/CommonAuth(0x00000001a2485000)
+[265] 0x00000000123ec000 /System/Library/Frameworks/AVFAudio.framework/Versions/A/AVFAudio(0x00000001f8eca000)
+[266] 0x00000000123ec000 /System/Library/PrivateFrameworks/AXCoreUtilities.framework/Versions/A/AXCoreUtilities(0x00000001b0509000)
+[267] 0x00000000123ec000 /System/Library/Frameworks/IOBluetooth.framework/Versions/A/IOBluetooth(0x00000001a31fa000)
+[268] 0x00000000123ec000 /System/Library/Frameworks/CoreBluetooth.framework/Versions/A/CoreBluetooth(0x00000001a6060000)
+[269] 0x00000000123ec000 /System/Library/Frameworks/AudioUnit.framework/Versions/A/AudioUnit(0x00000001a8f91000)
+[270] 0x00000000123ec000 /System/Library/PrivateFrameworks/CoreUtils.framework/Versions/A/CoreUtils(0x000000019d49a000)
+[271] 0x00000000123ec000 /System/Library/PrivateFrameworks/CoreUtilsExtras.framework/Versions/A/CoreUtilsExtras(0x0000000203da9000)
+[272] 0x00000000123ec000 /System/Library/PrivateFrameworks/IO80211.framework/Versions/A/IO80211(0x0000000208e0c000)
+[273] 0x00000000123ec000 /System/Library/PrivateFrameworks/MobileKeyBag.framework/Versions/A/MobileKeyBag(0x000000019d613000)
+[274] 0x00000000123ec000 /System/Library/PrivateFrameworks/BrightnessControl.framework/Versions/A/BrightnessControl(0x00000001c9e29000)
+[275] 0x00000000123ec000 /System/Library/PrivateFrameworks/HID.framework/Versions/A/HID(0x00000001af4f0000)
+[276] 0x00000000123ec000 /System/Library/PrivateFrameworks/AFKUser.framework/Versions/A/AFKUser(0x00000001c76b6000)
+[277] 0x00000000123ec000 /System/Library/PrivateFrameworks/SystemStatus.framework/Versions/A/SystemStatus(0x0000000214916000)
+[278] 0x000000010cba8000 /System/Library/PrivateFrameworks/SkyLight.framework/Versions/A/Resources/CursorAsset(0x000000010cba8000)
+[279] 0x00000000123ec000 /System/Library/PrivateFrameworks/AmbientDisplay.framework/Versions/A/AmbientDisplay(0x00000001aadca000)
+[280] 0x00000000123ec000 /System/Library/Frameworks/Cocoa.framework/Versions/A/Cocoa(0x00000001aadbe000)
+[281] 0x00000000123ec000 /System/Library/PrivateFrameworks/DisplayServices.framework/Versions/A/DisplayServices(0x00000001abe93000)
+[282] 0x00000000123ec000 /System/Library/Frameworks/AppKit.framework/Versions/C/AppKit(0x0000000195ab1000)
+[283] 0x00000000123ec000 /System/Library/PrivateFrameworks/UIFoundation.framework/Versions/A/UIFoundation(0x00000001969c0000)
+[284] 0x00000000123ec000 /System/Library/PrivateFrameworks/CollectionViewCore.framework/Versions/A/CollectionViewCore(0x0000000201317000)
+[285] 0x00000000123ec000 /System/Library/PrivateFrameworks/RemoteViewServices.framework/Versions/A/RemoteViewServices(0x00000001a50e3000)
+[286] 0x00000000123ec000 /System/Library/PrivateFrameworks/XCTTargetBootstrap.framework/Versions/A/XCTTargetBootstrap(0x000000019c42e000)
+[287] 0x00000000123ec000 /System/Library/PrivateFrameworks/InternationalSupport.framework/Versions/A/InternationalSupport(0x00000001a0b84000)
+[288] 0x00000000123ec000 /System/Library/PrivateFrameworks/UserActivity.framework/Versions/A/UserActivity(0x00000001a0c0b000)
+[289] 0x00000000123ec000 /System/Library/PrivateFrameworks/WindowManagement.framework/Versions/A/WindowManagement(0x00000002193cf000)
+[290] 0x00000000123ec000 /System/Library/PrivateFrameworks/CoreSVG.framework/Versions/A/CoreSVG(0x000000019c434000)
+[291] 0x00000000123ec000 /System/Library/PrivateFrameworks/IconServices.framework/Versions/A/IconServices(0x000000019fad7000)
+[292] 0x00000000123ec000 /System/Library/PrivateFrameworks/DFRFoundation.framework/Versions/A/DFRFoundation(0x000000019c416000)
+[293] 0x00000000123ec000 /System/Library/PrivateFrameworks/DataDetectorsCore.framework/Versions/A/DataDetectorsCore(0x00000001a0b8f000)
+[294] 0x00000000123ec000 /System/Library/PrivateFrameworks/TextInput.framework/Versions/A/TextInput(0x00000001b838b000)
+[295] 0x00000000123ec000 /System/Library/Frameworks/Carbon.framework/Versions/A/Frameworks/HIToolbox.framework/Versions/A/HIToolbox(0x000000019c0e2000)
+[296] 0x00000000123ec000 /System/Library/Frameworks/Carbon.framework/Versions/A/Frameworks/SpeechRecognition.framework/Versions/A/SpeechRecognition(0x00000001a5123000)
+[297] 0x00000000123ec000 /System/Library/PrivateFrameworks/CoreUI.framework/Versions/A/CoreUI(0x000000019a17a000)
+[298] 0x00000000123ec000 /System/Library/PrivateFrameworks/PerformanceAnalysis.framework/Versions/A/PerformanceAnalysis(0x000000019a3c8000)
+[299] 0x00000000123ec000 /System/Library/PrivateFrameworks/TextureIO.framework/Versions/A/TextureIO(0x00000001a0adf000)
+[300] 0x00000000123ec000 /System/Library/PrivateFrameworks/IconFoundation.framework/Versions/A/IconFoundation(0x000000019fabc000)
+[301] 0x00000000123ec000 /System/Library/PrivateFrameworks/SpeechRecognitionCore.framework/Versions/A/SpeechRecognitionCore(0x00000001a510f000)
+[302] 0x00000000123ec000 /System/Library/PrivateFrameworks/CoreBrightness.framework/Versions/A/CoreBrightness(0x00000001a0162000)
+[303] 0x00000000123ec000 /System/Library/PrivateFrameworks/HIDPreferences.framework/Versions/A/HIDPreferences(0x00000001c1445000)
+[304] 0x00000000123ec000 /System/Library/PrivateFrameworks/HIDAnalytics.framework/Versions/A/HIDAnalytics(0x00000001b5144000)
+[305] 0x0000000105cd8000 /System/Library/CoreServices/TouchBarEvent.bundle(0x0000000105cd8000)
+[306] 0x00000000123ec000 /usr/lib/swift/libswiftNetwork.dylib(0x00000001d3789000)
+[307] 0x00000000123ec000 /usr/lib/swift/libswiftOSLog.dylib(0x00000001cb71c000)
+[308] 0x00000000123ec000 /System/Library/Frameworks/OSLog.framework/Versions/A/OSLog(0x00000001d1902000)
+[309] 0x00000000123ec000 /System/Library/PrivateFrameworks/LoggingSupport.framework/Versions/A/LoggingSupport(0x00000001b535a000)
+[310] 0x00000000123ec000 /usr/lib/swift/libswiftQuartzCore.dylib(0x00000001c3179000)
+[311] 0x00000000123ec000 /System/Library/Extensions/AGXMetal13_3.bundle/Contents/MacOS/AGXMetal13_3(0x00000001f77a1000)
+[312] 0x00000000123ec000 /System/Library/PrivateFrameworks/GPURawCounter.framework/Versions/A/GPURawCounter(0x00000001b540b000)
+[313] 0x0000000105de4000 /usr/lib/libobjc-trampolines.dylib(0x0000000105de4000)
+[314] 0x00000000123ec000 /System/Library/PrivateFrameworks/SignpostMetrics.framework/Versions/A/SignpostMetrics(0x000000020f723000)
+[315] 0x00000000123ec000 /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vImage.framework/Versions/A/Libraries/libCGInterfaces.dylib(0x00000001b9e86000)
+[316] 0x00000000123ec000 /System/Library/CoreServices/RawCamera.bundle/Contents/MacOS/RawCamera(0x00000001bcf41000)
+[317] 0x00000000123ec000 /System/Library/PrivateFrameworks/MobileAsset.framework/Versions/A/MobileAsset(0x00000001a2498000)
+[318] 0x00000000123ec000 /System/Library/PrivateFrameworks/SoftwareUpdateCoreSupport.framework/Versions/A/SoftwareUpdateCoreSupport(0x00000001ba7c6000)
+[319] 0x00000000123ec000 /System/Library/PrivateFrameworks/SoftwareUpdateCoreConnect.framework/Versions/A/SoftwareUpdateCoreConnect(0x00000001c091f000)
+[320] 0x00000000123ec000 /System/Library/PrivateFrameworks/StreamingZip.framework/Versions/A/StreamingZip(0x00000001a8fb7000)
+[321] 0x00000000123ec000 /System/Library/PrivateFrameworks/RemoteServiceDiscovery.framework/Versions/A/RemoteServiceDiscovery(0x00000001a888c000)
+[322] 0x00000000123ec000 /System/Library/PrivateFrameworks/MSUDataAccessor.framework/Versions/A/MSUDataAccessor(0x00000001ba4ab000)
+[323] 0x00000000123ec000 /usr/lib/libbootpolicy.dylib(0x00000001b6bc2000)
+[324] 0x00000000123ec000 /usr/lib/libpartition2_dynamic.dylib(0x00000001c726c000)
+[325] 0x00000000123ec000 /System/Library/PrivateFrameworks/HDRProcessing.framework/Versions/A/HDRProcessing(0x00000001c1451000)
+(lldb) disassemble -s 0x1974b5a30 -c 80
+TCC`tccd_send_message:
+    0x1974b5a30 <+752>:  add    x3, x3, #0xd44
+    0x1974b5a34 <+756>:  add    x4, sp, #0xa0
+    0x1974b5a38 <+760>:  mov    x1, x27
+    0x1974b5a3c <+764>:  mov    w2, #0x1
+    0x1974b5a40 <+768>:  mov    w5, #0x2c
+    0x1974b5a44 <+772>:  bl     0x1974cbfc0               ; symbol stub for: _os_log_impl
+    0x1974b5a48 <+776>:  mov    x0, x26
+    0x1974b5a4c <+780>:  bl     0x1974cc110               ; symbol stub for: free
+    0x1974b5a50 <+784>:  ldr    x26, [sp, #0x20]
+    0x1974b5a54 <+788>:  adrp   x27, 353134
+    0x1974b5a58 <+792>:  mov    x0, x23
+    0x1974b5a5c <+796>:  cbz    w24, 0x1974b5ae4          ; <+932>
+    0x1974b5a60 <+800>:  bl     0x1974cc540               ; symbol stub for: xpc_retain
+    0x1974b5a64 <+804>:  mov    x0, x20
+    0x1974b5a68 <+808>:  bl     0x1974cc540               ; symbol stub for: xpc_retain
+    0x1974b5a6c <+812>:  mov    x0, #0x0
+    0x1974b5a70 <+816>:  mov    x1, #0x0
+    0x1974b5a74 <+820>:  bl     0x1974cc0a0               ; symbol stub for: dispatch_get_global_queue
+    0x1974b5a78 <+824>:  mov    x2, x0
+    0x1974b5a7c <+828>:  add    x8, sp, #0x28
+    0x1974b5a80 <+832>:  adrp   x16, 334203
+    0x1974b5a84 <+836>:  ldr    x16, [x16, #0xc10]
+    0x1974b5a88 <+840>:  mov    x17, x8
+    0x1974b5a8c <+844>:  movk   x17, #0x6ae1, lsl #48
+    0x1974b5a90 <+848>:  pacda  x16, x17
+    0x1974b5a94 <+852>:  str    x16, [sp, #0x28]
+    0x1974b5a98 <+856>:  adrp   x9, 27
+    0x1974b5a9c <+860>:  ldr    d0, [x9, #0x518]
+    0x1974b5aa0 <+864>:  str    d0, [sp, #0x30]
+    0x1974b5aa4 <+868>:  add    x8, x8, #0x10
+    0x1974b5aa8 <+872>:  adrp   x16, 1
+    0x1974b5aac <+876>:  add    x16, x16, #0x334          ; __tccd_send_message_block_invoke
+    0x1974b5ab0 <+880>:  pacia  x16, x8
+    0x1974b5ab4 <+884>:  adrp   x8, 361411
+    0x1974b5ab8 <+888>:  add    x8, x8, #0x410            ; __block_descriptor_tmp.565
+    0x1974b5abc <+892>:  stp    x16, x8, [sp, #0x38]
+    0x1974b5ac0 <+896>:  stp    x20, x23, [sp, #0x50]
+    0x1974b5ac4 <+900>:  str    x26, [sp, #0x48]
+    0x1974b5ac8 <+904>:  stp    w24, w21, [sp, #0x60]
+    0x1974b5acc <+908>:  str    w22, [sp, #0x68]
+    0x1974b5ad0 <+912>:  add    x3, sp, #0x28
+    0x1974b5ad4 <+916>:  mov    x0, x23
+    0x1974b5ad8 <+920>:  mov    x1, x20
+    0x1974b5adc <+924>:  bl     0x1974cc340               ; symbol stub for: xpc_connection_send_message_with_reply
+    0x1974b5ae0 <+928>:  b      0x1974b5d68               ; <+1576>
+    0x1974b5ae4 <+932>:  mov    x1, x20
+    0x1974b5ae8 <+936>:  bl     0x1974cc350               ; symbol stub for: xpc_connection_send_message_with_reply_sync
+    0x1974b5aec <+940>:  mov    x24, x0
+    0x1974b5af0 <+944>:  adrp   x8, 334203
+    0x1974b5af4 <+948>:  ldr    x8, [x8, #0xfa8]
+    0x1974b5af8 <+952>:  cmp    x0, x8
+    0x1974b5afc <+956>:  b.eq   0x1974b5ba8               ; <+1128>
+    0x1974b5b00 <+960>:  adrp   x8, 334203
+    0x1974b5b04 <+964>:  ldr    x8, [x8, #0xfb0]
+    0x1974b5b08 <+968>:  cmp    x24, x8
+    0x1974b5b0c <+972>:  b.eq   0x1974b5c1c               ; <+1244>
+    0x1974b5b10 <+976>:  ldr    x8, [x27, #0xf28]
+    0x1974b5b14 <+980>:  cmn    x8, #0x1
+    0x1974b5b18 <+984>:  b.ne   0x1974b5de8               ; <+1704>
+    0x1974b5b1c <+988>:  ldr    x0, [x19, #0xf00]
+    0x1974b5b20 <+992>:  mov    w1, #0x1
+    0x1974b5b24 <+996>:  bl     0x1974cc1c0               ; symbol stub for: os_log_type_enabled
+    0x1974b5b28 <+1000>: cbz    w0, 0x1974b5b94           ; <+1108>
+    0x1974b5b2c <+1004>: mov    x0, x24
+    0x1974b5b30 <+1008>: bl     0x1974b5ea8               ; tccd_reply_description_redacted
+    0x1974b5b34 <+1012>: mov    x20, x0
+    0x1974b5b38 <+1016>: ldr    x8, [x27, #0xf28]
+    0x1974b5b3c <+1020>: cmn    x8, #0x1
+    0x1974b5b40 <+1024>: b.ne   0x1974b5e18               ; <+1752>
+    0x1974b5b44 <+1028>: ldr    x21, [x19, #0xf00]
+    0x1974b5b48 <+1032>: mov    x0, x21
+    0x1974b5b4c <+1036>: mov    w1, #0x1
+    0x1974b5b50 <+1040>: bl     0x1974cc1c0               ; symbol stub for: os_log_type_enabled
+    0x1974b5b54 <+1044>: cbz    w0, 0x1974b5b8c           ; <+1100>
+    0x1974b5b58 <+1048>: mov    w8, #0x102
+    0x1974b5b5c <+1052>: movk   w8, #0x822, lsl #16
+    0x1974b5b60 <+1056>: str    w8, [sp, #0xa0]
+    0x1974b5b64 <+1060>: stur   x20, [sp, #0xa4]
+    0x1974b5b68 <+1064>: adrp   x0, -2
+    0x1974b5b6c <+1068>: add    x0, x0, #0x0
+(lldb) disassemble -s 0x1974b5aec -c 70
+TCC`tccd_send_message:
+    0x1974b5aec <+940>:  mov    x24, x0
+    0x1974b5af0 <+944>:  adrp   x8, 334203
+    0x1974b5af4 <+948>:  ldr    x8, [x8, #0xfa8]
+    0x1974b5af8 <+952>:  cmp    x0, x8
+    0x1974b5afc <+956>:  b.eq   0x1974b5ba8               ; <+1128>
+    0x1974b5b00 <+960>:  adrp   x8, 334203
+    0x1974b5b04 <+964>:  ldr    x8, [x8, #0xfb0]
+    0x1974b5b08 <+968>:  cmp    x24, x8
+    0x1974b5b0c <+972>:  b.eq   0x1974b5c1c               ; <+1244>
+    0x1974b5b10 <+976>:  ldr    x8, [x27, #0xf28]
+    0x1974b5b14 <+980>:  cmn    x8, #0x1
+    0x1974b5b18 <+984>:  b.ne   0x1974b5de8               ; <+1704>
+    0x1974b5b1c <+988>:  ldr    x0, [x19, #0xf00]
+    0x1974b5b20 <+992>:  mov    w1, #0x1
+    0x1974b5b24 <+996>:  bl     0x1974cc1c0               ; symbol stub for: os_log_type_enabled
+    0x1974b5b28 <+1000>: cbz    w0, 0x1974b5b94           ; <+1108>
+    0x1974b5b2c <+1004>: mov    x0, x24
+    0x1974b5b30 <+1008>: bl     0x1974b5ea8               ; tccd_reply_description_redacted
+    0x1974b5b34 <+1012>: mov    x20, x0
+    0x1974b5b38 <+1016>: ldr    x8, [x27, #0xf28]
+    0x1974b5b3c <+1020>: cmn    x8, #0x1
+    0x1974b5b40 <+1024>: b.ne   0x1974b5e18               ; <+1752>
+    0x1974b5b44 <+1028>: ldr    x21, [x19, #0xf00]
+    0x1974b5b48 <+1032>: mov    x0, x21
+    0x1974b5b4c <+1036>: mov    w1, #0x1
+    0x1974b5b50 <+1040>: bl     0x1974cc1c0               ; symbol stub for: os_log_type_enabled
+    0x1974b5b54 <+1044>: cbz    w0, 0x1974b5b8c           ; <+1100>
+    0x1974b5b58 <+1048>: mov    w8, #0x102
+    0x1974b5b5c <+1052>: movk   w8, #0x822, lsl #16
+    0x1974b5b60 <+1056>: str    w8, [sp, #0xa0]
+    0x1974b5b64 <+1060>: stur   x20, [sp, #0xa4]
+    0x1974b5b68 <+1064>: adrp   x0, -2
+    0x1974b5b6c <+1068>: add    x0, x0, #0x0
+    0x1974b5b70 <+1072>: adrp   x3, 26
+    0x1974b5b74 <+1076>: add    x3, x3, #0xe63            ; "RECV: synchronous reply %{public}s"
+    0x1974b5b78 <+1080>: add    x4, sp, #0xa0
+    0x1974b5b7c <+1084>: mov    x1, x21
+    0x1974b5b80 <+1088>: mov    w2, #0x1
+    0x1974b5b84 <+1092>: mov    w5, #0xc
+    0x1974b5b88 <+1096>: bl     0x1974cbfc0               ; symbol stub for: _os_log_impl
+    0x1974b5b8c <+1100>: mov    x0, x20
+    0x1974b5b90 <+1104>: bl     0x1974cc110               ; symbol stub for: free
+    0x1974b5b94 <+1108>: mov    x8, x26
+    0x1974b5b98 <+1112>: ldr    x9, [x8, #0x10]!
+    0x1974b5b9c <+1116>: mov    x0, x26
+    0x1974b5ba0 <+1120>: mov    x1, x24
+    0x1974b5ba4 <+1124>: b      0x1974b5d5c               ; <+1564>
+    0x1974b5ba8 <+1128>: ldr    x8, [x27, #0xf28]
+    0x1974b5bac <+1132>: cmn    x8, #0x1
+    0x1974b5bb0 <+1136>: b.ne   0x1974b5e00               ; <+1728>
+    0x1974b5bb4 <+1140>: ldr    x25, [x19, #0xf00]
+    0x1974b5bb8 <+1144>: mov    x0, x25
+    0x1974b5bbc <+1148>: mov    w1, #0x0
+    0x1974b5bc0 <+1152>: bl     0x1974cc1c0               ; symbol stub for: os_log_type_enabled
+    0x1974b5bc4 <+1156>: cbz    w0, 0x1974b5bfc           ; <+1212>
+    0x1974b5bc8 <+1160>: mov    w8, #0x100
+    0x1974b5bcc <+1164>: movk   w8, #0x800, lsl #16
+    0x1974b5bd0 <+1168>: str    w8, [sp, #0xa0]
+    0x1974b5bd4 <+1172>: stur   x20, [sp, #0xa4]
+    0x1974b5bd8 <+1176>: adrp   x0, -2
+    0x1974b5bdc <+1180>: add    x0, x0, #0x0
+    0x1974b5be0 <+1184>: adrp   x3, 26
+    0x1974b5be4 <+1188>: add    x3, x3, #0xd7e            ; "send_message_with_reply_sync(): connection interrupted for message: %p."
+    0x1974b5be8 <+1192>: add    x4, sp, #0xa0
+    0x1974b5bec <+1196>: mov    x1, x25
+    0x1974b5bf0 <+1200>: mov    w2, #0x0
+    0x1974b5bf4 <+1204>: mov    w5, #0xc
+    0x1974b5bf8 <+1208>: bl     0x1974cbfc0               ; symbol stub for: _os_log_impl
+    0x1974b5bfc <+1212>: add    w5, w22, #0x1
+    0x1974b5c00 <+1216>: mov    x0, x23
+(lldb) command source -s0 /tmp/r007bps.txt
+Executing commands in '/tmp/r007bps.txt'.
+(lldb) breakpoint set -a 0x1974b5584 -N r7_tccd
+Breakpoint 1: where = TCC`tccd, address = 0x00000001974b5584
+(lldb) breakpoint command add r7_tccd
+(lldb) breakpoint set -a 0x1974b5740 -N r7_send
+Breakpoint 2: where = TCC`tccd_send_message, address = 0x00000001974b5740
+(lldb) breakpoint command add r7_send
+(lldb) breakpoint set -a 0x1974b5aec -N r7_syncret
+Breakpoint 3: where = TCC`tccd_send_message + 940, address = 0x00000001974b5aec
+(lldb) breakpoint command add r7_syncret
+(lldb) breakpoint set -a 0x1974b5b10 -N r7_realreply
+Breakpoint 4: where = TCC`tccd_send_message + 976, address = 0x00000001974b5b10
+(lldb) breakpoint command add r7_realreply
+(lldb) breakpoint set -a 0x1974b5ba8 -N r7_interrupted
+Breakpoint 5: where = TCC`tccd_send_message + 1128, address = 0x00000001974b5ba8
+(lldb) breakpoint command add r7_interrupted
+(lldb) breakpoint set -a 0x1974b5c1c -N r7_conninvalid
+Breakpoint 6: where = TCC`tccd_send_message + 1244, address = 0x00000001974b5c1c
+(lldb) breakpoint command add r7_conninvalid
+(lldb) breakpoint set -a 0x1974b8ebc -N r7_handlerimpl
+Breakpoint 7: where = TCC`__TCCAccessRequest_block_invoke.203, address = 0x00000001974b8ebc
+(lldb) breakpoint command add r7_handlerimpl
+(lldb) breakpoint set -a 0x1974bc7b0 -N r7_parser
+Breakpoint 8: where = TCC`__TCCAccessSetPidResponsibleForPid_block_invoke_2, address = 0x00000001974bc7b0
+(lldb) breakpoint command add r7_parser
+(lldb) breakpoint set -a 0x1974bd548 -N r7_minia
+Breakpoint 9: where = TCC`__TCCAccessCopyInformationForBundleId_block_invoke + 56, address = 0x00000001974bd548
+(lldb) breakpoint command add r7_minia
+(lldb) breakpoint set -a 0x1974bd560 -N r7_minib
+Breakpoint 10: where = TCC`__TCCAccessCopyInformationForBundleId_block_invoke + 80, address = 0x00000001974bd560
+(lldb) breakpoint command add r7_minib
+(lldb) breakpoint set -a 0x197811e0c -N r7_skydec
+Breakpoint 11: where = SkyLight`audit_token_check_tcc_access + 108, address = 0x0000000197811e0c
+(lldb) breakpoint command add r7_skydec
+(lldb) breakpoint list
+Current breakpoints:
+1: address = TCC[0x00000001850c9584], locations = 1, resolved = 1, hit count = 0
+    Breakpoint commands:
+      register read x0 x1
+      continue
+
+  Names:
+    r7_tccd
+
+  1.1: where = TCC`tccd, address = 0x00000001974b5584, resolved, hit count = 0
+
+2: address = TCC[0x00000001850c9740], locations = 1, resolved = 1, hit count = 0
+    Breakpoint commands:
+      register read x2 x3 x4 x5 w22
+      continue
+
+  Names:
+    r7_send
+
+  2.1: where = TCC`tccd_send_message, address = 0x00000001974b5740, resolved, hit count = 0
+
+3: address = TCC[0x00000001850c9aec], locations = 1, resolved = 1, hit count = 0
+    Breakpoint commands:
+      register read x0
+      continue
+
+  Names:
+    r7_syncret
+
+  3.1: where = TCC`tccd_send_message + 940, address = 0x00000001974b5aec, resolved, hit count = 0
+
+4: address = TCC[0x00000001850c9b10], locations = 1, resolved = 1, hit count = 0
+    Breakpoint commands:
+      register read x24
+      continue
+
+  Names:
+    r7_realreply
+
+  4.1: where = TCC`tccd_send_message + 976, address = 0x00000001974b5b10, resolved, hit count = 0
+
+5: address = TCC[0x00000001850c9ba8], locations = 1, resolved = 1, hit count = 0
+    Breakpoint commands:
+      register read x24
+      continue
+
+  Names:
+    r7_interrupted
+
+  5.1: where = TCC`tccd_send_message + 1128, address = 0x00000001974b5ba8, resolved, hit count = 0
+
+6: address = TCC[0x00000001850c9c1c], locations = 1, resolved = 1, hit count = 0
+    Breakpoint commands:
+      register read x24
+      continue
+
+  Names:
+    r7_conninvalid
+
+  6.1: where = TCC`tccd_send_message + 1244, address = 0x00000001974b5c1c, resolved, hit count = 0
+
+7: address = TCC[0x00000001850ccebc], locations = 1, resolved = 1, hit count = 0
+    Breakpoint commands:
+      register read x0 x1
+      continue
+
+  Names:
+    r7_handlerimpl
+
+  7.1: where = TCC`__TCCAccessRequest_block_invoke.203, address = 0x00000001974b8ebc, resolved, hit count = 0
+
+8: address = TCC[0x00000001850d07b0], locations = 1, resolved = 1, hit count = 0
+    Breakpoint commands:
+      register read x0
+      continue
+
+  Names:
+    r7_parser
+
+  8.1: where = TCC`__TCCAccessSetPidResponsibleForPid_block_invoke_2, address = 0x00000001974bc7b0, resolved, hit count = 0
+
+9: address = TCC[0x00000001850d1548], locations = 1, resolved = 1, hit count = 0
+    Breakpoint commands:
+      register read w1 x0
+      continue
+
+  Names:
+    r7_minia
+
+  9.1: where = TCC`__TCCAccessCopyInformationForBundleId_block_invoke + 56, address = 0x00000001974bd548, resolved, hit count = 0
+
+10: address = TCC[0x00000001850d1560], locations = 1, resolved = 1, hit count = 0
+    Breakpoint commands:
+      register read w1 x0
+      continue
+
+  Names:
+    r7_minib
+
+  10.1: where = TCC`__TCCAccessCopyInformationForBundleId_block_invoke + 80, address = 0x00000001974bd560, resolved, hit count = 0
+
+11: address = SkyLight[0x0000000185425e0c], locations = 1, resolved = 1, hit count = 0
+    Breakpoint commands:
+      register read w0
+      continue
+
+  Names:
+    r7_skydec
+
+  11.1: where = SkyLight`audit_token_check_tcc_access + 108, address = 0x0000000197811e0c, resolved, hit count = 0
+
+(lldb) continue
+Process 75144 resuming
+(lldb)  register read x0 x1
+      x0 = 0x0000000000000001
+      x1 = 0x000000016d2b6c90
+(lldb)  continue
+Process 75144 resuming
+Command #2 'continue' continued the target.
+(lldb)  register read x2 x3 x4 x5 w22
+      x2 = 0x0000000155abc230
+      x3 = 0x000000016d2b6830
+      x4 = 0x0000000000000007
+      x5 = 0x0000000000000000
+     w22 = 0x4584a5e0
+(lldb)  continue
+Process 75144 resuming
+Command #2 'continue' continued the target.
+(lldb)  register read x0
+      x0 = 0x000000013464cd30
+(lldb)  continue
+Process 75144 resuming
+Command #2 'continue' continued the target.
+(lldb)  register read x24
+     x24 = 0x000000013464cd30
+(lldb)  continue
+Process 75144 resuming
+Command #2 'continue' continued the target.
+(lldb)  register read x0 x1
+      x0 = 0x000000016d2b6830
+      x1 = 0x000000013464cd30
+(lldb)  continue
+Process 75144 resuming
+Command #2 'continue' continued the target.
+(lldb)  register read w0
+      w0 = 0x00000001
+(lldb)  continue
+Process 75144 resuming
+Command #2 'continue' continued the target.
+(lldb)  register read x0 x1
+      x0 = 0x0000000000000001
+      x1 = 0x000000016d2b6c90
+(lldb)  continue
+Process 75144 resuming
+Command #2 'continue' continued the target.
+(lldb)  register read x2 x3 x4 x5 w22
+      x2 = 0x000000013466d490
+      x3 = 0x000000016d2b6830
+      x4 = 0x0000000000000007
+      x5 = 0x0000000000000000
+     w22 = 0x4584a5e0
+(lldb)  continue
+Process 75144 resuming
+Command #2 'continue' continued the target.
+(lldb)  register read x0
+      x0 = 0x000000014471b950
+(lldb)  continue
+Process 75144 resuming
+Command #2 'continue' continued the target.
+(lldb)  register read x24
+     x24 = 0x000000014471b950
+(lldb)  continue
+Process 75144 resuming
+Command #2 'continue' continued the target.
+(lldb)  register read x0 x1
+      x0 = 0x000000016d2b6830
+      x1 = 0x000000014471b950
+(lldb)  continue
+Process 75144 resuming
+Command #2 'continue' continued the target.
+(lldb)  register read w0
+      w0 = 0x00000001
+(lldb)  continue
+Process 75144 resuming
+Command #2 'continue' continued the target.
+(lldb)  register read x0 x1
+      x0 = 0x0000000000000001
+      x1 = 0x000000016d2b6c30
+(lldb)  continue
+Process 75144 resuming
+Command #2 'continue' continued the target.
+(lldb)  register read x2 x3 x4 x5 w22
+      x2 = 0x000000013466d490
+      x3 = 0x000000016d2b67d0
+      x4 = 0x0000000000000007
+      x5 = 0x0000000000000000
+     w22 = 0x4584a5e0
+(lldb)  continue
+Process 75144 resuming
+Command #2 'continue' continued the target.
+(lldb)  register read x0
+      x0 = 0x000000014584cca0
+(lldb)  continue
+Process 75144 resuming
+Command #2 'continue' continued the target.
+(lldb)  register read x24
+     x24 = 0x000000014584cca0
+(lldb)  continue
+Process 75144 resuming
+Command #2 'continue' continued the target.
+(lldb)  register read x0 x1
+      x0 = 0x000000016d2b67d0
+      x1 = 0x000000014584cca0
+(lldb)  continue
+Process 75144 resuming
+Command #2 'continue' continued the target.
+(lldb)  register read w0
+      w0 = 0x00000001
+(lldb)  continue
+Process 75144 resuming
+Command #2 'continue' continued the target.
+(lldb) breakpoint list
+Current breakpoints:
+1: address = TCC[0x00000001850c9584], locations = 1, resolved = 1, hit count = 3
+    Breakpoint commands:
+      register read x0 x1
+      continue
+
+  Names:
+    r7_tccd
+
+  1.1: where = TCC`tccd, address = 0x00000001974b5584, resolved, hit count = 3
+
+2: address = TCC[0x00000001850c9740], locations = 1, resolved = 1, hit count = 3
+    Breakpoint commands:
+      register read x2 x3 x4 x5 w22
+      continue
+
+  Names:
+    r7_send
+
+  2.1: where = TCC`tccd_send_message, address = 0x00000001974b5740, resolved, hit count = 3
+
+3: address = TCC[0x00000001850c9aec], locations = 1, resolved = 1, hit count = 3
+    Breakpoint commands:
+      register read x0
+      continue
+
+  Names:
+    r7_syncret
+
+  3.1: where = TCC`tccd_send_message + 940, address = 0x00000001974b5aec, resolved, hit count = 3
+
+4: address = TCC[0x00000001850c9b10], locations = 1, resolved = 1, hit count = 3
+    Breakpoint commands:
+      register read x24
+      continue
+
+  Names:
+    r7_realreply
+
+  4.1: where = TCC`tccd_send_message + 976, address = 0x00000001974b5b10, resolved, hit count = 3
+
+5: address = TCC[0x00000001850c9ba8], locations = 1, resolved = 1, hit count = 0
+    Breakpoint commands:
+      register read x24
+      continue
+
+  Names:
+    r7_interrupted
+
+  5.1: where = TCC`tccd_send_message + 1128, address = 0x00000001974b5ba8, resolved, hit count = 0
+
+6: address = TCC[0x00000001850c9c1c], locations = 1, resolved = 1, hit count = 0
+    Breakpoint commands:
+      register read x24
+      continue
+
+  Names:
+    r7_conninvalid
+
+  6.1: where = TCC`tccd_send_message + 1244, address = 0x00000001974b5c1c, resolved, hit count = 0
+
+7: address = TCC[0x00000001850ccebc], locations = 1, resolved = 1, hit count = 3
+    Breakpoint commands:
+      register read x0 x1
+      continue
+
+  Names:
+    r7_handlerimpl
+
+  7.1: where = TCC`__TCCAccessRequest_block_invoke.203, address = 0x00000001974b8ebc, resolved, hit count = 3
+
+8: address = TCC[0x00000001850d07b0], locations = 1, resolved = 1, hit count = 0
+    Breakpoint commands:
+      register read x0
+      continue
+
+  Names:
+    r7_parser
+
+  8.1: where = TCC`__TCCAccessSetPidResponsibleForPid_block_invoke_2, address = 0x00000001974bc7b0, resolved, hit count = 0
+
+9: address = TCC[0x00000001850d1548], locations = 1, resolved = 1, hit count = 0
+    Breakpoint commands:
+      register read w1 x0
+      continue
+
+  Names:
+    r7_minia
+
+  9.1: where = TCC`__TCCAccessCopyInformationForBundleId_block_invoke + 56, address = 0x00000001974bd548, resolved, hit count = 0
+
+10: address = TCC[0x00000001850d1560], locations = 1, resolved = 1, hit count = 0
+    Breakpoint commands:
+      register read w1 x0
+      continue
+
+  Names:
+    r7_minib
+
+  10.1: where = TCC`__TCCAccessCopyInformationForBundleId_block_invoke + 80, address = 0x00000001974bd560, resolved, hit count = 0
+
+11: address = SkyLight[0x0000000185425e0c], locations = 1, resolved = 1, hit count = 3
+    Breakpoint commands:
+      register read w0
+      continue
+
+  Names:
+    r7_skydec
+
+  11.1: where = SkyLight`audit_token_check_tcc_access + 108, address = 0x0000000197811e0c, resolved, hit count = 3
+
+(lldb)

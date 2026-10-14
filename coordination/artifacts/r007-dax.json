@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T03:55:13.800078+08:00",
+  "finished": "2026-10-15T03:55:16.242469+08:00",
+  "command": "cp /var/mnt/rootfs/usr/libexec/diskarbitrationd /var/mnt/rootfs/usr/local/bin/dax; fs_usage -w -f exec,proc 2>/dev/null > /var/jb/var/mobile/fsB.log & FS=$!; sleep 1; /var/jb/usr/bin/chroot /var/mnt/rootfs /usr/local/bin/dax >/dev/null 2>&1 & P=$!; sleep 1; kill -0 $P 2>/dev/null && echo \"DAX ALIVE\" || echo \"DAX DEAD\"; kill $P 2>/dev/null; kill $FS 2>/dev/null; grep -nE \"execve.*dax\" /var/jb/var/mobile/fsB.log | tail -4; ls -la /var/mnt/rootfs/usr/local/bin/ | head",
+  "command_sha256": "2a1e63bd157452ec55691a7a691da06a86a1a552a0d27028d25099df39637642",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "DAX DEAD\n51344:03:55:15.206334  execve                                 /usr/local/bin/dax                                                                                                                                                    0.000655   chroot.4038896\ntotal 12724\ndrwxr-xr-x 78 root wheel    2496 Oct 15 03:55 .\ndrwxr-xr-x  8 root wheel     256 Oct  8 13:36 ..\n-rw-r--r--  1 root wheel       0 Oct 12 02:39 .ldid.macwsinputd\n-rw-r--r--  1 root wheel       0 Oct 14 02:42 .ldid.macwsworkspacectl\n-rwxr-xr-x  1 root staff  291392 Oct 11 22:38 OSXvnc-server\n-rwxr-xr-x  1 root wheel   51344 Oct 14 01:38 bsprobe\n-rwxr-xr-x  1 root wheel   51440 Oct  7 16:48 bundle_probe\n-rwxr-xr-x  1 root wheel   51264 Oct  7 16:55 bundle_probe2\n-rwxr-xr-x  1 root wheel   51056 Oct 12 01:09 bytecmp\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

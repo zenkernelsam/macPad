@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T03:21:43.992848+08:00",
+  "finished": "2026-10-15T03:21:44.482359+08:00",
+  "command": "ls /var/jb/usr/bin/ | grep -iE \"trust|tc|sign|ldid|cs\" ; ls /var/jb/usr/sbin/ 2>/dev/null | grep -iE \"trust|tc\"; ls /var/jb/bin 2>/dev/null | grep -iE \"trust|tc\"",
+  "command_sha256": "030a1a5d03a384846cdcf36d201e6bef1520d6354314acbaa6f1d63ae6e376ab",
+  "exit": 1,
+  "timeout": false,
+  "stdout": "csplit\ngetconf\nipcs\nlastcomm\nldid\nldid2\nllvm-bitcode-strip-16\nvirtualmac-diagnostics\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

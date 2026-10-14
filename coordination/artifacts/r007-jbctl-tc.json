@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T03:21:53.755753+08:00",
+  "finished": "2026-10-15T03:21:54.220108+08:00",
+  "command": "jbctl trustcache info 2>&1 | head -5; echo \"=== tccd arm64e cdhash in tc? ===\"; jbctl trustcache info 2>/dev/null | grep -iE \"4b0dce7b|f7370b3d\"; echo \"=== diskarb cdhash check ===\"; jbctl trustcache info 2>/dev/null | wc -l",
+  "command_sha256": "225fb6f59f795744d2158e10c7c82f6af3d0e31b000d85ebae7c22a4ad0b877e",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "Jailbreak Trustcache 0 <UUID: D3B6182C132E4596825E9393B5FB3292> (length: 29)\n| 1:\t06C854ABD5567BCB413D3EE016553DD5D1D4DF14\n| 2:\t06C854ABD5567BCB413D3EE016553DD5D1D4DF14\n| 3:\t06C854ABD5567BCB413D3EE016553DD5D1D4DF14\n| 4:\t06C854ABD5567BCB413D3EE016553DD5D1D4DF14\n=== tccd arm64e cdhash in tc? ===\n| 503:\t4B0DCE7BC91B12D930F1C0D315D2BA4C6ECDC47D\n=== diskarb cdhash check ===\n6699\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

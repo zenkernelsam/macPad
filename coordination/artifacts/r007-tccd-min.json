@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T03:12:01.063187+08:00",
+  "finished": "2026-10-15T03:12:03.793058+08:00",
+  "command": "launchctl bootout system/com.macwsguide.macos-diskarbitrationd 2>/dev/null; launchctl bootout user/501/com.macwsguide.macos-diskarbitrationd 2>/dev/null; launchctl remove com.macwsguide.tccd-system 2>/dev/null; launchctl bootout user/501/com.macwsguide.tccd-system 2>/dev/null; cp /var/jb/usr/macOS/LaunchDaemons/com.macwsguide.tccd-system.plist /tmp/tccd-system-min.plist; /usr/libexec/PlistBuddy -c \"Delete :POSIXSpawnType\" /tmp/tccd-system-min.plist 2>/dev/null; /usr/libexec/PlistBuddy -c \"Delete :EnablePressuredExit\" /tmp/tccd-system-min.plist 2>/dev/null; /usr/libexec/PlistBuddy -c \"Delete :PublishesEvents\" /tmp/tccd-system-min.plist 2>/dev/null; /usr/libexec/PlistBuddy -c \"Set :Label com.macwsguide.tccd-min\" /tmp/tccd-system-min.plist; launchctl bootstrap system/ /tmp/tccd-system-min.plist; echo BOOT=$?; sleep 2; launchctl print system/com.macwsguide.tccd-min 2>&1 | grep -E \"domain =|state|pid|last exit|runs\" | head -6; ps aux | grep -F \"tccd system\" | grep -v grep | head -3",
+  "command_sha256": "dd3e4cc564b54f0aa5a55c2e3cba4ef146601afa79a7f7a6bd2c506dc8eb83d1",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "BOOT=0\n",
+  "stderr": "zsh:1: no such file or directory: /usr/libexec/PlistBuddy\n",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

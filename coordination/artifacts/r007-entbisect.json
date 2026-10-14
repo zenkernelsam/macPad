@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T04:15:24.468880+08:00",
+  "finished": "2026-10-15T04:15:25.365228+08:00",
+  "command": "cat > /var/jb/var/mobile/e1.plist <<E\n<?xml version=\"1.0\"?><plist version=\"1.0\"><dict><key>com.apple.private.amfi.can-execute-cdhash</key><true/></dict></plist>\nE\ncat > /var/jb/var/mobile/e2.plist <<E\n<?xml version=\"1.0\"?><plist version=\"1.0\"><dict><key>com.apple.private.security.no-sandbox</key><true/></dict></plist>\nE\ncat > /var/jb/var/mobile/e3.plist <<E\n<?xml version=\"1.0\"?><plist version=\"1.0\"><dict><key>platform-application</key><true/><key>com.apple.private.amfi.can-execute-cdhash</key><true/></dict></plist>\nE\nfor v in e1 e2 e3; do cp /var/mnt/rootfs/usr/libexec/diskarbitrationd /var/mnt/rootfs/usr/local/bin/t_$v; /var/jb/usr/bin/ldid -S/var/jb/var/mobile/$v.plist -M /var/mnt/rootfs/usr/local/bin/t_$v; for H in $(/var/jb/usr/bin/ldid -h /var/mnt/rootfs/usr/local/bin/t_$v | grep \"^CDHash=\" | cut -d= -f2); do /var/jb/usr/bin/jbctl trustcache add $H >/dev/null; done; timeout 5 /var/jb/usr/bin/chroot /var/mnt/rootfs /usr/local/bin/t_$v x >/dev/null 2>&1; echo \"$v rc=$?\"; done",
+  "command_sha256": "5857a63caab2c6af6c8ed263053803811fb5fcc7c377e29cecdb1f9033e422be",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "e1 rc=133\ne2 rc=133\ne3 rc=133\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

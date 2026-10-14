@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T03:49:22.809807+08:00",
+  "finished": "2026-10-15T03:49:25.828254+08:00",
+  "command": "cp /var/mnt/rootfs/usr/local/bin/tccd_noent /var/mnt/rootfs/usr/local/bin/mysvcx; cd /var/jb/var/mobile; fs_usage -w -f exec,proc 2>/dev/null > /var/jb/var/mobile/fs8.log & FS=$!; sleep 1; /var/jb/usr/bin/chroot /var/mnt/rootfs /usr/local/bin/mysvcx system >/dev/null 2>&1 & P=$!; sleep 1.5; kill -0 $P 2>/dev/null && echo \"MYSVCX ALIVE pid=$P\" || echo \"MYSVCX DEAD\"; ps aux | grep mysvcx | grep -v grep; kill $FS 2>/dev/null; grep -nE \"execve.*mysvcx|exit.*mysvcx\" /var/jb/var/mobile/fs8.log | tail -4; kill $P 2>/dev/null",
+  "command_sha256": "9f0556026fc3f02f5e21a662068bc6f2ba3c2ac6fabcb86305d0d55ac42013d7",
+  "exit": 1,
+  "timeout": false,
+  "stdout": "MYSVCX DEAD\n39270:03:49:24.294875  execve                 [  1]           /usr/local/bin/mysvcx                                                                                                                                                 0.000455   chroot.4035891\n39271:03:49:24.294883  exit                                                                                                                                                                                                         0.000006   mysvcx.4035891\n39272:03:49:24.294910  exit                                                                                                                                                                                                         0.000009   mysvcx.4035895\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

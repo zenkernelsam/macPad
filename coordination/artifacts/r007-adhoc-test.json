@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T03:44:35.740322+08:00",
+  "finished": "2026-10-15T03:44:39.255098+08:00",
+  "command": "ldid -e /var/mnt/rootfs/System/Library/PrivateFrameworks/TCC.framework/Support/tccd > /var/jb/var/mobile/tccd-ents.plist; wc -c /var/jb/var/mobile/tccd-ents.plist; cp /var/mnt/rootfs/System/Library/PrivateFrameworks/TCC.framework/Support/tccd /var/mnt/rootfs/usr/local/bin/tccd_adhoc; ldid -S/var/jb/var/mobile/tccd-ents.plist /var/mnt/rootfs/usr/local/bin/tccd_adhoc; echo \"SIGN_RC=$?\"; ldid -e /var/mnt/rootfs/usr/local/bin/tccd_adhoc | grep -c key; jbctl trustcache add /var/mnt/rootfs/usr/local/bin/tccd_adhoc; echo \"TC_RC=$?\"; /var/jb/usr/bin/chroot /var/mnt/rootfs /usr/local/bin/tccd_adhoc system >/dev/null 2>&1 & P=$!; sleep 3; kill -0 $P 2>/dev/null && echo \"ADHOC TCCD ALIVE\" || echo \"ADHOC TCCD DEAD\"; ps aux | grep tccd_adhoc | grep -v grep",
+  "command_sha256": "e9a2b19b371cddf7a3ded3d448ef2a117b67c9f77fd4dda5ad82a5e96eff30c3",
+  "exit": 1,
+  "timeout": false,
+  "stdout": "2034 /var/jb/var/mobile/tccd-ents.plist\nSIGN_RC=0\n24\nERROR: passed cdhash is malformed\nTC_RC=2\nADHOC TCCD DEAD\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

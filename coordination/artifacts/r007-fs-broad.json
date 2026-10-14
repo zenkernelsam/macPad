@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T03:56:01.671449+08:00",
+  "finished": "2026-10-15T03:56:06.065895+08:00",
+  "command": "fs_usage -w -f exec,proc 2>/dev/null > /var/jb/var/mobile/fsC.log & FS=$!; sleep 1; for b in /usr/libexec/mDNSResponder /usr/libexec/configd /usr/libexec/securityd /usr/libexec/symptomsd /usr/sbin/racoon /usr/libexec/dasd /usr/libexec/mobileactivationd /usr/libexec/installd /System/Library/PrivateFrameworks/MobileActivation.framework/Support/mobactivationd /usr/libexec/atc /usr/libexec/UserEventAgent /usr/libexec/amfid; do /var/jb/usr/bin/chroot /var/mnt/rootfs \"$b\" x >/dev/null 2>&1; sleep 0.15; done; sleep 0.3; kill $FS 2>/dev/null; grep -nE \"execve\" /var/jb/var/mobile/fsC.log | grep -vE \"ifconfig|fs_usage|python|chroot\\.[0-9]+$\" | tail -16",
+  "command_sha256": "0297fa085096e23abf44532b3186e7617cb8cedde16352bd2b627abecfd168ba",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

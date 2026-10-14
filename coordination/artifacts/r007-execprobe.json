@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T03:13:45.782088+08:00",
+  "finished": "2026-10-15T03:13:48.245960+08:00",
+  "command": "launchctl bootstrap system/ /var/jb/var/mobile/execprobe.plist; echo BOOT=$?; sleep 2; launchctl print system/com.macwsguide.execprobe 2>&1 | grep -E \"domain =|state|pid =|last exit|runs\" | head -6; ps aux | grep -F diskarbitrationd | grep -v grep | head -3",
+  "command_sha256": "e5b13b91f0b17c3b824ceff3b783f1da75fa2e14f10e95976996264845e96be8",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "BOOT=0\n\tstate = not running\n\tdomain = user/501\n\truns = 1\n\tlast exit reason = OS_REASON_EXEC\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T02:55:19.767008+08:00",
+  "finished": "2026-10-15T02:55:20.205274+08:00",
+  "command": "TCCD=/var/mnt/rootfs/System/Library/PrivateFrameworks/TCC.framework/Support/tccd; /var/jb/usr/bin/strings $TCCD 2>/dev/null | grep -iE \"TCC.db|com.apple.TCC|/var/|/Library/Application|Sandbox|\\.db\" | sort -u | head -25; echo \"---state dirs---\"; ls -ld /var/mnt/rootfs/Library/Application\\ Support/com.apple.TCC 2>/dev/null; ls -l /var/mnt/rootfs/Library/Application\\ Support/com.apple.TCC/ 2>/dev/null | head; ls -ld \"/var/mnt/rootfs/var/mobile/Library/TCC\" /var/mnt/rootfs/private/var/db/tccd* 2>/dev/null",
+  "command_sha256": "53daf789e49f0d62e89085c9561ab8d9569d78dda6911770186092993e565370",
+  "exit": 1,
+  "timeout": false,
+  "stdout": "---state dirs---\ndrwxr-xr-x 2 root wheel 64 Jun 15  2023 /var/mnt/rootfs/Library/Application Support/com.apple.TCC\ntotal 0\n",
+  "stderr": "zsh:1: no matches found: /var/mnt/rootfs/private/var/db/tccd*\n",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

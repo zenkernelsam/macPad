@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T02:54:38.115849+08:00",
+  "finished": "2026-10-15T02:54:38.504359+08:00",
+  "command": "ls /var/jb/usr/bin/ | grep -iE \"lldb|python|otool|jtool\" | head; ls /var/jb/usr/local/bin/ 2>/dev/null | head",
+  "command_sha256": "819f64f81de0be822c3569ef6cf42bee6bd2f0774246f374bd5a79e6573e56b6",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "llvm-otool-16\npython\npython3\npython3-config\npython3.9\npython3.9-config\niosurf_probe\niosurf_probe2\nmount_bindfs\nmprobe\nmwinject\nmwinject2\nstrings\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T03:48:29.721878+08:00",
+  "finished": "2026-10-15T03:48:31.706565+08:00",
+  "command": "ls -lt /private/var/mobile/Library/Logs/CrashReporter/ | grep -iE \"tccd\" | head; echo \"=== fs exec errno for iOS-side adhoc ===\"; fs_usage -w -f exec,proc 2>/dev/null > /var/jb/var/mobile/fs7.log & FS=$!; sleep 1; cd /var/jb/var/mobile; ./tccd_noent_local system >/dev/null 2>&1; sleep 0.5; kill $FS 2>/dev/null; grep -nE \"execve.*tccd_noent|SIG|kill.*tccd\" /var/jb/var/mobile/fs7.log | tail -6",
+  "command_sha256": "b8afb55d239fdfdc1f73e05da7717939cb14bc041c2aeaac731dca1af992f5e7",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "-rw-rw----    1 root   _analyticsusers  5876 Oct 15 03:47 tccd_noent_local-2026-10-15-034754.ips\n-rw-rw----    1 root   _analyticsusers  5897 Oct 15 03:29 tccd_local-2026-10-15-032948.ips\n-rw-rw----    1 root   _analyticsusers  5846 Oct 15 03:29 tccd_local-2026-10-15-032910.ips\n-rw-rw----    1 root   _analyticsusers  5857 Oct 15 03:24 tccd_local-2026-10-15-032454.ips\n=== fs exec errno for iOS-side adhoc ===\n26145:03:48:31.154902  fcntl             F=3   <ADDFILESIGS_RETURN>                                                                                                                                                                 0.000001   sleep.4035467\n26272:03:48:31.155158  fcntl             F=3   <ADDFILESIGS_RETURN>                                                                                                                                                                 0.000001   sleep.4035467\n26407:03:48:31.155389  fcntl             F=3   <ADDFILESIGS_RETURN>                                                                                                                                                                 0.000001   sleep.4035467\n31285:03:48:31.161964  fcntl             F=3   <ADDFILESIGS_RETURN>                                                                                                                                                                 0.000002   sleep.4035467\n31403:03:48:31.162931  fcntl             F=3   <ADDFILESIGS_RETURN>                                                                                                                                                                 0.000002   sleep.4035467\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

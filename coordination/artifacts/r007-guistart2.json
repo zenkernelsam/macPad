@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T04:43:14.710206+08:00",
+  "finished": "2026-10-15T04:44:24.472003+08:00",
+  "command": "bash /var/jb/usr/macOS/bin/macos_gui.sh start coexist --no-terminal > /tmp/guistart2.log 2>&1; echo \"GUI_RC=$?\"; grep -nE \"tccd|ERROR|fail\" /tmp/guistart2.log | head -10",
+  "command_sha256": "a44440a9888a8814ecfed0f200e5709e0de6a64a62550e9f439f8b6ae0c92705",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "GUI_RC=0\n41:[macos_gui] Starting macOS system tccd (private endpoint)...\n42:[macos_gui] macOS system tccd endpoint ready (pid=74977).\n118:74977\t0\tcom.macwsguide.tccd-system\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

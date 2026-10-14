@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T04:29:46.495098+08:00",
+  "finished": "2026-10-15T04:29:52.060956+08:00",
+  "command": "cp /var/mnt/rootfs/System/Library/PrivateFrameworks/TCC.framework/Support/tccd /var/mnt/rootfs/usr/local/bin/tccd_m && /var/jb/usr/bin/ldid -Hsha256 -S/var/jb/var/mobile/mega.ent.plist /var/mnt/rootfs/usr/local/bin/tccd_m && for H in $(/var/jb/usr/bin/ldid -h /var/mnt/rootfs/usr/local/bin/tccd_m | grep \"^CDHash=\" | cut -d= -f2); do /var/jb/usr/bin/jbctl trustcache add $H >/dev/null; done; timeout 10 /var/jb/usr/macOS/bin/launchdchrootexec 0 0 /var/mnt/rootfs /usr/local/bin/tccd_m system >/tmp/tm.log 2>&1 & P=$!; sleep 5; if kill -0 $P 2>/dev/null; then echo \"ALIVE pid=$P\"; ps aux | grep tccd_m | grep -v grep; fi; cat /tmp/tm.log | head -15; kill $P 2>/dev/null",
+  "command_sha256": "80cb22e345585c84b8c9c1e61d986fbf6b4de3c2329093b8ae6f364b90a898e0",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "ALIVE pid=72105\nroot           72107   0.0  0.2 408314656  27344   ??  SN    4:29AM   0:00.07 /usr/local/bin/tccd_m system\nroot           72105   0.0  0.0        0      0   ??  ?N    4:29AM   0:00.00 timeout 10 /var/jb/usr/macOS/bin/launchdchrootexec 0 0 /var/mnt/rootfs /usr/local/bin/tccd_m system\nchdir: No such file or directory\n[launchdchrootexec] target=/usr/local/bin/tccd_m arch=arm64e insert=/usr/local/lib/libmachook.dylib\n#### MACWS-CTOR-CANARY InitStuff entered\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\n#### MACWS-CTOR-CANARY InitStuff done\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T04:20:10.334239+08:00",
+  "finished": "2026-10-15T04:20:14.797212+08:00",
+  "command": "timeout 8 /var/jb/usr/macOS/bin/launchdchrootexec 0 0 /var/mnt/rootfs /usr/local/bin/tccd_p system >/tmp/tl.log 2>&1 & P=$!; sleep 4; if kill -0 $P 2>/dev/null; then echo \"ALIVE pid=$P\"; ps aux | grep -E \"tccd_p|launchdchroot\" | grep -v grep; else echo \"DIED\"; fi; cat /tmp/tl.log | head -20; kill $P 2>/dev/null; wait 2>/dev/null",
+  "command_sha256": "18c199af80e03d849d1e60daaf7de2c0cc612dca8975cf20b0e7305e9784ae77",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "DIED\nchdir: No such file or directory\n[launchdchrootexec] target=/usr/local/bin/tccd_p arch=arm64e insert=/usr/local/lib/libmachook.dylib\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

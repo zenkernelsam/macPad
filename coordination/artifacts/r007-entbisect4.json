@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T04:16:42.884572+08:00",
+  "finished": "2026-10-15T04:16:43.651737+08:00",
+  "command": "for v in eA eB; do cp /var/mnt/rootfs/System/Library/PrivateFrameworks/TCC.framework/Support/tccd /var/mnt/rootfs/usr/local/bin/tt_$v; /var/jb/usr/bin/ldid -S/var/jb/var/mobile/$v.plist -M /var/mnt/rootfs/usr/local/bin/tt_$v 2>&1 | head -2; for H in $(/var/jb/usr/bin/ldid -h /var/mnt/rootfs/usr/local/bin/tt_$v | grep \"^CDHash=\" | cut -d= -f2); do /var/jb/usr/bin/jbctl trustcache add $H >/dev/null; done; timeout 5 /var/jb/usr/bin/chroot /var/mnt/rootfs /usr/local/bin/tt_$v x >/dev/null 2>&1; echo \"tccd+$v rc=$?\"; done; echo \"=== mega-ent retest ===\"; timeout 5 /var/jb/usr/bin/chroot /var/mnt/rootfs /usr/local/bin/mysvcx x >/dev/null 2>&1; echo \"mysvcx rc=$?\"; timeout 5 /var/jb/usr/bin/chroot /var/mnt/rootfs /usr/local/bin/tccd_fullent x >/dev/null 2>&1; echo \"tccd_fullent rc=$?\"",
+  "command_sha256": "348918c6ae8171bf9fed8c7f738a7e2d73731535706c9430572948820c32a254",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "tccd+eA rc=137\ntccd+eB rc=137\n=== mega-ent retest ===\nmysvcx rc=133\ntccd_fullent rc=137\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

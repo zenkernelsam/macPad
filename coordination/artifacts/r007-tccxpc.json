@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T04:34:21.293913+08:00",
+  "finished": "2026-10-15T04:34:22.137795+08:00",
+  "command": "cp /var/jb/var/mobile/tccxpc_probe /var/mnt/rootfs/usr/local/bin/tccxpc_probe && chmod 755 /var/mnt/rootfs/usr/local/bin/tccxpc_probe && /var/jb/usr/bin/ldid -Hsha256 -S/var/jb/var/mobile/mega.ent.plist /var/mnt/rootfs/usr/local/bin/tccxpc_probe && for H in $(/var/jb/usr/bin/ldid -h /var/mnt/rootfs/usr/local/bin/tccxpc_probe | grep \"^CDHash=\" | cut -d= -f2); do /var/jb/usr/bin/jbctl trustcache add $H >/dev/null; done; /var/jb/usr/macOS/bin/launchdchrootexec 0 0 /var/mnt/rootfs /usr/local/bin/tccxpc_probe com.apple.tccd.system 100 0 com.apple.macosbooter.tccd.system 2>&1 | head -20",
+  "command_sha256": "c7e09335f8129506261ac62a9bcc417842cd180eccabf85805f3d51eba68d2ed",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "chdir: No such file or directory\n[launchdchrootexec] target=/usr/local/bin/tccxpc_probe arch=arm64e insert=/usr/local/lib/libmachook.dylib\n#### MACWS-CTOR-CANARY InitStuff entered\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\n#### MACWS-CTOR-CANARY InitStuff done\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nprobe: creating mach-service connection to com.apple.tccd.system\nprobe: bootstrap_look_up(com.apple.macosbooter.tccd.system) kr=0 port=0x1803\nprobe: reply: <dictionary: 0x15c104190> { count = 0, transaction: 0, voucher = 0x0, contents =\n}\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

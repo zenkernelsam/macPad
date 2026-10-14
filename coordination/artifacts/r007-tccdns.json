@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T04:17:45.586071+08:00",
+  "finished": "2026-10-15T04:17:46.202611+08:00",
+  "command": "/var/jb/usr/bin/python3 - <<PYEOF\nimport plistlib\nraw=open(\"/var/jb/var/mobile/tccd.ent.plist\",\"rb\").read()\nend=raw.find(b\"</plist>\")+8\nd=plistlib.loads(raw[:end])\nd[\"com.apple.private.security.no-sandbox\"]=True\nplistlib.dump(d,open(\"/var/jb/var/mobile/tccd_full.plist\",\"wb\"))\nprint(\"keys:\",len(d))\nPYEOF\ncp /var/mnt/rootfs/System/Library/PrivateFrameworks/TCC.framework/Support/tccd /var/mnt/rootfs/usr/local/bin/tccd_ns && /var/jb/usr/bin/ldid -S/var/jb/var/mobile/tccd_full.plist -M /var/mnt/rootfs/usr/local/bin/tccd_ns && for H in $(/var/jb/usr/bin/ldid -h /var/mnt/rootfs/usr/local/bin/tccd_ns | grep \"^CDHash=\" | cut -d= -f2); do /var/jb/usr/bin/jbctl trustcache add $H >/dev/null; done; timeout 8 /var/jb/usr/bin/chroot /var/mnt/rootfs /usr/local/bin/tccd_ns system >/tmp/tn.log 2>&1; echo \"tccd_ns rc=$?\"; cat /tmp/tn.log | head -20; ps aux | grep tccd_ns | grep -v grep",
+  "command_sha256": "9e0ab2703ed06b8f1e37b2bec006dd56d79ed49a320189eab10203f409b253d9",
+  "exit": 1,
+  "timeout": false,
+  "stdout": "keys: 13\ntccd_ns rc=133\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

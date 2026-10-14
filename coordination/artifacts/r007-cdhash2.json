@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T03:45:06.973905+08:00",
+  "finished": "2026-10-15T03:45:07.313094+08:00",
+  "command": "/var/jb/usr/bin/python3 - <<PYEOF\nimport struct,hashlib\ndata=open(\"/var/mnt/rootfs/usr/local/bin/tccd_adhoc\",\"rb\").read()\nm=struct.unpack(\">I\",data[:4])[0]; off=8; sl=None\nn=struct.unpack(\">I\",data[4:8])[0]\nfor i in range(n):\n    ct,cs,o,sz,a=struct.unpack(\">IIIII\",data[off:off+20]); off+=20\n    if cs==0x80000002: sl=data[o:o+sz]; break\nnc=struct.unpack(\"<I\",sl[16:20])[0]; off=32\nfor _ in range(nc):\n    cmd,sz=struct.unpack(\"<II\",sl[off:off+8])\n    if cmd==0x1d:\n        do,ds=struct.unpack(\"<II\",sl[off+8:off+16])\n        bl=sl[do:do+ds]\n        mm,ll,c=struct.unpack(\">III\",bl[:12])\n        for i in range(c):\n            t,o=struct.unpack(\">II\",bl[12+i*8:20+i*8])\n            if t==0:\n                cd=bl[o:o+ll]\n                print(\"sha1 :\",hashlib.sha1(cd).hexdigest())\n                print(\"sha256:\",hashlib.sha256(cd).hexdigest()[:40])\n    off+=sz\nPYEOF",
+  "command_sha256": "2d83792b45e85c3cc2b4b9efa7ba703f9e3b60a1f4f35173fe7e0dbae9c5f272",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "sha1 : 44392baedeeb80b8ad9e2ca44d398ab43405405e\nsha256: 859bd839ca3ad8dc7ebb9d4848371ccba9357077\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

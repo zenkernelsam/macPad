@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T03:50:48.609078+08:00",
+  "finished": "2026-10-15T03:50:51.612076+08:00",
+  "command": "jbctl trustcache add 63f68a771f729d21e8840a35872ede0f0d307a88; cd /var/jb/var/mobile; fs_usage -w -f exec,proc 2>/dev/null > /var/jb/var/mobile/fs9.log & FS=$!; sleep 1; /var/jb/usr/bin/chroot /var/mnt/rootfs /usr/local/bin/svcx2 system >/dev/null 2>&1 & P=$!; sleep 1.5; kill -0 $P 2>/dev/null && echo \"SVCX2 ALIVE pid=$P\" || echo \"SVCX2 DEAD\"; kill $FS 2>/dev/null; grep -nE \"execve.*svcx2\" /var/jb/var/mobile/fs9.log | tail -4; kill $P 2>/dev/null",
+  "command_sha256": "50ab8a7e86dacbc0d81fc933be4948842349cb36d4e7f4cf80fc425648a3a933",
+  "exit": 1,
+  "timeout": false,
+  "stdout": "SVCX2 DEAD\n33766:03:50:50.108531  execve                 [  1]           /usr/local/bin/svcx2                                                                                                                                                  0.000528   chroot.4036625\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

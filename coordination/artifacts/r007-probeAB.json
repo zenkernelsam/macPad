@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T03:14:15.895940+08:00",
+  "finished": "2026-10-15T03:14:20.501685+08:00",
+  "command": "launchctl bootstrap system/ /var/jb/var/mobile/execprobeA.plist; echo BOOTA=$?; sleep 2; echo \"=== A: diskarbitrationd target ===\"; launchctl print system/com.macwsguide.execprobeA 2>&1 | grep -E \"state|pid =|last exit|runs\" | head -4; launchctl bootstrap system/ /var/jb/var/mobile/execprobeB.plist; echo BOOTB=$?; sleep 2; echo \"=== B: tccd no-arg ===\"; launchctl print system/com.macwsguide.execprobeB 2>&1 | grep -E \"state|pid =|last exit|runs\" | head -4; ps aux | grep -E \"tccd|diskarb\" | grep -v grep | head -5",
+  "command_sha256": "f13d0536e6f4e219ba4e984b94a476e34f482db1872d572527fa40f98c04ef76",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "BOOTA=0\n=== A: diskarbitrationd target ===\n\tstate = running\n\truns = 1\n\tpid = 67454\n\tlast exit code = (never exited)\nBOOTB=0\n=== B: tccd no-arg ===\n\tstate = not running\n\truns = 1\n\tlast exit reason = OS_REASON_EXEC\nroot           67454  13.0  0.1 408340304  23808   ??  Ss    3:14AM   0:00.98 /usr/libexec/diskarbitrationd\nmobile         23321   0.0  0.0        0      0   ??  ?s   Mon07AM   0:00.00 /System/Library/PrivateFrameworks/TCC.framework/Support/tccd\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

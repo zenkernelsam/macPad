@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T03:28:32.248679+08:00",
+  "finished": "2026-10-15T03:28:32.683870+08:00",
+  "command": "echo \"=== tccd xattr ===\"; xattr -l /var/mnt/rootfs/System/Library/PrivateFrameworks/TCC.framework/Support/tccd 2>&1; ls -la@ /var/mnt/rootfs/System/Library/PrivateFrameworks/TCC.framework/Support/tccd 2>/dev/null; echo \"=== diskarbitrationd xattr ===\"; xattr -l /var/mnt/rootfs/usr/libexec/diskarbitrationd 2>&1; echo \"=== mount flags /var/mnt ===\"; mount | grep -E \"mnt|rootfs\"",
+  "command_sha256": "a8917e5ed6adc650cf894c960d5bf982118d32b065053677adf46a7d5eb3405b",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "=== tccd xattr ===\n=== diskarbitrationd xattr ===\n=== mount flags /var/mnt ===\ndevfs on /private/var/mnt/efi-test (devfs, local, nosuid)\n/var/jb/usr on /private/var/mnt/rootfs/private/var/jb/usr (bindfs, local, nosuid, read-only, nobrowse)\ndevfs on /private/var/mnt/rootfs/dev (devfs, local, nosuid)\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

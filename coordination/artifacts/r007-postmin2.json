@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T04:38:54.595311+08:00",
+  "finished": "2026-10-15T04:38:55.412935+08:00",
+  "command": "wc -l /var/jb/var/mobile/WindowServer.err | awk \"{print \\$1}\" > /tmp/wserr_before; /var/jb/usr/macOS/bin/launchdchrootexec 0 0 /var/mnt/rootfs /tmp/macos_ws_event_probe postmin 2>/dev/null; echo PROBE_RC=$?; BEFORE=$(cat /tmp/wserr_before); AFTER=$(wc -l < /var/jb/var/mobile/WindowServer.err); echo \"WSERR_LINES: $BEFORE -> $AFTER\"; tail -n +$((BEFORE+1)) /var/jb/var/mobile/WindowServer.err | grep -vE \"^$\" | head -40",
+  "command_sha256": "5849cbac3dba2f744b3bb6033f1d989dfcf93c9abf90ffd41f4b9a5399b1a34b",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "mode=postmin\npostmin: cid=126019 postRecord=0x8f050001a8fca788 getRecord=0x3c1d0001a90990e4\npostmin: SLSPostEventRecord -> rc=1002\nPROBE_RC=0\nWSERR_LINES: 794598 -> 794601\n#### MACH-ALL-LISTEN slot=54 pid=73187 tid=4060218 rcvname=124779 option=0x3104207\n#### MACH-ALL-LISTEN slot=55 pid=73187 tid=4060218 rcvname=119063 option=0x3104207\n#### MACH-ALL-LISTEN slot=56 pid=73187 tid=4060218 rcvname=84539 option=0x3104207\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

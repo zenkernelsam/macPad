@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T03:44:56.029891+08:00",
+  "finished": "2026-10-15T03:44:56.482700+08:00",
+  "command": "ldid -p /var/mnt/rootfs/usr/local/bin/tccd_adhoc 2>/dev/null | head; /var/jb/usr/bin/python3 - <<PYEOF\nimport struct\ndata=open(\"/var/mnt/rootfs/usr/local/bin/tccd_adhoc\",\"rb\").read()\nm=struct.unpack(\">I\",data[:4])[0]; off=8; sl=None\nif m==0xCAFEBABE:\n    n=struct.unpack(\">I\",data[4:8])[0]\n    for i in range(n):\n        ct,cs,o,sz,a=struct.unpack(\">IIIII\",data[off:off+20]); off+=20\n        if cs==0x80000002: sl=data[o:o+sz]; break\n    if sl is None:\n        off=8\n        for i in range(n):\n            ct,cs,o,sz,a=struct.unpack(\">IIIII\",data[off:off+20]); off+=20\n            if ct==0x0100000C and (cs&0xff)!=0x80000002: pass\n    if sl is None: \n        off=8\n        for i in range(n):\n            ct,cs,o,sz,a=struct.unpack(\">IIIII\",data[off:off+20]); off+=20\n            if cs in (2,0x80000002): sl=data[o:o+sz]; break\nelse: sl=data\nnc=struct.unpack(\"<I\",sl[16:20])[0]; off=32\nfor _ in range(nc):\n    cmd,sz=struct.unpack(\"<II\",sl[off:off+8])\n    if cmd==0x1d:\n        do,ds=struct.unpack(\"<II\",sl[off+8:off+16])\n        bl=sl[do:do+ds]\n        mm,ll,c=struct.unpack(\">III\",bl[:12])\n        for i in range(c):\n            t,o=struct.unpack(\">II\",bl[12+i*8:20+i*8])\n            if t==0:\n                cd=bl[o:]\n                flags=struct.unpack(\">I\",cd[12:16])[0]\n                platform=cd[38]\n                hashOff=struct.unpack(\">I\",cd[16:20])[0]\n                nspec,ncode=struct.unpack(\">II\",cd[24:32])\n                hsz,htype=cd[36],cd[37]\n                identOff=struct.unpack(\">I\",cd[20:24])[0]\n                # cdhash = first 20 bytes of sha256 over entire codedir — ldid adhoc: hash the CD\n                import hashlib\n                cdh=hashlib.sha256(cd[:ll]).digest()[:20].hex()\n                print(\"cdflags=0x%x platform=%d hashType=%d ncode=%d\" % (flags,platform,htype,ncode))\n                print(\"adhoc_cdhash_sha256=%s\" % cdh)\n    off+=sz\nPYEOF",
+  "command_sha256": "a14efc70574f88d885b4275a5f6b29b494ad8beb7c0ef100871bc29b0f1b7834",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "cdflags=0x0 platform=0 hashType=1 ncode=154\nadhoc_cdhash_sha256=859bd839ca3ad8dc7ebb9d4848371ccba9357077\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

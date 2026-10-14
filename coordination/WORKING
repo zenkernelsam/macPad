@@ -1,15 +1,20 @@
-R006 TCC PRODUCER FOUND — 2026-10-15
-Raw w0=1 = transport-failure default, NOT a daemon deny.
-send_message_with_reply_sync to tccd -> _xpc_error_connection_invalid
-on every attempt (flags=1 routes to com.apple.tccd.system; that launchd
-job is NOT loaded in the chroot — only iOS com.apple.tccd runs).
-No request reaches tccd; reply parser never runs; preflight's init-1
-survives -> cset eq deny -> cached deny -> 1002.
-Exact image analysis/TCC_22F82 UUID 1238D7CA-…94B12F387E6B3BF1
-(dyld-cache extract, runtime-matched). postmin probe mode added
-(one canonical post, no preamble). Evidence:
-docs/evidence/r006-tcc-producer-20261015.md + artifacts/r006-*.json/txt.
-Upstream invariant: macOS system tccd endpoint absent in chroot.
-Cleaned: detach ok, 14 bp disabled, tmux killed, stack stopped,
-HI baseline ok, zero orphans.  Input still 1002 — not accepted.
-Git writes pending release.
+R007 SYSTEM-TCCD CHAIN RESTORED — 2026-10-15
+Real Ventura `tccd system` runs in chroot as com.macwsguide.tccd-system
+(pid 74977), serving private endpoint com.apple.macosbooter.tccd.system
+(registered in user/501, the loading-context domain).
+libmachook maps ONLY com.apple.tccd.system -> private name; had to add
+the entry to BOTH tables (mac_hooks.m bootstrap + Metal_hooks.x XPC —
+the tables must stay identical; XPC path was missing it).
+LIVE PROOF (lldb, WS 75144, same slide 0x123ec000): postmin ->
+sync send returns real OS_xpc_dictionary 3/3, zero error singletons,
+handler impl parses keys, get_bool("result")=0 -> minis w1=0 ->
+default 1 survives -> deny -> rc=1002.
+==> 1002 is now a REAL TCC policy denial, not transport default.
+Daemon admission: ldid -S$ENT -M (merged, 252 keys, tcc.manager kept),
+per-slice cdhash, launchdchrootexec; set_macos_version.py BEFORE lipo
+(iOS platform slice breaks /bin/echo).
+iOS com.apple.tccd (uid501 pid 23321) untouched. HI ok.
+Evidence: docs/evidence/r007-system-tccd-20261015.md
+Open for next: which daemon-side check yields result=false
+(responsible-pid binding vs grant/identity) — daemon-side question.
+Input still not accepted — no accepted input path exists yet.

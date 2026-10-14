@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Real Ventura system-scope tccd, carried by the stock rootfs at
+	     /System/Library/PrivateFrameworks/TCC.framework/Support/tccd
+	     (fat arm64/arm64e, sha256 recorded in
+	     docs/evidence/r007-system-tccd-20261015.md).  The stock
+	     com.apple.tccd.system.plist ProgramArguments would exec iOS's own
+	     filesystem path under iPadOS launchd, so the job wraps it in
+	     launchdchrootexec like every other Ventura daemon here.
+
+	     iPadOS launchd never registers com.apple.tccd.system (runtime-
+	     confirmed: system-domain print -> "Could not find service"), and
+	     iPadOS's own tccd lives only in user/501 as com.apple.tccd.
+	     R006 showed every chroot TCC preflight returning
+	     _xpc_error_connection_invalid because both client connections
+	     (user then system fallback) resolved nothing.  This job publishes
+	     only the private endpoint; libmachook maps the stock
+	     com.apple.tccd.system lookup to it inside injected Ventura
+	     processes, and the daemon's own check-in traverses the same
+	     translation.  The native iOS user tccd is untouched: nothing
+	     here kills it, steals com.apple.tccd, or redirects user-scope
+	     requests to it. -->
+	<key>Label</key>
+	<string>com.macwsguide.tccd-system</string>
+	<key>MachServices</key>
+	<dict>
+		<key>com.apple.macosbooter.tccd.system</key>
+		<true/>
+	</dict>
+	<key>PublishesEvents</key>
+	<dict>
+		<key>com.apple.tccd.events</key>
+		<dict>
+			<key>DomainInternal</key>
+			<true/>
+		</dict>
+	</dict>
+	<key>POSIXSpawnType</key>
+	<string>Adaptive</string>
+	<key>EnablePressuredExit</key>
+	<true/>
+	<key>ProgramArguments</key>
+	<array>
+		<string>/var/jb/usr/macOS/bin/launchdchrootexec</string>
+		<string>0</string>
+		<string>0</string>
+		<string>/var/mnt/rootfs</string>
+		<string>/System/Library/PrivateFrameworks/TCC.framework/Support/tccd</string>
+		<string>system</string>
+	</array>
+	<key>RunAtLoad</key>
+	<true/>
+	<key>StandardOutPath</key>
+	<string>/var/jb/var/mobile/tccd-system.out</string>
+	<key>StandardErrorPath</key>
+	<string>/var/jb/var/mobile/tccd-system.err</string>
+</dict>
+</plist>

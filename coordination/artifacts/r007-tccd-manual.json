@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T03:07:25.108927+08:00",
+  "finished": "2026-10-15T03:07:25.683126+08:00",
+  "command": "/var/jb/usr/bin/timeout -k 2 15 /var/jb/usr/macOS/bin/launchdchrootexec 0 0 /var/mnt/rootfs /System/Library/PrivateFrameworks/TCC.framework/Support/tccd system; echo \"TCCD_RC=$?\"",
+  "command_sha256": "5c605d1caaab01f04bdf03e6bfb78aa27cd62b38607c272dde75c1c5af3b2211",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "TCCD_RC=137\n",
+  "stderr": "chdir: No such file or directory\n[launchdchrootexec] target=/System/Library/PrivateFrameworks/TCC.framework/Support/tccd arch=arm64e insert=/usr/local/lib/libmachook.dylib\n",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T03:24:05.698194+08:00",
+  "finished": "2026-10-15T03:24:06.108208+08:00",
+  "command": "find /var/jb -name \"run_dbg\" 2>/dev/null; ls -la /var/jb/var/mobile/run_dbg 2>/dev/null; find /var/jb/var/mobile -name \"run_dbg*\" -o -name \"run_nocskill*\" 2>/dev/null | head",
+  "command_sha256": "4e30594ecf1f43fd423c838d260bccce13061020235a5e859f1728263e996bfd",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

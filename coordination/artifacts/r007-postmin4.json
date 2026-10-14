@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T04:46:28.164106+08:00",
+  "finished": "2026-10-15T04:46:29.980070+08:00",
+  "command": "touch /var/mnt/rootfs/tmp/macws_runtime_diagnostics; BEFORE=$(wc -l < /var/jb/var/mobile/WindowServer.err); /var/jb/usr/macOS/bin/launchdchrootexec 0 0 /var/mnt/rootfs /tmp/macos_ws_event_probe postmin 2>/dev/null; echo PROBE_RC=$?; sleep 1; AFTER=$(wc -l < /var/jb/var/mobile/WindowServer.err); echo \"WSERR: $BEFORE -> $AFTER\"; tail -n +$((BEFORE+1)) /var/jb/var/mobile/WindowServer.err | grep -nE \"tccd|TCC|CGXSYNTH|XPC_TRACE|mach_service\" | head -30",
+  "command_sha256": "c506b1004dc9d14cf4666946f4f23990f82aee5fa9d240d21734caef386ef3fa",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "mode=postmin\npostmin: cid=97291 postRecord=0x8f050001a8fca788 getRecord=0x3c1d0001a90990e4\npostmin: SLSPostEventRecord -> rc=1002\nPROBE_RC=0\nWSERR: 803349 -> 803349\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

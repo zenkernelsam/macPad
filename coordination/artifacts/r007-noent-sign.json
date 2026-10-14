@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T03:45:52.644645+08:00",
+  "finished": "2026-10-15T03:45:53.276602+08:00",
+  "command": "cp /var/mnt/rootfs/System/Library/PrivateFrameworks/TCC.framework/Support/tccd /var/mnt/rootfs/usr/local/bin/tccd_noent; ldid -S /var/mnt/rootfs/usr/local/bin/tccd_noent; echo SIGN=$?; /var/jb/usr/bin/python3 - <<PYEOF\nimport struct,hashlib\ndata=open(\"/var/mnt/rootfs/usr/local/bin/tccd_noent\",\"rb\").read()\noff=8; sl=None; n=struct.unpack(\">I\",data[4:8])[0]\nfor i in range(n):\n    ct,cs,o,sz,a=struct.unpack(\">IIIII\",data[off:off+20]); off+=20\n    if cs==0x80000002: sl=data[o:o+sz]; break\nnc=struct.unpack(\"<I\",sl[16:20])[0]; off=32\nfor _ in range(nc):\n    cmd,sz=struct.unpack(\"<II\",sl[off:off+8])\n    if cmd==0x1d:\n        do,ds=struct.unpack(\"<II\",sl[off+8:off+16]); bl=sl[do:do+ds]\n        mm,ll,c=struct.unpack(\">III\",bl[:12])\n        for i in range(c):\n            t,o=struct.unpack(\">II\",bl[12+i*8:20+i*8])\n            if t==0: print(\"sha1:\",hashlib.sha1(bl[o:o+ll]).hexdigest()); print(\"platform:\",bl[o+38])\n    off+=sz\nPYEOF",
+  "command_sha256": "8b614d32fd7075ed0eee300ebc14ce8fa1c63f98952235d2622e42ec9fd9d90a",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "SIGN=0\nsha1: 4724e14e64c8c79579f116d095113173a5361fb4\nplatform: 0\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

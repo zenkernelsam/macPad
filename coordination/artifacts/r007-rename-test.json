@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T03:30:40.976454+08:00",
+  "finished": "2026-10-15T03:30:41.612093+08:00",
+  "command": "cat /private/var/mobile/Library/Logs/CrashReporter/tccd_local-2026-10-15-032948.ips 2>/dev/null | python3 -c \"import json,sys; d=json.loads(sys.stdin.readline()); print(d.get(\\\"exception\\\",{}), d.get(\\\"termination\\\",{}))\" 2>/dev/null | head -5; echo \"=== rename test: cp tccd to /usr/local/bin/tccdtest in rootfs ===\"; cp /var/mnt/rootfs/System/Library/PrivateFrameworks/TCC.framework/Support/tccd /var/mnt/rootfs/usr/local/bin/tccdtest; /var/jb/usr/bin/chroot /var/mnt/rootfs /usr/local/bin/tccdtest system 2>/dev/null; echo \"RENAMED_RC=$?\"; echo \"=== WS ents ===\"; ldid -e /var/mnt/rootfs/System/Library/PrivateFrameworks/SkyLight.framework/WindowServer 2>&1 | grep -c \"private\"; ls /var/mnt/rootfs/System/Library/PrivateFrameworks/SkyLight.framework/ 2>/dev/null | head",
+  "command_sha256": "9a723104146eef28990dce72b01bc1ba7c02b82e4fedd29337f426af3b8b3466",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "{} {}\n=== rename test: cp tccd to /usr/local/bin/tccdtest in rootfs ===\nRENAMED_RC=137\n=== WS ents ===\n0\nResources\nSkyLight\nVersions\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

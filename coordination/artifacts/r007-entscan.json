@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T03:30:57.631586+08:00",
+  "finished": "2026-10-15T03:30:58.219153+08:00",
+  "command": "for b in /usr/libexec/cfprefsd /usr/libexec/securityd /System/Library/PrivateFrameworks/CoreSymbolication.framework/coresymbolicationd /usr/libexec/mdnsd /usr/libexec/nehelper /usr/sbin/notifyd /usr/libexec/locationd /usr/libexec/nsurlsessiond /System/Library/CoreServices/iconservicesd; do n=$(ldid -e /var/mnt/rootfs$b 2>/dev/null | grep -c \"com.apple.private\"); echo \"$n $b\"; done",
+  "command_sha256": "ecebf1ecad9cee568094ab3d11637db1876c7b29ccf4c6c6e9aab02d63ac47e6",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "0 /usr/libexec/cfprefsd\n0 /usr/libexec/securityd\n0 /System/Library/PrivateFrameworks/CoreSymbolication.framework/coresymbolicationd\n0 /usr/libexec/mdnsd\n22 /usr/libexec/nehelper\n94 /usr/sbin/notifyd\n106 /usr/libexec/locationd\n20 /usr/libexec/nsurlsessiond\n94 /System/Library/CoreServices/iconservicesd\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

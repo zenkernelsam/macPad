@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T03:46:00.194650+08:00",
+  "finished": "2026-10-15T03:46:03.579761+08:00",
+  "command": "jbctl trustcache add 4724e14e64c8c79579f116d095113173a5361fb4; echo TC=$?; /var/jb/usr/bin/chroot /var/mnt/rootfs /usr/local/bin/tccd_noent system >/dev/null 2>&1 & P=$!; sleep 3; kill -0 $P 2>/dev/null && echo \"NOENT ALIVE pid=$P\" || echo \"NOENT DEAD\"; ps aux | grep tccd_noent | grep -v grep",
+  "command_sha256": "864d40abfebd30624bbf37048ceb560f6fd57533ac3a2e3b03e4d397ff61b609",
+  "exit": 1,
+  "timeout": false,
+  "stdout": "TC=0\nNOENT DEAD\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

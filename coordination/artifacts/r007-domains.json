@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T04:32:22.138043+08:00",
+  "finished": "2026-10-15T04:32:22.652051+08:00",
+  "command": "for d in system user/501 gui/501; do echo \"== $d ==\"; launchctl print $d/com.macwsguide.tccd-system 2>&1 | head -4; done; echo \"== service registration check ==\"; launchctl print user/501 2>/dev/null | grep -B2 -A2 \"macosbooter.tccd\"; launchctl print system 2>/dev/null | grep -iE \"macosbooter.tccd|macwsguide.tccd\"; echo \"== proc still alive ==\"; ps aux | grep \"tccd.*system\" | grep -v grep",
+  "command_sha256": "75a803023e5ac4f6502cb5bce33594946ea4b54a913311601ba4845da254ab4b",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "== system ==\nWarning: Please switch to user/foreground/com.macwsguide.tccd-system service identifier\nuser/501/com.macwsguide.tccd-system = {\n\tactive count = 1\n\tpath = /private/preboot/CFD92CED195A8E1D96E46DD57D101E3CEC005BA3A576CAA9B225733705A2775E33BFF567CD972EA42D56E91B018EF3F1/dopamine-IWpVUH/procursus/usr/macOS/LaunchDaemons/com.macwsguide.tccd-system.plist\n== user/501 ==\nuser/501/com.macwsguide.tccd-system = {\n\tactive count = 1\n\tpath = /private/preboot/CFD92CED195A8E1D96E46DD57D101E3CEC005BA3A576CAA9B225733705A2775E33BFF567CD972EA42D56E91B018EF3F1/dopamine-IWpVUH/procursus/usr/macOS/LaunchDaemons/com.macwsguide.tccd-system.plist\n\ttype = LaunchDaemon\n== gui/501 ==\n== service registration check ==\n\t\t 0x39103    M   A   com.apple.SystemConfiguration.helper\n\t\t 0x84f03    M   D   com.apple.Maps.xpc.MediaAPI\n\t\t 0xc3a5f    M   D   com.apple.macosbooter.tccd.system\n\t\t 0xb2003    M   A   com.apple.DASDelegateService\n\t\t 0xa7503    M   A   com.apple.siri-distributed-evaluation\n== proc still alive ==\nroot           72254   0.0  0.2 408178368  26992   ??  Ss    4:32AM   0:00.58 /System/Library/PrivateFrameworks/TCC.framework/Support/tccd system\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

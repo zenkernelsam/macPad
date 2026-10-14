@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T04:31:07.198563+08:00",
+  "finished": "2026-10-15T04:31:07.745044+08:00",
+  "command": "ENT=/var/jb/usr/macOS/bin/entitlements.plist; ls -l $ENT; T=/var/mnt/rootfs/System/Library/PrivateFrameworks/TCC.framework/Support/tccd; echo \"== before: tccd ents count ==\"; /var/jb/usr/bin/ldid -e $T | grep -c \"<key>\"; /var/jb/usr/bin/ldid -S$ENT -M $T 2>&1 | head -3; echo \"== after: merged ents ==\"; /var/jb/usr/bin/ldid -e $T | grep -c \"<key>\"; /var/jb/usr/bin/ldid -e $T | grep -cE \"tcc.manager|no-sandbox\"; for arch in arm64 arm64e x86_64; do H=$(/var/jb/usr/bin/ldid -arch $arch -h $T 2>/dev/null | grep \"^CDHash=\" | cut -c8-); [ -n \"$H\" ] && /var/jb/usr/bin/jbctl trustcache add $H && echo \"added $arch $H\"; done",
+  "command_sha256": "5f2be144293582945fa4ae27e10b938075535c4481d335e7f5abe20949cef938",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "-rw-r--r-- 1 mobile staff 7530 Sep 25 10:39 /var/jb/usr/macOS/bin/entitlements.plist\n== before: tccd ents count ==\n24\n== after: merged ents ==\n252\n8\nadded arm64e 704203a3eacf79c8f68a584e43d2865bb4daf60c\nadded x86_64 ce128d00199aef12ef5b22d2f70cbb6553e0ba06\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

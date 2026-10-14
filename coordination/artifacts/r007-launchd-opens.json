@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T03:51:06.423081+08:00",
+  "finished": "2026-10-15T03:51:06.899850+08:00",
+  "command": "grep -E \"launchd.*open.*rootfs|launchd.*(echo|notifyd|diskarb|locationd|tccd|svcx2|mysvcx)\" /var/jb/var/mobile/fs5.log /var/jb/var/mobile/fs9.log /var/jb/var/mobile/fs8.log 2>/dev/null | grep -E \"open|execve\" | tail -20",
+  "command_sha256": "0fc976d0cc84fb678099e770c1842aed79bfa0c3c13051fb528db4fad7fca724",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T03:09:23.372819+08:00",
+  "finished": "2026-10-15T03:09:23.941662+08:00",
+  "command": "echo \"-- my ssh domain --\"; launchctl managername 2>/dev/null; launchctl print system 2>/dev/null | head -3; echo \"-- existing project jobs domain check --\"; for j in com.macwsguide.cfprefsd-daemon com.apple.coreservices.launchservicesd com.macwsguide.diskarbitrationd com.macwsguide.macos-diskarbitrationd; do echo \"$j:\"; launchctl print \"system/$j\" 2>&1 | head -2; done; echo \"-- our tccd job in both domains --\"; launchctl print system/com.macwsguide.tccd-system 2>&1 | head -3; launchctl print user/501/com.macwsguide.tccd-system 2>&1 | head -3",
+  "command_sha256": "d83d06f1401e5819fa182120e9a8e2c0e2699717d36f91eb5bf6875cff3d6ce6",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "-- my ssh domain --\nSystem\nsystem = {\n\ttype = system\n\thandle = 0\n-- existing project jobs domain check --\ncom.macwsguide.cfprefsd-daemon:\nCould not find service \"com.macwsguide.cfprefsd-daemon\" in domain for system\ncom.apple.coreservices.launchservicesd:\nCould not find service \"com.apple.coreservices.launchservicesd\" in domain for system\ncom.macwsguide.diskarbitrationd:\nCould not find service \"com.macwsguide.diskarbitrationd\" in domain for system\ncom.macwsguide.macos-diskarbitrationd:\nCould not find service \"com.macwsguide.macos-diskarbitrationd\" in domain for system\n-- our tccd job in both domains --\nWarning: Please switch to user/foreground/com.macwsguide.tccd-system service identifier\nuser/501/com.macwsguide.tccd-system = {\n\tactive count = 0\nuser/501/com.macwsguide.tccd-system = {\n\tactive count = 0\n\tpath = /private/preboot/CFD92CED195A8E1D96E46DD57D101E3CEC005BA3A576CAA9B225733705A2775E33BFF567CD972EA42D56E91B018EF3F1/dopamine-IWpVUH/procursus/usr/macOS/LaunchDaemons/com.macwsguide.tccd-system.plist\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

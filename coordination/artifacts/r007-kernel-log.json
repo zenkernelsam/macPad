@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T03:22:21.593076+08:00",
+  "finished": "2026-10-15T03:22:22.385462+08:00",
+  "command": "/var/jb/usr/bin/chroot /var/mnt/rootfs /System/Library/PrivateFrameworks/TCC.framework/Support/tccd system 2>/dev/null & sleep 0.3; log show --last 30s --info 2>/dev/null | grep -iE \"amfi|codesign|tccd|violat|exec|killed\" | tail -25",
+  "command_sha256": "f3bee8beb24c90b110cc909fc445033f1fedb8ac0306ba2aee6b6d38220d48f4",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

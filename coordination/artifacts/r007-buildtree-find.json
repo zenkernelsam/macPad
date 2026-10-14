@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T03:03:38.077405+08:00",
+  "finished": "2026-10-15T03:04:12.823628+08:00",
+  "command": "find / -name \"mac_hooks.m\" -not -path \"/var/mnt/*\" 2>/dev/null | head -5; find / -name \".theos\" -maxdepth 5 -type d 2>/dev/null | head -5; find /var/mobile /var/root /var/jb/var/mobile -maxdepth 5 -name \"Makefile\" -path \"*acWS*\" 2>/dev/null | head",
+  "command_sha256": "7f74e61d586b5215db3a4c8469fb9377a00fb78c843da8c9c82f00acf6f7c832",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

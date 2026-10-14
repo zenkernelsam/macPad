@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T03:40:47.003676+08:00",
+  "finished": "2026-10-15T03:40:47.425299+08:00",
+  "command": "/var/jb/usr/bin/python3 - <<PYEOF\nimport struct\ndef plat(path):\n    try: data=open(path,\"rb\").read()\n    except Exception as e: return (\"ERR\",str(e))\n    if len(data)<40: return None\n    m=struct.unpack(\">I\",data[:4])[0]\n    sl=None; off=8\n    if m==0xCAFEBABE:\n        n=struct.unpack(\">I\",data[4:8])[0]\n        for i in range(n):\n            ct,cs,o,sz,a=struct.unpack(\">IIIII\",data[off:off+20]); off+=20\n            if cs==0x80000002: sl=data[o:o+sz]; break\n        if sl is None: return (\"noarm64e\",)\n    else: sl=data\n    nc=struct.unpack(\"<I\",sl[16:20])[0]; off=32\n    for _ in range(nc):\n        cmd,sz=struct.unpack(\"<II\",sl[off:off+8])\n        if cmd==0x1d:\n            do,ds=struct.unpack(\"<II\",sl[off+8:off+16])\n            bl=sl[do:do+ds]\n            mm,ll,c=struct.unpack(\">III\",bl[:12])\n            for i in range(c):\n                t,o=struct.unpack(\">II\",bl[12+i*8:20+i*8])\n                if t==0:\n                    cd=bl[o:]\n                    flags=struct.unpack(\">I\",cd[12:16])[0]\n                    return (flags,cd[38])\n        off+=sz\n    return None\nfor p in [\"/var/mnt/rootfs/System/Library/PrivateFrameworks/SkyLight.framework/Resources/WindowServer\",\n          \"/var/mnt/rootfs/System/Library/CoreServices/Dock.app/Contents/MacOS/Dock\",\n          \"/var/mnt/rootfs/System/Library/CoreServices/loginwindow.app/Contents/MacOS/loginwindow\",\n          \"/var/mnt/rootfs/usr/libexec/lsd\",\n          \"/var/mnt/rootfs/System/Library/PrivateFrameworks/TCC.framework/Support/tccd\",\n          \"/var/mnt/rootfs/usr/libexec/nehelper\"]:\n    print(p.split(\"rootfs\")[-1], plat(p))\nPYEOF",
+  "command_sha256": "92cf39e20aa020dda65d12512bc78fed0325a2267e6fa38f50c979a86c4dc8cd",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "/System/Library/PrivateFrameworks/SkyLight.framework/Resources/WindowServer (0, 0)\n/System/Library/CoreServices/Dock.app/Contents/MacOS/Dock (0, 0)\n/System/Library/CoreServices/loginwindow.app/Contents/MacOS/loginwindow (0, 14)\n/usr/libexec/lsd (0, 0)\n/System/Library/PrivateFrameworks/TCC.framework/Support/tccd (0, 14)\n/usr/libexec/nehelper (0, 14)\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

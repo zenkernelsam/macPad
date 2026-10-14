@@ -110,34 +110,96 @@ static int probe_mode(int argc, char **argv) {
     return M_INVENTORY;
 }
 
+// Expected SkyLight LC_UUID for the pinned Ventura 22F82 build.  The
+// same pin gates inventory's private-slot reads and postmin's post:
+// an unknown image must fail closed before anything touches WS.
+static const uint8_t kSkyUUID[16] = {
+    0x96,0x67,0x6a,0x53,0xb1,0xe0,0x3d,0x7e,
+    0xb9,0x8b,0xb7,0x38,0x73,0xcd,0x18,0x80 };
+static int skylight_uuid_matches(void) {
+    for (uint32_t i = 0; i < _dyld_image_count(); i++) {
+        const char *n = _dyld_get_image_name(i);
+        if (n && strstr(n, "SkyLight.framework")) {
+            const struct mach_header_64 *h =
+                (const struct mach_header_64 *)_dyld_get_image_header(i);
+            const struct load_command *lc = (const void *)(h + 1);
+            for (uint32_t c = 0; c < h->ncmds; c++) {
+                if (lc->cmd == LC_UUID) {
+                    const struct uuid_command *u = (const void *)lc;
+                    return memcmp(u->uuid, kSkyUUID, 16) == 0;
+                }
+                lc = (const void *)((const char *)lc + lc->cmdsize);
+            }
+            return 0;
+        }
+    }
+    return 0;
+}
+
+// A canonical record that is still all-zero after SLEventGetEventRecord
+// means the fill silently did nothing — refuse to post a fabricated
+// zero record (R006 review guard).
+static int postmin_record_plausible(const uint8_t *rec, size_t n) {
+    for (size_t i = 0; i < n; i++)
+        if (rec[i]) return 1;
+    return 0;
+}
+
+// postmin exits: 0 post attempted; 2 uuid pin fail; 3 missing symbol;
+// 4 no connection; 5 event create failed; 6 record not filled.
+static int postmin_run(void) {
+    if (!skylight_uuid_matches()) {
+        printf("postmin: FAIL closed — loaded SkyLight uuid != pinned "
+               "22F82 build\n");
+        return 2;
+    }
+    MainConnectionIDFn mc =
+        (MainConnectionIDFn)dlsym(RTLD_DEFAULT, "SLSMainConnectionID");
+    PostEventRecordFn pr =
+        (PostEventRecordFn)dlsym(RTLD_DEFAULT, "SLSPostEventRecord");
+    GetEventRecordFn gr =
+        (GetEventRecordFn)dlsym(RTLD_DEFAULT, "SLEventGetEventRecord");
+    if (!mc || !pr || !gr) {
+        printf("postmin: FAIL closed — missing symbol(s) "
+               "mainConn=%p postRecord=%p getRecord=%p\n",
+               (void *)mc, (void *)pr, (void *)gr);
+        return 3;
+    }
+    uint32_t cid = mc();
+    printf("postmin: cid=%u postRecord=%p getRecord=%p\n",
+           cid, (void *)pr, (void *)gr);
+    if (!cid) {
+        printf("postmin: FAIL closed — SLSMainConnectionID returned 0\n");
+        return 4;
+    }
+    CGEventRef mv = CGEventCreateMouseEvent(
+        NULL, kCGEventMouseMoved, CGPointMake(500, 500), 0);
+    if (!mv) {
+        printf("postmin: FAIL closed — CGEventCreateMouseEvent NULL\n");
+        return 5;
+    }
+    uint8_t canon[0xf8];
+    memset(canon, 0, sizeof(canon));
+    gr(mv, canon, sizeof(canon));
+    CFRelease(mv);
+    if (!postmin_record_plausible(canon, sizeof(canon))) {
+        printf("postmin: FAIL closed — record all-zero after "
+               "SLEventGetEventRecord\n");
+        return 6;
+    }
+    printf("postmin: SLSPostEventRecord -> rc=%d\n",
+           pr(cid, canon, sizeof(canon), 0));
+    return 0;
+}
+
 int main(int argc, char **argv) {
     setbuf(stdout, NULL);   // unbuffered — survive a crash mid-probe
     int mode = probe_mode(argc, argv);
     printf("mode=%s\n", mode == M_MUTATE ? "mutate" :
            mode == M_POSTMIN ? "postmin" :
            mode == M_POST ? "post" : "inventory");
-    if (mode == M_POSTMIN) {
-        // R006: one attributable _XPostEventRecord, nothing else.
-        MainConnectionIDFn mc =
-            (MainConnectionIDFn)dlsym(RTLD_DEFAULT, "SLSMainConnectionID");
-        PostEventRecordFn pr =
-            (PostEventRecordFn)dlsym(RTLD_DEFAULT, "SLSPostEventRecord");
-        GetEventRecordFn gr =
-            (GetEventRecordFn)dlsym(RTLD_DEFAULT, "SLEventGetEventRecord");
-        uint32_t cid = mc ? mc() : 0;
-        printf("postmin: cid=%u postRecord=%p getRecord=%p\n",
-               cid, (void *)pr, (void *)gr);
-        if (cid && pr && gr) {
-            uint8_t canon[0xf8];
-            memset(canon, 0, sizeof(canon));
-            CGEventRef mv = CGEventCreateMouseEvent(
-                NULL, kCGEventMouseMoved, CGPointMake(500, 500), 0);
-            if (mv) { gr(mv, canon, 0xf8); CFRelease(mv); }
-            printf("postmin: SLSPostEventRecord -> rc=%d\n",
-                   pr(cid, canon, 0xf8, 0));
-        }
-        return 0;
-    }
+    if (mode == M_POSTMIN)
+        return postmin_run();
     mach_port_t evport = MACH_PORT_NULL;
     GetEventPortFn getEventPort =
         (GetEventPortFn)dlsym(RTLD_DEFAULT, "SLSGetEventPort");
@@ -157,9 +219,6 @@ int main(int argc, char **argv) {
     // service is reachable from this bootstrap domain — Mach port
     // names are PER-TASK, so this port number cannot be compared with
     // remote= fields in WindowServer's own MACH-ALL-SEND log lines.
-    static const uint8_t kSkyUUID[16] = {
-        0x96,0x67,0x6a,0x53,0xb1,0xe0,0x3d,0x7e,
-        0xb9,0x8b,0xb7,0x38,0x73,0xcd,0x18,0x80 };
     int sky_uuid_ok = 0;
     {
         for (uint32_t i = 0; i < _dyld_image_count(); i++) {

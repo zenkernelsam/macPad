@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T03:08:23.228373+08:00",
+  "finished": "2026-10-15T03:08:24.875886+08:00",
+  "command": "launchctl kickstart -k system/com.macwsguide.tccd-system 2>&1; sleep 1; launchctl print system/com.macwsguide.tccd-system 2>&1 | sed -n \"1,60p\"; echo \"=== log show amfi ===\"; log show --last 3m --predicate \"process == \\\"kernel\\\" OR eventMessage CONTAINS \\\"tccd\\\"\" 2>/dev/null | grep -iE \"amfi|tccd|code sign\" | tail -15",
+  "command_sha256": "6df8a9bad4543331cf7361ebab9ba1a477a811c4fe9c502a5b5c4d10d98d7479",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "Warning: Please switch to user/foreground/com.macwsguide.tccd-system service identifier\nWarning: Please switch to user/foreground/com.macwsguide.tccd-system service identifier\nuser/501/com.macwsguide.tccd-system = {\n\tactive count = 0\n\tpath = /private/preboot/CFD92CED195A8E1D96E46DD57D101E3CEC005BA3A576CAA9B225733705A2775E33BFF567CD972EA42D56E91B018EF3F1/dopamine-IWpVUH/procursus/usr/macOS/LaunchDaemons/com.macwsguide.tccd-system.plist\n\ttype = LaunchDaemon\n\tstate = not running\n\n\tprogram = /var/jb/usr/macOS/bin/launchdchrootexec\n\targuments = {\n\t\t/var/jb/usr/macOS/bin/launchdchrootexec\n\t\t0\n\t\t0\n\t\t/var/mnt/rootfs\n\t\t/System/Library/PrivateFrameworks/TCC.framework/Support/tccd\n\t\tsystem\n\t}\n\n\tstdout path = /var/jb/var/mobile/tccd-system.out\n\tstderr path = /var/jb/var/mobile/tccd-system.err\n\tinherited environment = {\n\t\tMACWS_RS_CTX_TRACE => 1\n\t\tMACWS_IOMFB_FORCE_REG => 1\n\t\tMACWS_AGX_CRASH_DIAG => 1\n\t}\n\n\tdefault environment = {\n\t\tPATH => /usr/bin:/bin:/usr/sbin:/sbin\n\t}\n\n\tenvironment = {\n\t\tXPC_SERVICE_NAME => com.macwsguide.tccd-system\n\t}\n\n\tdomain = user/501\n\tminimum runtime = 10\n\tbase minimum runtime = 10\n\texit timeout = 3\n\truns = 2\n\tlast exit reason = OS_REASON_EXEC\n\n\tsemaphores = {\n\t\tprovides events => 1\n\t}\n\n\tendpoints = {\n\t\t\"com.apple.macosbooter.tccd.system\" = {\n\t\t\tport = 0xc2f0f\n\t\t\tactive = 0\n\t\t\tmanaged = 1\n\t\t\treset = 0\n\t\t\thide = 0\n\t\t\twatching = 1\n\t\t}\n\t}\n\n\tspawn type = adaptive (6)\n\tjetsam priority = 40\n\tjetsam memory limit (active, soft) = 6 MB\n\tjetsam memory limit (inactive, hard) = 6 MB\n\tjetsamproperties category = daemon\n=== log show amfi ===\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

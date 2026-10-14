@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T03:52:39.195458+08:00",
+  "finished": "2026-10-15T03:52:41.708554+08:00",
+  "command": "fs_usage -w -f exec,proc 2>/dev/null > /var/jb/var/mobile/fsA.log & FS=$!; sleep 1; for b in \"/System/Library/CoreServices/loginwindow.app/Contents/MacOS/loginwindow\" \"/usr/libexec/nehelper\" \"/usr/local/bin/mysvcx\"; do /var/jb/usr/bin/chroot /var/mnt/rootfs \"$b\" x >/dev/null 2>&1; sleep 0.3; done; kill $FS 2>/dev/null; grep -nE \"execve\" /var/jb/var/mobile/fsA.log | grep -vE \"ifconfig|fs_usage|python\" | tail -8",
+  "command_sha256": "979d14016b949e81a022760b71320d2ffff6d642776a54cc19f0fb15e9275442",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "32050:03:52:40.662408  execve                 [  1]           /System/Library/CoreServices/loginwindow.app/Contents/MacOS/loginwindow                                                                                               0.000622   chroot.4037614\n49915:03:52:41.005216  execve                 [  1]           /usr/libexec/nehelper                                                                                                                                                 0.000501   chroot.4037621\n69599:03:52:41.385931  execve                 [  1]           /usr/local/bin/mysvcx                                                                                                                                                 0.000414   chroot.4037631\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

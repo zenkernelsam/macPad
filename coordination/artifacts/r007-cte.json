@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T03:32:32.239766+08:00",
+  "finished": "2026-10-15T03:32:32.640966+08:00",
+  "command": "cd /var/jb/var/mobile && ldid -S chroot_then_exec 2>/dev/null; chmod 755 chroot_then_exec; ./chroot_then_exec /var/mnt/rootfs /System/Library/PrivateFrameworks/TCC.framework/Support/tccd 2>&1 | tail -10; echo RC=$?",
+  "command_sha256": "8d35389385e304d32fed536c3c1fb41e41b5dbbfa9be4d0adf96b1f1edf828b2",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "chrooted to /var/mnt/rootfs, exec'ing /System/Library/PrivateFrameworks/TCC.framework/Support/tccd\nexecl: Operation not permitted\nRC=0\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

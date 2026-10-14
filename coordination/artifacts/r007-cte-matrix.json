@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T03:32:54.935165+08:00",
+  "finished": "2026-10-15T03:32:58.725538+08:00",
+  "command": "cd /var/jb/var/mobile; for b in /usr/libexec/diskarbitrationd /usr/sbin/notifyd /usr/libexec/locationd /bin/sleep /System/Library/PrivateFrameworks/TCC.framework/Support/tccd; do ./chroot_then_exec /var/mnt/rootfs $b x >/dev/null 2>&1 & P=$!; sleep 0.5; R=GONE; kill -0 $P 2>/dev/null && R=ALIVE; kill -9 $P 2>/dev/null; echo \"$b => $R\"; done; echo \"--- sleep15 arg test ---\"; ./chroot_then_exec /var/mnt/rootfs /bin/sleep >/dev/null 2>&1 & P=$!; sleep 0.5; kill -0 $P 2>/dev/null && echo \"sleep ALIVE\" || echo \"sleep DEAD\"; kill -9 $P 2>/dev/null",
+  "command_sha256": "01e12611bd0d6fd2bb53df55b21ced6c15e9fc2a0d48610cbf69a8ca68e20e40",
+  "exit": 1,
+  "timeout": false,
+  "stdout": "/usr/libexec/diskarbitrationd => GONE\n/usr/sbin/notifyd => GONE\n/usr/libexec/locationd => GONE\n/bin/sleep => GONE\n/System/Library/PrivateFrameworks/TCC.framework/Support/tccd => GONE\n--- sleep15 arg test ---\nsleep DEAD\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

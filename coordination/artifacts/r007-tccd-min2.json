@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T03:12:17.103763+08:00",
+  "finished": "2026-10-15T03:12:19.652750+08:00",
+  "command": "launchctl remove com.macwsguide.tccd-system 2>/dev/null; launchctl bootout user/501/com.macwsguide.tccd-system 2>/dev/null; launchctl bootout system/com.macwsguide.tccd-system 2>/dev/null; launchctl bootstrap system/ /var/jb/var/mobile/tccd-min.plist; echo BOOT=$?; sleep 2; launchctl print system/com.macwsguide.tccd-min 2>&1 | grep -E \"domain =|state|pid =|last exit|runs\" | head -6; ps aux | grep -F \"tccd system\" | grep -v grep | head -3; echo \"--- err tail ---\"; tail -5 /var/jb/var/mobile/tccd-system.err 2>/dev/null",
+  "command_sha256": "c2e0c94230c00c8d097ea1a6263c0c9bc4c8dd41131d368bf4399f6e1850f564",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "BOOT=0\n\tstate = not running\n\tdomain = user/501\n\truns = 1\n\tlast exit reason = OS_REASON_EXEC\n--- err tail ---\nlaunchd service = com.macwsguide.tccd-system\n[launchdchrootexec] target=/System/Library/PrivateFrameworks/TCC.framework/Support/tccd arch=arm64e insert=/usr/local/lib/libmachook.dylib\nlaunchd service = com.macwsguide.tccd-system\n[launchdchrootexec] target=/System/Library/PrivateFrameworks/TCC.framework/Support/tccd arch=arm64e insert=/usr/local/lib/libmachook.dylib\nlaunchd service = com.macwsguide.tccd-min\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

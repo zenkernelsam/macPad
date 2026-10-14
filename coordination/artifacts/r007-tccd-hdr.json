@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T02:53:57.156992+08:00",
+  "finished": "2026-10-15T02:53:57.568202+08:00",
+  "command": "TCCD=/var/mnt/rootfs/System/Library/PrivateFrameworks/TCC.framework/Support/tccd; /var/jb/usr/bin/shasum -a 256 $TCCD 2>/dev/null || { command -v shasum; command -v sha256sum; xxd -l 64 $TCCD | head -4; }; echo \"---macho hdr---\"; xxd -l 48 -s 0 $TCCD; echo \"---dyld deps---\"; /var/jb/usr/bin/strings $TCCD 2>/dev/null | grep -i \"dyld\\|cryptex\" | head -5",
+  "command_sha256": "ada0175eb2d07550ba7da873b8627c08618528d4705252f7f871e4e57275c776",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "/var/jb/usr/bin/sha256sum\n---macho hdr---\n---dyld deps---\n",
+  "stderr": "zsh:1: command not found: xxd\nzsh:1: command not found: xxd\n",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

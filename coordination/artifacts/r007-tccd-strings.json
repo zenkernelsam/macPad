@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T02:55:31.432531+08:00",
+  "finished": "2026-10-15T02:55:31.867050+08:00",
+  "command": "TCCD=/var/mnt/rootfs/System/Library/PrivateFrameworks/TCC.framework/Support/tccd; S=/var/jb/usr/local/bin/strings; [ -x $S ] || S=/var/jb/usr/bin/strings; $S $TCCD | grep -iE \"TCC\\.db|com\\.apple\\.TCC|Application Support|/var/db|\\.sqlite\" | sort -u | head -30",
+  "command_sha256": "a1f139fd7619a01440d53ebcab6730a332ba7fbc2cb9c9e7c25bb2d0c9dc1301",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "%s/TCC.db\n/Library/Application Support/com.apple.TCC/MDMOverrides.plist\n/Library/Application Support/com.apple.TCC/SiteOverrides.plist\n<string>com.apple.tccd</string>\nFailed to post com.apple.tcc.access.changed notification (%u)\nLibrary/Application Support/com.apple.TCC\ncom.apple.TCC\ncom.apple.TCC.authorization_action\ncom.apple.TCC.configuration-profile-changed\ncom.apple.tcc\ncom.apple.tcc.\ncom.apple.tcc.AdhocSignatureCache\ncom.apple.tcc.access.changed\ncom.apple.tcc.appRegistrationQueue\ncom.apple.tcc.db_queue\ncom.apple.tcc.delegated-services\ncom.apple.tcc.notification\ncom.apple.tcc.registerWithApplicationResolverSubjectIdentity\ncom.apple.tccctl\ncom.apple.tccd\ncom.apple.tccd.AlertManager\ncom.apple.tccd.TCCDSyncControllerErrorDomain\ncom.apple.tccd.events\ncom.apple.tccd.policy-override\ncom.apple.tccd.system\ncom.apple.tccd0#\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

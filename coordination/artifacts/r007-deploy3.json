@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T04:42:26.385206+08:00",
+  "finished": "2026-10-15T04:42:27.151646+08:00",
+  "command": "set -e\nexport PATH=/var/jb/usr/bin:/var/jb/usr/sbin:/usr/bin:/usr/sbin:/bin:/sbin\nLIB=/var/jb/usr/macOS/lib/libmachook.dylib\nLIB64=/var/jb/usr/macOS/lib/libmachook_arm64.dylib\nRLIB=/var/mnt/rootfs/usr/local/lib/libmachook.dylib\nRLIB64=/var/mnt/rootfs/usr/local/lib/libmachook_arm64.dylib\nENT=/var/jb/usr/macOS/bin/entitlements.plist\n\nldid -S$ENT -M /tmp/mh_e.dylib; ldid -S$ENT -M /tmp/mh_e.dylib\nldid -S$ENT -M /tmp/mh_a.dylib; ldid -S$ENT -M /tmp/mh_a.dylib\n\nrm -f \"$LIB\" \"$LIB64\" \"$RLIB\" \"$RLIB64\"\ninstall -m755 /tmp/mh_e.dylib \"$LIB\"\ninstall -m755 /tmp/mh_a.dylib \"$LIB64\"\ninstall -m755 /tmp/mh_e.dylib \"$RLIB\"\ninstall -m755 /tmp/mh_a.dylib \"$RLIB64\"\n\npython3 /var/jb/usr/macOS/bin/macws_boot_trust.py --readd \\\n    \"$LIB\" \"$LIB64\" \"$RLIB\" \"$RLIB64\"\n\n/var/jb/usr/bin/chroot /var/mnt/rootfs /bin/echo HI\nstrings \"$RLIB\" | grep -c 'macosbooter.tccd.system'\necho DEPLOY-OK\n",
+  "command_sha256": "7986d9c81d34d1c7f84e1485a99cc29eb018fb3d5e658d8843f17426800df9f6",
+  "exit": 134,
+  "timeout": false,
+  "stdout": "BOOT-TRUST {\"added\": 2, \"backend\": \"libjailbreak\", \"cached\": 0, \"files\": 4, \"hashes\": 2, \"images\": 4, \"resource_hits\": 0, \"scan_seconds\": 0.0, \"total_seconds\": 0.072}\n",
+  "stderr": "dyld[74394]: Library not loaded: /usr/local/lib/libmachook_arm64.dylib\n  Referenced from: <B9D9E023-C706-3E57-B650-729DE3FB04DE> /bin/echo\n  Reason: tried: '/usr/local/lib/libmachook_arm64.dylib' (mach-o file (/usr/local/lib/libmachook_arm64.dylib), but incompatible platform (have 'iOS', need 'macOS')), '/System/Volumes/Preboot/Cryptexes/OS/usr/local/lib/libmachook_arm64.dylib' (no such file), '/usr/local/lib/libmachook_arm64.dylib' (mach-o file (/usr/local/lib/libmachook_arm64.dylib), but incompatible platform (have 'iOS', need 'macOS')), '/usr/lib/libmachook_arm64.dylib' (no such file, not in dyld cache)\nAbort trap: 6\n",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

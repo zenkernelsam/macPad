@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T04:54:58.019747+08:00",
+  "finished": "2026-10-15T04:55:01.984647+08:00",
+  "command": "export LC_ALL=UTF-8 TMUX_TMPDIR=/var/tmp; tmux send-keys -t devin_r007 \"continue\" C-m; sleep 3; pkill -f \"macos_ws_event_probe postmin\" 2>/dev/null; /var/jb/usr/macOS/bin/launchdchrootexec 0 0 /var/mnt/rootfs /tmp/macos_ws_event_probe postmin 2>/dev/null; echo PROBE_RC=$?",
+  "command_sha256": "ac95f5916bf3758c2ce81fa654685211a80c40aad1eaaa723fb8a55e8cdc5161",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "mode=postmin\npostmin: cid=97799 postRecord=0x8f050001a8fca788 getRecord=0x3c1d0001a90990e4\npostmin: SLSPostEventRecord -> rc=1002\nPROBE_RC=0\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

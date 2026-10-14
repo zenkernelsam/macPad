@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T03:11:29.542682+08:00",
+  "finished": "2026-10-15T03:11:31.087075+08:00",
+  "command": "launchctl bootstrap system/ /var/jb/usr/macOS/LaunchDaemons/com.macwsguide.macos-diskarbitrationd.plist; echo BOOT=$?; sleep 1; launchctl print system/com.macwsguide.macos-diskarbitrationd 2>&1 | grep -E \"domain =|state|pid|runs\" | head -5; echo \"---\"; ps aux | grep -F diskarbitrationd | grep -v grep | head -3",
+  "command_sha256": "3bc7be9e77c2e7b67065a3b6bf43a48f0abbb68b5b302d377029130cf53d7f9b",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "BOOT=0\n\tstate = running\n\tdomain = user/501\n\truns = 1\n\tpid = 67127\n---\nroot           67127  25.3  0.1 408340304  23696   ??  Ss    3:11AM   0:00.66 /usr/libexec/diskarbitrationd\nroot           67148   0.0  0.0 408339984   1408   ??  S     3:11AM   0:00.00 /usr/libexec/diskarbitrationd\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

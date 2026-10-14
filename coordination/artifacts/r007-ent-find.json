@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T02:45:39.814188+08:00",
+  "finished": "2026-10-15T02:45:40.213331+08:00",
+  "command": "ls -l /var/jb/usr/macOS/misc/entitlements.plist /var/mnt/rootfs/misc/entitlements.plist misc/entitlements.plist 2>/dev/null; find /var/jb/usr/macOS /var/mnt/rootfs/usr/local -name \"*entitlement*\" -o -name \"*.plist\" -path \"*ent*\" 2>/dev/null | head -10",
+  "command_sha256": "2fa0f26e56c8e876176dc6cb0e9f6195a3f53fe882ca584fd774ae03b7a14ab4",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "/var/jb/usr/macOS/bin/extensionkitservice-entitlements.plist\n/var/jb/usr/macOS/bin/appearance-extension-entitlements.plist\n/var/jb/usr/macOS/bin/settings-extension-entitlements.plist\n/var/jb/usr/macOS/bin/entitlements.plist\n/var/jb/usr/macOS/bin/locationd-native-entitlements.plist\n/var/jb/usr/macOS/bin/diskarbitrationd-native-entitlements.plist\n/var/jb/usr/macOS/bin/coreaudiod-ios-audio.entitlements.plist\n/var/jb/usr/macOS/bin/cfprefsd-entitlements.plist\n/var/jb/usr/macOS/bin/interop-location-entitlements.plist\n/var/jb/usr/macOS/bin/merge_third_party_entitlements.py\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

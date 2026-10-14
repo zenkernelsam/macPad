@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T03:25:59.657316+08:00",
+  "finished": "2026-10-15T03:26:04.125368+08:00",
+  "command": "cd /var/jb/var/mobile; env DYLD_PRINT_LIBRARIES=1 DYLD_PRINT_APIS=1 DYLD_PRINT_SEGMENTS=1 /var/jb/usr/bin/chroot /var/mnt/rootfs /System/Library/PrivateFrameworks/TCC.framework/Support/tccd system >/var/jb/var/mobile/dtccd.out 2>/var/jb/var/mobile/dtccd.err & BP=$!; sleep 4; kill -0 $BP 2>/dev/null && echo ALIVE || echo DEAD; echo \"=== stderr size ===\"; wc -c /var/jb/var/mobile/dtccd.err; head -20 /var/jb/var/mobile/dtccd.err; kill $BP 2>/dev/null",
+  "command_sha256": "b13134640b4ca5db1307922c7bceb08ac5bef56e55aead1d0fbe76a332c783bc",
+  "exit": 1,
+  "timeout": false,
+  "stdout": "DEAD\n=== stderr size ===\n183011 /var/jb/var/mobile/dtccd.err\ndyld[68228]: re-using existing shared cache (/private/preboot/Cryptexes/OS/System/Library/Caches/com.apple.dyld/dyld_shared_cache_arm64e):\ndyld[68228]:         0x18906C000->0x1890C3FFF init=5, max=5 __TEXT\ndyld[68228]:         0x1890C4000->0x18FEB7FFF init=5, max=5 __TEXT\ndyld[68228]:         0x18FEB8000->0x18FECFFFF init=5, max=5 __TEXT_STUBS\ndyld[68228]:         0x18FED0000->0x195A27FFF init=5, max=5 __TEXT\ndyld[68228]:         0x195A28000->0x195A57FFF init=5, max=5 __TEXT_STUBS\ndyld[68228]:         0x195A58000->0x19C71FFFF init=5, max=5 __TEXT\ndyld[68228]:         0x19C720000->0x19C77BFFF init=5, max=5 __TEXT_STUBS\ndyld[68228]:         0x19C77C000->0x1A354BFFF init=5, max=5 __TEXT\ndyld[68228]:         0x1A354C000->0x1A35A7FFF init=5, max=5 __TEXT_STUBS\ndyld[68228]:         0x1A35A8000->0x1AA39FFFF init=5, max=5 __TEXT\ndyld[68228]:         0x1AA3A0000->0x1AA3FBFFF init=5, max=5 __TEXT_STUBS\ndyld[68228]:         0x1AA3FC000->0x1B1237FFF init=5, max=5 __TEXT\ndyld[68228]:         0x1B1238000->0x1B12AFFFF init=5, max=5 __TEXT_STUBS\ndyld[68228]:         0x1B12B0000->0x1B76D7FFF init=5, max=5 __TEXT\ndyld[68228]:         0x1B76D8000->0x1B774FFFF init=5, max=5 __TEXT_STUBS\ndyld[68228]:         0x1B7750000->0x1BE55FFFF init=5, max=5 __TEXT\ndyld[68228]:         0x1BE560000->0x1BE5D7FFF init=5, max=5 __TEXT_STUBS\ndyld[68228]:         0x1BE5D8000->0x1C5383FFF init=5, max=5 __TEXT\ndyld[68228]:         0x1C5384000->0x1C53F7FFF init=5, max=5 __TEXT_STUBS\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

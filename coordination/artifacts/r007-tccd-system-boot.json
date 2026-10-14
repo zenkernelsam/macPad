@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T03:10:24.828273+08:00",
+  "finished": "2026-10-15T03:10:27.473266+08:00",
+  "command": "launchctl bootout user/501/com.macwsguide.tccd-system 2>&1; launchctl remove com.macwsguide.tccd-system 2>/dev/null; launchctl bootout system/com.macwsguide.tccd-system 2>/dev/null; echo \"--- explicit system bootstrap ---\"; launchctl bootstrap system/ /var/jb/usr/macOS/LaunchDaemons/com.macwsguide.tccd-system.plist 2>&1; echo BOOT=$?; sleep 2; launchctl print system/com.macwsguide.tccd-system 2>&1 | grep -E \"domain =|state|pid|last exit|runs =|macosbooter\" | head -10; ps aux | grep -F \"tccd system\" | grep -v grep",
+  "command_sha256": "e5d993fc17a8c54102826dd2e69880146b7421f0a139d51478ad6c54a7dfb796",
+  "exit": 1,
+  "timeout": false,
+  "stdout": "--- explicit system bootstrap ---\nBOOT=0\n\tstate = not running\n\tdomain = user/501\n\truns = 1\n\tlast exit reason = OS_REASON_EXEC\n\t\t\"com.apple.macosbooter.tccd.system\" = {\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T02:45:45.143884+08:00",
+  "finished": "2026-10-15T02:45:45.857976+08:00",
+  "command": "ENT=/var/jb/usr/macOS/bin/entitlements.plist; ldid -S$ENT /var/tmp/macos_ws_event_probe.new && ldid -S$ENT /var/tmp/macos_ws_event_probe.new && install -m755 /var/tmp/macos_ws_event_probe.new /var/mnt/rootfs/usr/local/bin/macos_ws_event_probe.new && mv -f /var/mnt/rootfs/usr/local/bin/macos_ws_event_probe.new /var/mnt/rootfs/usr/local/bin/macos_ws_event_probe && python3 /var/jb/usr/macOS/bin/macws_boot_trust.py --readd /var/mnt/rootfs/usr/local/bin/macos_ws_event_probe 2>&1 | tail -3 && /var/jb/usr/bin/chroot /var/mnt/rootfs /usr/local/bin/macos_ws_event_probe postmin; echo POSTMIN_RC=$?",
+  "command_sha256": "56566cf5f43eb52c2effd22b98d6880bfae8b423861a436a3a19ce471f00c57d",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "BOOT-TRUST {\"added\": 1, \"backend\": \"libjailbreak\", \"cached\": 0, \"files\": 1, \"hashes\": 1, \"images\": 1, \"resource_hits\": 0, \"scan_seconds\": 0.0, \"total_seconds\": 0.067}\nPOSTMIN_RC=133\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

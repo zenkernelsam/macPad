@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T02:54:29.695663+08:00",
+  "finished": "2026-10-15T02:54:30.188696+08:00",
+  "command": "TCCD=/var/mnt/rootfs/System/Library/PrivateFrameworks/TCC.framework/Support/tccd; /var/jb/usr/bin/chroot /var/mnt/rootfs /usr/bin/lldb -b -o \"target create $TCCD\" -o \"image list\" -o quit 2>&1 | grep -v \"^$\" | tail -15",
+  "command_sha256": "264f8a4de29212a4795872c6ff672fb88daba9672fd4ad0cf7f1036c21e2ade9",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "MACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\n#### MACWS-CTOR-CANARY InitStuff done\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nxcode-select: error: No developer tools were found and no install could be requested (perhaps no UI is present).\nIf developer tools are located at a non-default location on disk, use `sudo xcode-select --switch path/to/Xcode.app` to specify the Xcode that you wish to use for command line developer tools.\nUse `xcode-select --install` to install the standalone command line developer tools, or visit http://adc.apple.com to download Xcode or the standalone command line tools installation package.\nSee `man xcode-select` for more details.\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

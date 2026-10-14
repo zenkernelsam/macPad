@@ -1,0 +1,448 @@
+
+5: address = TCC[0x00000001850c9ba8], locations = 1, resolved = 1, hit count = 0
+    Breakpoint commands:
+      register read x24
+      continue
+
+  Names:
+    r7_interrupted
+
+  5.1: where = TCC`tccd_send_message + 1128, address = 0x00000001974b5ba8, resolved, hit count = 0
+
+6: address = TCC[0x00000001850c9c1c], locations = 1, resolved = 1, hit count = 0
+    Breakpoint commands:
+      register read x24
+      continue
+
+  Names:
+    r7_conninvalid
+
+  6.1: where = TCC`tccd_send_message + 1244, address = 0x00000001974b5c1c, resolved, hit count = 0
+
+7: address = TCC[0x00000001850ccebc], locations = 1, resolved = 1, hit count = 5
+    Breakpoint commands:
+      register read x0 x1
+      continue
+
+  Names:
+    r7_handlerimpl
+
+  7.1: where = TCC`__TCCAccessRequest_block_invoke.203, address = 0x00000001974b8ebc, resolved, hit count = 5
+
+8: address = TCC[0x00000001850d07b0], locations = 1, resolved = 1, hit count = 0
+    Breakpoint commands:
+      register read x0
+      continue
+
+  Names:
+    r7_parser
+
+  8.1: where = TCC`__TCCAccessSetPidResponsibleForPid_block_invoke_2, address = 0x00000001974bc7b0, resolved, hit count = 0
+
+9: address = TCC[0x00000001850d1548], locations = 1, resolved = 1, hit count = 0
+    Breakpoint commands:
+      register read w1 x0
+      continue
+
+  Names:
+    r7_minia
+
+  9.1: where = TCC`__TCCAccessCopyInformationForBundleId_block_invoke + 56, address = 0x00000001974bd548, resolved, hit count = 0
+
+10: address = TCC[0x00000001850d1560], locations = 1, resolved = 1, hit count = 0
+    Breakpoint commands:
+      register read w1 x0
+      continue
+
+  Names:
+    r7_minib
+
+  10.1: where = TCC`__TCCAccessCopyInformationForBundleId_block_invoke + 80, address = 0x00000001974bd560, resolved, hit count = 0
+
+11: address = SkyLight[0x0000000185425e0c], locations = 1, resolved = 1, hit count = 5
+    Breakpoint commands:
+      register read w0
+      continue
+
+  Names:
+    r7_skydec
+
+  11.1: where = SkyLight`audit_token_check_tcc_access + 108, address = 0x0000000197811e0c, resolved, hit count = 5
+
+12: address = TCC[0x00000001850d0548], locations = 1, resolved = 1, hit count = 2
+    Breakpoint commands:
+      register read w1 x0
+      continue
+
+  Names:
+    r7_miniAfix
+
+  12.1: where = TCC`__TCCAccessPreflightWithAuditToken_block_invoke, address = 0x00000001974bc548, resolved, hit count = 2
+
+13: address = TCC[0x00000001850d0548], locations = 1, resolved = 1, hit count = 2
+    Breakpoint commands:
+      register read w1 x0
+      continue
+
+  Names:
+    r7_miniAfix
+
+  13.1: where = TCC`__TCCAccessPreflightWithAuditToken_block_invoke, address = 0x00000001974bc548, resolved, hit count = 2
+
+14: address = TCC[0x00000001850d0560], locations = 1, resolved = 1, hit count = 2
+    Breakpoint commands:
+      register read w1 x0
+      continue
+
+  Names:
+    r7_miniBfix
+
+  14.1: where = TCC`__TCCAccessPreflightWithAuditToken_block_invoke.337, address = 0x00000001974bc560, resolved, hit count = 2
+
+15: address = TCC[0x00000001850ccee8], locations = 1, resolved = 1, hit count = 0
+    Breakpoint commands:
+      register read x0
+      continue
+
+  Names:
+    r7_type
+
+  15.1: where = TCC`__TCCAccessRequest_block_invoke.203 + 44, address = 0x00000001974b8ee8, resolved, hit count = 0
+
+16: address = TCC[0x00000001850ccf5c], locations = 1, resolved = 1, hit count = 0
+    Breakpoint commands:
+      register read w0
+      continue
+
+  Names:
+    r7_resultbool
+
+  16.1: where = TCC`__TCCAccessRequest_block_invoke.203 + 160, address = 0x00000001974b8f5c, resolved, hit count = 0
+
+17: address = TCC[0x00000001850cd00c], locations = 1, resolved = 1, hit count = 0
+    Breakpoint commands:
+      register read x20
+      continue
+
+  Names:
+    r7_errpath
+
+  17.1: where = TCC`__TCCAccessRequest_block_invoke.203 + 336, address = 0x00000001974b900c, resolved, hit count = 0
+
+(lldb) continue
+error: Process is running.  Use 'process interrupt' to pause execution.
+(lldb)  register read x0 x1
+      x0 = 0x0000000000000001
+      x1 = 0x000000016d2b6c90
+(lldb)  continue
+Process 75144 resuming
+Command #2 'continue' continued the target.
+(lldb)  register read x2 x3 x4 x5 w22
+      x2 = 0x0000000155abb8f0
+      x3 = 0x000000016d2b6830
+      x4 = 0x0000000000000007
+      x5 = 0x0000000000000000
+     w22 = 0x4460ccc0
+(lldb)  continue
+Process 75144 resuming
+Command #2 'continue' continued the target.
+(lldb)  register read x0
+      x0 = 0x000000014460f1d0
+(lldb)  continue
+Process 75144 resuming
+Command #2 'continue' continued the target.
+(lldb)  register read x24
+     x24 = 0x000000014460f1d0
+(lldb)  continue
+Process 75144 resuming
+Command #2 'continue' continued the target.
+(lldb)  register read x0 x1
+      x0 = 0x000000016d2b6830
+      x1 = 0x000000014460f1d0
+(lldb)  continue
+Process 75144 resuming
+Command #2 'continue' continued the target.
+(lldb)  register read x0
+      x0 = 0x00000001ed7c3da0  (void *)0x00000001ed7c3dc8: OS_xpc_dictionary
+(lldb)  continue
+Process 75144 resuming
+Command #2 'continue' continued the target.
+(lldb)  register read w0
+      w0 = 0x00000000
+(lldb)  continue
+Process 75144 resuming
+Command #2 'continue' continued the target.
+(lldb)  register read w1 x0
+      w1 = 0x00000000
+      x0 = 0x000000016d2b6bd0
+(lldb)  continue
+Process 75144 resuming
+Command #2 'continue' continued the target.
+(lldb)  register read w1 x0
+      w1 = 0x00000000
+      x0 = 0x000000016d2b6ba8
+(lldb)  continue
+Process 75144 resuming
+Command #2 'continue' continued the target.
+(lldb)  register read w0
+      w0 = 0x00000001
+(lldb)  continue
+Process 75144 resuming
+Command #2 'continue' continued the target.
+(lldb)  register read x0 x1
+      x0 = 0x0000000000000001
+      x1 = 0x000000016d2b6c30
+(lldb)  continue
+Process 75144 resuming
+Command #2 'continue' continued the target.
+(lldb)  register read x2 x3 x4 x5 w22
+      x2 = 0x0000000145806a20
+      x3 = 0x000000016d2b67d0
+      x4 = 0x0000000000000007
+      x5 = 0x0000000000000000
+     w22 = 0x44720fb0
+(lldb)  continue
+Process 75144 resuming
+Command #2 'continue' continued the target.
+(lldb)  register read x0
+      x0 = 0x000000014471b950
+(lldb)  continue
+Process 75144 resuming
+Command #2 'continue' continued the target.
+(lldb)  register read x24
+     x24 = 0x000000014471b950
+(lldb)  continue
+Process 75144 resuming
+Command #2 'continue' continued the target.
+(lldb)  register read x0 x1
+      x0 = 0x000000016d2b67d0
+      x1 = 0x000000014471b950
+(lldb)  continue
+Process 75144 resuming
+Command #2 'continue' continued the target.
+(lldb)  register read x0
+      x0 = 0x00000001ed7c3da0  (void *)0x00000001ed7c3dc8: OS_xpc_dictionary
+(lldb)  continue
+Process 75144 resuming
+Command #2 'continue' continued the target.
+(lldb)  register read w0
+      w0 = 0x00000000
+(lldb)  continue
+Process 75144 resuming
+Command #2 'continue' continued the target.
+(lldb)  register read w1 x0
+      w1 = 0x00000000
+      x0 = 0x000000016d2b6b70
+(lldb)  continue
+Process 75144 resuming
+Command #2 'continue' continued the target.
+(lldb)  register read w1 x0
+      w1 = 0x00000000
+      x0 = 0x000000016d2b6b48
+(lldb)  continue
+Process 75144 resuming
+Command #2 'continue' continued the target.
+(lldb)  register read w0
+      w0 = 0x00000001
+(lldb)  continue
+Process 75144 resuming
+Command #2 'continue' continued the target.
+
+5: address = TCC[0x00000001850c9ba8], locations = 1, resolved = 1, hit count = 0
+    Breakpoint commands:
+      register read x24
+      continue
+
+  Names:
+    r7_interrupted
+
+  5.1: where = TCC`tccd_send_message + 1128, address = 0x00000001974b5ba8, resolved, hit count = 0
+
+6: address = TCC[0x00000001850c9c1c], locations = 1, resolved = 1, hit count = 0
+    Breakpoint commands:
+      register read x24
+      continue
+
+  Names:
+    r7_conninvalid
+
+  6.1: where = TCC`tccd_send_message + 1244, address = 0x00000001974b5c1c, resolved, hit count = 0
+
+7: address = TCC[0x00000001850ccebc], locations = 1, resolved = 1, hit count = 3
+    Breakpoint commands:
+      register read x0 x1
+      continue
+
+  Names:
+    r7_handlerimpl
+
+  7.1: where = TCC`__TCCAccessRequest_block_invoke.203, address = 0x00000001974b8ebc, resolved, hit count = 3
+
+8: address = TCC[0x00000001850d07b0], locations = 1, resolved = 1, hit count = 0
+    Breakpoint commands:
+      register read x0
+      continue
+
+  Names:
+    r7_parser
+
+  8.1: where = TCC`__TCCAccessSetPidResponsibleForPid_block_invoke_2, address = 0x00000001974bc7b0, resolved, hit count = 0
+
+9: address = TCC[0x00000001850d1548], locations = 1, resolved = 1, hit count = 0
+    Breakpoint commands:
+      register read w1 x0
+      continue
+
+  Names:
+    r7_minia
+
+  9.1: where = TCC`__TCCAccessCopyInformationForBundleId_block_invoke + 56, address = 0x00000001974bd548, resolved, hit count = 0
+
+10: address = TCC[0x00000001850d1560], locations = 1, resolved = 1, hit count = 0
+    Breakpoint commands:
+      register read w1 x0
+      continue
+
+  Names:
+    r7_minib
+
+  10.1: where = TCC`__TCCAccessCopyInformationForBundleId_block_invoke + 80, address = 0x00000001974bd560, resolved, hit count = 0
+
+11: address = SkyLight[0x0000000185425e0c], locations = 1, resolved = 1, hit count = 3
+    Breakpoint commands:
+      register read w0
+      continue
+
+  Names:
+    r7_skydec
+
+  11.1: where = SkyLight`audit_token_check_tcc_access + 108, address = 0x0000000197811e0c, resolved, hit count = 3
+
+12: address = TCC[0x00000001850d0548], locations = 1, resolved = 1, hit count = 0
+    Breakpoint commands:
+      register read w1 x0
+      continue
+
+  Names:
+    r7_miniAfix
+
+  12.1: where = TCC`__TCCAccessPreflightWithAuditToken_block_invoke, address = 0x00000001974bc548, resolved, hit count = 0
+
+13: address = TCC[0x00000001850d0548], locations = 1, resolved = 1, hit count = 0
+    Breakpoint commands:
+      register read w1 x0
+      continue
+
+  Names:
+    r7_miniAfix
+
+  13.1: where = TCC`__TCCAccessPreflightWithAuditToken_block_invoke, address = 0x00000001974bc548, resolved, hit count = 0
+
+14: address = TCC[0x00000001850d0560], locations = 1, resolved = 1, hit count = 0
+    Breakpoint commands:
+      register read w1 x0
+      continue
+
+  Names:
+    r7_miniBfix
+
+  14.1: where = TCC`__TCCAccessPreflightWithAuditToken_block_invoke.337, address = 0x00000001974bc560, resolved, hit count = 0
+
+(lldb) continue
+error: Process is running.  Use 'process interrupt' to pause execution.
+(lldb)  register read x0 x1
+      x0 = 0x0000000000000001
+      x1 = 0x000000016d2b6c90
+(lldb)  continue
+Process 75144 resuming
+Command #2 'continue' continued the target.
+(lldb)  register read x2 x3 x4 x5 w22
+      x2 = 0x00000001546abe60
+      x3 = 0x000000016d2b6830
+      x4 = 0x0000000000000007
+      x5 = 0x0000000000000000
+     w22 = 0x44720fb0
+(lldb)  continue
+Process 75144 resuming
+Command #2 'continue' continued the target.
+(lldb)  register read x0
+      x0 = 0x000000013466e8b0
+(lldb)  continue
+Process 75144 resuming
+Command #2 'continue' continued the target.
+(lldb)  register read x24
+     x24 = 0x000000013466e8b0
+(lldb)  continue
+Process 75144 resuming
+Command #2 'continue' continued the target.
+(lldb)  register read x0 x1
+      x0 = 0x000000016d2b6830
+      x1 = 0x000000013466e8b0
+(lldb)  continue
+Process 75144 resuming
+Command #2 'continue' continued the target.
+(lldb)  register read w1 x0
+      w1 = 0x00000000
+      x0 = 0x000000016d2b6bd0
+(lldb)  continue
+Process 75144 resuming
+Command #2 'continue' continued the target.
+(lldb)  register read w1 x0
+      w1 = 0x00000000
+      x0 = 0x000000016d2b6ba8
+(lldb)  continue
+Process 75144 resuming
+Command #2 'continue' continued the target.
+(lldb)  register read w0
+      w0 = 0x00000001
+(lldb)  continue
+Process 75144 resuming
+Command #2 'continue' continued the target.
+(lldb)  register read x0 x1
+      x0 = 0x0000000000000001
+      x1 = 0x000000016d2b6c30
+(lldb)  continue
+Process 75144 resuming
+Command #2 'continue' continued the target.
+(lldb)  register read x2 x3 x4 x5 w22
+      x2 = 0x0000000134674da0
+      x3 = 0x000000016d2b67d0
+      x4 = 0x0000000000000007
+      x5 = 0x0000000000000000
+     w22 = 0x34673a30
+(lldb)  continue
+Process 75144 resuming
+Command #2 'continue' continued the target.
+(lldb)  register read x0
+      x0 = 0x00000001446062e0
+(lldb)  continue
+Process 75144 resuming
+Command #2 'continue' continued the target.
+(lldb)  register read x24
+     x24 = 0x00000001446062e0
+(lldb)  continue
+Process 75144 resuming
+Command #2 'continue' continued the target.
+(lldb)  register read x0 x1
+      x0 = 0x000000016d2b67d0
+      x1 = 0x00000001446062e0
+(lldb)  continue
+Process 75144 resuming
+Command #2 'continue' continued the target.
+(lldb)  register read w1 x0
+      w1 = 0x00000000
+      x0 = 0x000000016d2b6b70
+(lldb)  continue
+Process 75144 resuming
+Command #2 'continue' continued the target.
+(lldb)  register read w1 x0
+      w1 = 0x00000000
+      x0 = 0x000000016d2b6b48
+(lldb)  continue
+Process 75144 resuming
+Command #2 'continue' continued the target.
+(lldb)  register read w0
+      w0 = 0x00000001
+(lldb)  continue
+Process 75144 resuming
+Command #2 'continue' continued the target.

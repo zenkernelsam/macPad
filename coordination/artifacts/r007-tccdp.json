@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T04:19:53.316646+08:00",
+  "finished": "2026-10-15T04:19:53.803990+08:00",
+  "command": "cp /var/mnt/rootfs/System/Library/PrivateFrameworks/TCC.framework/Support/tccd /var/mnt/rootfs/usr/local/bin/tccd_p && /var/jb/usr/bin/ldid -Hsha256 -S/var/jb/var/mobile/tccd_full.plist /var/mnt/rootfs/usr/local/bin/tccd_p 2>&1 | head -3; for H in $(/var/jb/usr/bin/ldid -h /var/mnt/rootfs/usr/local/bin/tccd_p | grep \"^CDHash=\" | cut -d= -f2); do /var/jb/usr/bin/jbctl trustcache add $H; done; echo \"=== exec via procursus chroot (no insert yet) ===\"; timeout 6 /var/jb/usr/bin/chroot /var/mnt/rootfs /usr/local/bin/tccd_p system >/tmp/tp.log 2>&1; echo \"rc=$?\"; head -5 /tmp/tp.log",
+  "command_sha256": "b9ae68ed0ea894aef11f5ceee0694572d98d0a94b7966c1aa7ade9f36e719366",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "=== exec via procursus chroot (no insert yet) ===\nrc=133\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

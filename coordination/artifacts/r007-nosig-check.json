@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T03:35:53.361302+08:00",
+  "finished": "2026-10-15T03:35:53.810465+08:00",
+  "command": "ldid -e /var/mnt/rootfs/usr/local/bin/tccd_nosig; echo \"---\"; /var/jb/usr/bin/codesign -dv /var/mnt/rootfs/usr/local/bin/tccd_nosig 2>&1 | head -8; file /var/mnt/rootfs/usr/local/bin/tccd_nosig 2>/dev/null; otool -l /var/mnt/rootfs/usr/local/bin/tccd_nosig 2>/dev/null | grep -c CODE_SIGNATURE",
+  "command_sha256": "ec980c6f60e93dbd6847466e72f04e02a41765d0d1692134c1eee6a8778b711c",
+  "exit": 1,
+  "timeout": false,
+  "stdout": "---\nzsh:1: no such file or directory: /var/jb/usr/bin/codesign\n0\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

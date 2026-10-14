@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T02:54:49.231285+08:00",
+  "finished": "2026-10-15T02:54:49.647161+08:00",
+  "command": "/var/jb/usr/bin/python3 -c \"\nimport struct\nd=open(\\\"/var/mnt/rootfs/System/Library/PrivateFrameworks/TCC.framework/Support/tccd\\\",\\\"rb\\\").read()\nimport binascii\nmagic=struct.unpack(\\\">I\\\",d[:4])[0]\nprint(\\\"magic %08x\\\"%magic)\nif magic==0xcafebabe:\n  n=struct.unpack(\\\">I\\\",d[4:8])[0]\n  off=8\n  for i in range(n):\n    ct,cs,o,s,a=struct.unpack(\\\">IIIII\\\",d[off:off+20]); off+=20\n    m=struct.unpack(\\\"<I\\\",d[o:o+4])[0]\n    print(\\\"slice%d cputype=%08x cpusub=%08x off=%x size=%x mach=%08x\\\"%(i,ct,cs,o,s,m))\n    nc=struct.unpack(\\\"<I\\\",d[o+16:o+20])[0]; co=o+32\n    for j in range(nc):\n      cmd,sz=struct.unpack(\\\"<II\\\",d[co:co+8])\n      if cmd==0x1b:\n        u=d[co+8:co+24]; print(\\\"  UUID\\\",u.hex().upper())\n      co+=sz\n\"",
+  "command_sha256": "019454f5e8149907ec78cff074af4ab4795e9dbb14a28459a8cdbb33df1b5694",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "magic cafebabe\nslice0 cputype=01000007 cpusub=00000003 off=4000 size=a35e0 mach=feedfacf\n  UUID 63AD17DE519833338EF76B04ED50DCF7\nslice1 cputype=0100000c cpusub=80000002 off=a8000 size=9f5a0 mach=feedfacf\n  UUID 9845D17F040938848A17260C729636E5\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

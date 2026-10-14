@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T03:22:31.971160+08:00",
+  "finished": "2026-10-15T03:22:32.338377+08:00",
+  "command": "which dmesg; dmesg 2>&1 | tail -30 | grep -iE \"amfi|code|sign|tccd|kill|viol\" ; echo \"=== all dmesg tail ===\"; dmesg 2>&1 | tail -15",
+  "command_sha256": "2270058be2d43a307a19a7371d4f446ebd3d44907e844f9bef52b2c61aa35cdd",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "dmesg not found\n=== all dmesg tail ===\nzsh:1: command not found: dmesg\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

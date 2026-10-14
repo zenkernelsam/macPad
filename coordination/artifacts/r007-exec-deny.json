@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T03:13:00.893905+08:00",
+  "finished": "2026-10-15T03:13:01.476052+08:00",
+  "command": "echo \"=== full err ===\"; cat /var/jb/var/mobile/tccd-system.err; echo \"=== exec deny logs ===\"; log show --last 5m 2>/dev/null | grep -iE \"amfi|exec|tccd|launchdchrootexec|spawn\" | tail -20; echo \"=== procplatform? manual tccd verify ===\"; ps aux | grep -F \"tccd\" | grep -v grep",
+  "command_sha256": "0877912fc48a61802a5980d3bb0017bed6781bce7adf91420e47eeac1798041a",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "=== full err ===\n[launchdchrootexec] target=/System/Library/PrivateFrameworks/TCC.framework/Support/tccd arch=arm64e insert=/usr/local/lib/libmachook.dylib\nlaunchd service = com.macwsguide.tccd-system\n[launchdchrootexec] target=/System/Library/PrivateFrameworks/TCC.framework/Support/tccd arch=arm64e insert=/usr/local/lib/libmachook.dylib\nlaunchd service = com.macwsguide.tccd-system\n[launchdchrootexec] target=/System/Library/PrivateFrameworks/TCC.framework/Support/tccd arch=arm64e insert=/usr/local/lib/libmachook.dylib\nlaunchd service = com.macwsguide.tccd-system\n[launchdchrootexec] target=/System/Library/PrivateFrameworks/TCC.framework/Support/tccd arch=arm64e insert=/usr/local/lib/libmachook.dylib\nlaunchd service = com.macwsguide.tccd-system\n[launchdchrootexec] target=/System/Library/PrivateFrameworks/TCC.framework/Support/tccd arch=arm64e insert=/usr/local/lib/libmachook.dylib\nlaunchd service = com.macwsguide.tccd-system\n[launchdchrootexec] target=/System/Library/PrivateFrameworks/TCC.framework/Support/tccd arch=arm64e insert=/usr/local/lib/libmachook.dylib\nlaunchd service = com.macwsguide.tccd-system\n[launchdchrootexec] target=/System/Library/PrivateFrameworks/TCC.framework/Support/tccd arch=arm64e insert=/usr/local/lib/libmachook.dylib\nlaunchd service = com.macwsguide.tccd-min\n=== exec deny logs ===\n=== procplatform? manual tccd verify ===\nmobile         23321   0.0  0.0        0      0   ??  ?s   Mon07AM   0:00.00 /System/Library/PrivateFrameworks/TCC.framework/Support/tccd\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

@@ -15710,6 +15710,26 @@ static const char *macws_private_bootstrap_service_name(const char *name) {
     // lookup.
     if (!strcmp(name, DESKTOP_SERVICES_HELPER_ORIG))
         return DESKTOP_SERVICES_HELPER_NEW;
+    // Ventura TCC's tccd() routes root/system clients to the system-scope
+    // daemon endpoint (RE-confirmed on the exact TCC image UUID
+    // 1238D7CA-719A-36A4-94B1-2F387E6B3BF1 at tccd+0x108..+0x114: the name
+    // csel picks "com.apple.tccd.system" and create_mach_service then emits
+    // the privileged flag 0x2).  iPadOS launchd never registers
+    // com.apple.tccd.system anywhere (runtime-confirmed 2026-10-15:
+    // `launchctl print system/com.apple.tccd.system` -> "Could not find
+    // service"), while iPadOS's own tccd lives only in user/501 — outside
+    // the system-domain lookups that chroot daemons issue.  R006 live trace:
+    // both tccd_send_message connections (user then system fallback)
+    // returned _xpc_error_connection_invalid, so the preflight result kept
+    // its local default 1 and SkyLight denied every PostEvent.  Map the
+    // system-scope name to the private endpoint owned by the real Ventura
+    // tccd 'system' job; the mapped-name path also drops the privileged
+    // flag bit that iPadOS launchd rejects (established contract above).
+    // The user-scope name "com.apple.tccd" stays unmapped: iPadOS owns it
+    // in user/501 and the framework's own send loop falls back to the
+    // system connection, matching stock ordering.
+    if (!strcmp(name, "com.apple.tccd.system"))
+        return "com.apple.macosbooter.tccd.system";
     return name;
 }
 

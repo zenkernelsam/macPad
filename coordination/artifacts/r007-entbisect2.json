@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T04:16:19.333296+08:00",
+  "finished": "2026-10-15T04:16:20.061010+08:00",
+  "command": "/var/jb/usr/bin/python3 - <<PYEOF\nimport plistlib\nd=plistlib.load(open(\"/var/jb/var/mobile/tccd.ent.plist\",\"rb\"))\na={k:v for k,v in d.items() if k!=\"com.apple.private.tcc.manager\"}\nb={\"com.apple.private.tcc.manager\": d[\"com.apple.private.tcc.manager\"]}\nplistlib.dump(a,open(\"/var/jb/var/mobile/eA.plist\",\"wb\"))\nplistlib.dump(b,open(\"/var/jb/var/mobile/eB.plist\",\"wb\"))\nPYEOF\nfor v in eA eB; do cp /var/mnt/rootfs/usr/libexec/diskarbitrationd /var/mnt/rootfs/usr/local/bin/t2_$v; /var/jb/usr/bin/ldid -S/var/jb/var/mobile/$v.plist -M /var/mnt/rootfs/usr/local/bin/t2_$v; for H in $(/var/jb/usr/bin/ldid -h /var/mnt/rootfs/usr/local/bin/t2_$v | grep \"^CDHash=\" | cut -d= -f2); do /var/jb/usr/bin/jbctl trustcache add $H >/dev/null; done; timeout 5 /var/jb/usr/bin/chroot /var/mnt/rootfs /usr/local/bin/t2_$v x >/dev/null 2>&1; echo \"$v rc=$?\"; done",
+  "command_sha256": "e8e1dd2fa5f71d1479324369aba6aaa7f3d4a9e0a2bf2c58dd88e41f0d870002",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "eA rc=133\neB rc=133\n",
+  "stderr": "Traceback (most recent call last):\n  File \"<stdin>\", line 2, in <module>\n  File \"/var/jb/usr/lib/python3.9/plistlib.py\", line 875, in load\n    return p.parse(fp)\n  File \"/var/jb/usr/lib/python3.9/plistlib.py\", line 177, in parse\n    self.parser.ParseFile(fileobj)\nxml.parsers.expat.ExpatError: junk after document element: line 35, column 0\nldid: /var/jb/var/mobile/eA.plist: No such file or directory\nldid: /var/jb/var/mobile/eB.plist: No such file or directory\n",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

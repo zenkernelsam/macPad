@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T04:31:18.472826+08:00",
+  "finished": "2026-10-15T04:31:23.871402+08:00",
+  "command": "timeout 10 /var/jb/usr/macOS/bin/launchdchrootexec 0 0 /var/mnt/rootfs /System/Library/PrivateFrameworks/TCC.framework/Support/tccd system >/tmp/tcanon.log 2>&1 & P=$!; sleep 5; if kill -0 $P 2>/dev/null; then echo \"ALIVE\"; ps aux | grep \"TCC.framework\" | grep -v grep; else echo \"DEAD\"; fi; head -8 /tmp/tcanon.log; kill $P 2>/dev/null",
+  "command_sha256": "3f19e42dd99f2356a29dd2c98b9bbf81b79ae4ee5c2024153e4f5b64b1808feb",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "ALIVE\nroot           72206   0.0  0.2 408314656  27328   ??  SN    4:31AM   0:00.07 /System/Library/PrivateFrameworks/TCC.framework/Support/tccd system\nroot           72204   0.0  0.0        0      0   ??  ?N    4:31AM   0:00.00 timeout 10 /var/jb/usr/macOS/bin/launchdchrootexec 0 0 /var/mnt/rootfs /System/Library/PrivateFrameworks/TCC.framework/Support/tccd system\nmobile         23321   0.0  0.0        0      0   ??  ?s   Mon07AM   0:00.00 /System/Library/PrivateFrameworks/TCC.framework/Support/tccd\nchdir: No such file or directory\n[launchdchrootexec] target=/System/Library/PrivateFrameworks/TCC.framework/Support/tccd arch=arm64e insert=/usr/local/lib/libmachook.dylib\n#### MACWS-CTOR-CANARY InitStuff entered\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

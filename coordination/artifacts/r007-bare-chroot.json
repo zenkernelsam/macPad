@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T03:21:16.835071+08:00",
+  "finished": "2026-10-15T03:21:20.304493+08:00",
+  "command": "cd /var/jb/var/mobile; /var/jb/usr/bin/chroot /var/mnt/rootfs /System/Library/PrivateFrameworks/TCC.framework/Support/tccd system >/var/jb/var/mobile/btccd.out 2>/var/jb/var/mobile/btccd.err & BP=$!; sleep 3; ps aux | grep -F \"tccd\" | grep -v grep | grep -v 23321; echo \"--- btccd.err ---\"; cat /var/jb/var/mobile/btccd.err; kill -0 $BP 2>/dev/null && echo \"ALIVE\" || echo \"DEAD\"; kill $BP 2>/dev/null",
+  "command_sha256": "4cb4297f9837520713df2280bf1265c84248e342134236cdc3ca3d34b0054f2a",
+  "exit": 1,
+  "timeout": false,
+  "stdout": "--- btccd.err ---\nDEAD\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

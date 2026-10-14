@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T04:58:02.643788+08:00",
+  "finished": "2026-10-15T04:58:07.885224+08:00",
+  "command": "export LC_ALL=UTF-8 TMUX_TMPDIR=/var/tmp; tmux send-keys -t devin_r007 \"continue\" C-m; sleep 2; /var/jb/usr/macOS/bin/launchdchrootexec 0 0 /var/mnt/rootfs /tmp/macos_ws_event_probe postmin 2>/dev/null; echo PROBE_RC=$?; sleep 2; tmux capture-pane -t devin_r007 -p -S -150 > /tmp/r007_pane2.txt; grep -nE \"register read|w1 =|x0 =|x24 =|w0 =|Process\" /tmp/r007_pane2.txt | tail -40",
+  "command_sha256": "fab528a3c8f6ab3ae9ff025fd9070dc5ef2eb134d6c31837c76d976132b93d42",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "mode=postmin\npostmin: cid=91343 postRecord=0x8f050001a8fca788 getRecord=0x3c1d0001a90990e4\npostmin: SLSPostEventRecord -> rc=1002\nPROBE_RC=0\n127:Process 75144 resuming\n129:(lldb)  register read x0 x1\n130:      x0 = 0x000000016d2b6830\n133:Process 75144 resuming\n135:(lldb)  register read w1 x0\n136:      w1 = 0x00000000\n137:      x0 = 0x000000016d2b6bd0\n139:Process 75144 resuming\n141:(lldb)  register read w1 x0\n142:      w1 = 0x00000000\n143:      x0 = 0x000000016d2b6ba8\n145:Process 75144 resuming\n147:(lldb)  register read w0\n148:      w0 = 0x00000001\n150:Process 75144 resuming\n152:(lldb)  register read x0 x1\n153:      x0 = 0x0000000000000001\n156:Process 75144 resuming\n158:(lldb)  register read x2 x3 x4 x5 w22\n165:Process 75144 resuming\n167:(lldb)  register read x0\n168:      x0 = 0x00000001446062e0\n170:Process 75144 resuming\n172:(lldb)  register read x24\n173:     x24 = 0x00000001446062e0\n175:Process 75144 resuming\n177:(lldb)  register read x0 x1\n178:      x0 = 0x000000016d2b67d0\n181:Process 75144 resuming\n183:(lldb)  register read w1 x0\n184:      w1 = 0x00000000\n185:      x0 = 0x000000016d2b6b70\n187:Process 75144 resuming\n189:(lldb)  register read w1 x0\n190:      w1 = 0x00000000\n191:      x0 = 0x000000016d2b6b48\n193:Process 75144 resuming\n195:(lldb)  register read w0\n196:      w0 = 0x00000001\n198:Process 75144 resuming\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

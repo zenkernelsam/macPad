@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T04:23:09.542141+08:00",
+  "finished": "2026-10-15T04:23:10.124998+08:00",
+  "command": "/var/jb/usr/bin/python3 - <<PYEOF\nimport plistlib\nraw=open(\"/var/jb/var/mobile/tccd.ent.plist\",\"rb\").read()\nd=plistlib.loads(raw[:raw.find(b\"</plist>\")+8])\nd[\"com.apple.private.security.no-sandbox\"]=True\nd[\"platform-application\"]=True\nplistlib.dump(d,open(\"/var/jb/var/mobile/tccd_full.plist\",\"wb\"))\nPYEOF\n/var/jb/usr/bin/ldid -Hsha256 -S/var/jb/var/mobile/tccd_full.plist /var/mnt/rootfs/usr/local/bin/tccd_p && for H in $(/var/jb/usr/bin/ldid -h /var/mnt/rootfs/usr/local/bin/tccd_p | grep \"^CDHash=\" | cut -d= -f2); do /var/jb/usr/bin/jbctl trustcache add $H >/dev/null; done; timeout 8 /var/jb/usr/bin/chroot /var/mnt/rootfs /usr/local/bin/tccd_p system >/tmp/tp3.log 2>&1; echo \"rc=$?\"; head -8 /tmp/tp3.log",
+  "command_sha256": "75eca2654226175d928c2504107be30679d0e7c2e3ffdf386e66800f62057ea6",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "rc=134\ndyld[71727]: Library not loaded: /usr/local/lib/libmachook.dylib\n  Referenced from: <9845D17F-0409-3884-8A17-260C729636E5> /usr/local/bin/tccd_p\n  Reason: tried: '/usr/local/lib/libmachook.dylib' (file system sandbox blocked mmap() of '/usr/local/lib/libmachook.dylib'), '/System/Volumes/Preboot/Cryptexes/OS/usr/local/lib/libmachook.dylib' (no such file), '/usr/local/lib/libmachook.dylib' (file system sandbox blocked mmap() of '/usr/local/lib/libmachook.dylib'), '/usr/lib/libmachook.dylib' (no such file, not in dyld cache)\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T04:35:30.510563+08:00",
+  "finished": "2026-10-15T04:36:40.988989+08:00",
+  "command": "bash /var/jb/usr/macOS/bin/macos_gui.sh start coexist --no-terminal > /tmp/guistart.log 2>&1; echo \"GUI_RC=$?\"; grep -nE \"tccd|ERROR|error|fail\" /tmp/guistart.log | head -20; echo \"=== tail ===\"; tail -15 /tmp/guistart.log",
+  "command_sha256": "4e85420b1c979d4099548ca8313d0cc65e0197935bd49cef3363fc5f0b6a731c",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "GUI_RC=0\n41:[macos_gui] Starting macOS system tccd (private endpoint)...\n42:[macos_gui] macOS system tccd endpoint ready (pid=73029).\n118:73029\t0\tcom.macwsguide.tccd-system\n122:72383\t-9\tcom.macwsguide.tccd-min\n=== tail ===\n73521\t0\tUIKitApplication:com.macwsguide.interop\n73562\t0\tcom.macwsguide.systemuiserver\n73047\t0\tcom.apple.coreservices.launchservicesd\n73187\t0\tUIKitApplication:com.macwsguide.windowserver\n72764\t0\tcom.macwsguide.cfprefsd-mobile-agent\n73179\t0\tUIKitApplication:com.macwsguide.input\n73533\t0\tcom.macwsguide.corelocationagent\n72877\t0\tcom.macwsguide.iconservicesagent\n73502\t0\tUIKitApplication:com.macwsguide.display\n72906\t0\tcom.macwsguide.csnameddatad\n72735\t0\tcom.apple.systemstatusd\n\nVNC: running -> connect with  vnc://<device-ip>:5900   (no password)\n\nlogs: /var/jb/var/mobile/osxvnc.log  /var/jb/var/mobile/terminal.log  /var/jb/var/mobile/lsd-system.log  /var/jb/var/mobile/lsd-session.log  /var/jb/var/mobile/dock.log  /var/jb/var/mobile/systemuiserver.log  /var/jb/var/mobile/controlcenter.log  /var/jb/var/mobile/WindowServer.err\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

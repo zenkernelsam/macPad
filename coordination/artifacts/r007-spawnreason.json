@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T04:05:45.615698+08:00",
+  "finished": "2026-10-15T04:05:46.132046+08:00",
+  "command": "/var/jb/usr/bin/jbctl trustcache add b8944be3d2b9b031f17dc4152984f25a677c6ccd && for b in /bin/echo /usr/libexec/diskarbitrationd /System/Library/PrivateFrameworks/TCC.framework/Support/tccd /usr/libexec/nehelper /usr/libexec/configd /usr/local/bin/mysvcx; do printf \"%-70s \" \"$b\"; /var/jb/usr/bin/spawnreason /var/mnt/rootfs \"$b\" hi 2>&1 | tail -1; done",
+  "command_sha256": "4126bca5045116bf0f7639947517dbe8b731e99f2291a8fb557db5a4f4ffbc38",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "/bin/echo                                                              child=70307 si_code=1 si_status=0 waitst=0x0 reason_ns=0 reason_code=0 flags=0x0\n/usr/libexec/diskarbitrationd                                          child=70311 si_code=2 si_status=5 waitst=0x5 reason_ns=0 reason_code=0 flags=0x0\n/System/Library/PrivateFrameworks/TCC.framework/Support/tccd           child=70314 si_code=2 si_status=9 waitst=0x9 reason_ns=0 reason_code=0 flags=0x0\n/usr/libexec/nehelper                                                  child=70317 si_code=2 si_status=9 waitst=0x9 reason_ns=0 reason_code=0 flags=0x0\n/usr/libexec/configd                                                   child=70320 si_code=2 si_status=9 waitst=0x9 reason_ns=0 reason_code=0 flags=0x0\n/usr/local/bin/mysvcx                                                  child=70323 si_code=2 si_status=9 waitst=0x9 reason_ns=0 reason_code=0 flags=0x0\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

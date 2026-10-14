@@ -24474,6 +24474,17 @@ static const char *macws_private_chroot_service_name(const char *name) {
         return "com.apple.macosbooter.extensionkitservice";
     if (!strcmp(name, "com.apple.hiservices-xpcservice"))
         return "com.apple.macosbooter.hiservices-xpcservice";
+    // Ventura TCC's tccd() routes root/system clients to the system-scope
+    // daemon endpoint (RE-confirmed on TCC image UUID
+    // 1238D7CA-719A-36A4-94B1-2F387E6B3BF1).  iPadOS launchd never registers
+    // com.apple.tccd.system; iPadOS's own tccd lives only in user/501.
+    // Map only the system-scope name to the private endpoint owned by the
+    // real Ventura tccd 'system' job — the user-scope name "com.apple.tccd"
+    // stays unmapped so iPadOS keeps its native user daemon and the
+    // framework's stock user->system send fallback is preserved.  See the
+    // identical entry in macws_private_bootstrap_service_name().
+    if (!strcmp(name, "com.apple.tccd.system"))
+        return "com.apple.macosbooter.tccd.system";
     return name;
 }
 

@@ -1,0 +1,26 @@
+{
+  "heartbeat_time": "2026-10-14T21:03:21.165Z",
+  "redaction": "Device address and SSH password removed before saving when present.",
+  "session_id": "EE473D24-793C-48E3-B8A9-2298BB40327F",
+  "name": "devin: macPad移植 (devin)",
+  "tty": "/dev/ttys001",
+  "commandLine": "devin acp",
+  "processes": [
+    {
+      "pid": 86525,
+      "ppid": 672,
+      "cwd": "/Users/ciscohe/Desktop/macPad",
+      "acp": false
+    },
+    {
+      "pid": 90827,
+      "ppid": 86525,
+      "cwd": "/Users/ciscohe/Desktop/macPad",
+      "acp": true
+    }
+  ],
+  "agent_pid": 90827,
+  "binding_verified": true,
+  "handover_ready": false,
+  "screen": " │      return name;\n │  }\n │ =====METAL=====\n │ diff --git a/libmachook/Metal_hooks.x b/libmachook/Metal_hooks.x\n │ index 3c8fb62..01c843f 100644\n │ --- a/libmachook/Metal_hooks.x\n │ +++ b/libmachook/Metal_hooks.x\n │ @@ -24474,6 +24474,17 @@ static const char *macws_private_chroot_service_name(const char *name) {\n │          return \"com.apple.macosbooter.extensionkitservice\";\n │      if (!strcmp(name, \"com.apple.hiservices-xpcservice\"))\n │          return \"com.apple.macosbooter.hiservices-xpcservice\";\n │ +    // Ventura TCC's tccd() routes root/system clients to the system-scope\n │ +    // daemon endpoint (RE-confirmed on TCC image UUID\n │ +    // 1238D7CA-719A-36A4-94B1-2F387E6B3BF1).  iPadOS launchd never registers\n │ +    // com.apple.tccd.system; iPadOS's own tccd lives only in user/501.\n │ +    // Map only the system-scope name to the private endpoint owned by the\n │ +    // real Ventura tccd 'system' job — the user-scope name \"com.apple.tccd\"\n │ +    // stays unmapped so iPadOS keeps its native user daemon and the\n │ +    // framework's stock user->system send fallback is preserved.  See the\n │ +    // identical entry in macws_private_bootstrap_service_name().\n │ +    if (!strcmp(name, \"com.apple.tccd.system\"))\n │ +        return \"com.apple.macosbooter.tccd.system\";\n │      return name;\n │  }\n └ Exited with code 0\n\n ○ Running command\n\u0000│\u0000$\u0000cd\u0000~/Desktop/macPad\u0000&&\u0000git\u0000diff\u0000layout/usr/macOS/bin/m\n\n⠒⠂ Running tools · 142m 14s (esc twice to interrupt)\n──────────────────────────────────────────────────────────────────────────\u0000(bypass permissions on)\u0000─\n❭ Guide Devin while it works\n────────────────────────────────────────────────────────────────────────────────────────────────────\nSWE-2 Max         \u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000Context: 135k / 262k tokens (51%)\n1 shell · ↓ select"
+}

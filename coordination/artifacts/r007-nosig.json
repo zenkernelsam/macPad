@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T03:35:43.848913+08:00",
+  "finished": "2026-10-15T03:35:46.458565+08:00",
+  "command": "cd /var/jb/var/mobile; cp /var/mnt/rootfs/System/Library/PrivateFrameworks/TCC.framework/Support/tccd /var/mnt/rootfs/usr/local/bin/tccd_nosig 2>/dev/null; ldid -S /var/mnt/rootfs/usr/local/bin/tccd_nosig 2>&1; echo \"SIGN_RC=$?\"; ldid -e /var/mnt/rootfs/usr/local/bin/tccd_nosig 2>&1 | head -5; jbctl trustcache add /var/mnt/rootfs/usr/local/bin/tccd_nosig 2>&1 | tail -2; /var/jb/usr/bin/chroot /var/mnt/rootfs /usr/local/bin/tccd_nosig system 2>/dev/null & P=$!; sleep 2; kill -0 $P 2>/dev/null && echo \"NOSIG ALIVE\" || echo \"NOSIG DEAD\"; kill $P 2>/dev/null",
+  "command_sha256": "b65ef54db2ee32c28cffb7c05e94748bd2a6be1343fdac1b4109d8ee6b6f3e32",
+  "exit": 1,
+  "timeout": false,
+  "stdout": "SIGN_RC=0\nERROR: passed cdhash is malformed\nNOSIG DEAD\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T04:26:35.159725+08:00",
+  "finished": "2026-10-15T04:26:39.789122+08:00",
+  "command": "/var/jb/usr/bin/python3 - <<PYEOF\nimport struct\nd=open(\"/var/mnt/rootfs/System/Library/PrivateFrameworks/TCC.framework/Support/tccd\",\"rb\").read()\nn=struct.unpack(\">I\",d[4:8])[0]; off=8\nfor i in range(n):\n    ct,cs,o,sz,a=struct.unpack(\">IIIII\",d[off:off+20]); off+=20\n    if cs==3:  # arm64 subtype 3\n        open(\"/var/mnt/rootfs/usr/local/bin/tccd_a\",\"wb\").write(d[o:o+sz])\n        print(\"wrote arm64 slice\",sz)\nPYEOF\nchmod 755 /var/mnt/rootfs/usr/local/bin/tccd_a; /var/jb/usr/bin/ldid -Hsha256 -S/var/jb/var/mobile/tccd_full.plist /var/mnt/rootfs/usr/local/bin/tccd_a && for H in $(/var/jb/usr/bin/ldid -h /var/mnt/rootfs/usr/local/bin/tccd_a | grep \"^CDHash=\" | cut -d= -f2); do /var/jb/usr/bin/jbctl trustcache add $H >/dev/null; done; timeout 8 /var/jb/usr/bin/chroot /var/mnt/rootfs /usr/local/bin/tccd_a system >/tmp/ta.log 2>&1 & P=$!; sleep 4; kill -0 $P 2>/dev/null && echo \"ALIVE\" || echo \"done\"; ps aux | grep tccd_a | grep -v grep; wait; echo \"rc=$?\"; head -15 /tmp/ta.log",
+  "command_sha256": "7b6f39cf5b3c7d629de766f595be2d40bf78afdc5923c0fee366283cefb86723",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "wrote arm64 slice 669152\ndone\nrc=0\nchroot: failed to run command ‘/usr/local/bin/tccd_a’: Bad CPU type in executable\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

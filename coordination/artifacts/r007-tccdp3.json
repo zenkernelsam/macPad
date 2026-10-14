@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T04:21:46.036549+08:00",
+  "finished": "2026-10-15T04:21:46.552942+08:00",
+  "command": "/var/jb/usr/bin/python3 /var/jb/var/mobile/add_macho_load_dylib.py /var/mnt/rootfs/usr/local/bin/tccd_p /usr/local/lib/libmachook.dylib && /var/jb/usr/bin/ldid -Hsha256 -S/var/jb/var/mobile/tccd_full.plist /var/mnt/rootfs/usr/local/bin/tccd_p && for H in $(/var/jb/usr/bin/ldid -h /var/mnt/rootfs/usr/local/bin/tccd_p | grep \"^CDHash=\" | cut -d= -f2); do /var/jb/usr/bin/jbctl trustcache add $H >/dev/null; done; timeout 8 /var/jb/usr/bin/chroot /var/mnt/rootfs /usr/local/bin/tccd_p system >/tmp/tp2.log 2>&1; echo \"rc=$?\"; head -15 /tmp/tp2.log; ps aux | grep tccd_p | grep -v grep",
+  "command_sha256": "f482b6d01b6a22156c7345dd4b0a139e5d256b6add9db5981c545565c7f64803",
+  "exit": 1,
+  "timeout": false,
+  "stdout": "/var/mnt/rootfs/usr/local/bin/tccd_p: ARM64 slices=1 modified=1 dylib=/usr/local/lib/libmachook.dylib\nrc=134\ndyld[71643]: Library not loaded: /usr/local/lib/libmachook.dylib\n  Referenced from: <9845D17F-0409-3884-8A17-260C729636E5> /usr/local/bin/tccd_p\n  Reason: tried: '/usr/local/lib/libmachook.dylib' (file system sandbox blocked mmap() of '/usr/local/lib/libmachook.dylib'), '/System/Volumes/Preboot/Cryptexes/OS/usr/local/lib/libmachook.dylib' (no such file), '/usr/local/lib/libmachook.dylib' (file system sandbox blocked mmap() of '/usr/local/lib/libmachook.dylib'), '/usr/lib/libmachook.dylib' (no such file, not in dyld cache)\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

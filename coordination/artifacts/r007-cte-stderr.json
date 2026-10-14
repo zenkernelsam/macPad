@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T03:33:07.723236+08:00",
+  "finished": "2026-10-15T03:33:08.197518+08:00",
+  "command": "cd /var/jb/var/mobile; for b in /usr/libexec/diskarbitrationd /usr/sbin/notifyd /bin/echo; do echo \"=== $b ===\"; ./chroot_then_exec /var/mnt/rootfs $b 2>&1 | tail -3; done",
+  "command_sha256": "5af6e1aff816e79ec8750e28b302965cd44bb6cd59aea9620e39234cdefcbf6c",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "=== /usr/libexec/diskarbitrationd ===\nchrooted to /var/mnt/rootfs, exec'ing /usr/libexec/diskarbitrationd\nexecl: Operation not permitted\n=== /usr/sbin/notifyd ===\nchrooted to /var/mnt/rootfs, exec'ing /usr/sbin/notifyd\nexecl: Operation not permitted\n=== /bin/echo ===\nchrooted to /var/mnt/rootfs, exec'ing /bin/echo\nexecl: Operation not permitted\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

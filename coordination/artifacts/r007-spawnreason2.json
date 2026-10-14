@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T04:06:54.816122+08:00",
+  "finished": "2026-10-15T04:06:55.374576+08:00",
+  "command": "/var/jb/usr/bin/jbctl trustcache add fa5d5eff6cd95042222bfc4c87d0f6a2f4680794 && for b in /bin/echo /usr/libexec/diskarbitrationd /System/Library/PrivateFrameworks/TCC.framework/Support/tccd /usr/libexec/nehelper /usr/libexec/configd /usr/local/bin/mysvcx /System/Library/CoreServices/loginwindow.app/Contents/MacOS/loginwindow; do printf \"%-72s \" \"$b\"; /var/jb/usr/bin/spawnreason2 /var/mnt/rootfs \"$b\" hi 2>&1 | tail -1; done",
+  "command_sha256": "934e87732acd101552fc209a35377ae6b3b3cd7841341735f89a56a9b7da4527",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "/bin/echo                                                                child=70381 si_code=1 si_status=0 waitst=0x0 | pinfo_rc=0 err=2 ns=2863311530 code=12297829382473034410 flags=0xaaaaaaaaaaaaaaaa\n/usr/libexec/diskarbitrationd                                            child=70385 si_code=2 si_status=5 waitst=0x5 | pinfo_rc=24 err=0 ns=2 code=5 flags=0x0\n/System/Library/PrivateFrameworks/TCC.framework/Support/tccd             child=70388 si_code=2 si_status=9 waitst=0x9 | pinfo_rc=0 err=2 ns=2863311530 code=12297829382473034410 flags=0xaaaaaaaaaaaaaaaa\n/usr/libexec/nehelper                                                    child=70391 si_code=2 si_status=9 waitst=0x9 | pinfo_rc=0 err=2 ns=2863311530 code=12297829382473034410 flags=0xaaaaaaaaaaaaaaaa\n/usr/libexec/configd                                                     child=70394 si_code=2 si_status=9 waitst=0x9 | pinfo_rc=0 err=2 ns=2863311530 code=12297829382473034410 flags=0xaaaaaaaaaaaaaaaa\n/usr/local/bin/mysvcx                                                    child=70397 si_code=2 si_status=9 waitst=0x9 | pinfo_rc=0 err=2 ns=2863311530 code=12297829382473034410 flags=0xaaaaaaaaaaaaaaaa\n/System/Library/CoreServices/loginwindow.app/Contents/MacOS/loginwindow  child=70400 si_code=2 si_status=9 waitst=0x9 | pinfo_rc=0 err=2 ns=2863311530 code=12297829382473034410 flags=0xaaaaaaaaaaaaaaaa\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

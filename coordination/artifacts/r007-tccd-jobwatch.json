@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T03:07:54.692214+08:00",
+  "finished": "2026-10-15T03:07:59.280792+08:00",
+  "command": "launchctl load /var/jb/usr/macOS/LaunchDaemons/com.macwsguide.tccd-system.plist; echo LOAD=$?; sleep 1; launchctl print system/com.macwsguide.tccd-system 2>&1 | grep -E \"state|pid|exit|runs|reason\" | head -8; sleep 3; echo \"---3s---\"; launchctl print system/com.macwsguide.tccd-system 2>&1 | grep -E \"state|pid|exit|runs|reason|endpoints|macosbooter\" | head -12; ps aux | grep -F \"tccd system\" | grep -v grep",
+  "command_sha256": "eba898b9a21570d92f1ac8a2b54e033e102d237b6e32d5e60cf45761def53702",
+  "exit": 1,
+  "timeout": false,
+  "stdout": "LOAD=0\n\tstate = not running\n\texit timeout = 3\n\truns = 1\n\tlast exit reason = OS_REASON_EXEC\n\tproperties = runatload | supports transactions | supports pressured exit | inferred program | exponential throttling | needs proxy\n---3s---\n\tstate = not running\n\texit timeout = 3\n\truns = 1\n\tlast exit reason = OS_REASON_EXEC\n\tendpoints = {\n\t\t\"com.apple.macosbooter.tccd.system\" = {\n\tproperties = runatload | supports transactions | supports pressured exit | inferred program | exponential throttling | needs proxy\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

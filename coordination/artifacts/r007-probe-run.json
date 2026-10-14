@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T02:46:06.196328+08:00",
+  "finished": "2026-10-15T02:46:06.618417+08:00",
+  "command": "/var/jb/usr/bin/chroot /var/mnt/rootfs /usr/local/bin/macos_ws_event_probe postmin 2>&1; echo RC=$?; /var/jb/usr/bin/chroot /var/mnt/rootfs /usr/local/bin/macos_ws_event_probe inventory 2>&1 | head -5; echo INV_RC=$?",
+  "command_sha256": "10e598c0aa2a7bead3878e0d0fa8f44f3a944f5248ca6bb882d988a8fb480ca6",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "RC=133\nINV_RC=0\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

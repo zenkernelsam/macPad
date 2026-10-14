@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T03:24:23.752753+08:00",
+  "finished": "2026-10-15T03:24:24.482094+08:00",
+  "command": "cd /var/jb/var/mobile && ldid -Srun_nocskill.entitlements.plist run_dbg 2>&1; ldid -e run_dbg 2>&1 | head -8; chmod 755 run_dbg; CDH=$(jbctl trustcache info 2>/dev/null | wc -l); jbctl trustcache add /var/jb/var/mobile/run_dbg 2>&1 | tail -3; echo \"--- run tccd via run_dbg (CS_DEBUGGED admits, exc port catches death) ---\"; ./run_dbg /var/jb/usr/bin/chroot /var/mnt/rootfs /System/Library/PrivateFrameworks/TCC.framework/Support/tccd system 2>&1 | tail -30",
+  "command_sha256": "c9b665f37ad3e6d45936eeab70cae2a20062e0245f0ee7fff7ba81fe48293b79",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n<plist version=\"1.0\">\n<dict>\n\t<key>task_for_pid-allow</key>\n\t<true/>\n\t<key>get-task-allow</key>\n\t<true/>\nERROR: passed cdhash has wrong length\n--- run tccd via run_dbg (CS_DEBUGGED admits, exc port catches death) ---\n[*] spawned pid=68142 (suspended)\nSuccessfully marked proc of pid 68142 as debugged\n[*] jbctl rc=0\n[*] task_for_pid kr=0 port=3075\n[*] task_resume kr=0\n[*] child SIGNALED 9\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

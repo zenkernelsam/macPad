@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T04:01:36.515664+08:00",
+  "finished": "2026-10-15T04:01:37.042031+08:00",
+  "command": "for b in /usr/libexec/diskarbitrationd /usr/sbin/notifyd /usr/local/bin/mysvcx /usr/local/bin/tccd_noent /usr/local/bin/dax /usr/libexec/nehelper /System/Library/CoreServices/loginwindow.app/Contents/MacOS/loginwindow /usr/libexec/configd /usr/libexec/symptomsd /usr/libexec/amfid /bin/echo; do printf \"%-72s \" \"$b\"; /var/jb/usr/bin/execreason /var/mnt/rootfs \"$b\" x; done",
+  "command_sha256": "c1775e9e21b262340da1b1dbd5395017fb722c76cea4f3559df1b1b5b8e5468e",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "/usr/libexec/diskarbitrationd                                            child=70068 si_code=1 si_status=1 reason_ns=0 reason_code=0 flags=0x0\n/usr/sbin/notifyd                                                        child=70070 si_code=1 si_status=1 reason_ns=0 reason_code=0 flags=0x0\n/usr/local/bin/mysvcx                                                    child=70072 si_code=1 si_status=1 reason_ns=0 reason_code=0 flags=0x0\n/usr/local/bin/tccd_noent                                                child=70074 si_code=1 si_status=1 reason_ns=0 reason_code=0 flags=0x0\n/usr/local/bin/dax                                                       child=70076 si_code=1 si_status=1 reason_ns=0 reason_code=0 flags=0x0\n/usr/libexec/nehelper                                                    child=70078 si_code=1 si_status=1 reason_ns=0 reason_code=0 flags=0x0\n/System/Library/CoreServices/loginwindow.app/Contents/MacOS/loginwindow  child=70080 si_code=1 si_status=1 reason_ns=0 reason_code=0 flags=0x0\n/usr/libexec/configd                                                     child=70082 si_code=1 si_status=1 reason_ns=0 reason_code=0 flags=0x0\n/usr/libexec/symptomsd                                                   child=70084 si_code=1 si_status=1 reason_ns=0 reason_code=0 flags=0x0\n/usr/libexec/amfid                                                       child=70086 si_code=1 si_status=1 reason_ns=0 reason_code=0 flags=0x0\n/bin/echo                                                                child=70087 si_code=1 si_status=1 reason_ns=0 reason_code=0 flags=0x0\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

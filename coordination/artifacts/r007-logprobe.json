@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T03:27:40.684650+08:00",
+  "finished": "2026-10-15T03:27:41.158176+08:00",
+  "command": "log show --last 60s 2>&1 | wc -l; log show --last 60s 2>/dev/null | tail -8; echo \"=== sandbox-exec/ktrace avail? ===\"; ls /var/jb/usr/bin/ | grep -iE \"ktrace|kdebug|fs_usage|sandbox\"",
+  "command_sha256": "3bc341f490dffcd2d5e277b70fd6c1318930fdcae69214528fc343a52adb8c34",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "1\n=== sandbox-exec/ktrace avail? ===\nfs_usage\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T03:23:24.262989+08:00",
+  "finished": "2026-10-15T03:23:27.845497+08:00",
+  "command": "ls -la /var/mnt/rootfs/System/Library/PrivateFrameworks/TCC.framework/Support/tccd; echo \"=== bare-chroot diskarbitrationd (control) ===\"; /var/jb/usr/bin/chroot /var/mnt/rootfs /usr/libexec/diskarbitrationd 2>/var/jb/var/mobile/bda.err & BP=$!; sleep 3; ps aux | grep -F diskarbitrationd | grep -v grep | head -3; kill -0 $BP 2>/dev/null && echo \"ALIVE\" || echo \"DEAD\"; cat /var/jb/var/mobile/bda.err; kill $BP 2>/dev/null",
+  "command_sha256": "e281e99d0eca32277988b1e8b4d687a08e1fc714cfc6e26ef39870d39e861fd8",
+  "exit": 1,
+  "timeout": false,
+  "stdout": "-rwxr-xr-x 1 root wheel 1340832 Jun 15  2023 /var/mnt/rootfs/System/Library/PrivateFrameworks/TCC.framework/Support/tccd\n=== bare-chroot diskarbitrationd (control) ===\nroot           67454   0.0  0.1 408339184  23728   ??  Ss    3:14AM   0:01.38 /usr/libexec/diskarbitrationd\nDEAD\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

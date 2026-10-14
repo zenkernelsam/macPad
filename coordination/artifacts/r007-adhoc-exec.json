@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T03:45:14.349194+08:00",
+  "finished": "2026-10-15T03:45:17.758467+08:00",
+  "command": "jbctl trustcache add 44392baedeeb80b8ad9e2ca44d398ab43405405e; echo \"TC1=$?\"; jbctl trustcache add 859bd839ca3ad8dc7ebb9d4848371ccba9357077; echo \"TC2=$?\"; /var/jb/usr/bin/chroot /var/mnt/rootfs /usr/local/bin/tccd_adhoc system >/dev/null 2>&1 & P=$!; sleep 3; kill -0 $P 2>/dev/null && echo \"ADHOC TCCD ALIVE pid=$P\" || echo \"ADHOC TCCD DEAD\"; ps aux | grep tccd_adhoc | grep -v grep",
+  "command_sha256": "86038a1c4965e6f9d5489e8c7d46ffd200ec0e560ffab7ed84e015c1b5069749",
+  "exit": 1,
+  "timeout": false,
+  "stdout": "TC1=0\nTC2=0\nADHOC TCCD DEAD\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

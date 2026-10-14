@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T02:54:24.370357+08:00",
+  "finished": "2026-10-15T02:54:25.094025+08:00",
+  "command": "ls /var/mnt/rootfs/usr/bin/python3 /var/mnt/rootfs/usr/local/bin/python3 /var/jb/usr/macOS/bin/python3* 2>/dev/null; /var/jb/usr/bin/chroot /var/mnt/rootfs /usr/bin/env python3 -c \"print(1)\" 2>&1 | tail -2",
+  "command_sha256": "228db5e99e9e963f0a0d59905b31286b56314328362a288158a1616d7fb26fb5",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "Use `xcode-select --install` to install the standalone command line developer tools, or visit http://adc.apple.com to download Xcode or the standalone command line tools installation package.\nSee `man xcode-select` for more details.\n",
+  "stderr": "zsh:1: no matches found: /var/jb/usr/macOS/bin/python3*\n",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

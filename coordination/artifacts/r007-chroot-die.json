@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T03:25:34.716961+08:00",
+  "finished": "2026-10-15T03:25:35.235258+08:00",
+  "command": "find /private/var/mobile/Library/Logs/CrashReporter /Library/Logs/DiagnosticReports /var/jb/var/mobile/Library/Logs/CrashReporter -iname \"*tccd*\" -o -iname \"*dyld*\" 2>/dev/null | head; echo \"=== retry chroot exec w/ full stderr ===\"; /var/jb/usr/bin/chroot /var/mnt/rootfs /System/Library/PrivateFrameworks/TCC.framework/Support/tccd system; echo \"CHROOT_RC=$?\"; echo \"=== try exec via run_dbg for exc-port capture (chroot util path) ===\"; cd /var/jb/var/mobile && ./run_dbg /var/jb/usr/bin/chroot /var/mnt/rootfs /System/Library/PrivateFrameworks/TCC.framework/Support/tccd system 2>&1 | tail -15",
+  "command_sha256": "a4fb6d974a230f69b74c5b9bd14cf661f5fedb835ca6bdf697215518545a48a9",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "/private/var/mobile/Library/Logs/CrashReporter/tccd_local-2026-10-15-032454.ips\n=== retry chroot exec w/ full stderr ===\nCHROOT_RC=137\n=== try exec via run_dbg for exc-port capture (chroot util path) ===\n[*] spawned pid=68208 (suspended)\nSuccessfully marked proc of pid 68208 as debugged\n[*] jbctl rc=0\n[*] task_for_pid kr=0 port=2819\n[*] task_resume kr=0\n[*] child SIGNALED 9\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

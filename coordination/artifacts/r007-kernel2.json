@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T03:27:32.008393+08:00",
+  "finished": "2026-10-15T03:27:33.705300+08:00",
+  "command": "TS=$(date +%s); /var/jb/usr/bin/chroot /var/mnt/rootfs /System/Library/PrivateFrameworks/TCC.framework/Support/tccd system 2>/dev/null; sleep 1; log show --last 60s --predicate \"process == \\\"kernel\\\"\" 2>/dev/null | tail -30",
+  "command_sha256": "6eec6171c626a345cf04da3b2e64da3b194d304b9ea036ea55bcf5ea24ac5354",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

@@ -1,6 +1,31 @@
 # DEVIN_STATUS — current delivery
 
-State: **R006 live TCC-producer trace delivered** (2026-10-15): the raw
+State: **R007 real system-tccd chain restored** (2026-10-15): the
+authentic Ventura `tccd system` now serves project endpoint
+`com.apple.macosbooter.tccd.system` and WindowServer's preflight
+completes a **real XPC round-trip** — `xpc_connection_send_message_with_reply_sync`
+returns genuine `OS_xpc_dictionary` replies, never an error singleton
+(live lldb, WS 75144: 3/3 non-error fall-throughs, 0 interrupted,
+0 connection_invalid).  The daemon's answer is `result=false` — a real
+TCC policy denial for the adhoc probe's identity — so `SLSPostEventRecord`
+still returns 1002, but now produced by the daemon's actual evaluation,
+not the transport-failure default.  Endpoint/domain verified unfiltered:
+`com.apple.tccd.system` absent from iPadOS system domain; iOS `tccd`
+only `user/501` and untouched.  Required mid-flight fix: the private-name
+translation had to be added to BOTH lookup tables —
+`macws_private_bootstrap_service_name` (mac_hooks.m) **and**
+`macws_private_chroot_service_name` (Metal_hooks.x, the XPC path actually
+used); only the system-scope name maps.  Daemon admission recipe: stock
+tccd re-signed `ldid -S$ENT -M` (original 24 TCC entitlements merged into
+the 252-key closure), per-slice CDHash into trustcache, launched via
+`launchdchrootexec`; `misc/set_macos_version.py` on the fat dylib before
+thinning is a required deploy step (iOS-platform slice = `/bin/echo`
+breaks).  Evidence: `docs/evidence/r007-system-tccd-20261015.md`,
+artifacts `coordination/artifacts/r007-*.json`.  Open: which daemon-side
+check yields `result=false` for PostEvent (responsible-pid binding vs
+grant lookup) — next round, daemon-side.
+
+Prior state: **R006 live TCC-producer trace delivered** (2026-10-15): the raw
 `1` is now proven to be a **transport-failure artifact**, not a daemon
 policy reply.  Inside WindowServer (pid 61460, single coexist
 generation) every `xpc_connection_send_message_with_reply_sync` to

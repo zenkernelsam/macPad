@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T03:07:12.396152+08:00",
+  "finished": "2026-10-15T03:07:13.148491+08:00",
+  "command": "launchctl print system/com.macwsguide.tccd-system 2>&1 | head -40; ls -lat /var/jb/var/mobile/*.err /var/jb/var/mobile/*.out 2>/dev/null | head -8; find /var/jb/var/mobile/Library/Logs /private/var/mobile/Library/Logs /Library/Logs -name \"*tccd*\" -o -name \"*.ips\" -newermt \"10 minutes ago\" 2>/dev/null | head -10",
+  "command_sha256": "bdc3446bdb3f544c711aaffee0dd84a490c345b2e8b8cf311a2d7f456890b529",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "Could not find service \"com.macwsguide.tccd-system\" in domain for system\n-rw-r--r-- 1 root mobile      184 Oct 15 03:06 /var/jb/var/mobile/tccd-system.err\n-rw-r--r-- 1 root mobile        0 Oct 15 03:06 /var/jb/var/mobile/tccd-system.out\n-rw-r--r-- 1 root mobile      764 Oct 15 03:06 /var/jb/var/mobile/systemstatusd.err\n-rw-r--r-- 1 root mobile        0 Oct 15 03:06 /var/jb/var/mobile/systemstatusd.out\n-rw-r--r-- 1 root mobile    11253 Oct 15 02:54 /var/jb/var/mobile/autosignd.out\n-rw-r--r-- 1 root mobile 73331462 Oct 15 02:01 /var/jb/var/mobile/WindowServer.err\n-rw-r--r-- 1 root mobile  6363791 Oct 15 02:01 /var/jb/var/mobile/macwsinputd.err\n-rw-r--r-- 1 root mobile   380307 Oct 15 02:00 /var/jb/var/mobile/macwsinteropd.err\n/private/var/mobile/Library/Logs/CrashReporter/ExcUserFault_com.apple.quicklook.ThumbnailsAgent-2026-10-15-030636.0007.ips\n/private/var/mobile/Library/Logs/CrashReporter/ExcUserFault_lsd-2026-10-15-030636.0003.ips\n/private/var/mobile/Library/Logs/CrashReporter/ExcUserFault_lsregister-2026-10-15-030644.ips\n/private/var/mobile/Library/Logs/CrashReporter/ExcUserFault_coreservicesd-2026-10-15-030635.000.ips\n/private/var/mobile/Library/Logs/CrashReporter/ExcUserFault_com.apple.quicklook.ThumbnailsAgent-2026-10-15-030636.ips\n/private/var/mobile/Library/Logs/CrashReporter/ExcUserFault_lsd-2026-10-15-030636.0005.ips\n/private/var/mobile/Library/Logs/CrashReporter/ExcUserFault_lsd-2026-10-15-030636.0004.ips\n/private/var/mobile/Library/Logs/CrashReporter/ExcUserFault_lsd-2026-10-15-030636.0006.ips\n/private/var/mobile/Library/Logs/CrashReporter/ExcUserFault_quicklookd-2026-10-15-030636.0002.ips\n/private/var/mobile/Library/Logs/CrashReporter/ExcUserFault_quicklookd-2026-10-15-030636.000.ips\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

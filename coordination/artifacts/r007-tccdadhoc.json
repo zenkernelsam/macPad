@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T04:15:45.546841+08:00",
+  "finished": "2026-10-15T04:15:46.086648+08:00",
+  "command": "/var/jb/usr/bin/ldid -e /var/mnt/rootfs/usr/local/bin/tccd_fullent > /var/jb/var/mobile/tccd.ent.plist && head -3 /var/jb/var/mobile/tccd.ent.plist && /var/jb/usr/bin/ldid -S/var/jb/var/mobile/tccd.ent.plist -M /var/mnt/rootfs/usr/local/bin/tccd_fullent && for H in $(/var/jb/usr/bin/ldid -h /var/mnt/rootfs/usr/local/bin/tccd_fullent | grep \"^CDHash=\" | cut -d= -f2); do /var/jb/usr/bin/jbctl trustcache add $H; done; /var/jb/usr/bin/spawnreason3 /var/mnt/rootfs /usr/local/bin/tccd_fullent system 2>&1 | tail -2; ps aux | grep -E \"tccd_fullent|tccd\" | grep -v grep",
+  "command_sha256": "04f78298b2c9cb2a74a5e5302630691774f489770690c4b4fd34a884f09478b6",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n<plist version=\"1.0\">\nchild=71163 si_code=2 si_status=9 waitst=0x9 | pinfo_rc=0 err=2 ns=2863311530 code=12297829382473034410 flags=0xaaaaaaaaaaaaaaaa\nmobile         23321   0.0  0.0        0      0   ??  ?s   Mon07AM   0:00.00 /System/Library/PrivateFrameworks/TCC.framework/Support/tccd\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

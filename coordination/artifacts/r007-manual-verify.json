@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T03:20:33.166376+08:00",
+  "finished": "2026-10-15T03:20:36.833654+08:00",
+  "command": "cd /var/jb/var/mobile; /var/jb/usr/macOS/bin/launchdchrootexec 0 0 /var/mnt/rootfs /System/Library/PrivateFrameworks/TCC.framework/Support/tccd system >/var/jb/var/mobile/mtccd.out 2>/var/jb/var/mobile/mtccd.err & MCPID=$!; sleep 3; echo \"--- after 3s ---\"; ps -p $MCPID -o pid,stat,command 2>/dev/null; ps aux | grep -F \"tccd\" | grep -v grep; echo \"--- stderr ---\"; cat /var/jb/var/mobile/mtccd.err; kill -0 $MCPID 2>/dev/null && echo \"ALIVE\" || echo \"DEAD\"; kill $MCPID 2>/dev/null; wait 2>/dev/null",
+  "command_sha256": "8a8876d7ba94ad31917162e4b1b04282f1d1ec44ab7158727adfe3ab5b53ef21",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "--- after 3s ---\n  PID STAT COMMAND\nmobile         23321   0.0  0.0        0      0   ??  ?s   Mon07AM   0:00.00 /System/Library/PrivateFrameworks/TCC.framework/Support/tccd\n--- stderr ---\nchdir: No such file or directory\n[launchdchrootexec] target=/System/Library/PrivateFrameworks/TCC.framework/Support/tccd arch=arm64e insert=/usr/local/lib/libmachook.dylib\nDEAD\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

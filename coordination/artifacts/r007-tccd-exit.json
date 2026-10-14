@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T03:07:06.163866+08:00",
+  "finished": "2026-10-15T03:07:06.664919+08:00",
+  "command": "cat /var/jb/var/mobile/tccd-system.err /var/jb/var/mobile/tccd-system.out 2>/dev/null | tail -40; echo \"=== job state ===\"; launchctl print system/com.macwsguide.tccd-system 2>&1 | grep -E \"state|last exit|pid|reason|runs =\" | head -10; echo \"=== crash logs ===\"; ls -t /var/jb/var/mobile/Library/Logs/CrashReporter/ /private/var/mobile/Library/Logs/CrashReporter/ 2>/dev/null | grep -i tccd | head -5",
+  "command_sha256": "77e977508330cff951fbda27d510b440a743c03eb28e4df632c72f993c70b30b",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "[launchdchrootexec] target=/System/Library/PrivateFrameworks/TCC.framework/Support/tccd arch=arm64e insert=/usr/local/lib/libmachook.dylib\nlaunchd service = com.macwsguide.tccd-system\n=== job state ===\n=== crash logs ===\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

@@ -1,0 +1,18 @@
+{
+  "time": "2026-10-15T02:41:43.723246+08:00",
+  "reviewer_head": "842d181d4f97489b2d3f1f48200a1e7a8b7593d1",
+  "argv": [
+    "python3",
+    "DevinWatchdog_mac/macpad_devin_relay.py",
+    "send",
+    "coordination/next-pointer.txt",
+    "--expected-session-id",
+    "EE473D24-793C-48E3-B8A9-2298BB40327F",
+    "--expected-pid",
+    "90827"
+  ],
+  "exit": 0,
+  "stdout": "{\"body_sent_once\": true, \"cr_sent_once\": true, \"identity\": [\"EE473D24-793C-48E3-B8A9-2298BB40327F\", \"/dev/ttys001\", 90827], \"body_sha256\": \"d2d72b0ea7e5c7642fe46c74651846825e9210f4bc702c2d1712d7c3b71a6ee2\"}\n",
+  "stderr": "",
+  "scheduler_changed": false
+}

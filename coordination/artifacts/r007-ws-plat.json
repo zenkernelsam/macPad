@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T03:38:56.555311+08:00",
+  "finished": "2026-10-15T03:40:26.560995+08:00",
+  "command": "/var/jb/usr/bin/python3 - <<PYEOF\nimport struct,os\ndef plat(path):\n    try: data=open(path,\"rb\").read()\n    except Exception as e: return (\"ERR\",e)\n    if len(data)<40: return None\n    m=struct.unpack(\">I\",data[:4])[0]\n    sl=None; off=8\n    if m==0xCAFEBABE:\n        n=struct.unpack(\">I\",data[4:8])[0]\n        for i in range(n):\n            ct,cs,o,sz,a=struct.unpack(\">IIIII\",data[off:off+20]); off+=20\n            if cs==0x80000002: sl=data[o:o+sz]; break\n        if sl is None: return (\"noarm64e\",)\n    else: sl=data\n    nc=struct.unpack(\"<I\",sl[16:20])[0]; off=32\n    ents=None; plat=None; flags=None\n    for _ in range(nc):\n        cmd,sz=struct.unpack(\"<II\",sl[off:off+8])\n        if cmd==0x1d:\n            do,ds=struct.unpack(\"<II\",sl[off+8:off+16])\n            bl=sl[do:do+ds]\n            mm,ll,c=struct.unpack(\">III\",bl[:12])\n            for i in range(c):\n                t,o=struct.unpack(\">II\",bl[12+i*8:20+i*8])\n                if t==0:\n                    cd=bl[o:]\n                    flags=struct.unpack(\">I\",cd[12:16])[0]\n                    plat=cd[38]\n        off+=sz\n    return (flags,plat)\nws=\"/var/mnt/rootfs/System/Library/PrivateFrameworks/SkyLight.framework/WindowServer\"\nif not os.path.exists(ws): ws=\"/var/mnt/rootfs/System/Library/PrivateFrameworks/SkyLight.framework/Versions/A/WindowServer\"\nimport glob\ncands=[ws]+glob.glob(\"/var/mnt/rootfs/System/Library/PrivateFrameworks/SkyLight.framework/**/WindowServer\",recursive=True)+glob.glob(\"/var/mnt/rootfs/usr/libexec/WindowServer*\")+glob.glob(\"/var/mnt/rootfs/**/WindowServer\",recursive=True)[:5]\nfor c in cands:\n    if os.path.isfile(c):\n        print(c, plat(c))\nPYEOF",
+  "command_sha256": "fd806f01290fcc5c51664b7f6ace229f96b5fe596d42e4e9e8ff8c3f2d850dc2",
+  "exit": 124,
+  "timeout": true,
+  "stdout": "",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

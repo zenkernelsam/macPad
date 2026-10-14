@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T03:54:59.341704+08:00",
+  "finished": "2026-10-15T03:54:59.817512+08:00",
+  "command": "find /private/var/mobile/Library/Logs/CrashReporter /Library/Logs/DiagnosticReports /private/var/db/diagnostics -name \"*tccd*\" -o -name \"*mysvcx*\" -o -name \"*svcx*\" 2>/dev/null | head; echo \"=== jetsam events ===\"; ls -lt /private/var/mobile/Library/Logs/CrashReporter/*.ips 2>/dev/null | head -5; find /var/jb/var/mobile -name \"*.ips\" -newer /var/jb/var/mobile/fs8.log 2>/dev/null",
+  "command_sha256": "6528fdb75e676cbf448e566a6a9747f7d777b00bcdefd228a0f9f3be8e5dcdc9",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "/private/var/mobile/Library/Logs/CrashReporter/tccd_local-2026-10-15-032454.ips\n/private/var/mobile/Library/Logs/CrashReporter/tccd_local-2026-10-15-032910.ips\n/private/var/mobile/Library/Logs/CrashReporter/tccd_noent_local-2026-10-15-034754.ips\n/private/var/mobile/Library/Logs/CrashReporter/tccd_local-2026-10-15-032948.ips\n/private/var/mobile/Library/Logs/CrashReporter/tccd_noent_local-2026-10-15-034831.ips\n=== jetsam events ===\n-rw-rw---- 1 root _analyticsusers  5927 Oct 15 03:48 /private/var/mobile/Library/Logs/CrashReporter/tccd_noent_local-2026-10-15-034831.ips\n-rw-rw---- 1 root _analyticsusers  5876 Oct 15 03:47 /private/var/mobile/Library/Logs/CrashReporter/tccd_noent_local-2026-10-15-034754.ips\n-rw-rw---- 1 root _analyticsusers 21805 Oct 15 03:46 /private/var/mobile/Library/Logs/CrashReporter/ReportCrash-2026-10-15-034630.ips\n-rw-rw---- 1 root _analyticsusers  4914 Oct 15 03:46 /private/var/mobile/Library/Logs/CrashReporter/diskarbitrationd-2026-10-15-034629.ips\n-rw-rw---- 1 root _analyticsusers  8578 Oct 15 03:31 /private/var/mobile/Library/Logs/CrashReporter/notifyd-2026-10-15-033117.ips\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

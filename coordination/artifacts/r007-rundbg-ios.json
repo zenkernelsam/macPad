@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T03:24:53.396005+08:00",
+  "finished": "2026-10-15T03:24:53.864783+08:00",
+  "command": "cp /var/mnt/rootfs/System/Library/PrivateFrameworks/TCC.framework/Support/tccd /var/jb/var/mobile/tccd_local; chmod 755 /var/jb/var/mobile/tccd_local; cd /var/jb/var/mobile; ./run_dbg /var/jb/var/mobile/tccd_local system 2>&1 | tail -15; echo \"=== jbctl tc help ===\"; jbctl trustcache 2>&1 | head -15",
+  "command_sha256": "3a7ed66571dbd3c699a1f436acb1f3c80fb595ea98beb759fec919af611f9beb",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "[*] spawned pid=68170 (suspended)\nSuccessfully marked proc of pid 68170 as debugged\n[*] jbctl rc=0\n[*] task_for_pid kr=0 port=3075\n[*] task_resume kr=0\ndyld[68170]: Library not loaded: /System/Library/Frameworks/ApplicationServices.framework/Versions/A/ApplicationServices\n  Referenced from: <9845D17F-0409-3884-8A17-260C729636E5> /private/preboot/CFD92CED195A8E1D96E46DD57D101E3CEC005BA3A576CAA9B225733705A2775E33BFF567CD972EA42D56E91B018EF3F1/dopamine-IWpVUH/procursus/var/mobile/tccd_local\n  Reason: tried: '/System/Library/Frameworks/ApplicationServices.framework/Versions/A/ApplicationServices' (errno=2), '/private/preboot/Cryptexes/OS/System/Library/Frameworks/ApplicationServices.framework/Versions/A/ApplicationServices' (errno=2), '/System/Library/Frameworks/ApplicationServices.framework/Versions/A/ApplicationServices' (errno=2, not in dyld cache), '/Library/Frameworks/ApplicationServices.framework/Versions/A/ApplicationServices' (errno=2)\n[*] child SIGNALED 6\n=== jbctl tc help ===\nUsage: jbctl <command> <arguments>\nAvailable commands:\n\tproc_set_debugged <pid>\t\tMarks the process with the given pid as being debugged, allowing invalid code pages inside of it\n\ttrustcache info\t\t\tPrint info about all jailbreak related trustcaches and the cdhashes contained in them\n\ttrustcache clear\t\tClears all existing cdhashes from the jailbreaks trustcache\n\ttrustcache add <cdhash>\t\tAdd an arbitrary cdhash to the jailbreaks trustcache\n\tupdate <tipa/basebin/tarball> <path>\tInitiates a jailbreak update either based on a TIPA, based on a basebin.tar file or based on a standalone tarball, TIPA installation depends on TrollStore, afterwards it triggers a userspace reboot\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

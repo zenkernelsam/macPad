@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T02:54:05.456373+08:00",
+  "finished": "2026-10-15T02:54:05.903458+08:00",
+  "command": "TCCD=/var/mnt/rootfs/System/Library/PrivateFrameworks/TCC.framework/Support/tccd; /var/jb/usr/bin/sha256sum $TCCD; od -Ax -tx1 -N48 $TCCD | head -4; echo \"---uuid via od---\"; od -Ax -tx1 -j $(python3 - 2>/dev/null <<EOF\nimport struct,sys\nd=open(\"$TCCD\",\"rb\").read(0x4000)\n# parse minimal macho for LC_UUID\nmagic=struct.unpack(\"<I\",d[:4])[0]\nif magic==0xfeedfacf:\n  n=struct.unpack(\"<I\",d[16:20])[0]; off=32\n  for i in range(n):\n    cmd,sz=struct.unpack(\"<II\",d[off:off+8])\n    if cmd==0x1b:\n      u=d[off+8:off+24]; print(\"UUID \"+u.hex().upper()); break\n    off+=sz\nelif magic==0xcafebabe:\n  print(\"FAT\")\nEOF\n) $TCCD 2>/dev/null | head -3",
+  "command_sha256": "db9bca85badafba99f06648254f10c064155a8de6b094de061817b2b0037cc67",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "1d1b16cf658163e654833fc09093046393c07f46ac092f0ea32b244a247f563c  /var/mnt/rootfs/System/Library/PrivateFrameworks/TCC.framework/Support/tccd\n000000 ca fe ba be 00 00 00 02 01 00 00 07 00 00 00 03\n000010 00 00 40 00 00 0a 35 e0 00 00 00 0e 01 00 00 0c\n000020 80 00 00 02 00 0a 80 00 00 09 f5 a0 00 00 00 0e\n000030\n---uuid via od---\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

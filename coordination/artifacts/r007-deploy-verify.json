@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T03:06:14.967981+08:00",
+  "finished": "2026-10-15T03:06:15.452029+08:00",
+  "command": "grep -ac macosbooter.tccd.system /var/mnt/rootfs/usr/local/lib/libmachook.dylib /var/mnt/rootfs/usr/local/lib/libmachook_arm64.dylib; /var/jb/usr/bin/sha256sum /var/jb/usr/macOS/lib/libmachook.dylib /var/jb/usr/macOS/lib/libmachook_arm64.dylib /var/mnt/rootfs/usr/local/lib/libmachook.dylib /var/mnt/rootfs/usr/local/lib/libmachook_arm64.dylib",
+  "command_sha256": "2d0f80d6810f1b848786ec69c00639cea157ed9ed7ad85ef37ee3c923b62f54e",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "/var/mnt/rootfs/usr/local/lib/libmachook.dylib:1\n/var/mnt/rootfs/usr/local/lib/libmachook_arm64.dylib:1\nef76ad520c09cdbc78ce1728286120545666c2b63af9387e2df0b0c8b400d280  /var/jb/usr/macOS/lib/libmachook.dylib\n92d6e256651e1908b17ec20818ebb8efc1dd5193070b81475e3223ee857a2788  /var/jb/usr/macOS/lib/libmachook_arm64.dylib\nef76ad520c09cdbc78ce1728286120545666c2b63af9387e2df0b0c8b400d280  /var/mnt/rootfs/usr/local/lib/libmachook.dylib\n92d6e256651e1908b17ec20818ebb8efc1dd5193070b81475e3223ee857a2788  /var/mnt/rootfs/usr/local/lib/libmachook_arm64.dylib\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

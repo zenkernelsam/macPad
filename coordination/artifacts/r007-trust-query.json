@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T03:21:38.440302+08:00",
+  "finished": "2026-10-15T03:21:40.007335+08:00",
+  "command": "which trustcache; trustcache query 4b0dce7bc91b12d930f1c0d315d2ba4c6ecdc47d 2>&1; echo \"---\"; trustcache query f7370b3d98686ce82992c17ae12c5807dd174eb6 2>&1; echo \"=== compare: diskarbitrationd cdhash ===\"; /var/jb/usr/macOS/bin/* 2>/dev/null | head -1",
+  "command_sha256": "bf90205b8a1c3ba1fe3233f035b164d8d9e93ca1576e245b81d5e387572071b2",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "trustcache not found\nzsh:1: command not found: trustcache\n---\nzsh:1: command not found: trustcache\n=== compare: diskarbitrationd cdhash ===\ndebugbydcmmc My pid: 67956\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

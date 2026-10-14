@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T03:54:30.300825+08:00",
+  "finished": "2026-10-15T03:54:30.714181+08:00",
+  "command": "otool -L /var/jb/usr/macOS/bin/launchdchrootexec 2>/dev/null || /var/jb/usr/bin/python3 -c \"\nimport struct\ndata=open(\\\"/var/jb/usr/macOS/bin/launchdchrootexec\\\",\\\"rb\\\").read()\nnc=struct.unpack(\\\"<I\\\",data[16:20])[0]; off=32\nfor _ in range(nc):\n    cmd,sz=struct.unpack(\\\"<II\\\",data[off:off+8])\n    if cmd in (0xc,0x18,0x1b):\n        name=data[struct.unpack(\\\"<I\\\",data[off+8:off+12])[0]+off:data.find(b\\\"\\x00\\\",off+24)]\n        print(hex(cmd),name)\n    off+=sz\n\"",
+  "command_sha256": "86f6178cb5996d1faa985a1953db072fea32fbd23d00a4d8541fdc6f9f1f1635",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "0x1b b''\n0xc b'/usr/lib/libobjc.A.dylib'\n0xc b'/System/Library/Frameworks/Foundation.framework/Foundation'\n0xc b'/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation'\n0xc b'/usr/lib/libSystem.B.dylib'\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

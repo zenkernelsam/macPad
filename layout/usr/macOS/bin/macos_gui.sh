@@ -56,6 +56,7 @@ EXTENSIONKIT_PLIST="$MACOS_DAEMONS/com.macwsguide.extensionkit.plist"
 HISERVICES_PLIST="$MACOS_DAEMONS/com.macwsguide.hiservices.plist"
 GEOD_PLIST="$MACOS_DAEMONS/com.macwsguide.geod.plist"
 OFFICE_LICENSING_PLIST="$MACOS_DAEMONS/com.macwsguide.office-licensing.plist"
+TCCD_SYSTEM_PLIST="$MACOS_DAEMONS/com.macwsguide.tccd-system.plist"
 CHROOTEXEC=/var/jb/usr/macOS/bin/launchdchrootexec
 RUN_BASH=/var/jb/usr/macOS/bin/run_bash.sh
 POSTINST=/var/jb/usr/macOS/bin/postinst.sh
@@ -147,6 +148,7 @@ INTEROP_LABEL=UIKitApplication:com.macwsguide.interop
 VIEWBRIDGE_LABEL=com.macwsguide.viewbridge
 EXTENSIONKIT_LABEL=com.macwsguide.extensionkit
 HISERVICES_LABEL=com.macwsguide.hiservices
+TCCD_SYSTEM_LABEL=com.macwsguide.tccd-system
 GEOD_LABEL=com.macwsguide.geod
 OFFICE_LICENSING_LABEL=com.macwsguide.office-licensing
 SHAREDFILELISTD_LABEL=com.apple.coreservices.sharedfilelistd
@@ -292,6 +294,9 @@ P_DOCK='CoreServices/Dock.app/Contents/MacOS/Dock'
 P_SYSTEMUI='CoreServices/SystemUIServer.app/Contents/MacOS/SystemUIServer'
 P_CONTROL_CENTER='CoreServices/ControlCenter.app/Contents/MacOS/ControlCenter'
 P_OFFICE_LICENSING='PrivilegedHelperTools/com.microsoft.office.licensingV2.helper'
+# The trailing ' system' argv distinguishes the chroot Ventura system tccd
+# from iPadOS's own com.apple.tccd (user/501), which execs with no argument.
+P_TCCD_SYSTEM='TCC.framework/Support/tccd system'
 P_ICONSERVICESD='CoreServices/iconservicesd'
 P_ICONSERVICESAGENT='CoreServices/iconservicesagent'
 P_QUICKLOOK_THUMBNAILS='QuickLookThumbnailing.framework/Support/com.apple.quicklook.ThumbnailsAgent'
@@ -783,6 +788,11 @@ stop_ws_dependents() {
     launchctl remove "$DESKTOP_SERVICES_HELPER_LABEL" 2>/dev/null
     launchctl unload "$AUTHD_PLIST" 2>/dev/null
     launchctl remove "$AUTHD_LABEL" 2>/dev/null
+    launchctl unload "$TCCD_SYSTEM_PLIST" 2>/dev/null
+    launchctl remove "$TCCD_SYSTEM_LABEL" 2>/dev/null
+    # Only the chroot Ventura system tccd (argv carries ' system'); the
+    # native iOS user com.apple.tccd is never matched or touched.
+    kill_by_pattern "$P_TCCD_SYSTEM"
     # This file is an output witness from the current interopd generation, not
     # persistent configuration. Never let a replacement process inherit an
     # apparently-ready provider from a dead generation.
@@ -957,6 +967,71 @@ start_macos_diskarbitrationd() {
         return 1
     }
     log "Private Ventura DiskArbitration endpoint ready (pid=$pid)."
+}
+
+start_tccd_system() {
+    # The real Ventura system-scope tccd must exist before any chroot
+    # client evaluates TCCAccess* — SkyLight's PostEvent right check,
+    # cfprefsd, Dock and friends all enter the same transport.  R006
+    # runtime-confirmed every send_message_with_reply_sync returning
+    # _xpc_error_connection_invalid while no system endpoint was
+    # registered, which left the preflight default 1 -> deny -> 1002.
+    local waited=0 pid=""
+    if proc_running "$P_TCCD_SYSTEM" &&
+       launchctl list "$TCCD_SYSTEM_LABEL" >/dev/null 2>&1; then
+        log "macOS system tccd endpoint already running."
+        return 0
+    fi
+    launchctl unload "$TCCD_SYSTEM_PLIST" 2>/dev/null
+    launchctl remove "$TCCD_SYSTEM_LABEL" 2>/dev/null
+    rm -f "$LOGDIR/tccd-system.out" "$LOGDIR/tccd-system.err" \
+          /var/jb/var/mobile/tccd-system.out /var/jb/var/mobile/tccd-system.err
+    log "Starting macOS system tccd (private endpoint)..."
+    launchctl load "$TCCD_SYSTEM_PLIST" || return 1
+    while [ "$waited" -lt 10 ]; do
+        pid=$(launchd_job_pid "$TCCD_SYSTEM_LABEL")
+        case "$pid" in
+            ''|*[!0-9]*) ;;
+            *) kill -0 "$pid" 2>/dev/null && break ;;
+        esac
+        sleep 1
+        waited=$((waited + 1))
+    done
+    case "$pid" in
+        ''|*[!0-9]*|'-'*)
+            log "ERROR: macOS system tccd did not reach a live process."
+            tail -n 30 "$LOGDIR/tccd-system.err" 2>/dev/null ||
+                tail -n 30 /var/jb/var/mobile/tccd-system.err 2>/dev/null || true
+            return 1
+            ;;
+    esac
+    # A live pid alone is not the transport witness: require the declared
+    # private Mach endpoint to be registered by launchd for this job.
+    # macosbooter jobs land in the loading context's domain (user/501 when
+    # macos_gui.sh runs over SSH), so search the domain service tables
+    # rather than assuming system/.
+    local tccd_domain
+    local endpoint_seen=1
+    for tccd_domain in system user/501 user/0 gui/501; do
+        launchctl print "$tccd_domain" 2>/dev/null |
+            grep -q 'com.apple.macosbooter.tccd.system' && {
+                endpoint_seen=0
+                break
+            }
+    done
+    [ "$endpoint_seen" -eq 0 ] || {
+        log "ERROR: macOS system tccd job has no registered endpoint."
+        tail -n 30 /var/jb/var/mobile/tccd-system.err 2>/dev/null || true
+        return 1
+    }
+    sleep 2
+    proc_running "$P_TCCD_SYSTEM" || {
+        log "ERROR: macOS system tccd exited during its readiness window."
+        tail -n 30 /var/jb/var/mobile/tccd-system.err 2>/dev/null || true
+        return 1
+    }
+    log "macOS system tccd endpoint ready (pid=$pid)."
+    return 0
 }
 
 probe_sharedfilelistd() {
@@ -4940,6 +5015,13 @@ start_macos() {
     publish_settings_service_contracts || return 1
     log "Publishing Ventura authorization and DesktopServices helpers..."
     publish_desktop_operation_services || return 1
+
+    # Every chroot TCC client resolves com.apple.tccd.system through the
+    # private endpoint; it must exist before launchservicesd, WindowServer,
+    # or any post/preflight caller reaches the framework.  This is an
+    # upstream transport repair only — the daemon's policy answers are its
+    # own and may legitimately deny.
+    start_tccd_system || return 1
 
     log "Loading legacy macOS launchservicesd..."
     launchctl load "$LAUNCHSERVICESD_PLIST" || return 1

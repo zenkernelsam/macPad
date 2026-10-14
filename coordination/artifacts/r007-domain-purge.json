@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T03:11:01.816379+08:00",
+  "finished": "2026-10-15T03:11:02.377897+08:00",
+  "command": "echo \"=== user/501 domain ===\"; launchctl print user/501/com.macwsguide.tccd-system 2>&1 | sed -n \"1,4p\"; echo \"=== system domain ===\"; launchctl print system/com.macwsguide.tccd-system 2>&1 | sed -n \"1,4p\"; echo \"=== kill both, verify ===\"; launchctl bootout user/501/com.macwsguide.tccd-system; echo B1=$?; launchctl bootout system/com.macwsguide.tccd-system; echo B2=$?; launchctl remove com.macwsguide.tccd-system; echo RM=$?; launchctl print user/501/com.macwsguide.tccd-system 2>&1 | head -1; launchctl print system/com.macwsguide.tccd-system 2>&1 | head -1",
+  "command_sha256": "938cf97c5f92f9e982b72beff7a1aba464d39279ddb55f868150a2cfdb1f1ee3",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "=== user/501 domain ===\nuser/501/com.macwsguide.tccd-system = {\n\tactive count = 0\n\tpath = /private/preboot/CFD92CED195A8E1D96E46DD57D101E3CEC005BA3A576CAA9B225733705A2775E33BFF567CD972EA42D56E91B018EF3F1/dopamine-IWpVUH/procursus/usr/macOS/LaunchDaemons/com.macwsguide.tccd-system.plist\n\ttype = LaunchDaemon\n=== system domain ===\nWarning: Please switch to user/foreground/com.macwsguide.tccd-system service identifier\nuser/501/com.macwsguide.tccd-system = {\n\tactive count = 0\n\tpath = /private/preboot/CFD92CED195A8E1D96E46DD57D101E3CEC005BA3A576CAA9B225733705A2775E33BFF567CD972EA42D56E91B018EF3F1/dopamine-IWpVUH/procursus/usr/macOS/LaunchDaemons/com.macwsguide.tccd-system.plist\n=== kill both, verify ===\nB1=0\nB2=3\nRM=3\nCould not find service \"com.macwsguide.tccd-system\" in domain for uid: 501\nCould not find service \"com.macwsguide.tccd-system\" in domain for system\n",
+  "stderr": "Boot-out failed: 3: No such process\n",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

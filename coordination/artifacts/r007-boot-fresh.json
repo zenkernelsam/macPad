@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T03:11:10.070725+08:00",
+  "finished": "2026-10-15T03:11:11.584233+08:00",
+  "command": "launchctl bootstrap system/ /var/jb/usr/macOS/LaunchDaemons/com.macwsguide.tccd-system.plist; echo BOOT=$?; sleep 1; echo \"=== system ===\"; launchctl print system/com.macwsguide.tccd-system 2>&1 | grep -E \"^system|^user|domain =|state|pid =|last exit|runs\" ; echo \"=== user501 ===\"; launchctl print user/501/com.macwsguide.tccd-system 2>&1 | head -2",
+  "command_sha256": "1728f0584381be09cf87fbc669ec91d8a4fb6759e45d253ec52b53cb89e797a3",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "BOOT=0\n=== system ===\nuser/501/com.macwsguide.tccd-system = {\n\tstate = not running\n\tdomain = user/501\n\truns = 1\n\tlast exit reason = OS_REASON_EXEC\n=== user501 ===\nuser/501/com.macwsguide.tccd-system = {\n\tactive count = 0\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

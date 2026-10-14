@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T04:32:08.859835+08:00",
+  "finished": "2026-10-15T04:32:12.273571+08:00",
+  "command": "launchctl unload /var/jb/usr/macOS/LaunchDaemons/com.macwsguide.tccd-system.plist 2>/dev/null; launchctl remove com.macwsguide.tccd-system 2>/dev/null; launchctl load /var/jb/usr/macOS/LaunchDaemons/com.macwsguide.tccd-system.plist && echo \"loaded\"; sleep 3; ps aux | grep \"tccd.*system\" | grep -v grep; echo \"== list ==\"; launchctl list com.macwsguide.tccd-system 2>&1 | head -8",
+  "command_sha256": "f68245769d14a02668df158174e441e59b6f09be04957ee1bd06a2a8a8ee88eb",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "loaded\nroot           72254   0.9  0.2 408179488  27008   ??  Ss    4:32AM   0:00.57 /System/Library/PrivateFrameworks/TCC.framework/Support/tccd system\n== list ==\n{\n\t\"EnableTransactions\" = true;\n\t\"StandardOutPath\" = \"/var/jb/var/mobile/tccd-system.out\";\n\t\"LimitLoadToSessionType\" = \"Background\";\n\t\"StandardErrorPath\" = \"/var/jb/var/mobile/tccd-system.err\";\n\t\"Label\" = \"com.macwsguide.tccd-system\";\n\t\"OnDemand\" = true;\n\t\"LastExitStatus\" = 0;\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}
