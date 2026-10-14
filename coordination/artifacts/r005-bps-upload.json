@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T00:24:59.458285+08:00",
+  "finished": "2026-10-15T00:24:59.951793+08:00",
+  "command": "upload /tmp/r005_bps.txt -> /tmp/r005_bps.txt",
+  "command_sha256": "39f707a0be1a8f6e99b2f3427ffee132c461ed3480a6b119e11c4f792d209680",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "",
+  "stderr": "",
+  "upload_source_sha256": "9e6353b7c9aac9ab82b3d5abb6d16443c14be884be016115d5945c8e3e14105e",
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

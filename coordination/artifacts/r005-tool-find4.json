@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T00:16:32.281822+08:00",
+  "finished": "2026-10-15T00:16:32.861429+08:00",
+  "command": "find /var/mnt/rootfs/usr -name 'lldb*' -o -name 'debugserver*' 2>/dev/null | head -10; ls /var/mnt/rootfs/usr/bin/lldb* /var/mnt/rootfs/usr/libexec/debugserver 2>/dev/null; ls /var/mnt/rootfs/usr/lib/ 2>/dev/null | grep -i lldb",
+  "command_sha256": "9c73a90f77cf49fdaa185c1d8bc39125eca13dc574cf943b94fab9a143a6476f",
+  "exit": 1,
+  "timeout": false,
+  "stdout": "/var/mnt/rootfs/usr/bin/lldb\n/var/mnt/rootfs/usr/libexec/rosetta/debugserver\n/var/mnt/rootfs/usr/bin/lldb\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

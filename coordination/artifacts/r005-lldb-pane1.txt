@@ -1,0 +1,1978 @@
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2c60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2c60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2c70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2c80: 0x0000000000000001 0x0000000000000014
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2b60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2b60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2b70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2b80: 0x0000000000000001 0x0000000100b6c000
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2a70
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2a70: 0x00000001ef897280 0x0000000000000040
+0x16f2e2a80: 0x0000000000000080 0x00000000000000c0
+0x16f2e2a90: 0x0000000000000001 0x000000016f2e2b60
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2c60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2c60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2c70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2c80: 0x0000000000000001 0x0000000000000012
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2b60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2b60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2b70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2b80: 0x0000000000000001 0x0000000100b6c000
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2a70
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2a70: 0x00000001ef897280 0x0000000000000040
+0x16f2e2a80: 0x0000000000000080 0x00000000000000c0
+0x16f2e2a90: 0x0000000000000001 0x000000016f2e2b60
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2c60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2c60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2c70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2c80: 0x0000000000000001 0x0000000000000010
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2b60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2b60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2b70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2b80: 0x0000000000000001 0x0000000100b6c000
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2a70
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2a70: 0x00000001ef897280 0x0000000000000040
+0x16f2e2a80: 0x0000000000000080 0x00000000000000c0
+0x16f2e2a90: 0x0000000000000001 0x000000016f2e2b60
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2c60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2c60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2c70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2c80: 0x0000000000000001 0x000000000000000c
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2b60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2b60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2b70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2b80: 0x0000000000000001 0x0000000100b6c000
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2a70
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2a70: 0x00000001ef897280 0x0000000000000040
+0x16f2e2a80: 0x0000000000000080 0x00000000000000c0
+0x16f2e2a90: 0x0000000000000001 0x000000016f2e2b60
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2c60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2c60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2c70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2c80: 0x0000000000000001 0x0000000000000002
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2b60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2b60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2b70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2b80: 0x0000000000000001 0x0000000100b6c000
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2a70
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2a70: 0x00000001ef897280 0x0000000000000040
+0x16f2e2a80: 0x0000000000000080 0x00000000000000c0
+0x16f2e2a90: 0x0000000000000001 0x000000016f2e2b60
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2c60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2c60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2c70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2c80: 0x0000000000000001 0x0000000000000017
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2b60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2b60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2b70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2b80: 0x0000000000000001 0x0000000100b6c000
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2a70
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2a70: 0x00000001ef897280 0x0000000000000040
+0x16f2e2a80: 0x0000000000000080 0x00000000000000c0
+0x16f2e2a90: 0x0000000000000001 0x000000016f2e2b60
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2c60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2c60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2c70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2c80: 0x0000000000000001 0x0000000000000014
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2b60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2b60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2b70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2b80: 0x0000000000000001 0x0000000100b6c000
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2a70
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2a70: 0x00000001ef897280 0x0000000000000040
+0x16f2e2a80: 0x0000000000000080 0x00000000000000c0
+0x16f2e2a90: 0x0000000000000001 0x000000016f2e2b60
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2c60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2c60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2c70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2c80: 0x0000000000000001 0x0000000000000013
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2b60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2b60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2b70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2b80: 0x0000000000000001 0x0000000100b6c000
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2a70
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2a70: 0x00000001ef897280 0x0000000000000040
+0x16f2e2a80: 0x0000000000000080 0x00000000000000c0
+0x16f2e2a90: 0x0000000000000001 0x000000016f2e2b60
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2c60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2c60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2c70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2c80: 0x0000000000000001 0x0000000000000012
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2b60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2b60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2b70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2b80: 0x0000000000000001 0x0000000100b6c000
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2a70
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2a70: 0x00000001ef897280 0x0000000000000040
+0x16f2e2a80: 0x0000000000000080 0x00000000000000c0
+0x16f2e2a90: 0x0000000000000001 0x000000016f2e2b60
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2c60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2c60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2c70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2c80: 0x0000000000000001 0x0000000000000011
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2b60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2b60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2b70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2b80: 0x0000000000000001 0x0000000100b6c000
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2a70
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2a70: 0x00000001ef897280 0x0000000000000040
+0x16f2e2a80: 0x0000000000000080 0x00000000000000c0
+0x16f2e2a90: 0x0000000000000001 0x000000016f2e2b60
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2c60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2c60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2c70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2c80: 0x0000000000000001 0x0000000000000010
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2b60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2b60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2b70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2b80: 0x0000000000000001 0x0000000100b6c000
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2a70
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2a70: 0x00000001ef897280 0x0000000000000040
+0x16f2e2a80: 0x0000000000000080 0x00000000000000c0
+0x16f2e2a90: 0x0000000000000001 0x000000016f2e2b60
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2c60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2c60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2c70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2c80: 0x0000000000000001 0x0000000000000019
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2b60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2b60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2b70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2b80: 0x0000000000000001 0x0000000100b6c000
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2a70
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2a70: 0x00000001ef897280 0x0000000000000040
+0x16f2e2a80: 0x0000000000000080 0x00000000000000c0
+0x16f2e2a90: 0x0000000000000001 0x000000016f2e2b60
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2c60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2c60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2c70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2c80: 0x0000000000000001 0x000000000000000f
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2b60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2b60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2b70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2b80: 0x0000000000000001 0x0000000100b6c000
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2a70
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2a70: 0x00000001ef897280 0x0000000000000040
+0x16f2e2a80: 0x0000000000000080 0x00000000000000c0
+0x16f2e2a90: 0x0000000000000001 0x000000016f2e2b60
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2c60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2c60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2c70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2c80: 0x0000000000000001 0x0000000000000002
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2b60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2b60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2b70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2b80: 0x0000000000000001 0x0000000100b6c000
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2a70
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2a70: 0x00000001ef897280 0x0000000000000040
+0x16f2e2a80: 0x0000000000000080 0x00000000000000c0
+0x16f2e2a90: 0x0000000000000001 0x000000016f2e2b60
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)  register read x19 x20 x22 x24
+     x19 = 0x001116de0000d9ad
+     x20 = 0x000000000000d9ad
+     x22 = 0x000000016f2e2d60
+     x24 = 0x0000000000000144
+(lldb)  memory read -s8 -c6 -fx $x22
+0x16f2e2d60: 0x00000001ef897280 0x0000000000000040
+0x16f2e2d70: 0x0000000000000080 0x00000000000000c0
+0x16f2e2d80: 0x0000000000000001 0x000000016f2eaff0
+(lldb)  thread info
+thread #1: tid = 0x3bd996, 0x00000001978118b4 SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+(lldb)  continue
+Process 55506 resuming
+Command #4 'continue' continued the target.
+(lldb)

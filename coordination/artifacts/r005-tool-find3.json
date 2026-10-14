@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T00:16:24.314274+08:00",
+  "finished": "2026-10-15T00:16:24.967745+08:00",
+  "command": "ls /var/jb/usr/lib/llvm-16/bin 2>/dev/null | grep -iE 'lldb|debug|gdb|tmux'; ls /var/jb/usr/lib/llvm-16/bin 2>/dev/null | wc -l; echo BASEBINS; ls /var/jb/basebins 2>/dev/null | head -30; echo PROOTS; find / -maxdepth 3 -name debugserver -o -name lldb 2>/dev/null | head -10",
+  "command_sha256": "2f1a782f004cfae433fe0d9748a1140cf4ba5a2a90a70a66bc5109a591273484",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "darwin-debug\nllvm-debuginfod\nllvm-debuginfod-find\n80\nBASEBINS\nPROOTS\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

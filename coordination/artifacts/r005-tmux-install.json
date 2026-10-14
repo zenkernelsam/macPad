@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T00:20:30.183904+08:00",
+  "finished": "2026-10-15T00:20:32.063688+08:00",
+  "command": "/var/jb/usr/bin/apt-get install -y tmux 2>&1 | tail -6; TMUX_TMPDIR=/var/tmp /var/jb/usr/bin/tmux -V",
+  "command_sha256": "f627426374d95b7e6f60562ae338e22d956d79fb2c12b5866105445187721e7c",
+  "exit": 1,
+  "timeout": false,
+  "stdout": "Unpacking tmux (3.4) ...\nSetting up libutf8proc3 (2.9.0) ...\nSetting up gettext-localizations (2020.10.07) ...\nSetting up libevent-core-2.1-7 (2.1.12-3) ...\nSetting up libevent-2.1-7 (2.1.12-3) ...\nSetting up tmux (3.4) ...\n",
+  "stderr": "tmux: need UTF-8 locale (LC_CTYPE) but have US-ASCII\n",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

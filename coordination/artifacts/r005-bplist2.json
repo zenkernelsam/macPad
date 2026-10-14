@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T00:35:40.243836+08:00",
+  "finished": "2026-10-15T00:35:47.791905+08:00",
+  "command": "LC_CTYPE=UTF-8 TMUX_TMPDIR=/var/tmp /var/jb/usr/bin/tmux send-keys -t devin_r005 'breakpoint disable 1' Enter; sleep 3; LC_CTYPE=UTF-8 TMUX_TMPDIR=/var/tmp /var/jb/usr/bin/tmux send-keys -t devin_r005 'breakpoint list' Enter; sleep 4; LC_CTYPE=UTF-8 TMUX_TMPDIR=/var/tmp /var/jb/usr/bin/tmux capture-pane -t devin_r005 -p -S - | tail -45",
+  "command_sha256": "1706edd0fe9a7ba9e5cd6518c8ff80e861e4736fb6b90e0c6c1e575c9b0c83fe",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "Current breakpoints:\n1: address = SkyLight[0x00000001854258b4], locations = 1 Options: disabled\n    Breakpoint commands:\n      register read x19 x20 x22 x24\n      memory read -s8 -c6 -fx $x22\n      thread info\n      continue\n\n  1.1: where = SkyLight`WSAuditTokenHoldsCachedProcessRight + 200, address = 0x00000001978118b4, unresolved, hit count = 6429\n\n2: address = SkyLight[0x0000000185425914], locations = 1, resolved = 1, hit count = 5\n    Breakpoint commands:\n      register read x21 x0 x1\n      memory read -s8 -c4 -fx $x1\n      thread info\n      continue\n\n  2.1: where = SkyLight`WSAuditTokenHoldsCachedProcessRight + 296, address = 0x0000000197811914, resolved, hit count = 5\n\n3: address = SkyLight[0x0000000185425da0], locations = 1, resolved = 1, hit count = 3\n    Breakpoint commands:\n      register read x0 x1 x8\n      memory read -s8 -c4 -fx $x1\n      thread info\n      continue\n\n  3.1: where = SkyLight`audit_token_check_tcc_access, address = 0x0000000197811da0, resolved, hit count = 3\n\n4: address = SkyLight[0x0000000185425e0c], locations = 1, resolved = 1, hit count = 3\n    Breakpoint commands:\n      register read w0 x8\n      thread info\n      continue\n\n  4.1: where = SkyLight`audit_token_check_tcc_access + 108, address = 0x0000000197811e0c, resolved, hit count = 3\n\n5: address = SkyLight[0x00000001853fd4e4], locations = 1, resolved = 1, hit count = 2\n    Breakpoint commands:\n      register read w0\n      thread info\n      continue\n\n  5.1: where = SkyLight`CGXSenderCanSynthesizeEvents + 128, address = 0x00000001977e94e4, resolved, hit count = 2\n\n(lldb)\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

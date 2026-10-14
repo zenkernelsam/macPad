@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T00:20:37.422326+08:00",
+  "finished": "2026-10-15T00:20:38.148364+08:00",
+  "command": "LC_CTYPE=UTF-8 TMUX_TMPDIR=/var/tmp /var/jb/usr/bin/tmux -V; echo SESSIONS; LC_CTYPE=UTF-8 TMUX_TMPDIR=/var/tmp /var/jb/usr/bin/tmux ls 2>&1; echo BASELINE; /var/jb/usr/bin/chroot /var/mnt/rootfs /bin/echo HI; echo HI_RC=$?",
+  "command_sha256": "575882f5856e763efccdc724ef0e1e716252e65de0fd7e03cb5526d7340bd6d0",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "tmux 3.4\nSESSIONS\nerror connecting to /private/var/tmp/tmux-0/default (No such file or directory)\nBASELINE\nHI\nHI_RC=0\n",
+  "stderr": "#### MACWS-CTOR-CANARY InitStuff entered\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\n#### MACWS-CTOR-CANARY InitStuff done\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\n",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

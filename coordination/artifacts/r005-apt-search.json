@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T00:17:46.332093+08:00",
+  "finished": "2026-10-15T00:17:47.116768+08:00",
+  "command": "/var/jb/usr/bin/apt-cache search lldb debugserver 2>/dev/null | head; /var/jb/usr/bin/apt-cache show lldb-16 2>/dev/null | head -8; /var/jb/usr/bin/apt-cache search debugserver 2>/dev/null | head",
+  "command_sha256": "3798129fc45a6a9e7a40a893e7e53a2d242ab02fe13fab83238f7adc9332fe9f",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "Package: lldb-16\nArchitecture: iphoneos-arm64\nVersion: 16.0.0~5.9.2~RELEASE-1\nPriority: optional\nSection: Development\nMaintainer: Procursus Team <support@procurs.us>\nInstalled-Size: 101972\nDepends: libiosexec1 (>= 1.3.1), liblldb-16 (= 16.0.0~5.9.2~RELEASE-1), debugserver-16 (= 16.0.0~5.9.2~RELEASE-1)\ndebugserver-14 - Next generation, high-performance debugger (debugserver)\ndebugserver-16 - Next generation, high-performance debugger (debugserver)\ndebugserver - Next generation, high-performance debugger (debugserver)\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

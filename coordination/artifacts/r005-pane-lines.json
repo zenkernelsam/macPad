@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T00:25:53.010098+08:00",
+  "finished": "2026-10-15T00:25:53.550499+08:00",
+  "command": "LC_CTYPE=UTF-8 TMUX_TMPDIR=/var/tmp /var/jb/usr/bin/tmux capture-pane -t devin_r005 -p -S - | wc -l",
+  "command_sha256": "d7c3767b75ca75b1adbbbd1224f88e5f009b1ec4039e77607a8a7f926fe931c5",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "1910\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

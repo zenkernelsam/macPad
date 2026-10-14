@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T00:15:58.645457+08:00",
+  "finished": "2026-10-15T00:15:59.123690+08:00",
+  "command": "ls -l /var/jb/usr/bin/lldb /var/jb/usr/bin/tmux 2>&1; /var/jb/usr/bin/lldb --version 2>&1 | head -3; echo PS_WS; ps aux | grep -i windowserver | grep -v grep; echo TMUX; TMUX_TMPDIR=/var/tmp /var/jb/usr/bin/tmux ls 2>&1; echo SENTINEL; ls -la /tmp/macws_runtime_diagnostics /var/mnt/rootfs/tmp/macws_runtime_diagnostics 2>&1",
+  "command_sha256": "9971ebb273467eb9f1f205d2d9c4514123120335b12fea3a7e52bc54316aa520",
+  "exit": 2,
+  "timeout": false,
+  "stdout": "ls: cannot access '/var/jb/usr/bin/lldb': No such file or directory\nls: cannot access '/var/jb/usr/bin/tmux': No such file or directory\nzsh:1: no such file or directory: /var/jb/usr/bin/lldb\nPS_WS\nTMUX\nzsh:1: no such file or directory: /var/jb/usr/bin/tmux\nSENTINEL\nls: cannot access '/tmp/macws_runtime_diagnostics': No such file or directory\nls: cannot access '/var/mnt/rootfs/tmp/macws_runtime_diagnostics': No such file or directory\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

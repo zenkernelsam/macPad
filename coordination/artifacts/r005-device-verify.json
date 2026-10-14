@@ -1,0 +1,14 @@
+{
+  "started": "2026-10-15T00:19:44.383050+08:00",
+  "finished": "2026-10-15T00:19:44.990511+08:00",
+  "command": "uname -a; sysctl -n hw.model kern.osversion 2>/dev/null; /var/jb/usr/lib/llvm-16/bin/lldb --version 2>&1 | head -2; ls -l /var/jb/usr/lib/llvm-16/bin/debugserver /var/jb/usr/bin/debugserver-16 2>/dev/null; ps aux | grep -iE 'windowserver|macos_ws' | grep -v grep; echo SENTINEL; ls -la /tmp/macws_runtime_diagnostics /var/mnt/rootfs/tmp/macws_runtime_diagnostics 2>&1",
+  "command_sha256": "18fd542171c54194995a53e1e69fa5ecf9daa8f2ee938739eba815d45e6b1f66",
+  "exit": 2,
+  "timeout": false,
+  "stdout": "Darwin <DEVICE_NAME> 22.3.0 Darwin Kernel Version 22.3.0: Wed Jan  4 21:25:19 PST 2023; root:xnu-8792.82.2~1/RELEASE_ARM64_T8103 iPad13,11 arm Darwin\nlldb version 16.0.0 (git@github.com:palera1n/Procursus revision 5477f7da643074610bc1f1d32bbfb899c67a61ae)\nSwift version 5.9.2 (swift-5.9.2-RELEASE)\nlrwxr-xr-x 1 root wheel     30 Aug  1  2024 /var/jb/usr/bin/debugserver-16 -> ../lib/llvm-16/bin/debugserver\n-rwxr-xr-x 1 root wheel 589776 Aug  1  2024 /var/jb/usr/lib/llvm-16/bin/debugserver\nSENTINEL\nls: cannot access '/tmp/macws_runtime_diagnostics': No such file or directory\nls: cannot access '/var/mnt/rootfs/tmp/macws_runtime_diagnostics': No such file or directory\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup.",
+  "redaction_original_sha256": "08c1d2db811d3352d9a4d95effa05dcb48b7a98da2de71e6687ca3ffd837d28b",
+  "redaction_note": "Transport/device hostname and address replaced by placeholders; register values and outcomes unchanged."
+}

@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T00:36:49.475465+08:00",
+  "finished": "2026-10-15T00:36:50.661224+08:00",
+  "command": "date; /var/jb/usr/macOS/bin/launchdchrootexec 0 0 /var/mnt/rootfs /usr/local/bin/macos_ws_event_probe post 2>&1 | grep -E 'pid|canonical|SLSPost|PROBE|SLSMain|preflight|TCCAccess'",
+  "command_sha256": "8aa54f862154cf79581bbc632e20b89bdc1618b04836e3aa097f35afdb69d08b",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "Thu Oct 15 00:36:49 HKT 2026\nstub[0] va=0x1dff3f358 fn=0xe10c8001af1bb004 -> libbsm.0.dylib:audit_token_to_pid\nstub[1] va=0x1dff3f360 fn=0x736b8001af1bb034 -> libbsm.0.dylib:audit_token_to_pidversion\nstub[2] va=0x1dfef4b98 fn=0xe5658001a4234444 -> libsystem_kernel.dylib:__getpid\nSLSMainConnectionID = 135347\ntask_info(audit) rc=0 tcc=0x268003e9e7dd18 preflightAudit=0xae118001a8f443bc\nTCCAccessPreflightWithAuditToken(svc[0], self) -> 1\nTCCAccessPreflightWithAuditToken(svc[1], self) -> 1\nTCCAccessPreflightWithAuditToken(svc[2], self) -> 1\ncanonical record: v=0 len=248 type=5\nSLSPostEventRecord(canonical) -> rc=1002\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

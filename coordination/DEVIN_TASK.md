@@ -1,31 +1,17 @@
-# Active R005 — distinguish cached denial from live TCC denial in WindowServer
+# R006 — explain the TCC nonzero result, then identify the upstream invariant
 
-Goal ACTIVE. Codex guides/reviews; Devin implements/runs. R004B accepted as bounded diagnostic evidence, INCONCLUSIVE about cause. Read reviews/R004B-final-20261015.md and docs/evidence/ventura-22F82-tcc-checker-20261015.md, plus the full LLDB functions in artifacts/R005-static/exact-functions.txt. Finish the previously requested static-note correction before claiming any branch confirmed.
+User goal continues. Codex reviews after explicit handover; Devin implements/executes one bounded packet. R005 is APPROVED_WITH_LIMITS (reviews/R005-20261015.md): live WS PostEvent evaluation returned raw1 at the TCC callsite; its repeat cached-deny path is also confirmed. This does NOT yet prove a tccd policy reply. Input still1002/no accepted WS-DISPATCH.
 
-## Evidence boundary and tooling
+1. Correct R005 report limits in the same packet: library result vs daemon policy, mixed probe preamble, total bp1 count6429 vs retained141 samples, entitlement spelling and sanitized endpoint placeholders. Do not repeat R005 just to erase those limitations.
+2. Inventory the exact TCC image actually loaded by WindowServer: UUID/base/architectures and source hash if extracted. Use actual-image LLDB/otool/Capstone to follow TCCAccessPreflightWithAuditToken and its direct return-producing callees. Preserve complete relevant function/disassembly and instruction words. Standard exact-binary analysis is allowed by the latest user AGENTS; no IDA-only wait. Never reuse a different OS TCC image.
+3. Run one bounded, attributable transaction. Use an explicit minimal post/preflight mode without the old warp/multi-post preamble. Before continuing the debugger, apply positive senderPID/thread/service scope and a small stop/time budget; no all-WS hot breakpoint left running. Existing debugger tools are installed; don't reinstall or duplicate sessions. Respect current live process/handle state, one WS generation through project coexist/watchdog pipeline, correct namespace and echoHI baseline.
+4. Distinguish where raw1 is produced: local input/identity check, client cache, transport failure, daemon reply, or another observed branch. If an RPC occurs, capture the actual service endpoint/process identity and bounded request/reply fields necessary to explain this result (service name, subject/responsible audit identity, result/reason fields). Do not dump unrelated data or assume API names prove a policy transaction. If no RPC occurs, locate the real local return producer instead of adding more observers.
+5. State the evidenced upstream invariant and its producing operation. A real identity, service compatibility or provisioning fix must preserve protocol checks. Do not force return values, clear caches, fabricate sessions/tokens, blanket-grant TCC, patch unrelated entitlements, or alter the jailbreak. Keep this packet bounded to the causally supported next step; if a fix needs further evidence, deliver the exact observation and next test rather than guessing.
+6. Build/test affected architectures only if source changes; record true command exits before local output filtering, hashes/UUIDs and raw logs. Verify target remains functional, detach debugger, stop owned tools/generation as appropriate, archive exact chroot markers and recheck backboardd/thermal/crashes/echoHI. Input acceptance remains WS-DISPATCH plus visible interaction.
 
-Latest USER replacement AGENTS is controlling: exact-file otool/Capstone/LLDB or verbatim runtime evidence is allowed. The old IDA-only wait in earlier coordination notes is superseded. Preserve UUID/hash/instruction words and complete relevant functions; no byte guessing, forced branches or constant-return checks. Input is still 1002; missing loginwindow entitlement/sid0 is not a demonstrated cause.
+Git: Devin owns writes during this packet after receipt; commit explicit source/test/evidence paths only. Do not add misc/macos_ws_event_probe binary or credentials. Existing push authentication is unresolved; preserve local commits and record that limitation instead of retrying indefinitely. All work/artifacts stay in macPad where practicable.
 
-Exact input SkyLight_22F82: UUID 96676A53-B1E0-3D7E-B98B-B73873CD1880, SHA256 13d7a0ca010a9808234c71c34fd650b26329de99d1aceaeb5ddbb58f8b906c61, file image base 0x1850e5000. Derive runtime addresses from the loaded WS image identity/slide and verify original instruction words before breakpoints. Prefer the existing iOS-local debugger capability; inventory it first.
+Delivery: freeze source, update DEVIN_STATUS and WORKING with candidate HEAD + source/evidence fingerprint + exact results/limits. Send no vague success claims. LAST LINE MUST BE exactly:
+(handover to codex now)
 
-## One bounded experiment
-
-1. Verify CLI echo HI, clean owned-tool state, thermal and project coexist/watchdog startup. Start ONE WS generation via the pipeline. This debugger experiment does not need the loader observer enabled; avoid enabling unrelated high-overhead traces. Use a fresh real sender PID/pidversion, not cache-clearing or fake audit values.
-2. Arrange exactly one canonical SLSPostEventRecord, without preceding warp/CGEventPost/preflight mutation that would muddy attribution. Reuse verified public/private probe ABIs; add a minimal explicit mode if required. Record senderPID before posting and real reply/result. No unknown ABI calls.
-3. In the ACTUAL WindowServer, capture:
-   - dispatcher senderPID/pidversion/key/right descriptor and cached flags at file VA 0x1854258b4 (x20 pid, x19 key, x22 descriptor, x24 flags; validate against disassembly/runtime first);
-   - whether control reaches checker dispatch 0x185425914 and audit_token_check_tcc_access entry 0x185425da0;
-   - when reached, checker target presence and raw w0 at 0x185425e0c (immediately after blraaz), then final boolean/result. Raw TCC 0=>true at this caller; nonzero=>false.
-   Record the branch actually observed, not a conjectured cache population path. Breakpoints/logs must be bounded, auto-continue where safe, and correlate one sender/generation. Prefer debugger reads over more injectable hooks; if unavailable, report concrete tool failure before choosing an exact-profile observational alternative.
-4. If cached deny is observed, trace a fresh real sender's first evaluation / the real cache-write producer, without modifying cache state. If unresolved checker, trace real module/lookup failure. If raw TCC nonzero, capture the actual service/identity/policy request/reply or exact TCC return producer before changing anything. Match the owning TCC binary UUID if its private internals are inspected. Do not jump from a numeric error to an entitlement/session conclusion.
-5. Stop after the bounded decision trace and document the actionable next invariant. A narrow upstream fix can follow only once its producing operation is evidenced; no broad TCC bypass, fabricated sessions or same-pid proxy workaround presented as a fix.
-
-## Tool/process discipline
-
-Use local macPad SSH runner and real exit records. Do not run legacy ios_lldb_tmux.sh attach blindly: it kills an existing session and uses an old sudo/password pattern. As root, use a UNIQUE task-owned tmux/debugger session, inspect existing handles first, no sudo/password argv. Keep credentials only in temporary env. A wait timeout does not prove the task exited. Detach debugger explicitly before closing its session, then verify target/process/marker cleanup. No kernel writes.
-
-## Delivery
-
-Save raw disassembly/commands/register/log slices with PID/UUID/hash/time and real exits; update dated evidence, WORKING and DEVIN_STATUS at milestones. Build affected probe architectures if changed; preserve both thin libmachook images if untouched. Check echo HI/thermal/crashes/visible desktop or completion sequence where relevant. No input acceptance without correlated WS-DISPATCH and visible effect.
-
-Codex briefly reserves Git writes for reviewer checkpoint; implement/inventory now but do not commit until release. Keep R004B source stable; no generic tracing expansion. After release commit explicit source/evidence paths only. Never add misc/macos_ws_event_probe binary. Overall input/pacing/wallpaper/session goal remains active.
+Codex will wait for that marker and then give one consolidated review/next pointer. No mid-work task additions are planned. Existing user-configured automation is unchanged.

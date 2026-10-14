@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T01:35:28.702953+08:00",
+  "finished": "2026-10-15T01:35:29.194983+08:00",
+  "command": "/var/jb/usr/bin/python3 -c 'import os,subprocess,json\nfor p in [\"/tmp/macws_runtime_diagnostics\",\"/var/mnt/rootfs/tmp/macws_runtime_diagnostics\",\"/var/mnt/rootfs/private/tmp/macws_runtime_diagnostics\"]:\n print(json.dumps({\"path\":p,\"exists\":os.path.exists(p)}))\nr=subprocess.run([\"ps\",\"-axo\",\"pid,comm\"],capture_output=True,text=True);print(\"ps_exit=\"+str(r.returncode));print(\"\\n\".join(x for x in r.stdout.splitlines() if any(t in x for t in [\"WindowServer\",\"backboardd\",\"macos_ws_event_probe\",\"lldb\",\"debugserver\",\"tmux\"])))\nt=subprocess.run([\"/var/jb/usr/macOS/bin/macwsthermal\"],capture_output=True,text=True);print(\"thermal_exit=\"+str(t.returncode));print(t.stdout)\n'",
+  "command_sha256": "97cebf3e419bd82e92c8d290738ff51baa5b5677d422b3ed220abd2a80c3e81d",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "{\"path\": \"/tmp/macws_runtime_diagnostics\", \"exists\": false}\n{\"path\": \"/var/mnt/rootfs/tmp/macws_runtime_diagnostics\", \"exists\": false}\n{\"path\": \"/var/mnt/rootfs/private/tmp/macws_runtime_diagnostics\", \"exists\": false}\nps_exit=0\n70595 /usr/libexec/backboardd\nthermal_exit=0\nthermal-state=nominal raw=0 low-power=no battery-temp-centic=3139 virtual-temp-centic=3139 effective-temp-centic=3139 uptime=331507.897\n\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

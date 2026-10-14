@@ -1,0 +1,17 @@
+{
+  "time": "2026-10-15T00:44:27.372076+08:00",
+  "cli_pid": 86525,
+  "acp_pid": 90827,
+  "tty": "/dev/ttys001",
+  "session_id": "EE473D24-793C-48E3-B8A9-2298BB40327F",
+  "cwd": "/Users/ciscohe/Desktop/macPad",
+  "binding_verified": true,
+  "handover_observed": false,
+  "unit_cases": 5,
+  "unit_exit": 0,
+  "busy_dry_run_exit": 1,
+  "busy_dry_run_expected": "refused before input",
+  "messages_sent": 0,
+  "keys_sent": 0,
+  "scheduler_changed": false
+}

@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T00:20:48.416221+08:00",
+  "finished": "2026-10-15T00:21:57.985709+08:00",
+  "command": "head -3 /var/jb/usr/macOS/bin/macos_gui.sh; file /var/jb/usr/macOS/bin/macos_gui.sh 2>/dev/null; bash /var/jb/usr/macOS/bin/macos_gui.sh start coexist --no-terminal 2>&1 | tail -15",
+  "command_sha256": "345f406f310bf9b311d519ef5f95ea0037782de020c39266464bd49c1386df4c",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "# macos_gui.sh — start / stop the chroot macOS GUI stack (WindowServer + VNC +\n# Terminal) on the iOS side, with a choice of display mode and full cleanup of\n# any previously-running macOS services.\n55747\t0\tUIKitApplication:com.macwsguide.interop\n55782\t0\tcom.macwsguide.systemuiserver\n55263\t0\tcom.apple.coreservices.launchservicesd\n55506\t0\tUIKitApplication:com.macwsguide.windowserver\n55031\t0\tcom.macwsguide.cfprefsd-mobile-agent\n55496\t0\tUIKitApplication:com.macwsguide.input\n55762\t0\tcom.macwsguide.corelocationagent\n55132\t0\tcom.macwsguide.iconservicesagent\n55725\t0\tUIKitApplication:com.macwsguide.display\n55152\t0\tcom.macwsguide.csnameddatad\n55001\t0\tcom.apple.systemstatusd\n\nVNC: running -> connect with  vnc://<device-ip>:5900   (no password)\n\nlogs: /var/jb/var/mobile/osxvnc.log  /var/jb/var/mobile/terminal.log  /var/jb/var/mobile/lsd-system.log  /var/jb/var/mobile/lsd-session.log  /var/jb/var/mobile/dock.log  /var/jb/var/mobile/systemuiserver.log  /var/jb/var/mobile/controlcenter.log  /var/jb/var/mobile/WindowServer.err\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

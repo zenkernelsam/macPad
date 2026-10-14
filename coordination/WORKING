@@ -1,3 +1,13 @@
+R005 LIVE TRACE DONE — 2026-10-15
+lldb-16 on-device, WS pid 55506, slide 0x123ec000, UUID/words verified.
+Branch CONFIRMED: real miss -> audit_token_check_tcc_access ->
+TCCAccessPreflightWithAuditToken("kTCCServicePostEvent") raw w0=1 (deny)
+-> cached deny bits -> gate 0 -> 1002.  Not cached deny, not resolver
+failure.  Raw captures: artifacts/r005-lldb-pane{1,2}.txt.
+Cleaned: detach ok, stack stopped, sentinels absent, HI baseline ok.
+OPEN: why TCC denies this sender's audit token (grant producer).
+Git writes pending release.  Input still not accepted.
+
 FROZEN R004B — 2026-10-14 (awaiting review → R005)
 Bounded TLS loader observation around the real CGXSYNTH gate.
 Outcome: gate fired (seq=1,2, rc=0); ZERO public dlsym calls in window —

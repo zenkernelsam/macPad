@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T00:20:43.430581+08:00",
+  "finished": "2026-10-15T00:20:43.823256+08:00",
+  "command": "/var/jb/usr/macOS/bin/macos_gui.sh start coexist --no-terminal 2>&1 | tail -15",
+  "command_sha256": "9a80d79e4236a6845e8276751810d2849da213859005f2d4b991e1ce8b99e130",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "zsh:1: exec format error: /var/jb/usr/macOS/bin/macos_gui.sh\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

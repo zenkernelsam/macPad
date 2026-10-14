@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T00:22:14.748424+08:00",
+  "finished": "2026-10-15T00:22:23.292124+08:00",
+  "command": "ps aux | grep -i windowserver | grep -v grep; LC_CTYPE=UTF-8 TMUX_TMPDIR=/var/tmp /var/jb/usr/bin/tmux new-session -d -s devin_r005 -x 220 -y 60 '/var/jb/usr/lib/llvm-16/bin/lldb -p 55506' && echo TMUX_STARTED; sleep 8; LC_CTYPE=UTF-8 TMUX_TMPDIR=/var/tmp /var/jb/usr/bin/tmux capture-pane -t devin_r005 -p | tail -15",
+  "command_sha256": "130eb3041c7e5a21a8bb1f4ae48250e4634dc7e8099e94b6d573c77200265fd1",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "root           55506   3.3  0.9 409041600 140480   ??  Ss   12:21AM   0:01.59 /System/Library/PrivateFrameworks/SkyLight.framework/Resources/WindowServer -virtualonly -daemon\nTMUX_STARTED\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

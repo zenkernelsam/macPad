@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T00:16:12.008820+08:00",
+  "finished": "2026-10-15T00:16:12.476833+08:00",
+  "command": "echo JB_PREFIX; ls -d /var/jb /jb /var/jb/basebins 2>/dev/null; ls /var/jb/usr/bin 2>/dev/null | grep -iE 'lldb|tmux|debug'; ls /var/jb/bin 2>/dev/null | grep -iE 'lldb|tmux|debug'; find /var/jb -maxdepth 3 -iname '*lldb*' -o -iname '*tmux*' -o -iname '*debugserver*' 2>/dev/null | head",
+  "command_sha256": "85626581173afa78193044cea7f2173338f02a6756c07eaf244dcf342a9c9199",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "JB_PREFIX\n/var/jb\ndarwin-debug-16\nllvm-debuginfod-16\nllvm-debuginfod-find-16\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

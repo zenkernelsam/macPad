@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T00:17:09.677098+08:00",
+  "finished": "2026-10-15T00:17:10.160199+08:00",
+  "command": "/var/jb/usr/macOS/bin/launchdchrootexec 0 0 /var/mnt/rootfs /usr/bin/lldb --version 2>&1 | tail -12; echo LLDB_RC=$?",
+  "command_sha256": "187f1e2350edac37b66229ba41c5fc6375a07817fc9c3dd5538848b39d37cbf0",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "MACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\n#### MACWS-CTOR-CANARY InitStuff done\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nxcode-select: error: No developer tools were found and no install could be requested (perhaps no UI is present).\nIf developer tools are located at a non-default location on disk, use `sudo xcode-select --switch path/to/Xcode.app` to specify the Xcode that you wish to use for command line developer tools.\nUse `xcode-select --install` to install the standalone command line developer tools, or visit http://adc.apple.com to download Xcode or the standalone command line tools installation package.\nSee `man xcode-select` for more details.\nLLDB_RC=0\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

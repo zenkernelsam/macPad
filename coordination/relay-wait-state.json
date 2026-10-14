@@ -1,0 +1,29 @@
+{
+  "checked_at": "2026-10-15T01:10:57.455695+08:00",
+  "session_id": "EE473D24-793C-48E3-B8A9-2298BB40327F",
+  "cli_pid": 86525,
+  "agent_pid": 90827,
+  "tty": "/dev/ttys001",
+  "cwd": "/Users/ciscohe/Desktop/macPad",
+  "binding_verified": true,
+  "state": "HANDOVER_RECEIVED_REVIEWING",
+  "observation": "Delivery summary and idle Ask Devin prompt visible; no standalone handover marker. Report not independently reviewed.",
+  "turn_classification": "blocked_audit_satisfied",
+  "deep_review_performed": false,
+  "messages_sent": 0,
+  "keys_sent": 0,
+  "scheduler_changed": false,
+  "handover_protocol_transition": {
+    "status": "superseded_by_actual_handover",
+    "requested_at": "2026-10-15T00:59:05.875687+08:00",
+    "question": "Allow one handover-only reminder after verifying idle?",
+    "reason": "The older R005 task did not require the new handover marker.",
+    "approved": false
+  },
+  "blocked_reason": "Fresh due-time read still shows an idle delivery summary without explicit handover; the one-time reminder authorization is unanswered across at least three consecutive goal turns. User requires handover before review/dispatch.",
+  "actual_handover_observed": true,
+  "handover_observed_at": "2026-10-15T01:37:21.689065+08:00",
+  "historical_deadline": "2026-10-15T01:30:57.455695+08:00",
+  "local_deadline_enforced": false,
+  "coordination_block_resolved": true
+}

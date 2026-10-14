@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T00:18:23.300168+08:00",
+  "finished": "2026-10-15T00:18:23.893158+08:00",
+  "command": "/var/jb/usr/lib/llvm-16/bin/lldb --version 2>&1 | head -4; echo ENTS; /var/jb/usr/bin/ldid -e /var/jb/usr/lib/llvm-16/bin/debugserver 2>/dev/null | head -20",
+  "command_sha256": "35a1e3a83d91c2b462431f03e71f73b883b7e3185b4bc04f7d59c0fa4913da09",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "lldb version 16.0.0 (git@github.com:palera1n/Procursus revision 5477f7da643074610bc1f1d32bbfb899c67a61ae)\nSwift version 5.9.2 (swift-5.9.2-RELEASE)\nENTS\n<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n<plist version=\"1.0\">\n<dict>\n\t<key>platform-application</key>\n\t<true/>\n\t<key>com.apple.security.cs.debugger</key>\n\t<true/>\n\t<key>com.apple.backboardd.debugapplications</key>\n\t<true/>\n\t<key>com.apple.backboardd.launchapplications</key>\n\t<true/>\n\t<key>com.apple.diagnosticd.diagnostic</key>\n\t<true/>\n\t<key>com.apple.frontboard.debugapplications</key>\n\t<true/>\n\t<key>com.apple.frontboard.launchapplications</key>\n\t<true/>\n\t<key>com.apple.security.network.client</key>\n\t<true/>\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

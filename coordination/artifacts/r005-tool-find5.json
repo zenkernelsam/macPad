@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T00:17:26.657490+08:00",
+  "finished": "2026-10-15T00:17:33.010086+08:00",
+  "command": "find /var/mnt/rootfs -name 'LLDB.framework' -o -name 'debugserver' -o -name 'lldb-server*' 2>/dev/null | head; echo DPKG; /var/jb/usr/bin/dpkg -l 2>/dev/null | grep -iE 'lldb|llvm|tmux|debug' | head; echo IOSBIN; ls /usr/bin /bin /sbin /usr/sbin 2>/dev/null | grep -iE 'lldb|debugserver|tmux' | head",
+  "command_sha256": "ae7cf5b29a072ddc2c6e03d17e7698abcc89605cde27aea7c0a2e3c9d4966ad5",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "/var/mnt/rootfs/usr/libexec/rosetta/debugserver\nDPKG\nii  libllvm16                                                 16.0.0~5.9.2~RELEASE-1        iphoneos-arm64 Modular compiler and toolchain technologies, runtime library\nii  llvm-16                                                   16.0.0~5.9.2~RELEASE-1        iphoneos-arm64 Modular compiler and toolchain technologies\nii  llvm-16-linker-tools                                      16.0.0~5.9.2~RELEASE-1        iphoneos-arm64 Modular compiler and toolchain technologies\nii  llvm-16-runtime                                           16.0.0~5.9.2~RELEASE-1        iphoneos-arm64 Modular compiler and toolchain technologies, IR interpreter\nIOSBIN\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

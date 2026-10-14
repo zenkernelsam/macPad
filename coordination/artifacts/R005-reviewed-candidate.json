@@ -1,0 +1,217 @@
+{
+  "time": "2026-10-15T01:33:23.586885+08:00",
+  "base_head": "43d5220",
+  "kind": "uncommitted frozen evidence delivery",
+  "files": [
+    {
+      "path": "coordination/artifacts/r005-apt-install.json",
+      "sha256": "f296c356d0c21e2b75d50ad75074dd755bbed78317d570dd4bbfbf140b5d8e31",
+      "size": 1375
+    },
+    {
+      "path": "coordination/artifacts/r005-apt-search.json",
+      "sha256": "c4475d95a800e2965269fcb550eb44f55979023d740ffcb129f8325745bb274f",
+      "size": 1130
+    },
+    {
+      "path": "coordination/artifacts/r005-baseline.json",
+      "sha256": "4036010eb4a36a829624c65563efeb324dfe4052c37ddc1cc0067999aff75e3e",
+      "size": 1322
+    },
+    {
+      "path": "coordination/artifacts/r005-bpcond.json",
+      "sha256": "5748eabe8cb464921621e03debc279df61113c771c41f12ef93a7a0afa438159",
+      "size": 1585
+    },
+    {
+      "path": "coordination/artifacts/r005-bplist.json",
+      "sha256": "c59aeab05d7b2921234025758c1f8d61fecea4b5f59a4a7c4451fb96c93823f4",
+      "size": 2649
+    },
+    {
+      "path": "coordination/artifacts/r005-bplist2.json",
+      "sha256": "44e36530a1cd34cc24eb2b9fb3c73b1c85b95cda82afdc75bedf710889aaa975",
+      "size": 2361
+    },
+    {
+      "path": "coordination/artifacts/r005-bps-set.json",
+      "sha256": "bd8fdda4d82167865b922b1c74f3bd3064527349a1185673ff4cae7b6c8c3f87",
+      "size": 2497
+    },
+    {
+      "path": "coordination/artifacts/r005-bps-upload.json",
+      "sha256": "9f6019fbd6867e0a0795a71c56840f13e6bcc75b8573fed8ed8ca79972068535",
+      "size": 509
+    },
+    {
+      "path": "coordination/artifacts/r005-canonical-post.json",
+      "sha256": "ba98ca41041e3f130734b0173b5d04bea98de45db79512536fc1cef9c2a41160",
+      "size": 4049
+    },
+    {
+      "path": "coordination/artifacts/r005-cleanup.json",
+      "sha256": "252c018e8c5a1a3019814f9f9ee688b92704b20159d2ef9147d8b3ed8961d292",
+      "size": 1718
+    },
+    {
+      "path": "coordination/artifacts/r005-detach.json",
+      "sha256": "8aac76b22cf0c8bb89b21298332abb16f94d01a78766ad4505f7967db503d91a",
+      "size": 1106
+    },
+    {
+      "path": "coordination/artifacts/r005-device-verify.json",
+      "sha256": "08c1d2db811d3352d9a4d95effa05dcb48b7a98da2de71e6687ca3ffd837d28b",
+      "size": 1443
+    },
+    {
+      "path": "coordination/artifacts/r005-gui-start.json",
+      "sha256": "a5c448a74b1b94c157454298dfd25618452a12fae48895280ce2ab88561b1bb5",
+      "size": 542
+    },
+    {
+      "path": "coordination/artifacts/r005-gui-start2.json",
+      "sha256": "729815ce74d1bacbeb1ced026830d66223da824473469d35a836a5a42eb986af",
+      "size": 1652
+    },
+    {
+      "path": "coordination/artifacts/r005-imagelist.json",
+      "sha256": "9fa0848dab5f867d223bb757829388cbac4beb16c00b25c70db7b434029dc14b",
+      "size": 3658
+    },
+    {
+      "path": "coordination/artifacts/r005-lldb-attach.json",
+      "sha256": "6bd3d1f3e39b7fad0622cb164ef00d178bc283561ebc1363eb693926b786b0de",
+      "size": 939
+    },
+    {
+      "path": "coordination/artifacts/r005-lldb-check.json",
+      "sha256": "678329319418163bc3502f17751da5bb70d1303609841ea1b9a2d96471dec437",
+      "size": 751
+    },
+    {
+      "path": "coordination/artifacts/r005-lldb-pane1.txt",
+      "sha256": "85b7b706010ccd489ab6adaed43ffae3b77613d0faa05b40c3de186935da78e5",
+      "size": 89908
+    },
+    {
+      "path": "coordination/artifacts/r005-lldb-pane2.txt",
+      "sha256": "31cc4fa503165da962d767b498df307a6f02e5ae01e0ee0c6e0f2645347df856",
+      "size": 92169
+    },
+    {
+      "path": "coordination/artifacts/r005-lldb-paths.json",
+      "sha256": "47f90586aa25520129ad2fb77c6c74675b0b5da957d2d1db23195db6bcb506d8",
+      "size": 956
+    },
+    {
+      "path": "coordination/artifacts/r005-lldb-run.json",
+      "sha256": "971198a9a45b988047537151ffd94dd578bd055e14f65b0ac1c2780e3cd4412a",
+      "size": 874
+    },
+    {
+      "path": "coordination/artifacts/r005-lldb-run2.json",
+      "sha256": "769c7abf9a985ac03ede481ea178289a734028fa28cae218cdf90eb03fad057f",
+      "size": 1398
+    },
+    {
+      "path": "coordination/artifacts/r005-lldb-status.json",
+      "sha256": "29b082c49130878c15d72685540053cd33bbda9daed92b6ac574b50e5a4f60df",
+      "size": 1165
+    },
+    {
+      "path": "coordination/artifacts/r005-lldb-verify.json",
+      "sha256": "a1076330911047e10d6e79b2229879de3fba450bc887cbeffe7ddfa94b2b7822",
+      "size": 627
+    },
+    {
+      "path": "coordination/artifacts/r005-lldb-verify2.json",
+      "sha256": "abd9744a54e794a02b3b38d6ad81ce82893eb31fe9464a90ee1cf55a0be0b3fd",
+      "size": 1376
+    },
+    {
+      "path": "coordination/artifacts/r005-lldb-wait.json",
+      "sha256": "d4a206a2ab1ea58c7205fa5806f7266b27fa28d6e6f771c706503558fa1858c5",
+      "size": 576
+    },
+    {
+      "path": "coordination/artifacts/r005-pane-dump-cmd.json",
+      "sha256": "c52cd8c6c8a884bc61a85bddb7f88dff7311450b00a0251afe9ef39786f82270",
+      "size": 565
+    },
+    {
+      "path": "coordination/artifacts/r005-pane-lines.json",
+      "sha256": "978109040304a1b9b62c4fa7bd162667325f3aecf932d1939eef2649d62a6adf",
+      "size": 507
+    },
+    {
+      "path": "coordination/artifacts/r005-post2.json",
+      "sha256": "92b625c61748ce63dd710cb30aba166e1a11d02cf5bc970614b559b7e5bb9ce2",
+      "size": 1212
+    },
+    {
+      "path": "coordination/artifacts/r005-skylight-img.json",
+      "sha256": "0cb2500b7a022f007eb6f1c4e5b09e81521bc8fc7b84a7dca490087b2bc59ed7",
+      "size": 1130
+    },
+    {
+      "path": "coordination/artifacts/r005-tmux-install.json",
+      "sha256": "253713420518c71afc43ada30acc5e0dbe5fe072720ae6644b0c8c7b8a421074",
+      "size": 786
+    },
+    {
+      "path": "coordination/artifacts/r005-tool-find.json",
+      "sha256": "5dc781c444b625a120d6173384d219859a76a0b526bda3276ebb5b12e2ccf636",
+      "size": 770
+    },
+    {
+      "path": "coordination/artifacts/r005-tool-find2.json",
+      "sha256": "3f14d75e24a362fa0d18aab356c42ff2459488866d0171b63694ddb212124c61",
+      "size": 677
+    },
+    {
+      "path": "coordination/artifacts/r005-tool-find3.json",
+      "sha256": "488e81962e6cbf012530b52c73242e345ebc986ad1b738c933fe5b83f27d157c",
+      "size": 751
+    },
+    {
+      "path": "coordination/artifacts/r005-tool-find4.json",
+      "sha256": "949ce202637a0006c1047c4597037341cfa6d64beafdc9e4eff1f47328266fac",
+      "size": 738
+    },
+    {
+      "path": "coordination/artifacts/r005-tool-find5.json",
+      "sha256": "1bcee9d55661dc6eb8990334d42a11039ab0928473e2c7acd790899e3e4d8a76",
+      "size": 1405
+    },
+    {
+      "path": "coordination/artifacts/r005-tool-inventory.json",
+      "sha256": "4a3665da0ceb563050bb4692cd0ffd7d29e15e0c144d29eab00574d316213d0f",
+      "size": 1172
+    },
+    {
+      "path": "coordination/artifacts/r005-verify-words.json",
+      "sha256": "c42f3038af03c2c27d51c8ea220df56de8cdb3fd121ed24eeb4bde29a7f528d4",
+      "size": 2670
+    },
+    {
+      "path": "coordination/artifacts/r005-verify-words2.json",
+      "sha256": "abddd0c592e4981314ba68611bd7c25c67b62783648bc928ca1c5f294e56d847",
+      "size": 2877
+    },
+    {
+      "path": "docs/evidence/r005-live-tcc-branch-20261015.md",
+      "sha256": "4e599b8088e59e0b50e1c857808254c433c1a5ce3f170189db345992542e50e4",
+      "size": 5148
+    },
+    {
+      "path": "coordination/DEVIN_STATUS.md",
+      "sha256": "a4fde5074e44c620498295bdca1c2d373ffb2b2eead20da475a455067827501d",
+      "size": 36277
+    },
+    {
+      "path": "coordination/WORKING",
+      "sha256": "26a0860becf7ef3abc75e9b6c25a46995f1e2afe2d5bc5abc4a360f1794725e2",
+      "size": 1691
+    }
+  ]
+}

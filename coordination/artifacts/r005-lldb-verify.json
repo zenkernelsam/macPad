@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T00:18:12.237281+08:00",
+  "finished": "2026-10-15T00:18:12.715832+08:00",
+  "command": "ls -l /var/jb/usr/bin/lldb* /var/jb/usr/bin/debugserver* 2>/dev/null; /var/jb/usr/bin/lldb-16 --version 2>&1 | head -3",
+  "command_sha256": "3ab103d892d3c9dd3b5254b2422c425554a6cb13207caf3b5ad912fd8c5aa89e",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "zsh:1: no such file or directory: /var/jb/usr/bin/lldb-16\n",
+  "stderr": "zsh:1: no matches found: /var/jb/usr/bin/lldb*\n",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T00:16:42.230158+08:00",
+  "finished": "2026-10-15T00:16:42.720778+08:00",
+  "command": "file /var/mnt/rootfs/usr/bin/lldb 2>/dev/null | head -3; ls -l /var/mnt/rootfs/usr/bin/lldb; echo RUN; /var/jb/usr/macOS/bin/launchdchrootexec /usr/bin/lldb --version 2>&1 | head -5",
+  "command_sha256": "d192e17fc193940a419933558200dcb789ac284554f3ad46f611bd2f0bcde9c4",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "-rwxr-xr-x 1 root wheel 165984 Oct  7 13:15 /var/mnt/rootfs/usr/bin/lldb\nRUN\nUsage: /var/jb/usr/macOS/bin/launchdchrootexec uid gid /path/to/root /path/to/exec args\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

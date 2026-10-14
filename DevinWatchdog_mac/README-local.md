@@ -1,44 +1,35 @@
-# macPad 本地终端工具
+# macPad 本地终端与 SSH 工具
 
-复制自 ShadowRocket 协作流程使用的 DevinWatchdog_mac。当前主机的 python3 已安装 iterm2，无须旧文档中的 .venv-iterm。
+当前协议：用户现有定时任务唤醒，**仅在明确 handover 后集中审核并发送一次任务指针**。执行中不guide、不flush、不代关菜单。详见 coordination/README.md。
 
-在 macPad 仓库根目录只读列出 Devin 会话：
+## 只读发现与重新绑定
 
 ```sh
+python3 DevinWatchdog_mac/macpad_devin_relay.py read --json
 python3 DevinWatchdog_mac/devin_iterm_watch.py --list --no-reconnect
 ```
 
-macpad_devin_relay.py 是本轮建立的精确会话派发工具。它绑定本次核验的 session ID 和 tty，使用 suppress_broadcast；send 仅在确认空闲时发送指定消息文件。会话重建后必须重新核验 PID、tty、标题和 session ID 再更新绑定。
+PID重启会变化；relay动态验证唯一macPad移植标题、session、tty、ACP进程及其cwd。本机python3已安装iterm2。未启动常驻watchdog，不要无参数运行旧devin_iterm_watch.py（它会自动续跑，违反当前规则）。
+
+## 交接后发送一次
 
 ```sh
-python3 DevinWatchdog_mac/macpad_devin_relay.py read
-# 仅在移植工作获准继续、需要派发新工作包时执行：
-python3 DevinWatchdog_mac/macpad_devin_relay.py send coordination/dispatch-message.txt
+python3 DevinWatchdog_mac/macpad_devin_relay.py send coordination/next-pointer.txt \
+  --expected-session-id <fresh-id> --expected-pid <fresh-acp-pid> --dry-run
 ```
 
-未安装或启动常驻看门狗，未复制指向旧目录的 launchd plist。无参数运行 devin_iterm_watch.py 会开启自动续跑；任务暂停期间不要运行它。
+真实目标必须明确输出`(handover to codex now)`并回到空闲。新会话、普通空闲、排队输入、工作中、菜单、引用的标记均不能放行。只允许单行短指针；dry-run通过后去掉该选项。正文一次、单独可见hash标记、重核身份后独立CR；不自动重贴或催任务。并发发送由本地锁阻止。
 
-工作中发送指导可使用 `guide MESSAGE_FILE`（只在屏幕确认 Guide Devin 时允许）。若 TUI 将消息排队，先 read 核验 `Press Enter to send queued messages now`，再用 `flush` 递送已排队消息；这不会重启 Devin。任何 send/guide 都不会把消息正文打印到工具日志。敏感授权不要通过消息文件落盘。
+## 保留真实退出码的 SSH / SCP
 
-## SSH：保留真实退出码
-
-`macpad_ssh.py` 使用现有 ssh/sshpass。仅从临时环境读取 `MACWS_DEVICE`、`MACWS_DEVICE_PORT`（默认2222）、`MACWS_SSH_PASSWORD`；不把密码放 argv 或文件。例：在环境已配置后运行
+`macpad_ssh.py`从临时环境读取MACWS_DEVICE、MACWS_DEVICE_PORT（默认2222）、MACWS_SSH_PASSWORD，不把密码放argv或文件。
 
 ```sh
 python3 DevinWatchdog_mac/macpad_ssh.py --command 'uname -m' --record coordination/artifacts/device-identity.json
 python3 DevinWatchdog_mac/macpad_ssh.py --script coordination/device-check.sh --timeout 60 --record coordination/artifacts/device-check.json
-```
-
-`--script` 通过 stdin 交给远端 `sh -s`；脚本开头应设置 `set -eu`，预期失败用显式分支处理。工具保留远端 shell 的最终退出码，但不会改变 `false; true` 等 shell 组合的语义。构建、签名、部署各步骤分别记录退出码，或明确 fail-fast。输出 JSON 会替换当前连接地址/密码，但提交前仍需人工检查其他私人信息。
-
-已在设备验证：远端 `exit 0` → 工具0；远端 `exit 7` → 工具7，证据见 coordination/artifacts/ssh-exit-*.json。超时返回124并清理本地进程组；这不证明远端长任务已停止，仍须核验远端PID。工具不会启动常驻代理。
-
-单文件上传（先传新临时文件，后续签名/trust/原子替换仍由项目流程负责）：
-
-```sh
 python3 DevinWatchdog_mac/macpad_ssh.py --upload misc/macos_ws_event_probe --remote-path /tmp/macos_ws_event_probe.new --timeout 30 --record coordination/artifacts/probe-upload.json
 ```
 
-SCP 同样固定 password authentication、保存真实传输退出码及源文件 SHA256，并在超时后清理本地进程组。上传后重新核对远端文件；传输成功不等于已部署。
+远端脚本通过stdin交给sh -s，应使用set -eu并显式处理预期失败；管道末端状态不是原进程退出码。SCP固定password authentication，输出源哈希及真实退出码。上传成功不等于部署成功；仍需新文件签名/trust/原子安装及远端哈希核对。
 
-`dismiss` 仅在当前屏幕确认是带 `esc close` 的 Devin 会话/任务浮层时发送一次 Escape；它不发送双 Escape 中断，也不操作其它 tty。PID/tty/session 身份仍须先核实。
+JSON会替换当前地址/密码，提交前仍需检查其它私人信息。超时返回124并清理本地SSH进程组，不证明远端长任务已退出；须核验其真实PID/handle。工具不会自动重试或建立常驻代理。

@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T00:23:18.951838+08:00",
+  "finished": "2026-10-15T00:23:19.577910+08:00",
+  "command": "LC_CTYPE=UTF-8 TMUX_TMPDIR=/var/tmp /var/jb/usr/bin/tmux capture-pane -t devin_r005 -p -S - | grep -a 'SkyLight'",
+  "command_sha256": "eff355c5a03e1b88d3e0f104c7dff471dbb8c648612609667d8a6a5aa38aed0c",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "Executable module set to \"/System/Library/PrivateFrameworks/SkyLight.framework/Versions/A/Resources/WindowServer\".\n[  1] 465422C7-3CFC-3E9F-9C04-813F3A265AA6 0x0000000100b04000 /System/Library/PrivateFrameworks/SkyLight.framework/Versions/A/Resources/WindowServer (0x0000000100b04000)\n[  3] 96676A53-B1E0-3D7E-B98B-B73873CD1880 0x00000001974d1000 /System/Library/PrivateFrameworks/SkyLight.framework/Versions/A/SkyLight (0x00000001974d1000)\n[278] 983665BA-B173-392C-9874-65213940AEF1 0x000000010aba8000 /System/Library/PrivateFrameworks/SkyLight.framework/Versions/A/Resources/CursorAsset (0x000000010aba8000)\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

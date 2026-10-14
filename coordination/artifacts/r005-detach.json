@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T00:39:21.997832+08:00",
+  "finished": "2026-10-15T00:39:28.667812+08:00",
+  "command": "LC_CTYPE=UTF-8 TMUX_TMPDIR=/var/tmp /var/jb/usr/bin/tmux send-keys -t devin_r005 'process detach' Enter; sleep 3; LC_CTYPE=UTF-8 TMUX_TMPDIR=/var/tmp /var/jb/usr/bin/tmux send-keys -t devin_r005 'quit' Enter; sleep 3; LC_CTYPE=UTF-8 TMUX_TMPDIR=/var/tmp /var/jb/usr/bin/tmux kill-session -t devin_r005; LC_CTYPE=UTF-8 TMUX_TMPDIR=/var/tmp /var/jb/usr/bin/tmux ls 2>&1; ps aux | grep -E 'lldb|55506' | grep -v grep | head",
+  "command_sha256": "d2670ad28dac1792210d3078050436b055629df11eb79a1307e363fd42e84c84",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "no server running on /private/var/tmp/tmux-0/default\nroot           55506   1.8  1.1 409166144 172384   ??  Ss   12:21AM   0:35.04 /System/Library/PrivateFrameworks/SkyLight.framework/Resources/WindowServer -virtualonly -daemon\n",
+  "stderr": "no server running on /private/var/tmp/tmux-0/default\n",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T00:18:01.067477+08:00",
+  "finished": "2026-10-15T00:18:07.413661+08:00",
+  "command": "/var/jb/usr/bin/apt-get install -y lldb-16 2>&1 | tail -15",
+  "command_sha256": "158962eb8e8fb015fd5044a228043d86ea5f45dc83e29f21fe7394c3cc7e3371",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "Preparing to unpack .../libclang-cpp16_16.0.0~5.9.2~RELEASE-1_iphoneos-arm64.deb ...\nUnpacking libclang-cpp16 (16.0.0~5.9.2~RELEASE-1) ...\nSelecting previously unselected package debugserver-16.\nPreparing to unpack .../debugserver-16_16.0.0~5.9.2~RELEASE-1_iphoneos-arm64.deb ...\nUnpacking debugserver-16 (16.0.0~5.9.2~RELEASE-1) ...\nSelecting previously unselected package liblldb-16.\nPreparing to unpack .../liblldb-16_16.0.0~5.9.2~RELEASE-1_iphoneos-arm64.deb ...\nUnpacking liblldb-16 (16.0.0~5.9.2~RELEASE-1) ...\nSelecting previously unselected package lldb-16.\nPreparing to unpack .../lldb-16_16.0.0~5.9.2~RELEASE-1_iphoneos-arm64.deb ...\nUnpacking lldb-16 (16.0.0~5.9.2~RELEASE-1) ...\nSetting up libclang-cpp16 (16.0.0~5.9.2~RELEASE-1) ...\nSetting up liblldb-16 (16.0.0~5.9.2~RELEASE-1) ...\nSetting up debugserver-16 (16.0.0~5.9.2~RELEASE-1) ...\nSetting up lldb-16 (16.0.0~5.9.2~RELEASE-1) ...\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

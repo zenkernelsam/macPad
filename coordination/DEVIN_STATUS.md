@@ -1,8 +1,16 @@
 # DEVIN_STATUS — current delivery
 
-State: **R004B loader-observation** delivered (diagnostic checkpoint,
-not acceptance).  R003 checkpoint `0f5b8f4` and R004A audit/docs
-`be9dc08` accepted; see `reviews/`.
+State: **R005 live branch trace delivered** (2026-10-15): the 1002
+denial's real path is now runtime-confirmed — fresh miss →
+`audit_token_check_tcc_access` → `TCCAccessPreflightWithAuditToken`
+raw return **1** (deny at this callsite) → deny bits folded into the
+per-process rights cache → gate 0 → 1002.  NOT a cached deny, not a
+failed checker resolution.  Input still unfixed; the TCC grant producer
+for `kTCCServicePostEvent` is the open question.
+Full evidence: `docs/evidence/r005-live-tcc-branch-20261015.md`,
+raw pane captures `coordination/artifacts/r005-lldb-pane{1,2}.txt`.
+R004B accepted (bounded diagnostic, INCONCLUSIVE); R004A `be9dc08`
+and R003 `0f5b8f4` accepted.
 
 ## R004B bounded loader observation (2026-10-14)
 
@@ -210,7 +218,7 @@ global reads do NOT describe WindowServer state.
 
 - Device: iPad13,11 (T8103), iPadOS 16.3 (20D47), XNU 8792.82.2.
 - Rootfs: macOS 13.4.1 (22F82) at `/var/mnt/rootfs`, disk 44% used.
-- SSH: helper `devssh` → `Cs-Pad-2.local` :2222 (no creds in repo).
+- SSH: helper `devssh` → `<DEVICE_HOST>` :2222 (no creds in repo).
 - WindowServer for experiments: PID 42072,
   `UIKitApplication:com.macwsguide.windowserver`, `-virtualonly -daemon`.
 - libmachook deployed: thin slices Oct 14 03:28 (arm64e →

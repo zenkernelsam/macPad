@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T00:18:18.725860+08:00",
+  "finished": "2026-10-15T00:18:19.200716+08:00",
+  "command": "/var/jb/usr/bin/dpkg -L lldb-16 2>/dev/null | grep -v '/\\.' | head; /var/jb/usr/bin/dpkg -L debugserver-16 2>/dev/null | grep bin",
+  "command_sha256": "ff311e1932bd940d252510c679a945f0189b27f79df3b24f96af1394a2155fbd",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "/var\n/var/jb\n/var/jb/usr\n/var/jb/usr/lib\n/var/jb/usr/lib/llvm-16\n/var/jb/usr/lib/llvm-16/bin\n/var/jb/usr/lib/llvm-16/bin/lldb\n/var/jb/usr/lib/llvm-16/bin/lldb-argdumper\n/var/jb/usr/lib/llvm-16/bin/lldb-instr\n/var/jb/usr/lib/llvm-16/bin/lldb-server\n/var/jb/usr/bin\n/var/jb/usr/lib/llvm-16/bin\n/var/jb/usr/lib/llvm-16/bin/debugserver\n/var/jb/usr/lib/llvm-16/bin/debugserver-nonui\n/var/jb/usr/bin/debugserver-16\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

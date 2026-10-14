@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T00:16:18.283593+08:00",
+  "finished": "2026-10-15T00:16:18.735074+08:00",
+  "command": "find /var/jb -name 'lldb' -o -name 'lldb-*' -o -name 'debugserver' -o -name 'tmux' 2>/dev/null | head -20; echo PKG; find /var/jb -maxdepth 5 -type d -name 'llvm*' 2>/dev/null | head; ls /var/jb/usr/lib 2>/dev/null | grep -iE 'lldb|llvm' | head",
+  "command_sha256": "3c647c35811ade0015e72aeb1b1366e43bbe3080572a7de345755dd753fc80a6",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "PKG\nLLVMPolly.dylib\nllvm-16\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

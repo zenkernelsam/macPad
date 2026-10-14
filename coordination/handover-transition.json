@@ -1,0 +1,12 @@
+{
+  "time": "2026-10-15T01:15:37.036239+08:00",
+  "identity": [
+    "EE473D24-793C-48E3-B8A9-2298BB40327F",
+    "/dev/ttys001",
+    90827
+  ],
+  "kind": "one-time completed-idle handover confirmation",
+  "new_task_dispatched": false,
+  "basis": "Continued-work instruction; reconcile protocol after completed idle report. No busy-session interruption.",
+  "status": "confirmation_sent_once"
+}

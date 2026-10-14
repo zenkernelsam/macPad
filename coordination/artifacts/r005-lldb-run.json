@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T00:16:52.753112+08:00",
+  "finished": "2026-10-15T00:16:53.361344+08:00",
+  "command": "/var/jb/usr/macOS/bin/launchdchrootexec 0 0 /var/mnt/rootfs /usr/bin/lldb --version 2>&1 | head -8",
+  "command_sha256": "bc567a72ca7d0ba1faf124814b310bef8766804fb47facabe96dea1d1d4fbb5b",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "chdir: No such file or directory\n[launchdchrootexec] target=/usr/bin/lldb arch=arm64e insert=/usr/local/lib/libmachook.dylib\n#### MACWS-CTOR-CANARY InitStuff entered\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}
