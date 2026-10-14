@@ -86,6 +86,22 @@ Cleanup: `macos_gui.sh stop` (iOS restored), sentinel absent in BOTH
   the post right is `kTCCServicePostEvent`.  Full dumps + analysis:
   `docs/evidence/r004b-gate-dispatcher-impl-disasm-20261015.md`,
   artifacts `r004b-disasm-*.txt`.
+- **ERRATA 2026-10-15:** reviewer LLDB export on the same pinned binary
+  supplies the real symbol names — dispatcher
+  `WSAuditTokenHoldsCachedProcessRight` @`0x1854257ec`, impl
+  `audit_token_check_tcc_access` @`0x185425da0`, resolver
+  `tcc_lookup_symbol` @`0x185425e44`, right object
+  `kWSTCCServicePostEvent`.  Cache check is two-stage (`+0x18` known-bits
+  gate, `+0x10` allow-bits decision; onceToken via `dispatch_once`) — NOT
+  the single-OR mask reading in my capstone doc (errata block added at
+  its head).  Raw TCC return **0 = pass** at this callsite (`cset eq`);
+  the older "probe preflight returned 1 = allow" claim is retracted.
+  Authoritative doc:
+  `docs/evidence/ventura-22F82-tcc-checker-20261015.md` +
+  `coordination/artifacts/R005-static/exact-functions.txt`.  A cached
+  deny returning 0 without loader activity, or a cached checker pointer
+  calling TCC without dlsym, are both consistent with LOADER-OBS=0 —
+  which branch ran remains unproven.
 - Remaining: who grants/produces the TCC `kTCCServicePostEvent` right for
   a real sender in-session (loginwindow/session path), since
   self-pid posts are pre-allowed and cached denies fold back.

@@ -1,0 +1,19 @@
+{
+  "time": "2026-10-14T23:58:58.060833+08:00",
+  "input": "analysis/SkyLight_22F82",
+  "sha256": "13d7a0ca010a9808234c71c34fd650b26329de99d1aceaeb5ddbb58f8b906c61",
+  "argv": [
+    "xcrun",
+    "lldb",
+    "--batch",
+    "-o",
+    "target create --arch arm64e analysis/SkyLight_22F82",
+    "-o",
+    "image list",
+    "-o",
+    "disassemble --start-address 0x1854257ec --count 120 --bytes",
+    "-o",
+    "disassemble --start-address 0x185425da0 --count 100 --bytes"
+  ],
+  "exit": 0
+}

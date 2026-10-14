@@ -7,3 +7,12 @@ pipeline failure, real evidence). 26/26 fixture checks ALL-PASS.
 Deployed post-sign: arm64e c408dc94…, arm64 56224d25…; baseline HI rc=0.
 Stack stopped; sentinels absent both namespaces; no orphans.
 Input still 1002 — no acceptance.  Git writes released to Devin.
+
+ERRATA 10-15: LLDB on pinned binary resolved real symbols —
+WSAuditTokenHoldsCachedProcessRight / audit_token_check_tcc_access /
+tcc_lookup_symbol; right object kWSTCCServicePostEvent (payload
+"kTCCServicePostEvent"); TCC raw 0 = pass at this callsite (earlier
+"preflight 1 = allow" retracted); two-stage cache (+0x18 known / +0x10
+allow).  See docs/evidence/ventura-22F82-tcc-checker-20261015.md +
+artifacts/R005-static/.  R005 scope per reviewer: one-generation WS
+breakpoint capture of raw TCC w0 — no overrides.

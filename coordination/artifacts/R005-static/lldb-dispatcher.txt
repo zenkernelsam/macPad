@@ -1,0 +1,4 @@
+(lldb) target create --arch arm64e analysis/SkyLight_22F82
+Current executable set to '/Users/ciscohe/Desktop/macPad/analysis/SkyLight_22F82' (arm64e).
+(lldb) image list -v
+error: unknown or ambiguous option

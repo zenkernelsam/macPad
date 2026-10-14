@@ -1,0 +1,23 @@
+{
+  "time": "2026-10-15T00:04:31.252817+08:00",
+  "argv": [
+    "xcrun",
+    "lldb",
+    "--batch",
+    "-o",
+    "target create --arch arm64e analysis/SkyLight_22F82",
+    "-o",
+    "image list",
+    "-o",
+    "disassemble --name CGXSenderCanSynthesizeEvents --bytes",
+    "-o",
+    "disassemble --name WSAuditTokenHoldsCachedProcessRight --bytes",
+    "-o",
+    "disassemble --name audit_token_check_tcc_access --bytes",
+    "-o",
+    "disassemble --name tcc_lookup_symbol --bytes",
+    "-o",
+    "image lookup --address 0x1d3dcb6c8"
+  ],
+  "exit": 0
+}

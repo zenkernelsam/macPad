@@ -1,0 +1,230 @@
+(lldb) target create --arch arm64e analysis/SkyLight_22F82
+Current executable set to '/Users/ciscohe/Desktop/macPad/analysis/SkyLight_22F82' (arm64e).
+(lldb) image list
+[  0] 96676A53-B1E0-3D7E-B98B-B73873CD1880 0x00000001850e5000 /Users/ciscohe/Desktop/macPad/analysis/SkyLight_22F82 
+(lldb) disassemble --start-address 0x1854257ec --count 120 --bytes
+SkyLight_22F82`WSAuditTokenHoldsCachedProcessRight:
+SkyLight_22F82[0x1854257ec] <+0>:   0xd503237f   pacibsp 
+SkyLight_22F82[0x1854257f0] <+4>:   0xd102c3ff   sub    sp, sp, #0xb0
+SkyLight_22F82[0x1854257f4] <+8>:   0xa90667fa   stp    x26, x25, [sp, #0x60]
+SkyLight_22F82[0x1854257f8] <+12>:  0xa9075ff8   stp    x24, x23, [sp, #0x70]
+SkyLight_22F82[0x1854257fc] <+16>:  0xa90857f6   stp    x22, x21, [sp, #0x80]
+SkyLight_22F82[0x185425800] <+20>:  0xa9094ff4   stp    x20, x19, [sp, #0x90]
+SkyLight_22F82[0x185425804] <+24>:  0xa90a7bfd   stp    x29, x30, [sp, #0xa0]
+SkyLight_22F82[0x185425808] <+28>:  0x910283fd   add    x29, sp, #0xa0
+SkyLight_22F82[0x18542580c] <+32>:  0xaa0203f5   mov    x21, x2
+SkyLight_22F82[0x185425810] <+36>:  0xaa0103f6   mov    x22, x1
+SkyLight_22F82[0x185425814] <+40>:  0xaa0003f7   mov    x23, x0
+SkyLight_22F82[0x185425818] <+44>:  0xf028b0e8   adrp   x8, 333343
+SkyLight_22F82[0x18542581c] <+48>:  0xf9461d08   ldr    x8, [x8, #0xc38]
+SkyLight_22F82[0x185425820] <+52>:  0xf9400108   ldr    x8, [x8]
+SkyLight_22F82[0x185425824] <+56>:  0xf81b83a8   stur   x8, [x29, #-0x48]
+SkyLight_22F82[0x185425828] <+60>:  0xad400400   ldp    q0, q1, [x0]
+SkyLight_22F82[0x18542582c] <+64>:  0xad0187e0   stp    q0, q1, [sp, #0x30]
+SkyLight_22F82[0x185425830] <+68>:  0xad400002   ldp    q2, q0, [x0]
+SkyLight_22F82[0x185425834] <+72>:  0xad0003e2   stp    q2, q0, [sp]
+SkyLight_22F82[0x185425838] <+76>:  0x910003e0   mov    x0, sp
+SkyLight_22F82[0x18542583c] <+80>:  0x94015b38   bl     0x18547c51c               ; symbol stub for: audit_token_to_pid
+SkyLight_22F82[0x185425840] <+84>:  0xaa0003f4   mov    x20, x0
+SkyLight_22F82[0x185425844] <+88>:  0xad4187e0   ldp    q0, q1, [sp, #0x30]
+SkyLight_22F82[0x185425848] <+92>:  0xad0007e0   stp    q0, q1, [sp]
+SkyLight_22F82[0x18542584c] <+96>:  0x910003e0   mov    x0, sp
+SkyLight_22F82[0x185425850] <+100>: 0x94015b37   bl     0x18547c52c               ; symbol stub for: audit_token_to_pidversion
+SkyLight_22F82[0x185425854] <+104>: 0x340000f4   cbz    w20, 0x185425870          ; <+132>
+SkyLight_22F82[0x185425858] <+108>: 0xaa0003f8   mov    x24, x0
+SkyLight_22F82[0x18542585c] <+112>: 0x94015cb4   bl     0x18547cb2c               ; symbol stub for: getpid
+SkyLight_22F82[0x185425860] <+116>: 0x6b00029f   cmp    w20, w0
+SkyLight_22F82[0x185425864] <+120>: 0x540000c1   b.ne   0x18542587c               ; <+144>
+SkyLight_22F82[0x185425868] <+124>: 0x52800035   mov    w21, #0x1
+SkyLight_22F82[0x18542586c] <+128>: 0x14000018   b      0x1854258cc               ; <+224>
+SkyLight_22F82[0x185425870] <+132>: 0x394082c8   ldrb   w8, [x22, #0x20]
+SkyLight_22F82[0x185425874] <+136>: 0x7100011f   cmp    w8, #0x0
+SkyLight_22F82[0x185425878] <+140>: 0x14000014   b      0x1854258c8               ; <+220>
+SkyLight_22F82[0x18542587c] <+144>: 0x2a1403f3   mov    w19, w20
+SkyLight_22F82[0x185425880] <+148>: 0xb3607f13   bfi    x19, x24, #32, #32
+SkyLight_22F82[0x185425884] <+152>: 0xb029bc19   adrp   x25, 341889
+SkyLight_22F82[0x185425888] <+156>: 0xf945a728   ldr    x8, [x25, #0xb48]
+SkyLight_22F82[0x18542588c] <+160>: 0xb100051f   cmn    x8, #0x1
+SkyLight_22F82[0x185425890] <+164>: 0x54000ce1   b.ne   0x185425a2c               ; <+576>
+SkyLight_22F82[0x185425894] <+168>: 0xb029bc1a   adrp   x26, 341889
+SkyLight_22F82[0x185425898] <+172>: 0xf945a340   ldr    x0, [x26, #0xb40]
+SkyLight_22F82[0x18542589c] <+176>: 0xb40000a0   cbz    x0, 0x1854258b0           ; <+196>
+SkyLight_22F82[0x1854258a0] <+180>: 0xaa1303e1   mov    x1, x19
+SkyLight_22F82[0x1854258a4] <+184>: 0x94014fe2   bl     0x18547982c               ; symbol stub for: CFDictionaryGetValue
+SkyLight_22F82[0x1854258a8] <+188>: 0xaa0003f8   mov    x24, x0
+SkyLight_22F82[0x1854258ac] <+192>: 0x14000002   b      0x1854258b4               ; <+200>
+SkyLight_22F82[0x1854258b0] <+196>: 0xd2800018   mov    x24, #0x0
+SkyLight_22F82[0x1854258b4] <+200>: 0xf9400ec8   ldr    x8, [x22, #0x18]
+SkyLight_22F82[0x1854258b8] <+204>: 0xea18011f   tst    x8, x24
+SkyLight_22F82[0x1854258bc] <+208>: 0x54000240   b.eq   0x185425904               ; <+280>
+SkyLight_22F82[0x1854258c0] <+212>: 0xf9400ac8   ldr    x8, [x22, #0x10]
+SkyLight_22F82[0x1854258c4] <+216>: 0xea18011f   tst    x8, x24
+SkyLight_22F82[0x1854258c8] <+220>: 0x1a9f07f5   cset   w21, ne
+SkyLight_22F82[0x1854258cc] <+224>: 0xf85b83a8   ldur   x8, [x29, #-0x48]
+SkyLight_22F82[0x1854258d0] <+228>: 0xf028b0e9   adrp   x9, 333343
+SkyLight_22F82[0x1854258d4] <+232>: 0xf9461d29   ldr    x9, [x9, #0xc38]
+SkyLight_22F82[0x1854258d8] <+236>: 0xf9400129   ldr    x9, [x9]
+SkyLight_22F82[0x1854258dc] <+240>: 0xeb08013f   cmp    x9, x8
+SkyLight_22F82[0x1854258e0] <+244>: 0x54000be1   b.ne   0x185425a5c               ; <+624>
+SkyLight_22F82[0x1854258e4] <+248>: 0xaa1503e0   mov    x0, x21
+SkyLight_22F82[0x1854258e8] <+252>: 0xa94a7bfd   ldp    x29, x30, [sp, #0xa0]
+SkyLight_22F82[0x1854258ec] <+256>: 0xa9494ff4   ldp    x20, x19, [sp, #0x90]
+SkyLight_22F82[0x1854258f0] <+260>: 0xa94857f6   ldp    x22, x21, [sp, #0x80]
+SkyLight_22F82[0x1854258f4] <+264>: 0xa9475ff8   ldp    x24, x23, [sp, #0x70]
+SkyLight_22F82[0x1854258f8] <+268>: 0xa94667fa   ldp    x26, x25, [sp, #0x60]
+SkyLight_22F82[0x1854258fc] <+272>: 0x9102c3ff   add    sp, sp, #0xb0
+SkyLight_22F82[0x185425900] <+276>: 0xd65f0fff   retab  
+SkyLight_22F82[0x185425904] <+280>: 0xf94002c1   ldr    x1, [x22]
+SkyLight_22F82[0x185425908] <+284>: 0xad4006e0   ldp    q0, q1, [x23]
+SkyLight_22F82[0x18542590c] <+288>: 0xad0007e0   stp    q0, q1, [sp]
+SkyLight_22F82[0x185425910] <+292>: 0x910003e0   mov    x0, sp
+SkyLight_22F82[0x185425914] <+296>: 0xd63f0abf   blraaz x21
+SkyLight_22F82[0x185425918] <+300>: 0xaa0003f5   mov    x21, x0
+SkyLight_22F82[0x18542591c] <+304>: 0x7100001f   cmp    w0, #0x0
+SkyLight_22F82[0x185425920] <+308>: 0x52800108   mov    w8, #0x8
+SkyLight_22F82[0x185425924] <+312>: 0x52800209   mov    w9, #0x10
+SkyLight_22F82[0x185425928] <+316>: 0x9a881128   csel   x8, x9, x8, ne
+SkyLight_22F82[0x18542592c] <+320>: 0xf8686ad6   ldr    x22, [x22, x8]
+SkyLight_22F82[0x185425930] <+324>: 0xf945a728   ldr    x8, [x25, #0xb48]
+SkyLight_22F82[0x185425934] <+328>: 0xb100051f   cmn    x8, #0x1
+SkyLight_22F82[0x185425938] <+332>: 0x54000861   b.ne   0x185425a44               ; <+600>
+SkyLight_22F82[0x18542593c] <+336>: 0xf945a357   ldr    x23, [x26, #0xb40]
+SkyLight_22F82[0x185425940] <+340>: 0xb4fffc77   cbz    x23, 0x1854258cc          ; <+224>
+SkyLight_22F82[0x185425944] <+344>: 0xaa1802d6   orr    x22, x22, x24
+SkyLight_22F82[0x185425948] <+348>: 0xaa1703e0   mov    x0, x23
+SkyLight_22F82[0x18542594c] <+352>: 0xaa1303e1   mov    x1, x19
+SkyLight_22F82[0x185425950] <+356>: 0x94014f93   bl     0x18547979c               ; symbol stub for: CFDictionaryContainsKey
+SkyLight_22F82[0x185425954] <+360>: 0x340000c0   cbz    w0, 0x18542596c           ; <+384>
+SkyLight_22F82[0x185425958] <+364>: 0xaa1703e0   mov    x0, x23
+SkyLight_22F82[0x18542595c] <+368>: 0xaa1303e1   mov    x1, x19
+SkyLight_22F82[0x185425960] <+372>: 0xaa1603e2   mov    x2, x22
+SkyLight_22F82[0x185425964] <+376>: 0x94014fc2   bl     0x18547986c               ; symbol stub for: CFDictionarySetValue
+SkyLight_22F82[0x185425968] <+380>: 0x17ffffd9   b      0x1854258cc               ; <+224>
+SkyLight_22F82[0x18542596c] <+384>: 0x9100c3e8   add    x8, sp, #0x30
+SkyLight_22F82[0x185425970] <+388>: 0xa90323ff   stp    xzr, x8, [sp, #0x30]
+SkyLight_22F82[0x185425974] <+392>: 0xf00002c9   adrp   x9, 91
+SkyLight_22F82[0x185425978] <+396>: 0xfd42e920   ldr    d0, [x9, #0x5d0]
+SkyLight_22F82[0x18542597c] <+400>: 0xfd0023e0   str    d0, [sp, #0x40]
+SkyLight_22F82[0x185425980] <+404>: 0xb9004bff   str    wzr, [sp, #0x48]
+SkyLight_22F82[0x185425984] <+408>: 0x910003e9   mov    x9, sp
+SkyLight_22F82[0x185425988] <+412>: 0xf028b0f0   adrp   x16, 333343
+SkyLight_22F82[0x18542598c] <+416>: 0xf9460a10   ldr    x16, [x16, #0xc10]
+SkyLight_22F82[0x185425990] <+420>: 0xaa0903f1   mov    x17, x9
+SkyLight_22F82[0x185425994] <+424>: 0xf2ed5c31   movk   x17, #0x6ae1, lsl #48
+SkyLight_22F82[0x185425998] <+428>: 0xdac10a30   pacda  x16, x17
+SkyLight_22F82[0x18542599c] <+432>: 0xf90003f0   str    x16, [sp]
+SkyLight_22F82[0x1854259a0] <+436>: 0xf00002ca   adrp   x10, 91
+SkyLight_22F82[0x1854259a4] <+440>: 0xfd42dd40   ldr    d0, [x10, #0x5b8]
+SkyLight_22F82[0x1854259a8] <+444>: 0xfd0007e0   str    d0, [sp, #0x8]
+SkyLight_22F82[0x1854259ac] <+448>: 0x91004129   add    x9, x9, #0x10
+SkyLight_22F82[0x1854259b0] <+452>: 0xb02c03ca   adrp   x10, 360569
+SkyLight_22F82[0x1854259b4] <+456>: 0x911f614a   add    x10, x10, #0x7d8          ; __block_descriptor_tmp.67.19611
+SkyLight_22F82[0x1854259b8] <+460>: 0x90000010   adrp   x16, 0
+SkyLight_22F82[0x1854259bc] <+464>: 0x91298210   add    x16, x16, #0xa60          ; __setProcessFlagsInCache_block_invoke
+SkyLight_22F82[0x1854259c0] <+468>: 0xdac10130   pacia  x16, x9
+SkyLight_22F82[0x1854259c4] <+472>: 0xa9012bf0   stp    x16, x10, [sp, #0x10]
+SkyLight_22F82[0x1854259c8] <+476>: 0xb9002bf4   str    w20, [sp, #0x28]
+(lldb) disassemble --start-address 0x185425da0 --count 100 --bytes
+SkyLight_22F82`audit_token_check_tcc_access:
+SkyLight_22F82[0x185425da0] <+0>:   0xd503237f   pacibsp 
+SkyLight_22F82[0x185425da4] <+4>:   0xd10183ff   sub    sp, sp, #0x60
+SkyLight_22F82[0x185425da8] <+8>:   0xa90357f6   stp    x22, x21, [sp, #0x30]
+SkyLight_22F82[0x185425dac] <+12>:  0xa9044ff4   stp    x20, x19, [sp, #0x40]
+SkyLight_22F82[0x185425db0] <+16>:  0xa9057bfd   stp    x29, x30, [sp, #0x50]
+SkyLight_22F82[0x185425db4] <+20>:  0x910143fd   add    x29, sp, #0x50
+SkyLight_22F82[0x185425db8] <+24>:  0xaa0103f3   mov    x19, x1
+SkyLight_22F82[0x185425dbc] <+28>:  0xaa0003f4   mov    x20, x0
+SkyLight_22F82[0x185425dc0] <+32>:  0xf028b0e8   adrp   x8, 333343
+SkyLight_22F82[0x185425dc4] <+36>:  0xf9461d08   ldr    x8, [x8, #0xc38]
+SkyLight_22F82[0x185425dc8] <+40>:  0xf9400108   ldr    x8, [x8]
+SkyLight_22F82[0x185425dcc] <+44>:  0xf90017e8   str    x8, [sp, #0x28]
+SkyLight_22F82[0x185425dd0] <+48>:  0xb029bc15   adrp   x21, 341889
+SkyLight_22F82[0x185425dd4] <+52>:  0xf945aaa8   ldr    x8, [x21, #0xb50]
+SkyLight_22F82[0x185425dd8] <+56>:  0xb50000e8   cbnz   x8, 0x185425df4           ; <+84>
+SkyLight_22F82[0x185425ddc] <+60>:  0xd0000560   adrp   x0, 174
+SkyLight_22F82[0x185425de0] <+64>:  0x9130f800   add    x0, x0, #0xc3e            ; "TCCAccessPreflightWithAuditToken"
+SkyLight_22F82[0x185425de4] <+68>:  0x94000018   bl     0x185425e44               ; tcc_lookup_symbol
+SkyLight_22F82[0x185425de8] <+72>:  0xaa0003e8   mov    x8, x0
+SkyLight_22F82[0x185425dec] <+76>:  0xf905aaa0   str    x0, [x21, #0xb50]
+SkyLight_22F82[0x185425df0] <+80>:  0xb4000120   cbz    x0, 0x185425e14           ; <+116>
+SkyLight_22F82[0x185425df4] <+84>:  0xad400680   ldp    q0, q1, [x20]
+SkyLight_22F82[0x185425df8] <+88>:  0xad0007e0   stp    q0, q1, [sp]
+SkyLight_22F82[0x185425dfc] <+92>:  0x910003e1   mov    x1, sp
+SkyLight_22F82[0x185425e00] <+96>:  0xaa1303e0   mov    x0, x19
+SkyLight_22F82[0x185425e04] <+100>: 0xd2800002   mov    x2, #0x0
+SkyLight_22F82[0x185425e08] <+104>: 0xd63f091f   blraaz x8
+SkyLight_22F82[0x185425e0c] <+108>: 0x7100001f   cmp    w0, #0x0
+SkyLight_22F82[0x185425e10] <+112>: 0x1a9f17e0   cset   w0, eq
+SkyLight_22F82[0x185425e14] <+116>: 0xf94017e8   ldr    x8, [sp, #0x28]
+SkyLight_22F82[0x185425e18] <+120>: 0xf028b0e9   adrp   x9, 333343
+SkyLight_22F82[0x185425e1c] <+124>: 0xf9461d29   ldr    x9, [x9, #0xc38]
+SkyLight_22F82[0x185425e20] <+128>: 0xf9400129   ldr    x9, [x9]
+SkyLight_22F82[0x185425e24] <+132>: 0xeb08013f   cmp    x9, x8
+SkyLight_22F82[0x185425e28] <+136>: 0x540000c1   b.ne   0x185425e40               ; <+160>
+SkyLight_22F82[0x185425e2c] <+140>: 0xa9457bfd   ldp    x29, x30, [sp, #0x50]
+SkyLight_22F82[0x185425e30] <+144>: 0xa9444ff4   ldp    x20, x19, [sp, #0x40]
+SkyLight_22F82[0x185425e34] <+148>: 0xa94357f6   ldp    x22, x21, [sp, #0x30]
+SkyLight_22F82[0x185425e38] <+152>: 0x910183ff   add    sp, sp, #0x60
+SkyLight_22F82[0x185425e3c] <+156>: 0xd65f0fff   retab  
+SkyLight_22F82[0x185425e40] <+160>: 0x9401592b   bl     0x18547c2ec               ; symbol stub for: __stack_chk_fail
+
+SkyLight_22F82`tcc_lookup_symbol:
+SkyLight_22F82[0x185425e44] <+0>:   0xd503237f   pacibsp 
+SkyLight_22F82[0x185425e48] <+4>:   0xd10103ff   sub    sp, sp, #0x40
+SkyLight_22F82[0x185425e4c] <+8>:   0xa9024ff4   stp    x20, x19, [sp, #0x20]
+SkyLight_22F82[0x185425e50] <+12>:  0xa9037bfd   stp    x29, x30, [sp, #0x30]
+SkyLight_22F82[0x185425e54] <+16>:  0x9100c3fd   add    x29, sp, #0x30
+SkyLight_22F82[0x185425e58] <+20>:  0xaa0003f3   mov    x19, x0
+SkyLight_22F82[0x185425e5c] <+24>:  0xf028b0e8   adrp   x8, 333343
+SkyLight_22F82[0x185425e60] <+28>:  0xf9461d08   ldr    x8, [x8, #0xc38]
+SkyLight_22F82[0x185425e64] <+32>:  0xf9400108   ldr    x8, [x8]
+SkyLight_22F82[0x185425e68] <+36>:  0xf9000fe8   str    x8, [sp, #0x18]
+SkyLight_22F82[0x185425e6c] <+40>:  0xb029bc14   adrp   x20, 341889
+SkyLight_22F82[0x185425e70] <+44>:  0xf945ae80   ldr    x0, [x20, #0xb58]
+SkyLight_22F82[0x185425e74] <+48>:  0xb50000e0   cbnz   x0, 0x185425e90           ; <+76>
+SkyLight_22F82[0x185425e78] <+52>:  0xd0000560   adrp   x0, 174
+SkyLight_22F82[0x185425e7c] <+56>:  0x91317c00   add    x0, x0, #0xc5f            ; "/System/Library/PrivateFrameworks/TCC.framework/TCC"
+SkyLight_22F82[0x185425e80] <+60>:  0x528000a1   mov    w1, #0x5
+SkyLight_22F82[0x185425e84] <+64>:  0x94015ac6   bl     0x18547c99c               ; symbol stub for: dlopen
+SkyLight_22F82[0x185425e88] <+68>:  0xf905ae80   str    x0, [x20, #0xb58]
+SkyLight_22F82[0x185425e8c] <+72>:  0xb4000260   cbz    x0, 0x185425ed8           ; <+148>
+SkyLight_22F82[0x185425e90] <+76>:  0xaa1303e1   mov    x1, x19
+SkyLight_22F82[0x185425e94] <+80>:  0x94015ac6   bl     0x18547c9ac               ; symbol stub for: dlsym
+SkyLight_22F82[0x185425e98] <+84>:  0xb5000480   cbnz   x0, 0x185425f28           ; <+228>
+SkyLight_22F82[0x185425e9c] <+88>:  0xf02b0088   adrp   x8, 352275
+SkyLight_22F82[0x185425ea0] <+92>:  0xf944a114   ldr    x20, [x8, #0x940]
+SkyLight_22F82[0x185425ea4] <+96>:  0xaa1403e0   mov    x0, x20
+SkyLight_22F82[0x185425ea8] <+100>: 0x52800001   mov    w1, #0x0
+SkyLight_22F82[0x185425eac] <+104>: 0x94015cf4   bl     0x18547d27c               ; symbol stub for: os_log_type_enabled
+SkyLight_22F82[0x185425eb0] <+108>: 0x340003a0   cbz    w0, 0x185425f24           ; <+224>
+SkyLight_22F82[0x185425eb4] <+112>: 0x52802048   mov    w8, #0x102
+SkyLight_22F82[0x185425eb8] <+116>: 0x72a10408   movk   w8, #0x820, lsl #16
+SkyLight_22F82[0x185425ebc] <+120>: 0xb90003e8   str    w8, [sp]
+SkyLight_22F82[0x185425ec0] <+124>: 0xf80043f3   stur   x19, [sp, #0x4]
+SkyLight_22F82[0x185425ec4] <+128>: 0x90ffe600   adrp   x0, -832
+SkyLight_22F82[0x185425ec8] <+132>: 0x91000000   add    x0, x0, #0x0
+SkyLight_22F82[0x185425ecc] <+136>: 0xb0000663   adrp   x3, 205
+SkyLight_22F82[0x185425ed0] <+140>: 0x910f3463   add    x3, x3, #0x3cd            ; "Could not find TCC symbol "%s""
+SkyLight_22F82[0x185425ed4] <+144>: 0x1400000f   b      0x185425f10               ; <+204>
+SkyLight_22F82[0x185425ed8] <+148>: 0xf02b0088   adrp   x8, 352275
+SkyLight_22F82[0x185425edc] <+152>: 0xf944a114   ldr    x20, [x8, #0x940]
+SkyLight_22F82[0x185425ee0] <+156>: 0xaa1403e0   mov    x0, x20
+SkyLight_22F82[0x185425ee4] <+160>: 0x52800001   mov    w1, #0x0
+SkyLight_22F82[0x185425ee8] <+164>: 0x94015ce5   bl     0x18547d27c               ; symbol stub for: os_log_type_enabled
+SkyLight_22F82[0x185425eec] <+168>: 0x340001c0   cbz    w0, 0x185425f24           ; <+224>
+SkyLight_22F82[0x185425ef0] <+172>: 0x52802048   mov    w8, #0x102
+SkyLight_22F82[0x185425ef4] <+176>: 0x72a10408   movk   w8, #0x820, lsl #16
+SkyLight_22F82[0x185425ef8] <+180>: 0xb90003e8   str    w8, [sp]
+SkyLight_22F82[0x185425efc] <+184>: 0xf80043f3   stur   x19, [sp, #0x4]
+SkyLight_22F82[0x185425f00] <+188>: 0x90ffe600   adrp   x0, -832
+SkyLight_22F82[0x185425f04] <+192>: 0x91000000   add    x0, x0, #0x0
+SkyLight_22F82[0x185425f08] <+196>: 0xb0000663   adrp   x3, 205
+SkyLight_22F82[0x185425f0c] <+200>: 0x910e7463   add    x3, x3, #0x39d            ; "Could not load TCC (attempting to resolve "%s")"
+SkyLight_22F82[0x185425f10] <+204>: 0x910003e4   mov    x4, sp
+SkyLight_22F82[0x185425f14] <+208>: 0xaa1403e1   mov    x1, x20
+SkyLight_22F82[0x185425f18] <+212>: 0x52800002   mov    w2, #0x0
+SkyLight_22F82[0x185425f1c] <+216>: 0x52800185   mov    w5, #0xc
+SkyLight_22F82[0x185425f20] <+220>: 0x94015933   bl     0x18547c3ec               ; symbol stub for: _os_log_impl
+SkyLight_22F82[0x185425f24] <+224>: 0xd2800000   mov    x0, #0x0
+SkyLight_22F82[0x185425f28] <+228>: 0xf9400fe8   ldr    x8, [sp, #0x18]
+SkyLight_22F82[0x185425f2c] <+232>: 0xf028b0e9   adrp   x9, 333343

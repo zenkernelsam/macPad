@@ -6,6 +6,26 @@ sha256 `13d7a0ca010a9808234c71c34fd650b26329de99d1aceaeb5ddbb58f8b906c61`.
 `__TEXT` va `0x1850e5000` → file offset 0 (linear).  Decoder: capstone 5.0.7.
 Annotated dumps: `coordination/artifacts/r004b-disasm-{gate,dispatcher,impl}.txt`.
 
+**ERRATA (2026-10-15):** superseded by `ventura-22F82-tcc-checker-20261015.md`
++ `coordination/artifacts/R005-static/exact-functions.txt` — full
+symbol-resolved LLDB disassembly on the same binary.  Real symbol names:
+gate=`CGXSenderCanSynthesizeEvents`, dispatcher=
+**`WSAuditTokenHoldsCachedProcessRight`** @`0x1854257ec`, impl=
+**`audit_token_check_tcc_access`** @`0x185425da0`, resolver=
+**`tcc_lookup_symbol`** @`0x185425e44`.  Corrections to this doc:
+(1) cache check is two-stage — `rightDesc+0x18` known-bits test decides
+whether the impl is skipped, `rightDesc+0x10` then decides allow/deny —
+NOT a single OR of both masks; (2) the `0x1d8ba6b48` cell is
+`getProcessCredentialCache.onceToken` initialized via `dispatch_once`,
+not an opaque sentinel; (3) new-key insertion runs through
+`WSDoWithCredentials` + `__setProcessFlagsInCache_block_invoke` and
+registers `processCredentialCacheRemoveDeadProcess` via
+`register_for_port_notification_in_session`; (4) raw TCC return `0` =
+pass at this callsite — any older claim that TCC preflight returning 1
+meant allow is retracted (callsite-specific `cset eq`); (5) the right
+object symbol is `kWSTCCServicePostEvent` (payload string
+`"kTCCServicePostEvent"`, len 20 — both readings verified).
+
 ## 1. Gate — `CGXSenderCanSynthesizeEvents` @ `0x1853fd464`
 
 ```
