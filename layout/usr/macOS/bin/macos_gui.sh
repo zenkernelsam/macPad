@@ -969,6 +969,91 @@ start_macos_diskarbitrationd() {
     log "Private Ventura DiskArbitration endpoint ready (pid=$pid)."
 }
 
+# Bounded client-context round-trip for the private system-tccd endpoint.
+# macwstccdprobe runs under launchdchrootexec, so its
+# xpc_connection_create_mach_service("com.apple.tccd.system") lookup crosses
+# the same injected libmachook mapping that WindowServer's TCC.framework
+# calls use; exit 0 only when the daemon answers with a real XPC dictionary
+# inside the probe's own five-second window.  The watchdog below exists
+# because a wedged endpoint could otherwise outlive that window.
+probe_tccd_transport() {
+    local probe_pid waited=0 status=0
+    local probe_log="$LOGDIR/tccd-system.ready"
+
+    rm -f "$probe_log"
+    "$CHROOTEXEC" 0 0 "$ROOTFS" \
+        /usr/local/bin/macwstccdprobe ping \
+        >"$probe_log" 2>&1 &
+    probe_pid=$!
+    # macwstccdprobe's own bound is five seconds; allow eight for spawn and
+    # a possible on-demand daemon launch, then retire only this child.
+    while kill -0 "$probe_pid" 2>/dev/null && [ "$waited" -lt 80 ]; do
+        sleep 0.1
+        waited=$((waited + 1))
+    done
+    if kill -0 "$probe_pid" 2>/dev/null; then
+        kill -TERM "$probe_pid" 2>/dev/null
+        local terminate_wait=0
+        while kill -0 "$probe_pid" 2>/dev/null &&
+              [ "$terminate_wait" -lt 10 ]; do
+            sleep 0.1
+            terminate_wait=$((terminate_wait + 1))
+        done
+        kill -KILL "$probe_pid" 2>/dev/null
+        wait "$probe_pid" 2>/dev/null || true
+        log "ERROR: macOS system tccd protocol round-trip timed out."
+        tail -n 20 "$probe_log" 2>/dev/null || true
+        return 1
+    fi
+    wait "$probe_pid" 2>/dev/null || status=$?
+    if [ "$status" -ne 0 ] ||
+       ! grep -q '^TCCPING reply-type=dictionary ' "$probe_log" 2>/dev/null; then
+        log "ERROR: macOS system tccd protocol round-trip failed (status=$status)."
+        tail -n 20 "$probe_log" 2>/dev/null || true
+        return 1
+    fi
+    log "macOS system tccd protocol round-trip ready."
+}
+
+# Exact transport witness for the private Ventura system-tccd job.  All
+# three observations must agree before any caller may depend on the
+# endpoint; each one individually defeats a false-ready case recorded by
+# the R007 reviewer fixtures:
+#   1. `launchctl print <domain>/<label>` must resolve THIS job in one real
+#      domain — a lookup error or an unrelated-domain printout is a miss.
+#   2. When that job reports `pid = N`, the exact pid of the current
+#      generation must be live; a stale or recycled pid is not evidence.
+#      (EnablePressuredExit may legitimately leave no pid field at all —
+#      the registered endpoint then answers on demand and the protocol
+#      probe below is the arbiter.)
+#   3. The private endpoint must appear as its own service-name token in
+#      that job's own print — a substring inside a different name such as
+#      com.apple.macosbooter.tccd.system.other never counts.
+#   4. probe_tccd_transport must return a bounded real XPC dictionary from
+#      the intended client context.
+tccd_transport_ready() {
+    local tccd_domain="" tccd_print="" tccd_pid="" candidate
+    for candidate in system user/501 user/0 gui/501; do
+        tccd_print=$(launchctl print "$candidate/$TCCD_SYSTEM_LABEL" 2>/dev/null) \
+            || continue
+        tccd_domain=$candidate
+        break
+    done
+    [ -n "$tccd_domain" ] || return 1
+    if printf '%s\n' "$tccd_print" | grep -q 'pid = '; then
+        tccd_pid=$(printf '%s\n' "$tccd_print" |
+            sed -n 's/.*pid = \([0-9][0-9]*\).*/\1/p' | head -1)
+        case "$tccd_pid" in
+            ''|*[!0-9]*) return 1 ;;
+            *) kill -0 "$tccd_pid" 2>/dev/null || return 1 ;;
+        esac
+    fi
+    printf '%s\n' "$tccd_print" |
+        grep -Eq 'com\.apple\.macosbooter\.tccd\.system([^A-Za-z0-9_.-]|$)' ||
+        return 1
+    probe_tccd_transport
+}
+
 start_tccd_system() {
     # The real Ventura system-scope tccd must exist before any chroot
     # client evaluates TCCAccess* — SkyLight's PostEvent right check,
@@ -977,13 +1062,20 @@ start_tccd_system() {
     # _xpc_error_connection_invalid while no system endpoint was
     # registered, which left the preflight default 1 -> deny -> 1002.
     local waited=0 pid=""
-    if proc_running "$P_TCCD_SYSTEM" &&
-       launchctl list "$TCCD_SYSTEM_LABEL" >/dev/null 2>&1; then
-        log "macOS system tccd endpoint already running."
-        return 0
+    if launchctl list "$TCCD_SYSTEM_LABEL" >/dev/null 2>&1; then
+        # A warm job is not a transport witness: the R007 reviewer fixtures
+        # showed a running process with a missing endpoint and an
+        # unrelated-domain substring both passing the old checks.  The
+        # existing job is reused only when its exact domain, endpoint,
+        # generation and a real client-context reply all agree; otherwise
+        # it is reloaded below.
+        if tccd_transport_ready; then
+            log "macOS system tccd endpoint already running."
+            return 0
+        fi
+        launchctl unload "$TCCD_SYSTEM_PLIST" 2>/dev/null
+        launchctl remove "$TCCD_SYSTEM_LABEL" 2>/dev/null
     fi
-    launchctl unload "$TCCD_SYSTEM_PLIST" 2>/dev/null
-    launchctl remove "$TCCD_SYSTEM_LABEL" 2>/dev/null
     rm -f "$LOGDIR/tccd-system.out" "$LOGDIR/tccd-system.err" \
           /var/jb/var/mobile/tccd-system.out /var/jb/var/mobile/tccd-system.err
     log "Starting macOS system tccd (private endpoint)..."
@@ -1005,28 +1097,17 @@ start_tccd_system() {
             return 1
             ;;
     esac
-    # A live pid alone is not the transport witness: require the declared
-    # private Mach endpoint to be registered by launchd for this job.
-    # macosbooter jobs land in the loading context's domain (user/501 when
-    # macos_gui.sh runs over SSH), so search the domain service tables
-    # rather than assuming system/.
-    local tccd_domain
-    local endpoint_seen=1
-    for tccd_domain in system user/501 user/0 gui/501; do
-        launchctl print "$tccd_domain" 2>/dev/null |
-            grep -q 'com.apple.macosbooter.tccd.system' && {
-                endpoint_seen=0
-                break
-            }
-    done
-    [ "$endpoint_seen" -eq 0 ] || {
-        log "ERROR: macOS system tccd job has no registered endpoint."
+    # A live pid alone is not the transport witness: require the exact job,
+    # its declared private endpoint and a bounded real client-context
+    # protocol reply, then re-verify the same generation pid survived the
+    # probe window.
+    tccd_transport_ready || {
+        log "ERROR: macOS system tccd transport is not ready."
         tail -n 30 /var/jb/var/mobile/tccd-system.err 2>/dev/null || true
         return 1
     }
-    sleep 2
-    proc_running "$P_TCCD_SYSTEM" || {
-        log "ERROR: macOS system tccd exited during its readiness window."
+    kill -0 "$pid" 2>/dev/null || {
+        log "ERROR: macOS system tccd generation pid=$pid died during readiness."
         tail -n 30 /var/jb/var/mobile/tccd-system.err 2>/dev/null || true
         return 1
     }
@@ -1272,6 +1353,17 @@ start_ws_dependents_after_replacement() {
     }
     publish_desktop_operation_services || {
         log "watchdog: private macOS desktop-operation contracts did not recover"
+        return 1
+    }
+    # Same mandatory prerequisite as cold start: the private system-tccd
+    # endpoint must answer before any rebuilt client performs TCC
+    # preflight/input work.  stop_ws_dependents retires the job during a
+    # generation change, so the shared recovery path must restore it here —
+    # idempotent: an already-healthy endpoint is reused, an endpoint-less or
+    # stale one is reloaded.  Recovery still does not restart the live
+    # WindowServer merely because a wait expired.
+    start_tccd_system || {
+        log "watchdog: macOS system tccd transport did not recover"
         return 1
     }
     ensure_locationd_dirhelper_tree || {
@@ -1646,16 +1738,48 @@ application_trust_thermally_safe() {
 # CodeDirectories — so it is bounded and thermally cheap.
 trust_closure_already_live() {
     local manifest="$1"
+    shift
     [ -f "$manifest" ] || return 1
-    /var/jb/usr/bin/python3 - "$manifest" <<'PY'
-import json, re, subprocess, sys
+    /var/jb/usr/bin/python3 - "$manifest" "$@" <<'PY'
+import json, os, re, subprocess, sys
 try:
     files = json.load(open(sys.argv[1]))["files"]
-    need = {c["hash"].lower() for f in files.values() for c in f.get("codes", [])}
-    out = subprocess.run(["/var/jb/usr/bin/jbctl", "trustcache", "info"],
-                         capture_output=True, text=True).stdout
-    live = {h.lower() for h in re.findall(r"[0-9a-fA-F]{40}", out)}
-    sys.exit(0 if need and need <= live else 1)
+    live = {h.lower() for h in re.findall(
+        r"[0-9a-fA-F]{40}",
+        subprocess.run(["/var/jb/usr/bin/jbctl", "trustcache", "info"],
+                       capture_output=True, text=True).stdout)}
+    need = {c["hash"].lower() for f in files.values()
+            for c in f.get("codes", [])}
+    if not need or not need <= live:
+        sys.exit(1)
+    # The closure check alone cannot omit a newly mandatory target — but a
+    # manifest written before that target existed also passes it, silently
+    # skipping the restore walk forever (R007 defect).  Require every
+    # explicit prerequisite to be covered too: a regular file needs a
+    # manifest entry whose recorded hashes are all live; a scanned
+    # directory needs at least one recorded member; an explicit --hash
+    # flag value must itself be live (the walk registers these verbatim,
+    # so a flag added after the manifest was written must not be skipped
+    # here either).  Other missing paths and non-path args fail the
+    # isfile/isdir filters naturally.
+    args = sys.argv[2:]
+    for i, path in enumerate(args):
+        if os.path.isfile(path):
+            entry = files.get(path)
+            if not entry or not {c["hash"].lower() for c in
+                    entry.get("codes", [])} <= live:
+                sys.exit(1)
+        elif os.path.isdir(path):
+            prefix = os.path.join(path, "")
+            if not any(key.startswith(prefix) for key in files):
+                sys.exit(1)
+        elif path == "--hash":
+            if i + 1 >= len(args) or args[i + 1].lower() not in live:
+                sys.exit(1)
+        elif path.startswith("--hash="):
+            if path.split("=", 1)[1].lower() not in live:
+                sys.exit(1)
+    sys.exit(0)
 except Exception:
     sys.exit(1)
 PY
@@ -1671,20 +1795,6 @@ restore_cold_boot_trust() {
         log "ERROR: packaged CodeDirectory trust reader is missing."
         return 1
     }
-    # Cheap live-membership probe: if every manifest cdhash is already
-    # registered this boot, the CodeDirectory walk below is a pure no-op.
-    # The trustcache is reboot-volatile but only additive within a boot, so
-    # manifest membership implies live trust for the recorded files. Files
-    # that drifted from the manifest still exec-fail and are repaired by a
-    # manual `macos_gui.sh trust`, same as before. Unlike the expensive walk,
-    # this probe reads no application CodeDirectories, so it is safe to run
-    # while the device is thermally pressured.
-    if trust_closure_already_live "$boot_trust_cache/hashes.json"; then
-        BASE_TRUST_READY=1
-        log "Cold-boot trust closure already live (all manifest hashes registered this boot); skipping expensive walk."
-        return 0
-    fi
-    application_trust_thermally_safe || return 1
     set --
     for path in \
         /var/jb/usr/macOS/bin/launchdchrootexec \
@@ -1724,6 +1834,7 @@ restore_cold_boot_trust() {
         "$ROOTFS$VNC_BIN" \
         "$ROOTFS$TERM_BIN" \
         "$ROOTFS/System/Library/PrivateFrameworks/SystemStatusServer.framework/Support/systemstatusd" \
+        "$ROOTFS/System/Library/PrivateFrameworks/TCC.framework/Support/tccd" \
         "$ROOTFS/usr/local/libexec/macws-cfprefsd" \
         "$ROOTFS/usr/sbin/coreaudiod" \
         "$ROOTFS/System/Library/Frameworks/AudioToolbox.framework/AudioComponentRegistrar" \
@@ -1891,6 +2002,24 @@ restore_cold_boot_trust() {
             return 1
             ;;
     esac
+    # Cheap live-membership probe: if every manifest cdhash is already
+    # registered this boot AND every explicit prerequisite path above is
+    # covered by that manifest, the CodeDirectory walk below is a pure
+    # no-op. The trustcache is reboot-volatile but only additive within a
+    # boot, so manifest membership implies live trust for the recorded
+    # files. Files that drifted from the manifest still exec-fail and are
+    # repaired by a manual `macos_gui.sh trust`, same as before. Unlike the
+    # expensive walk, this probe reads no application CodeDirectories, so
+    # it is safe to run while the device is thermally pressured. It runs
+    # after the mandatory list is finalized so a manifest written before a
+    # newly required target (e.g. the Ventura system tccd) existed cannot
+    # satisfy the closure check while omitting that target's hashes.
+    if trust_closure_already_live "$boot_trust_cache/hashes.json" "$@"; then
+        BASE_TRUST_READY=1
+        log "Cold-boot trust closure already live (all manifest hashes registered this boot); skipping expensive walk."
+        return 0
+    fi
+    application_trust_thermally_safe || return 1
     # Exact Ventura shared-cache CodeDirectories remain required. The native
     # backend uses the same verified libjailbreak API as jbctl, one process,
     # and checks actual live membership after registering missing hashes.
@@ -4575,6 +4704,15 @@ rebuild_desktop_session() {
     publish_desktop_operation_services || {
         rm -f "$composite_marker"
         log "ERROR: desktop-operation contracts were not ready for the replacement WindowServer."
+        return 1
+    }
+    # stop_ws_dependents above also retired the system-tccd job.  Restore it
+    # through the same checked prerequisite used by cold start and the
+    # watchdog path — the replacement WindowServer's first TCC preflight must
+    # find the private endpoint already answering.
+    start_tccd_system || {
+        rm -f "$composite_marker"
+        log "ERROR: macOS system tccd transport was not ready for the replacement WindowServer."
         return 1
     }
     ensure_desktop_job "$LSD_SYSTEM_PLIST" "$LSD_SYSTEM_LABEL" \

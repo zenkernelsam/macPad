@@ -54,6 +54,7 @@ CORELOCATIONAGENT_NATIVE_ENT="/var/jb/usr/macOS/bin/corelocationagent-native-ent
 LOCATIOND_NATIVE_ENT="/var/jb/usr/macOS/bin/locationd-native-entitlements.plist"
 GEOD_NATIVE_ENT="/var/jb/usr/macOS/bin/geod-native-entitlements.plist"
 DISKARBITRATIOND_NATIVE_ENT="/var/jb/usr/macOS/bin/diskarbitrationd-native-entitlements.plist"
+TCCD_NATIVE_ENT="/var/jb/usr/macOS/bin/tccd-native-entitlements.plist"
 INTEROP_LOCATION_ENT="/var/jb/usr/macOS/bin/interop-location-entitlements.plist"
 COREAUDIOD_AUDIO_ENT="/var/jb/usr/macOS/bin/coreaudiod-ios-audio.entitlements.plist"
 LOAD_DYLIB_PATCHER="/var/jb/usr/macOS/bin/add_macho_load_dylib.py"
@@ -1431,6 +1432,67 @@ sign_and_trustcache_merging_native_entitlements \
     'com.apple.diskarbitrationd' \
     0 \
     'com.apple.rootless.datavault.metadata' || exit 1
+# The private macOS system-tccd job (com.macwsguide.tccd-system,
+# com.apple.macosbooter.tccd.system) execs the stock Ventura tccd. Its Apple
+# platform-14 signature is refused by iOS kernel exec-admission on this
+# device (OS_REASON_EXEC, runtime-confirmed during the 2026-10-15 R007
+# bring-up: every adhoc variant needed a restricted entitlement and the
+# project profile merge satisfies that). Sign it through the established
+# merge contract — project profile plus the real 12-key native entitlement
+# closure re-applied (the installed set is a UNION:
+# com.apple.private.tcc.allow becomes
+# [kTCCServiceListenEvent, kTCCServiceSystemPolicyAllFiles], not a
+# byte-identical copy of the native profile), Identifier com.apple.tccd
+# preserved — and register both per-slice CDHashes.
+# com.apple.private.notificationcenterui.tcc exists only in the native set
+# and is the fast-path marker. Unlike diskarbitrationd's datavault key, none
+# of tccd's native keys is exec-admission-fatal here: the R007 binary
+# carrying the complete merged closure ran as a live daemon, so no strip
+# list. iPadOS's own tccd and its databases stay untouched. The merge runs
+# on a staged .macws-new copy and swaps atomically so an interrupted repair
+# never leaves a half-merged daemon; the pristine image is preserved beside
+# it as .macws-original.
+tccd_target='/var/mnt/rootfs/System/Library/PrivateFrameworks/TCC.framework/Support/tccd'
+tccd_temporary="${tccd_target}.macws-new.$$"
+if [ -f "$tccd_target" ]; then
+    tccd_current=$(ldid -e "$tccd_target" 2>/dev/null || true)
+    if printf '%s\n' "$tccd_current" |
+           grep -Fq '<key>com.apple.private.graphics-restart-no-kill</key>' &&
+       printf '%s\n' "$tccd_current" |
+           grep -Fq '<key>com.apple.private.notificationcenterui.tcc</key>' &&
+       ldid -h "$tccd_target" 2>/dev/null |
+           grep -Fqx 'Identifier=com.apple.tccd'; then
+        for tccd_arch in arm64 arm64e x86_64; do
+            tccd_h=$(ldid -arch "$tccd_arch" -h "$tccd_target" 2>/dev/null |
+                grep CDHash= | cut -c8-)
+            [ -n "$tccd_h" ] && trust_cdhash "$tccd_h" "$tccd_target" "$tccd_arch"
+        done
+    else
+        [ -e "${tccd_target}.macws-original" ] ||
+            cp -p "$tccd_target" "${tccd_target}.macws-original" || exit 1
+        rm -f "$tccd_temporary"
+        cp -p "$tccd_target" "$tccd_temporary" || exit 1
+        sign_and_trustcache_merging_native_entitlements \
+            "$tccd_temporary" \
+            "$TCCD_NATIVE_ENT" \
+            '<key>com.apple.private.notificationcenterui.tcc</key>' \
+            'com.apple.tccd' || {
+            rm -f "$tccd_temporary"
+            exit 1
+        }
+        # The helper already post-verified and trusted the staged file's
+        # per-slice CDHashes (content-derived, still valid after the swap).
+        chown root:wheel "$tccd_temporary" 2>/dev/null || true
+        chmod 0755 "$tccd_temporary" || {
+            rm -f "$tccd_temporary"
+            exit 1
+        }
+        mv -f "$tccd_temporary" "$tccd_target" || exit 1
+    fi
+fi
+# Bounded daemon state: tccd owns its TCC databases; only make sure the
+# container directory exists. Never seed or modify grant data.
+mkdir -p '/var/mnt/rootfs/Library/Application Support/com.apple.TCC' || exit 1
 # The chroot has no loginwindow trust/bootstrap handoff. These are direct
 # outer-launchd targets, so each top-level executable must already satisfy the
 # same project signing policy before libmachook/autosignd can run. Their stock

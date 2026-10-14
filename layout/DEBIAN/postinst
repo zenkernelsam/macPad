@@ -32,6 +32,7 @@ CORELOCATIONAGENT_NATIVE_ENTITLEMENTS=/var/jb/usr/macOS/bin/corelocationagent-na
 LOCATIOND_NATIVE_ENTITLEMENTS=/var/jb/usr/macOS/bin/locationd-native-entitlements.plist
 GEOD_NATIVE_ENTITLEMENTS=/var/jb/usr/macOS/bin/geod-native-entitlements.plist
 DISKARBITRATIOND_NATIVE_ENTITLEMENTS=/var/jb/usr/macOS/bin/diskarbitrationd-native-entitlements.plist
+TCCD_NATIVE_ENTITLEMENTS=/var/jb/usr/macOS/bin/tccd-native-entitlements.plist
 INTEROP_LOCATION_ENTITLEMENTS=/var/jb/usr/macOS/bin/interop-location-entitlements.plist
 CODE_REQUIREMENT_WRITER=/var/jb/usr/macOS/bin/write_code_requirement.py
 WEATHER_PREPARER=/var/jb/usr/macOS/bin/prepare_weather_app.py
@@ -633,6 +634,72 @@ ensure_chroot_native_service_signature() {
     trust_installed_macho "$path"
 }
 
+# Fresh-inode variant of ensure_chroot_native_service_signature for the
+# Ventura system tccd.  The merge runs on a staged copy in the same
+# directory, is verified before swap, and only then replaces the target
+# atomically (mv -f), so a failed or interrupted sign can never leave a
+# half-merged tccd behind.  The pristine slice is preserved beside it as
+# .macws-original, matching the filecoordinationd convention.
+ensure_tccd_system_signature() {
+    target="$ROOTFS/System/Library/PrivateFrameworks/TCC.framework/Support/tccd"
+    backup="${target}.macws-original"
+    temporary="${target}.macws-new.$$"
+    [ -f "$target" ] || return 0
+    [ -f "$TCCD_NATIVE_ENTITLEMENTS" ] || return 1
+
+    # Same fast path as the generic contract: skip the staging entirely
+    # when the merged signature is already in place.
+    entitlements=$(/var/jb/usr/bin/ldid -e "$target" 2>/dev/null || true)
+    if printf '%s\n' "$entitlements" |
+            grep -q '<key>com.apple.private.graphics-restart-no-kill</key>' &&
+       printf '%s\n' "$entitlements" |
+            grep -Fq '<key>com.apple.private.notificationcenterui.tcc</key>' &&
+       /var/jb/usr/bin/ldid -h "$target" 2>/dev/null |
+            grep -q '^Identifier=com.apple.tccd$'; then
+        trust_installed_macho "$target"
+        return 0
+    fi
+
+    [ -e "$backup" ] || cp -p "$target" "$backup" || return 1
+    rm -f "$temporary"
+    cp -p "$target" "$temporary" || return 1
+    ensure_chroot_native_service_signature \
+        "$temporary" \
+        "$TCCD_NATIVE_ENTITLEMENTS" \
+        '<key>com.apple.private.notificationcenterui.tcc</key>' \
+        'com.apple.tccd' || {
+        rm -f "$temporary"
+        return 1
+    }
+    # Verified preparation: the staged file must carry the full contract
+    # before the atomic swap.  The helper already trusted its cdhashes
+    # (content-derived, path-independent — still valid after mv).
+    verify=$(/var/jb/usr/bin/ldid -e "$temporary" 2>/dev/null || true)
+    printf '%s\n' "$verify" |
+        grep -q '<key>com.apple.private.graphics-restart-no-kill</key>' || {
+        rm -f "$temporary"
+        return 1
+    }
+    printf '%s\n' "$verify" |
+        grep -Fq '<key>com.apple.private.notificationcenterui.tcc</key>' || {
+        rm -f "$temporary"
+        return 1
+    }
+    /var/jb/usr/bin/ldid -h "$temporary" 2>/dev/null |
+        grep -q '^Identifier=com.apple.tccd$' || {
+        rm -f "$temporary"
+        return 1
+    }
+    chown root:wheel "$temporary" 2>/dev/null || true
+    chmod 0755 "$temporary" || {
+        rm -f "$temporary"
+        return 1
+    }
+    mv -f "$temporary" "$target" || return 1
+    trust_installed_macho "$target"
+    echo 'Prepared Ventura system tccd for chroot launch; preserved the stock executable.'
+}
+
 ensure_private_cfprefsd() {
     cf_source="$ROOTFS/usr/sbin/cfprefsd"
     cf_target="$ROOTFS/usr/local/libexec/macws-cfprefsd"
@@ -753,7 +820,7 @@ if [ -d "$ROOTFS/System/Library" ]; then
         "$ROOTFS/usr/local/lib/libmachook.dylib" || exit 1
     install_chroot_runtime "$LIBMACHOOK_ARM64" \
         "$ROOTFS/usr/local/lib/libmachook_arm64.dylib" || exit 1
-    for bridge in macwsinputd macwsdisplayd macwsinteropd macwsworkspacectl macws-neofetch; do
+    for bridge in macwsinputd macwsdisplayd macwsinteropd macwsworkspacectl macws-neofetch macwstccdprobe; do
         install_chroot_runtime "/var/jb/usr/macOS/bin/$bridge" \
             "$ROOTFS/usr/local/bin/$bridge" || exit 1
     done
@@ -925,6 +992,24 @@ if [ -d "$ROOTFS/System/Library" ]; then
         "$DISKARBITRATIOND_NATIVE_ENTITLEMENTS" \
         '<key>com.apple.private.security.disk-device-access</key>' \
         'com.apple.diskarbitrationd' || exit 1
+    # The private macOS system-tccd job execs the stock Ventura binary, which
+    # the iOS kernel refuses while it still carries the Apple platform-14
+    # signature (exec-admission OS_REASON_EXEC — runtime-confirmed during the
+    # R007 bring-up).  Re-sign it through the same established merge contract
+    # as every other native service — project profile plus the real 12-key
+    # native entitlement closure re-applied (the installed set is a UNION:
+    # com.apple.private.tcc.allow becomes
+    # [kTCCServiceListenEvent, kTCCServiceSystemPolicyAllFiles], not a
+    # byte-identical copy of the native profile) — Identifier com.apple.tccd
+    # preserved, then per-slice trustcache admission.  The native marker key
+    # com.apple.private.notificationcenterui.tcc exists only in the native
+    # set, so the fast path skips an already-merged binary.  iPadOS's own
+    # tccd and its databases are never touched.
+    ensure_tccd_system_signature || exit 1
+    # Bounded daemon state: tccd owns its own database directory; only make
+    # sure the container exists.  Never create or modify the TCC databases
+    # themselves — grants are the daemon's own state.
+    mkdir -p "$ROOTFS/Library/Application Support/com.apple.TCC" || exit 1
     # cfprefsd is launched before autosignd can help.  Keep the stock image
     # untouched and install a private copy with its proven minimal profile;
     # the generic project profile's system-container entitlement is invalid in

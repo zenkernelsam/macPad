@@ -26,8 +26,12 @@ Its UUID was then confirmed identical in the live WS `image list`
 — the analyzed file IS the loaded image.
 
 Instruction words verified at runtime before breakpoints:
-`pacibsp` at `tccd_send_message` (0x1974b5740), shared reply parser
-(0x1974bc7b0), `TCCAccessRequest` (0x1974b4d9c), `tccd` (0x1974b5584);
+`pacibsp` at `tccd_send_message` (0x1974b5740),
+`__TCCAccessSetPidResponsibleForPid_block_invoke_2` (0x1974bc7b0 —
+labeled "shared reply parser" here originally; corrected under R007
+review: it is a different API's completion, not a shared get_bool
+parser, and its 0-hit count below is expected rather than meaningful),
+`TCCAccessRequest` (0x1974b4d9c), `tccd` (0x1974b5584);
 `cmp w0,#0` (`0x7100001f`) at SkyLight `audit_token_check_tcc_access+108`
 (0x197811e0c).
 
@@ -58,7 +62,9 @@ SkyLight audit_token_check_tcc_access+108: w0 = 1 → cset eq → 0 → deny
 Breakpoint tallies (whole session): `tccd`=13, `tccd_send_message`=8,
 post-sync-send=8 (**all** `_xpc_error_connection_invalid`),
 interrupted-path=0, handler-invoke=4 (always with the error object),
-shared `get_bool("result")` parser=**0**, mini-handler(0x1850d0560)=2
+`__TCCAccessSetPidResponsibleForPid_block_invoke_2`=**0** (originally
+labeled "shared `get_bool("result")` parser" — mislabel corrected
+under R007 review; it is not on this path), mini-handler(0x1850d0560)=2
 (both `w1=0`).
 
 ## Static chain (exact-file LLDB, `analysis/TCC_22F82`)

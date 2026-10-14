@@ -1,0 +1,26 @@
+{
+  "heartbeat_time": "2026-10-14T23:03:51.445Z",
+  "redaction": "Device address and SSH password removed before saving when present.",
+  "session_id": "EE473D24-793C-48E3-B8A9-2298BB40327F",
+  "name": "devin: macPad移植 (devin)",
+  "tty": "/dev/ttys001",
+  "commandLine": "devin acp",
+  "processes": [
+    {
+      "pid": 86525,
+      "ppid": 672,
+      "cwd": "/Users/ciscohe/Desktop/macPad",
+      "acp": false
+    },
+    {
+      "pid": 90827,
+      "ppid": 86525,
+      "cwd": "/Users/ciscohe/Desktop/macPad",
+      "acp": true
+    }
+  ],
+  "agent_pid": 90827,
+  "binding_verified": true,
+  "handover_ready": false,
+  "screen": " │ 1900                return 1\n │ 1901                ;;\n │ 1902        esac\n │ 1903 +      # Cheap live-membership probe: if every manifest cdhash is already\n │ 1904 +      # registered this boot AND every explicit prerequisite path above is\n │ 1905 +      # covered by that manifest, the CodeDirectory walk below is a pure\n │ 1906 +      # no-op. The trustcache is reboot-volatile but only additive within a\n │ 1907 +      # boot, so manifest membership implies live trust for the recorded\n │ 1908 +      # files. Files that drifted from the manifest still exec-fail and are\n │ 1909 +      # repaired by a manual `macos_gui.sh trust`, same as before. Unlike the\n │ 1910 +      # expensive walk, this probe reads no application CodeDirectories, so\n │ 1911 +      # it is safe to run while the device is thermally pressured. It runs\n │ 1912 +      # after the mandatory list is finalized so a manifest written before a\n │ 1913 +      # newly required target (e.g. the Ventura system tccd) existed cannot\n │ 1914 +      # satisfy the closure check while omitting that target's hashes.\n │ 1915 +      if trust_closure_already_live \"$boot_trust_cache/hashes.json\" \"$@\"; then\n │ 1916 +          BASE_TRUST_READY=1\n │ 1917 +          log \"Cold-boot trust closure already live (all manifest hashes registered this \n │ boot); skipping expensive walk.\"\n │ 1918 +          return 0\n │ 1919 +      fi\n │ 1920 +      application_trust_thermally_safe || return 1\n │ 1921        # Exact Ventura shared-cache CodeDirectories remain required. The native\n │ 1922        # backend uses the same verified libjailbreak API as jbctl, one process,\n └ 1923        # and checks actual live membership after registering missing hashes.\n\n Now\u0000the\u0000readiness\u0000refactor\u0000—\u0000replacing\u0000 start_tccd_system \u0000with\u0000the\u0000exact,\u0000generation-aware\u0000version\n\u0000plus\u0000two\u0000helpers:\n\n⠈⠉ Typing · 88m 59s (esc twice to interrupt)\n──────────────────────────────────────────────────────────────────────────\u0000(bypass permissions on)\u0000─\n❭ Guide Devin while it works\n────────────────────────────────────────────────────────────────────────────────────────────────────\nSWE-2 Max         \u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000Context: 158k / 262k tokens (60%)\n1 shell · ↓ select"
+}

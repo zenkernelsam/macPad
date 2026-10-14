@@ -199,8 +199,11 @@ class BootTrustTests(unittest.TestCase):
                          '"$ROOTFS$TERM_BIN"',
                          '--resource-index', '--manifest'):
             self.assertIn(required, method)
+        # The thermally-safe manifest probe may set BASE_TRUST_READY=1 and
+        # return early; on the fall-through path the expensive walk must still
+        # complete before the flag is set.
         self.assertLess(method.index('"$@" || return 1'),
-                        method.index('BASE_TRUST_READY=1'))
+                        method.rindex('BASE_TRUST_READY=1'))
 
     def test_fresh_rootfs_installs_recoverable_launchservices_loader(self):
         maintainer = (ROOT / 'layout/DEBIAN/postinst').read_text()

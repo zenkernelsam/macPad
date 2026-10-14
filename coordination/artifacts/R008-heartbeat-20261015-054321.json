@@ -1,0 +1,26 @@
+{
+  "heartbeat_time": "2026-10-14T21:43:21.224Z",
+  "redaction": "Device address and SSH password removed before saving when present.",
+  "session_id": "EE473D24-793C-48E3-B8A9-2298BB40327F",
+  "name": "devin: macPad移植 (devin)",
+  "tty": "/dev/ttys001",
+  "commandLine": "devin acp",
+  "processes": [
+    {
+      "pid": 86525,
+      "ppid": 672,
+      "cwd": "/Users/ciscohe/Desktop/macPad",
+      "acp": false
+    },
+    {
+      "pid": 90827,
+      "ppid": 86525,
+      "cwd": "/Users/ciscohe/Desktop/macPad",
+      "acp": true
+    }
+  ],
+  "agent_pid": 90827,
+  "binding_verified": true,
+  "handover_ready": false,
+  "screen": " │ 00000001850d06a0        bl      0x1850dff60 ; symbol stub for: __os_activity_initiate\n │ 00000001850d06a4        mov     x0, x19\n │ 00000001850d06a8        bl      0x1850e0530 ; symbol stub for: _xpc_release\n │ 00000001850d06ac        mov     x19, x20\n │ 00000001850d06b0        mov     x0, x19\n │ 00000001850d06b4        bl      0x1850e0530 ; symbol stub for: _xpc_release\n │ 00000001850d06b8        ldur    x0, [x29, #-0x50]\n │ 00000001850d06bc        cbz     x0, 0x1850d06d4\n │ 00000001850d06c0        sub     x8, x29, #0x50\n │ 00000001850d06c4        add     x19, x8, #0x8\n │ 00000001850d06c8        bl      0x1850e0530 ; symbol stub for: _xpc_release\n │ 00000001850d06cc        ldr     x0, [x19], #0x8\n │ 00000001850d06d0        cbnz    x0, 0x1850d06c8\n │ 00000001850d06d4        ldr     x8, [sp, #0x48]\n │ 00000001850d06d8        ldrb    w19, [x8, #0x18]\n │ 00000001850d06dc        add     x0, sp, #0x40\n │ 00000001850d06e0        mov     w1, #0x8\n │ 00000001850d06e4        bl      0x1850dfec0 ; symbol stub for: __Block_object_dispose\n │ 00000001850d06e8        ldur    x8, [x29, #-0x18]\n │ 00000001850d06ec        adrp    x9, 334196 ; 0x1d6a44000\n │ 00000001850d06f0        ldr     x9, [x9, #0xc38]\n │ 00000001850d06f4        ldr     x9, [x9]\n │ 00000001850d06f8        cmp     x9, x8\n │ 00000001850d06fc        b.ne    0x1850d0714\n │ 00000001850d0700        mov     x0, x19\n │ 00000001850d0704        ldp     x29, x30, [sp, #0xb0]\n │ 00000001850d0708        ldp     x20, x19, [sp, #0xa0]\n └ Exited with code 0\n\n⡤⠀ Thinking · 8m 45s (esc twice to interrupt) · (496c)\n────────────────────────────────────────────────────────────────────────── (bypass permissions on) ─\n❭ Guide Devin while it works\n────────────────────────────────────────────────────────────────────────────────────────────────────\nSWE-2 Max                                                            ctrl+o details · opt+t thinking\n1 shell · ↓ select"
+}

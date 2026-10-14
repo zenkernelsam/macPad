@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Native entitlement closure of the stock Ventura 22F82
+     /System/Library/PrivateFrameworks/TCC.framework/Support/tccd slices
+     (x86_64 uuid 63AD17DE-5198-3333-8EF7-6B04ED50DCF7, arm64e uuid
+     9845D17F-0409-3884-8A17-260C729636E5; identifier com.apple.tccd,
+     platform 14).  Both slices carry this identical 12-key set verbatim;
+     ldid -e on the fat binary prints the same document twice, once per
+     slice.
+
+     This file is the merge operand for
+     sign_and_trustcache_merging_native_entitlements /
+     ensure_chroot_native_service_signature: the project profile merge
+     adds the shared admission keys while these native values — including
+     the single-element com.apple.private.tcc.allow array — are re-applied
+     verbatim so the daemon keeps its real TCC manager identity.  The
+     resulting installed set is a UNION of the two profiles, not a
+     byte-identical copy of this file (com.apple.private.tcc.allow becomes
+     [kTCCServiceListenEvent, kTCCServiceSystemPolicyAllFiles]). -->
+<plist version="1.0">
+<dict>
+	<key>com.apple.fileprovider.acl-read</key>
+	<true/>
+	<key>com.apple.private.coreservices.canmaplsdatabase</key>
+	<true/>
+	<key>com.apple.private.kernel.global-proc-info</key>
+	<true/>
+	<key>com.apple.private.notificationcenterui.tcc</key>
+	<true/>
+	<key>com.apple.private.responsibility.set-arbitrary</key>
+	<true/>
+	<key>com.apple.private.security.storage.TCC</key>
+	<true/>
+	<key>com.apple.private.system-extensions.tcc</key>
+	<true/>
+	<key>com.apple.private.tcc.allow</key>
+	<array>
+		<string>kTCCServiceSystemPolicyAllFiles</string>
+	</array>
+	<key>com.apple.private.tcc.manager</key>
+	<true/>
+	<key>com.apple.private.usernotifications.bundle-identifiers</key>
+	<array>
+		<string>com.apple.tccd</string>
+	</array>
+	<key>com.apple.rootless.storage.TCC</key>
+	<true/>
+	<key>com.apple.runningboard.process-state</key>
+	<true/>
+</dict>
+</plist>

@@ -1,29 +1,92 @@
 # DEVIN_STATUS — current delivery
 
-State: **R007 real system-tccd chain restored** (2026-10-15): the
-authentic Ventura `tccd system` now serves project endpoint
+State: **R008 reproducible system-tccd transport delivered**
+(2026-10-15): all four R007 review findings addressed in source —
+see `docs/evidence/r008-tccd-transport-repro-20261015.md`.
+
+- **F1 lifecycle:** `start_tccd_system` now runs on every path that
+  republishes dependent services — cold start (before
+  `launchservicesd`), `start_ws_dependents_after_replacement`
+  (watchdog/recovery), and the explicit desktop-session WindowServer
+  rebuild — each time after `publish_desktop_operation_services` and
+  before dependent client work. `stop_ws_dependents` retires only the
+  project job/pattern (`TCC.framework/Support/tccd system`); the
+  native iOS `com.apple.tccd` is never matched.
+- **F3 readiness:** one checked path for warm/cold/recovery:
+  `tccd_transport_ready` resolves the actual launchd domain
+  (`system|user/501|user/0|gui/501` via `launchctl print`), requires
+  the job's own service table to contain the exact token
+  `com.apple.macosbooter.tccd.system` (boundary regex rejects
+  `.other`), verifies a reported generation pid with `kill -0`, and
+  demands a bounded real client-context protocol reply —
+  `macwstccdprobe ping` through `launchdchrootexec` (libmachook
+  injected, logical name `com.apple.tccd.system` mapped by the same
+  table WS uses), ≤8s watchdog killing only the probe child. A
+  reported pid is re-verified after the probe window. Pressured-exit
+  jobs without `pid =` still qualify via endpoint+probe.
+- **F2 admission:** tccd joins the mandatory cold-trust closure;
+  `trust_closure_already_live` now requires every explicit
+  prerequisite to be manifest-covered (file entries live, directories
+  with ≥1 member, explicit `--hash` values live) so a stale manifest
+  cannot skip newly mandatory targets. Package postinst gains
+  `ensure_tccd_system_signature` — staged `.macws-new.$$` copy signed
+  through `ensure_chroot_native_service_signature` with the real
+  12-key native profile (`tccd-native-entitlements.plist`), verified
+  before `mv -f`, pristine preserved as `.macws-original`; deep-repair
+  `postinst.sh` mirrors it through
+  `sign_and_trustcache_merging_native_entitlements`. Only the
+  container dir `…/com.apple.TCC` is created — no database/grant
+  edits. New tool `macwstccdprobe` (arm64, macOS platform, project
+  entitlements) is built by the top-level aggregate and installed to
+  `…/usr/local/bin/` beside the other bridges.
+- **F4 reply semantics:** R006/R007 evidence docs corrected (see
+  corrections block in `r007-system-tccd-20261015.md`): distinct
+  capture subsets separated, mini addresses fixed to
+  `0x1850d0548`/`560`, `0x1850d07b0` relabeled
+  `__TCCAccessSetPidResponsibleForPid_block_invoke_2`, entitlement
+  counts corrected to 12→124 per slice with the `tcc.allow` union.
+  `get_bool("result")==0` is now stated as accessor-zero, NOT proven
+  explicit `result=false`. Capture mechanism for the decoded reply
+  is wired: `MACWS_LSXPC_TRACE=1` + `macwstccdprobe preflight` dumps
+  request/reply dictionaries via the existing interpose (env passes
+  `launchdchrootexec` → `posix_spawn(environ)`).
+- **Validation:** 22/22 `test_tccd_lifecycle_contract` fixtures pass
+  (warm/cold/endpoint/substring/stale-pid/lookup-error/protocol-fail/
+  pressured-exit + ordering + manifest coverage + admission); 51/51
+  with `test_boot_trust`+`test_restore_boot_contract`; `bash -n` all
+  edited scripts; runtime-switch audit pending rerun. **Device-side
+  verification is pending** — `MACWS_DEVICE`/`MACWS_SSH_PASSWORD` are
+  not set in this session, so the full `build_on_ios.sh` pipeline,
+  cold-start/recovery witness, decoded-reply capture, R007-owned
+  cleanup inventory and thermal recheck remain for the next
+  device-connected session; every pending command is listed in the
+  R008 evidence doc.
+
+Prior state: **R007 real system-tccd chain restored** (2026-10-15):
+the authentic Ventura `tccd system` serves project endpoint
 `com.apple.macosbooter.tccd.system` and WindowServer's preflight
-completes a **real XPC round-trip** — `xpc_connection_send_message_with_reply_sync`
-returns genuine `OS_xpc_dictionary` replies, never an error singleton
-(live lldb, WS 75144: 3/3 non-error fall-throughs, 0 interrupted,
-0 connection_invalid).  The daemon's answer is `result=false` — a real
-TCC policy denial for the adhoc probe's identity — so `SLSPostEventRecord`
-still returns 1002, but now produced by the daemon's actual evaluation,
-not the transport-failure default.  Endpoint/domain verified unfiltered:
-`com.apple.tccd.system` absent from iPadOS system domain; iOS `tccd`
-only `user/501` and untouched.  Required mid-flight fix: the private-name
-translation had to be added to BOTH lookup tables —
+completes **real XPC round-trips** — the first lldb capture showed 3
+sends reaching the non-error return path; later captures read the
+replies as `OS_xpc_dictionary` with
+`xpc_dictionary_get_bool(reply,"result")==0` (accessor zero; explicit
+field presence unproven — see R008 corrections).  `SLSPostEventRecord`
+still returns 1002.  Endpoint/domain verified on-device:
+`com.apple.tccd.system` absent from this device's system domain; iOS
+`tccd` only `user/501` and untouched.  Required mid-flight fix: the
+private-name translation had to be added to BOTH lookup tables —
 `macws_private_bootstrap_service_name` (mac_hooks.m) **and**
-`macws_private_chroot_service_name` (Metal_hooks.x, the XPC path actually
-used); only the system-scope name maps.  Daemon admission recipe: stock
-tccd re-signed `ldid -S$ENT -M` (original 24 TCC entitlements merged into
-the 252-key closure), per-slice CDHash into trustcache, launched via
-`launchdchrootexec`; `misc/set_macos_version.py` on the fat dylib before
-thinning is a required deploy step (iOS-platform slice = `/bin/echo`
-breaks).  Evidence: `docs/evidence/r007-system-tccd-20261015.md`,
-artifacts `coordination/artifacts/r007-*.json`.  Open: which daemon-side
-check yields `result=false` for PostEvent (responsible-pid binding vs
-grant lookup) — next round, daemon-side.
+`macws_private_chroot_service_name` (Metal_hooks.x, the XPC path
+actually used); only the system-scope name maps.  Daemon admission
+recipe at the time: stock tccd re-signed `ldid -S$ENT -M` (12-key
+native set merged into the 124-key-per-slice installed union —
+corrected counts), per-slice CDHash into trustcache, launched via
+`launchdchrootexec`; `misc/set_macos_version.py` on the fat dylib
+before thinning is a required deploy step (iOS-platform slice =
+`/bin/echo` breaks).  Evidence:
+`docs/evidence/r007-system-tccd-20261015.md`,
+artifacts `coordination/artifacts/r007-*.json`.  Open: which
+daemon-side check produces the accessor-zero answer for PostEvent
+(responsible-pid binding vs grant lookup) — next round, daemon-side.
 
 Prior state: **R006 live TCC-producer trace delivered** (2026-10-15): the raw
 `1` is now proven to be a **transport-failure artifact**, not a daemon

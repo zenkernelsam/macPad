@@ -1,20 +1,52 @@
-R007 SYSTEM-TCCD CHAIN RESTORED — 2026-10-15
-Real Ventura `tccd system` runs in chroot as com.macwsguide.tccd-system
-(pid 74977), serving private endpoint com.apple.macosbooter.tccd.system
-(registered in user/501, the loading-context domain).
-libmachook maps ONLY com.apple.tccd.system -> private name; had to add
-the entry to BOTH tables (mac_hooks.m bootstrap + Metal_hooks.x XPC —
-the tables must stay identical; XPC path was missing it).
-LIVE PROOF (lldb, WS 75144, same slide 0x123ec000): postmin ->
-sync send returns real OS_xpc_dictionary 3/3, zero error singletons,
-handler impl parses keys, get_bool("result")=0 -> minis w1=0 ->
-default 1 survives -> deny -> rc=1002.
-==> 1002 is now a REAL TCC policy denial, not transport default.
-Daemon admission: ldid -S$ENT -M (merged, 252 keys, tcc.manager kept),
-per-slice cdhash, launchdchrootexec; set_macos_version.py BEFORE lipo
-(iOS platform slice breaks /bin/echo).
-iOS com.apple.tccd (uid501 pid 23321) untouched. HI ok.
-Evidence: docs/evidence/r007-system-tccd-20261015.md
-Open for next: which daemon-side check yields result=false
-(responsible-pid binding vs grant/identity) — daemon-side question.
-Input still not accepted — no accepted input path exists yet.
+R008 REPRODUCIBLE SYSTEM-TCCD TRANSPORT — 2026-10-15
+All four R007 review findings addressed in source; device-side
+verification pending (no MACWS_DEVICE/MACWS_SSH_PASSWORD this session).
+
+F1 lifecycle: start_tccd_system now runs on every dependent-republish
+path — cold start (before launchservicesd),
+start_ws_dependents_after_replacement, and the desktop-session WS
+rebuild — always after publish_desktop_operation_services, before
+dependent client work. stop_ws_dependents retires only the project
+job + 'TCC.framework/Support/tccd system' argv; iOS com.apple.tccd
+never matched.
+
+F3 readiness: single checked path tccd_transport_ready — resolves job
+across system|user/501|user/0|gui/501 via launchctl print, requires
+exact endpoint token com.apple.macosbooter.tccd.system (boundary
+regex, rejects .other), live generation pid when reported, and a
+bounded real client-context reply via new tool macwstccdprobe ping
+through launchdchrootexec (~8s watchdog, kills only the probe child);
+generation pid re-verified after the probe window. Pressured-exit
+pid-less jobs still qualify via endpoint+probe.
+
+F2 admission: tccd in mandatory cold-trust list;
+trust_closure_already_live requires every explicit prerequisite
+covered (file entries live, dir member, --hash values live) — stale
+manifests cannot skip new targets. Package postinst:
+ensure_tccd_system_signature stages .macws-new.$$, merges via the
+established native contract with the real 12-key profile
+(tccd-native-entitlements.plist), verifies, mv -f, preserves
+.macws-original; deep-repair postinst.sh mirrors it. Only the
+com.apple.TCC container dir is created — no db/grant edits.
+Corrected accounting: 12 native keys -> 124 installed per slice,
+tcc.allow union [SystemPolicyAllFiles]->[ListenEvent,
+SystemPolicyAllFiles]; slices x86_64 63AD17DE…/arm64e 9845D17F….
+
+F4 semantics: docs corrected (r007 corrections block + r006 relabel).
+get_bool==0 = accessor-zero, NOT proven explicit result=false.
+Capture recipe wired: MACWS_LSXPC_TRACE=1 launchdchrootexec …
+macwstccdprobe preflight dumps real request/reply dicts via the
+existing interpose (env passes posix_spawn(environ)).
+
+Validation: 22/22 tccd_lifecycle fixtures; 55/55 with
+boot_trust+restore_boot_contract+wallpaper; bash -n all edited
+scripts; macwstccdprobe builds (arm64/MACOS/uuid 28C2B10E…, sha256
+11c42e78…). Metal probe tests and -m unittest loader quirks are
+pre-existing/environmental.
+
+PENDING (device): build_on_ios.sh full pipeline with hashes,
+cold-start + recovery witnesses, LSXPC reply capture, R007-owned
+cleanup inventory (tccd_nosig/tccd_adhoc/etc), thermal recheck
+(last read serious 37.29C), native health. Exact commands in
+docs/evidence/r008-tccd-transport-repro-20261015.md.
+Input still not accepted (rc=1002; reply semantics being qualified).
