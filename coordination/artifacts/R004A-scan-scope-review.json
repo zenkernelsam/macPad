@@ -1,0 +1,13 @@
+{
+  "candidate": "708cf9c",
+  "fixture_root": "tmp/r004a-review-scan",
+  "expected": [
+    "MACWS_NESTED_REAL_FIXTURE",
+    "MACWS_REAL_FIXTURE"
+  ],
+  "actual": [
+    "MACWS_REAL_FIXTURE"
+  ],
+  "reference_excluded": true,
+  "nested_real_source_missed": true
+}

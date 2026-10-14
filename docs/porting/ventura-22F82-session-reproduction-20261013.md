@@ -292,9 +292,11 @@ desktop you can see" and "a desktop you can use" narrowed further on
   `CGXSenderCanSynthesizeEvents` returning 0, not a dead transport.
 - `gCurMsgAudit` is populated on the post path (52-byte sender creds) —
   the "always-NULL audit" theory is disproven.
-- The dispatcher decodes audit → `{pid | pidversion<<32}` → CFDictionary
-  rights-cache → on miss, a lazily-resolved checker.  The checker name
-  and the cache producer are still unknown — that is the open question.
+- PROVISIONAL static interpretation (pending IDA): the dispatcher may
+  decode audit → `{pid | pidversion<<32}` → CFDictionary rights-cache →
+  a lazily-resolved checker. Probe-local symbol resolution does not prove
+  the failing WS branch. The checker identity and state producer remain
+  open questions.
 - The hook provider was a no-op scaffold; it is now a real permit-gated
   trampoline verified live (`VERDICT=INSTALLED`, callable originals).
 

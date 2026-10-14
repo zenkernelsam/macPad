@@ -1254,12 +1254,17 @@ shell/python for what IDA can't reach (device-side file I/O over SSH,
 deploying/signing/verifying a patched file, running tests). Derive every
 patch's bytes/offsets from IDA first.
 
-## Device Access (hardcoded — do not re-derive)
+## Device Access (current session supplies the endpoint)
 
-- **SSH**: `root@192.168.64.1 -p 2222`, password `cisco`
-  (use `sshpass -p cisco`; no SSH keys on this Mac — `~/.ssh` is empty).
-  The device IP has changed before (`192.168.5.8`, `172.20.10.3`); if
-  `.64.1` is unreachable, scan reachable subnets for an open `2222`.
+- Use the latest user-authorized `MACWS_DEVICE` and `MACWS_DEVICE_PORT`
+  from the active conversation. Device addresses drift; do not reuse a
+  historical address or store a password in this repository.
+- `DevinWatchdog_mac/macpad_ssh.py` accepts the temporary
+  `MACWS_SSH_PASSWORD` environment value, preserves the remote exit code,
+  and supports bounded staging uploads. See its local README. The current
+  validated port is recorded in the session; SSH-key availability must be
+  inspected rather than inferred from an old host snapshot.
+
 - **File staging area on device** — upload ALL scripts/debs/patched
   binaries here (old files may be overwritten freely):
 

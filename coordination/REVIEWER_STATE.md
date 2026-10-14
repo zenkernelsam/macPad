@@ -46,3 +46,11 @@ SSH endpoint/password authorization stays in conversation/temporary environment 
 - Correct chroot sentinel independently rechecked absent in both paths (R003-cleanup-final-independent.json). Final provider normal/orig logs have real no-pipe exit 0; literal echo HI preserved. Thermal one-shot nominal 32.39°C.
 - R004A dispatched/receipt verified: worker read updated task and is inspecting audit tests. Scope is audit/reference-tree boundaries, manifest/cleanup-helper completeness and durable current-doc corrections. No new private-offset probes or device mutations. IDA request remains pending for R004B.
 - Reviewer owns Git during this docs/tool checkpoint; release after commit. Push authentication still unavailable; do not repeat unauthenticated attempts as success.
+
+## 2026-10-14 23:19:41 HKT R004A acceptance / R004B start
+
+- R004A initial candidate 708cf9c had an actual root-scope exclusion bug; reviewer fixture proved src/analysis source was omitted. Fixed at be9dc08. Independent fixture now includes both real names; audit exit 0 (309 env / 86 flags / 467 entries), bash/sh exit 0, diff exit 0.
+- Baseline/current 71-test logs independently parsed: same 24 ordered failure/error headers,16 failures + 8 errors. These named failures predate the package; full suite remains not green. Runtime-switch manifest scope corrected for kernel-writing CSUNKILL and deque-pop scaffold.
+- R004A bounded audit/docs accepted; reviews/R004A-final-20261014.md contains limits. Remaining credential literals in historical AGENTS endpoint block removed by reviewer; runbook static cache interpretation explicitly labeled provisional.
+- R004B dispatched to live verified Devin: public dlopen/dlsym observation scoped inside the existing exact WS gate, preserving loader results/errno/error state and existing random diagnostic. Source inspection found existing MacWSDiagnosticDlsym; no competing interpose allowed. This is runtime observation, so can advance without new static RE while the IDA endpoint request remains pending.
+- Git temporarily reserved by reviewer for checkpoint, to be released explicitly. Device unchanged since R003 clean shutdown; next mutation belongs to the bounded R004B pipeline and checks.
