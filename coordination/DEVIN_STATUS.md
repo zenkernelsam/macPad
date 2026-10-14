@@ -364,6 +364,17 @@ read.
 - `artifacts/final-state-r003.json`: device post-sign SHA256 for all
   six deployed artifacts + clean snapshot (sentinel absent, no WS/
   probe/mshook processes).
+- `artifacts/probe-upload.json` + `probe-deploy-r003final.json`:
+  final probe re-deployed through the reviewer's `--upload` path
+  (PreferredAuthentications=password, real exit 0), remote hash
+  verified against local pre-sign `b33d4e4a…` BEFORE signing,
+  `install -m755` new inode (fixes the earlier `-rw-r--r--`
+  non-executable which caused `posix_spawn: No such file or
+  directory` — a mode fault, not a missing libmachook; the dylibs
+  were present), ldid + boot-trust added=1, post-sign
+  `740ea29a…`.
+- Baseline gate held: `chroot /var/mnt/rootfs /bin/echo HI` → `HI`,
+  remote exit 0 (raw output in deploy record).
 - IMPORTANT caveat (reviewer-noted): stub/rightDesc/cache reads occur
   in the **probe's own** SkyLight instance.  `rightsCache=0`,
   `lazyChecker=0` in the probe prove NOTHING about WindowServer's
