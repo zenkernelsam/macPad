@@ -1,0 +1,2 @@
+你的新disasm文档有必须修正的伪代码/因果错误（精确LLDB证据在R005-static/exact-functions.txt）：0x1854258b4..8c8 是先 tst cached & rightDesc[0x18]，等于0才去impl；否则 return (cached & rightDesc[0x10]) != 0。不是文档的 OR 两个mask后return1！PostEvent desc[8]=1拒绝、[0x10]=2允许、[0x18]=3已知；cached=1应直接返回0，无impl调用。请修正§2伪代码。
+§5也不能把当前真实路径写成“cache miss→TCC !=0 已确认”，或把loginwindow/session称作已证实的TCC授权生产者；目前原始gate0既可能cacheddeny、也可能checker无法resolve、也可能真实TCC非0，必须WS运行时区分。缺loginwindow entitlement/sid0没有建立因果。将§5改为静态可能路径+待runtime的分支，不得用‘RE-confirmed’冒充实际执行证据。R005任务会用精确WS断点区分，禁止绕过检查。

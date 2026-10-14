@@ -1,56 +1,27 @@
-# Reviewer current state
+# Current reviewer handoff
 
-Updated: 2026-10-14 22:31:53 HKT. Goal ACTIVE. Last goal turn: PROGRESS (SSH status tool, exact RE input, runtime/artifact review and worker revisions); no blocked audit applies.
+Updated: 2026-10-15T00:18:11.333721+08:00. Goal ACTIVE. Previous goal turn: PROGRESS. No blocked audit applies.
 
-## Current candidate and work
+## Active work
 
-- Worker checkpoint commits: 685624f (R003 source/tools), b7aea48 (review addenda), 71ea1ae (full-stream records and cleanup). Final UUID guard/cleanup landed at 0f5b8f4. R003 diagnostic source is frozen; R004A is active for remaining audit/documentation debt.
-- Latest verified terminal: Devin PID 9664 / child 10090, tty /dev/ttys001, iTerm2 “macPad移植”; actual screen shows active edits. Revalidate IDs on every resume. Do not relaunch because a status file is stale.
-- Codex owns planning/reviews/tooling; Devin owns implementation/deployment. Git writes currently reserved by Codex for the reviewer checkpoint; await release message. Push attempts failed due missing HTTPS credentials; do not claim remote sync.
-- Reviews: reviews/R003-20261014.md + R003-addendum-20261014.md. Received feedback has corrected TCC constant override, unknown tap ABI calls, versioned permit capability and actual original-pointer tests. Final source/runtime mapping, private-read UUID gating and stale documentation remain under review.
+R005 is dispatched to the existing Devin “macPad移植” session. Its task is to distinguish the ACTUAL WS cached-deny branch from unresolved-checker or live-TCC-denial branches, then trace the real state producer. One bounded WS generation, one canonical event, exact debugger identity/address checks; no fake rights, forced returns, cache clearing or kernel writes. See DEVIN_TASK.md.
 
-## Proven evidence and limits
+Verified CLI: PID 9664 / child 10090, /dev/ttys001, session EE473D24-793C-48E3-B8A9-2298BB40327F. Another Devin on ttys004 is unrelated and must not receive these tasks. Revalidate every wakeup. Credentials/endpoint were refreshed directly in the verified session, not stored in a file; use user-authorized temporary environment and local SSH runner.
 
-- Reviewer copied the retained nonempty-audit witness from device logs and deployed hashes (artifacts/R003-device-review.txt); this was historical output, not a fresh input test.
-- Worker final provider normal/orig JSON records (v3) are now unfiltered, with real remote exit 0; inspect actual command/outputs before acceptance. Older v2 and inventory records with remote grep/tail only prove pipeline exit.
-- Standard event posts still return1002. No WS-DISPATCH + visible input effect accepted. Probe-local cache/global values do NOT prove WS-process state.
-- Reviewer independent thermal query: nominal, 3239 centic (32.39°C), exit 0; artifacts/R003-reviewer-thermal.json. This is one snapshot, not a sustained thermal acceptance.
-- Worker cleanup report: WS 46364 stopped, diagnostics sentinel removed, user Host app left intact. Reviewer rechecked both chroot marker paths absent; see closeout below.
+Git HEAD at this checkpoint: c6ebfc6. Codex currently reserves Git for reviewer docs/tooling checkpoint; explicit release message follows. Devin may inventory/prepare but must not write Git concurrently. Remote push authentication remains unavailable; no remote-sync claim.
 
-## Tool dependency
+## Current evidence
 
-Exact SkyLight binary: analysis/SkyLight_22F82 (Git ignored), arm64e UUID 96676A53-B1E0-3D7E-B98B-B73873CD1880, SHA256 13d7a0ca010a9808234c71c34fd650b26329de99d1aceaeb5ddbb58f8b906c61.
+- R004A audit/docs accepted; audit passes with 309 env / 86 flags / 467 entries. Baseline/current comparison shows the same 24 named failures (16 failures + 8 errors) in the 71-test failing-module subset; entire suite is not green.
+- R004B diagnostic experiment complete: initial dlopen interposition broke @loader_path/launchservicesd, removed; project pipeline recovered. Original gate executed twice, returned 0, no observed public dlsym in those contexts. This is INCONCLUSIVE, not an input fix. Independent 26-check fixture and runtime-switch audit passed with stable source hashes.
+- Reviewer cleanup recheck found all named iOS/chroot diagnostic marker paths absent, no matched WS/probe/debugger, backboardd present. Last runtime baseline echo HI passed; R005 must revalidate before mutation.
+- Exact SkyLight UUID 96676A53-B1E0-3D7E-B98B-B73873CD1880, SHA256 13d7a0ca010a9808234c71c34fd650b26329de99d1aceaeb5ddbb58f8b906c61. Full LLDB functions and command provenance: artifacts/R005-static/; interpretation: docs/evidence/ventura-22F82-tcc-checker-20261015.md.
+- RE-confirmed: checker is TCCAccessPreflightWithAuditToken. Its caller returns true only when raw TCC result is 0. Earlier “1=allow” is withdrawn. Cache known-mask hit returns the allow-mask boolean; cached deny 1 returns 0 without checker. The CURRENT executed branch remains unknown. Worker static-note cache/cause errors have been explicitly sent for correction.
 
-No local IDA process or listeners on 13337/13338/13339 at last check. User has a pending request to load that file/start IDA MCP or supply remote endpoint. AGENTS requires IDA for static RE. Continue independent corrections, actual runtime reads and documentation; do not substitute byte-hunting. This dependency does not block all goal progress.
+## Controlling rules / open dependencies
 
-## Next actions
+The user's replacement AGENTS (latest message) controls this run: precise otool/Capstone/LLDB disassembly OR verbatim runtime evidence is accepted. Old IDA-only restrictions in earlier notes no longer block this task. IDA remains useful if available, but old interpretations never become proven merely because an alternate tool is allowed.
 
-1. Confirm worker's bounded R003 freeze and last UUID guard; no new diagnostic expansion. Review final source hashes, exact build/deploy/probe records and remaining contract limits.
-2. Independently verify reported cleanup, ensure docs no longer present old assumptions as current truth, then write final bounded review and arrange explicit-path checkpoint/push once authentication is available.
-3. R004 targets the actual WindowServer permission-check chain: exact process/generation, dispatcher/checker result and its state producer. IDA + runtime evidence must distinguish the cause before any fix. Keep original goal scope: real input first, then pacing/GPU-fence, wallpaper rebuild and session/activation regressions.
+R005 may proceed with validated runtime debugger reads and exact-file analysis. Legacy ios_lldb_tmux attach blindly kills old sessions and uses a stale credential pattern; use unique owned sessions/root SSH, inspect handles, detach explicitly and clean up. Observation timeout is not process termination.
 
-SSH endpoint/password authorization stays in conversation/temporary environment only. Use local DevinWatchdog_mac tools and coordination/README.md. Historical checkpoints: reviews/reviewer-checkpoints-20261014.md.
-
-## 2026-10-14 22:37:20 HKT checkpoint
-
-- Worker acknowledges freeze and is completing UUID guard/final deployment. Two preexisting SCP shells were observed still running; guidance says inspect/stop only owned handles before retrying. Do not restart based on observation timeout.
-- Added bounded --upload support to local SSH tool; same password preference and child-process-group cleanup. CLI/syntax checked; actual upload verification delegated to Devin.
-- Concrete deployment observation from worker ls: `/var/mnt/rootfs/tmp/macos_ws_event_probe` mode 0644; new libmachook files present. Asked to fix executable mode via fresh-inode install and verify actual loader/signature state, rather than claim missing dylib from ENOENT. Require literal chroot echo HI baseline after final deployment.
-- Final provider v3 JSON: full stdout/stderr, remote command with no pipeline, exit 0 for normal/orig; values show original calls and wrong UUID rejection. Source-to-deployed-final-hash linkage and new private-read guard are still being finalized, so R003 remains unaccepted.
-- Static RE still awaits user-provided IDA MCP. No additional static analysis by reviewer.
-
-## 2026-10-14 22:52:24 HKT R003 closeout / R004A start
-
-- R003 frozen HEAD 0f5b8f4. Final review `reviews/R003-final-20261014.md`: diagnostic evidence reusable; documentation/runtime-switch debt still CHANGES_REQUESTED; no input/production pass.
-- Reviewer six provider/probe compile+links passed for arm64/arm64e; 6 focused tests passed. Runtime-switch audit failed with 33 env names + 1 flag. Baseline-source comparison produces identical omissions; reference-tree exclusion alone leaves 23 env names + 1 flag. All exact commands/hash results are in artifacts/R003-final-review-checks.json and R003-audit-comparison.json.
-- Correct chroot sentinel independently rechecked absent in both paths (R003-cleanup-final-independent.json). Final provider normal/orig logs have real no-pipe exit 0; literal echo HI preserved. Thermal one-shot nominal 32.39°C.
-- R004A dispatched/receipt verified: worker read updated task and is inspecting audit tests. Scope is audit/reference-tree boundaries, manifest/cleanup-helper completeness and durable current-doc corrections. No new private-offset probes or device mutations. IDA request remains pending for R004B.
-- Reviewer owns Git during this docs/tool checkpoint; release after commit. Push authentication still unavailable; do not repeat unauthenticated attempts as success.
-
-## 2026-10-14 23:19:41 HKT R004A acceptance / R004B start
-
-- R004A initial candidate 708cf9c had an actual root-scope exclusion bug; reviewer fixture proved src/analysis source was omitted. Fixed at be9dc08. Independent fixture now includes both real names; audit exit 0 (309 env / 86 flags / 467 entries), bash/sh exit 0, diff exit 0.
-- Baseline/current 71-test logs independently parsed: same 24 ordered failure/error headers,16 failures + 8 errors. These named failures predate the package; full suite remains not green. Runtime-switch manifest scope corrected for kernel-writing CSUNKILL and deque-pop scaffold.
-- R004A bounded audit/docs accepted; reviews/R004A-final-20261014.md contains limits. Remaining credential literals in historical AGENTS endpoint block removed by reviewer; runbook static cache interpretation explicitly labeled provisional.
-- R004B dispatched to live verified Devin: public dlopen/dlsym observation scoped inside the existing exact WS gate, preserving loader results/errno/error state and existing random diagnostic. Source inspection found existing MacWSDiagnosticDlsym; no competing interpose allowed. This is runtime observation, so can advance without new static RE while the IDA endpoint request remains pending.
-- Git temporarily reserved by reviewer for checkpoint, to be released explicitly. Device unchanged since R003 clean shutdown; next mutation belongs to the bounded R004B pipeline and checks.
+Original objective remains unfinished: real WS-DISPATCH + visible input effect first, then remaining pacing/GPU-fence, wallpaper-rebuild and session/activation acceptance. Do not redefine success as a diagnostic checkpoint. Older chronological checkpoints are archived in reviews/reviewer-checkpoints-before-r005-20261015.md.

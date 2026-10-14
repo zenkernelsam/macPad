@@ -40,3 +40,5 @@ python3 DevinWatchdog_mac/macpad_ssh.py --upload misc/macos_ws_event_probe --rem
 ```
 
 SCP 同样固定 password authentication、保存真实传输退出码及源文件 SHA256，并在超时后清理本地进程组。上传后重新核对远端文件；传输成功不等于已部署。
+
+`dismiss` 仅在当前屏幕确认是带 `esc close` 的 Devin 会话/任务浮层时发送一次 Escape；它不发送双 Escape 中断，也不操作其它 tty。PID/tty/session 身份仍须先核实。

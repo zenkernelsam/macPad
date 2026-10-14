@@ -11,6 +11,10 @@ async def main(conn):
  lines='\n'.join(screen.line(i).string for i in range(screen.number_of_lines))
  print('SESSION',SID,tty,name or s.name)
  if sys.argv[1]=='read': print(lines); return
+ if sys.argv[1]=='dismiss':
+  if 'esc close' not in lines or 'Cloud agents' not in lines: raise RuntimeError('No verified dismissible overlay')
+  await s.async_send_text('\x1b',suppress_broadcast=True)
+  print('Closed verified session overlay'); return
  if sys.argv[1]=='flush':
   if 'Press Enter to send queued messages now' not in lines: raise RuntimeError('No verified queued-message prompt')
   await s.async_send_text('\r',suppress_broadcast=True)

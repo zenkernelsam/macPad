@@ -1,0 +1,53 @@
+{
+  "started": "2026-10-15T00:07:20.649361+08:00",
+  "head": "d5d246193e794590b24f504b38c44d63955de9c6",
+  "sources_before": {
+    "libmachook/Diagnostics/MacWSLoaderObservation.m": "7a58cdb16cd1e9eba4c0cea3d1968886712eacb874fb7cf94e11bd3024ab3238",
+    "libmachook/Diagnostics/MacWSRandomDiagnostics.m": "9f8536a48309bb7923ece3499d2ade110f48439e9462ba8dcb92bc2ca2c48df4",
+    "libmachook/mac_hooks.m": "3b9a7833add4bc8a7740d3208648cd8b7aa39f6a2c42da7e9087d8b4949afdb5",
+    "misc/test_loader_observation.py": "e44044b6a2855a9abf1371d235fcc18fb418525b9dadfd065a98ca78016e08e4"
+  },
+  "checks": [
+    {
+      "argv": [
+        "python3",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "misc",
+        "-p",
+        "test_loader_observation.py"
+      ],
+      "exit": 0,
+      "stdout": "TEST outside-context emits nothing                  PASS\nTEST inside-context emits one                       PASS\nTEST errno preserved                                PASS\nTEST seq present                                    PASS\nTEST dlsym args logged                              PASS\nTEST nesting shares seq                             PASS\nTEST nested context emits two                       PASS\nTEST dlopen args logged                             PASS\nTEST post-exit emits nothing                        PASS\nTEST cap=32 records                                 PASS\nTEST cap marker emitted                             PASS\nTEST foreign thread emits nothing                   PASS\nTEST reentrant sink reached                         PASS\nTEST dlopen note recorded                           PASS\nTEST real dlsym observed via interpose              PASS\nTEST missing dlopen returns NULL                    PASS\nTEST uninterposed dlopen silent                     PASS\nTEST caller dlerror still pending                   PASS\nTEST dlerror consumed after read                    PASS\nTEST errno equals real-loader result                PASS\nTEST missing dlsym returns NULL                     PASS\nTEST missing dlsym recorded                         PASS\nTEST dlsym errno equals real result                 PASS\nTEST in-context dlopen still succeeds               PASS\nTEST context cap boundary emits 54                  PASS\nTEST over-cap context emits nothing                 PASS\nRESULT ALL-PASS\n",
+      "stderr": "#### LOADER-OBS seq=5 pid=60084 tid=259 api=dlsym handle=0x1 sym=outer res=0x2\n.\n----------------------------------------------------------------------\nRan 1 test in 2.846s\n\nOK\n"
+    },
+    {
+      "argv": [
+        "python3",
+        "misc/audit_runtime_switches.py"
+      ],
+      "exit": 0,
+      "stdout": "runtime-switch audit OK: 309 source/plist env names, 86 source flag files, 467 total recorded entries\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    }
+  ],
+  "sources_after": {
+    "libmachook/Diagnostics/MacWSLoaderObservation.m": "7a58cdb16cd1e9eba4c0cea3d1968886712eacb874fb7cf94e11bd3024ab3238",
+    "libmachook/Diagnostics/MacWSRandomDiagnostics.m": "9f8536a48309bb7923ece3499d2ade110f48439e9462ba8dcb92bc2ca2c48df4",
+    "libmachook/mac_hooks.m": "3b9a7833add4bc8a7740d3208648cd8b7aa39f6a2c42da7e9087d8b4949afdb5",
+    "misc/test_loader_observation.py": "e44044b6a2855a9abf1371d235fcc18fb418525b9dadfd065a98ca78016e08e4"
+  },
+  "stable": true
+}

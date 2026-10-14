@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T00:11:11.027672+08:00",
+  "finished": "2026-10-15T00:11:11.504680+08:00",
+  "command": "/var/jb/usr/bin/python3 -c 'import os,subprocess,json\nfor p in [\"/tmp/macws_runtime_diagnostics\",\"/var/mnt/rootfs/tmp/macws_runtime_diagnostics\",\"/var/mnt/rootfs/private/tmp/macws_runtime_diagnostics\"]:\n print(json.dumps({\"path\":p,\"exists\":os.path.exists(p)}))\nr=subprocess.run([\"ps\",\"-axo\",\"pid,comm\"],capture_output=True,text=True);print(\"ps_exit=\"+str(r.returncode));print(\"\\n\".join(x for x in r.stdout.splitlines() if any(t in x for t in [\"WindowServer\",\"backboardd\",\"mshook_provider_probe\",\"macos_ws_event_probe\",\"lldb\",\"debugserver\"])))\n'",
+  "command_sha256": "bc01480ce8f5765072c03252e5352037b7679e441ba1e422ba9897d924ceb7b3",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "{\"path\": \"/tmp/macws_runtime_diagnostics\", \"exists\": false}\n{\"path\": \"/var/mnt/rootfs/tmp/macws_runtime_diagnostics\", \"exists\": false}\n{\"path\": \"/var/mnt/rootfs/private/tmp/macws_runtime_diagnostics\", \"exists\": false}\nps_exit=0\n70595 /usr/libexec/backboardd\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

@@ -1,0 +1,1 @@
+R004B上设备前请读 reviews/R004B-preflight-20261014.md：Note在Emit防重入之前已消耗count；fixture sink缺NUL导致strstr读旧尾巴，nesting断言inner==seq+1||inner!=0不证明相等；补真实missing dlopen/dlsym + 合法调用方dlerror/errno保持测试及原结果对照；按计划限制outer gate捕获次数（不影响orig执行）。若gate包装器承诺errno保持，日志后恢复。不要只mock Note来证明实际interpose。都是当前代码可见契约问题，修完继续一次有界WS观察，不扩展为通用系统。Git已释放你，reviewer源码不并改。
