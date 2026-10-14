@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-14T23:48:52.341335+08:00",
+  "finished": "2026-10-14T23:48:52.945197+08:00",
+  "command": "set -u\ninstall -m755 /var/jb/usr/macOS/bin/macos_ws_event_probe /var/mnt/rootfs/usr/local/bin/macos_ws_event_probe.new && mv /var/mnt/rootfs/usr/local/bin/macos_ws_event_probe.new /var/mnt/rootfs/usr/local/bin/macos_ws_event_probe\nldid -S /var/mnt/rootfs/usr/local/bin/macos_ws_event_probe && ldid -S /var/mnt/rootfs/usr/local/bin/macos_ws_event_probe && echo signed\npython3 /var/jb/usr/macOS/bin/macws_boot_trust.py --readd /var/mnt/rootfs/usr/local/bin/macos_ws_event_probe 2>&1 | tail -1\n/var/jb/usr/bin/python3 -c \"import hashlib;print('postsign',hashlib.sha256(open('/var/mnt/rootfs/usr/local/bin/macos_ws_event_probe','rb').read()).hexdigest())\"\n",
+  "command_sha256": "8026124d32d30bde590523b07816cae1afca6fe4e1a389eb8fe5e3e37a0a9c9a",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "signed\nBOOT-TRUST {\"added\": 1, \"backend\": \"libjailbreak\", \"cached\": 0, \"files\": 1, \"hashes\": 1, \"images\": 1, \"resource_hits\": 0, \"scan_seconds\": 0.0, \"total_seconds\": 0.067}\npostsign da04a959e6d317e231396b41a2d6b5963a3e113dca7603a4224f144bfe50e1a9\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

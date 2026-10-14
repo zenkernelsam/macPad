@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-14T23:49:02.647272+08:00",
+  "finished": "2026-10-14T23:49:05.337689+08:00",
+  "command": "set -u\nERR=/var/jb/var/mobile/WindowServer.err\nSTART=$(wc -l < \"$ERR\" 2>/dev/null || echo 0)\necho \"WS_PID_BEFORE=$(ps aux | awk '/Resources\\/WindowServer/ && !/awk/ {print $2}' | head -1)\"\necho \"=== probe run ===\"\n/var/jb/usr/macOS/bin/launchdchrootexec 0 0 /var/mnt/rootfs /usr/local/bin/macos_ws_event_probe post\necho \"PROBE_RC=$?\"\nsleep 2\necho \"=== WS log delta ===\"\ntail -n +$((START+1)) \"$ERR\" | grep -E \"CGXSYNTH|LOADER-OBS\" | head -40\necho \"=== delta line count ===\"\ntail -n +$((START+1)) \"$ERR\" | grep -cE \"CGXSYNTH|LOADER-OBS\" || true\n",
+  "command_sha256": "664296c9e726e3fe4f9d3906251183695157e5c9bc07c8e62a2da5b1c7ae4b83",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "WS_PID_BEFORE=51644\n=== probe run ===\nPROBE_RC=137\n=== WS log delta ===\n=== delta line count ===\n0\n",
+  "stderr": "chdir: No such file or directory\n[launchdchrootexec] target=/usr/local/bin/macos_ws_event_probe arch=arm64e insert=/usr/local/lib/libmachook.dylib\nKilled: 9\n",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

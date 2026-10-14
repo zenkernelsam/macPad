@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-14T23:48:12.778805+08:00",
+  "finished": "2026-10-14T23:48:13.240134+08:00",
+  "command": "upload misc/macos_ws_event_probe -> /tmp/evprobe.new",
+  "command_sha256": "cc16293d902c8cd9a57516baf43f5610ab125d0241215d7c5867f90c866d83ca",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "",
+  "stderr": "",
+  "upload_source_sha256": "b33d4e4acafe9106d51466491d3e6bb44828afb29a6e8f41d2bc306f4aeeae20",
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

@@ -1,4 +1,8 @@
-REVISING R004A — 2026-10-14
-Runtime-switch audit fix + durable doc reconciliation (docs/audit only).
-No device mutation, no behavior change, no new probes.
-Git writes held by Codex — Devin edits but does not stage/commit.
+DELIVERED R004B — 2026-10-14
+Bounded TLS loader observation around the real CGXSYNTH gate.
+Outcome: gate fired (seq=1,2, rc=0); ZERO public dlsym calls observed.
+dlopen interpose REMOVED — proven to corrupt @loader_path (launchservicesd
+pipeline failure, real evidence). 26/26 fixture checks ALL-PASS.
+Deployed post-sign: arm64e c408dc94…, arm64 56224d25…; baseline HI rc=0.
+Stack stopped; sentinels absent in both namespaces; no orphans.
+Not acceptance — input still 1002.  Git writes released to Devin.

@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-14T23:49:49.939711+08:00",
+  "finished": "2026-10-14T23:49:50.580970+08:00",
+  "command": "ERR=/var/jb/var/mobile/WindowServer.err; wc -l $ERR; grep -nE \"CGXSYNTH|LOADER-OBS\" $ERR | tail -30",
+  "command_sha256": "fc94f04916847984d90aabec4338a17444fa9bf9fcc53d79b0e8f419c9077ec8",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "751139 /var/jb/var/mobile/WindowServer.err\n500468:#### CGXSYNTH-INSTALL gate=0x1977e9464 slot=0x1eaf921b8 hdr=0x1974d1000\n657233:#### CGXSYNTH-INSTALL gate=0x1977e9464 slot=0x1eaf921b8 hdr=0x1974d1000\n671184:#### CGXSYNTH-INSTALL gate=0x1977e9464 slot=0x1eaf921b8 hdr=0x1974d1000\n675460:#### CGXSYNTH cred=0x16da6b220 size=52 euid=0 pid=42636 rc=0\n675461:#### CGXSYNTH cred=0x16da6b228 size=52 euid=0 pid=42636 rc=0\n675463:#### CGXSYNTH cred=0x16da6b228 size=52 euid=0 pid=42636 rc=0\n675465:#### CGXSYNTH cred=0x16da6b228 size=52 euid=0 pid=42636 rc=0\n675467:#### CGXSYNTH cred=0x16da6b228 size=52 euid=0 pid=42636 rc=0\n675483:#### CGXSYNTH cred=0x16da6b208 size=52 euid=0 pid=42636 rc=0\n684123:#### CGXSYNTH-INSTALL gate=0x1977e9464 slot=0x1eaf921b8 hdr=0x1974d1000 permit=0\n688286:#### CGXSYNTH cred=0x16f657220 size=52 euid=0 pid=45121 rc=0\n688287:#### CGXSYNTH cred=0x16f657228 size=52 euid=0 pid=45121 rc=0\n688289:#### CGXSYNTH cred=0x16f657228 size=52 euid=0 pid=45121 rc=0\n688291:#### CGXSYNTH cred=0x16f657228 size=52 euid=0 pid=45121 rc=0\n688293:#### CGXSYNTH cred=0x16f657228 size=52 euid=0 pid=45121 rc=0\n704311:#### CGXSYNTH-INSTALL gate=0x1977e9464 slot=0x1eaf921b8 hdr=0x1974d1000 isWS=1 diag=1 permitFn=0x1009aed88 permit=0\n708494:#### CGXSYNTH cred=0x16f4c7220 size=52 euid=0 pid=45811 rc=0\n708495:#### CGXSYNTH cred=0x16f4c7228 size=52 euid=0 pid=45811 rc=0\n724072:#### CGXSYNTH-INSTALL gate=0x1977e9464 slot=0x1eaf921b8 hdr=0x1974d1000 isWS=1 diag=1 permitFn=0x10024ec24 permit=0\n728256:#### CGXSYNTH cred=0x16fc27220 size=52 euid=0 pid=46389 rc=0\n728257:#### CGXSYNTH cred=0x16fc27228 size=52 euid=0 pid=46389 rc=0\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

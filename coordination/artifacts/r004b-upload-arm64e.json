@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-14T23:26:12.854646+08:00",
+  "finished": "2026-10-14T23:26:13.292224+08:00",
+  "command": "upload /tmp/libmachook_arm64e.new -> /tmp/libmachook_arm64e.up",
+  "command_sha256": "1e60ab78de17bf0af571d8ae8885e27cf4de62ee7aee5b74a274d751c75a5fc8",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "",
+  "stderr": "",
+  "upload_source_sha256": "6d7f04c4ebf93fd2da5d2e32ef89cbdfca6ef4449a2a652c226a9e7376ae5613",
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

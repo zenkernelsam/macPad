@@ -47,6 +47,7 @@
 #include "macws_iosurface_protection_abi.h"
 #include "macws_iosurface_layout_abi.h"
 #include "macws_nocopy_abi.h"
+#include "MacWSLoaderObservation.h"
 
 // These macOS code-signing entry points are present in the iPadOS shared
 // cache and used by Ventura's CoreLocationAgent, but the iPhoneOS SDK omits
@@ -5887,15 +5888,17 @@ static void macws_configure_controlcenter_airplay_settings_route(void) {
     fflush(stderr);
 }
 
-// DIAGNOSTIC (2026-10-14, not a fix): _XPostEventRecord returns 1002 for
-// every event post.  RE shows its gate CGXSenderCanSynthesizeEvents
+// DIAGNOSTIC (2026-10-14, corrected same day): _XPostEventRecord returns
+// 1002 for every event post.  RE shows its gate CGXSenderCanSynthesizeEvents
 // (SkyLight-22F82 va 0x1853fd464) first reads gCurMsgAudit at
-// __DATA+0x1d8ba61b8; a NULL/undersized slot returns 0 before the
-// (already hooked) audit_token_check_tcc_access is ever reached.  The
-// ONLY writer of gCurMsgAudit is PKGTransactionDecodeCAPayload, which
-// points it at conn+0x208 for the duration of a transaction decode —
-// so a raw MIG post runs with the slot NULL.  Log the slot + creds at
-// every gate call to confirm which sub-case fires, then keep %orig.
+// __DATA+0x1d8ba61b8.  RUNTIME FACT (disproving the earlier NULL-audit
+// theory): live telemetry shows the slot populated on every canonical
+// post — a 52-byte credential naming the SENDER pid — and the genuine
+// check chain returns 0.  Which lazy checker/rights-cache producer makes
+// that decision is still unknown; pending IDA.  R004B: additionally log
+// the public dlopen/dlsym calls issued INSIDE the original gate via a
+// thread-local observation context (Diagnostics/MacWSLoaderObservation).
+// Record-only: return values, errno and loader error state are unchanged.
 static void **g_macws_cgx_audit_slot;   // &SkyLight gCurMsgAudit
 static int (*macws_orig_sender_can_synth)(void *, void *);
 static int macws_diag_sender_can_synth(void *a0, void *a1) {
@@ -5905,11 +5908,17 @@ static int macws_diag_sender_can_synth(void *a0, void *a1) {
         ? *(volatile uint32_t *)((char *)cred + 0x28) : 0; // audit.pid
     uint32_t aeuid = (cred && sz >= 0x34)
         ? *(volatile uint32_t *)((char *)cred + 0x18) : 0; // audit.euid
+    // errno contract: the wrapper returns the ORIGINAL's errno to the
+    // caller — save it before Exit/logging, restore before return.
+    unsigned seq = MacWSLoaderObservationEnter();
     int r = macws_orig_sender_can_synth(a0, a1);
+    int saved_errno = errno;
+    MacWSLoaderObservationExit();
     fprintf(stderr,
-            "#### CGXSYNTH cred=%p size=%u euid=%u pid=%u rc=%d\n",
-            cred, sz, aeuid, apid, r);
+            "#### CGXSYNTH cred=%p size=%u euid=%u pid=%u rc=%d seq=%u\n",
+            cred, sz, aeuid, apid, r, seq);
     fflush(stderr);
+    errno = saved_errno;
     return r;
 }
 

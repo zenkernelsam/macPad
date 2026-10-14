@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-14T23:41:44.095704+08:00",
+  "finished": "2026-10-14T23:41:44.536023+08:00",
+  "command": "/var/jb/usr/bin/python3 -c \"import hashlib\nfor f in [\\\"/var/mnt/rootfs/usr/local/lib/libmachook.dylib\\\",\\\"/var/mnt/rootfs/usr/local/lib/libmachook_arm64.dylib\\\",\\\"/var/mnt/rootfs/usr/local/lib/libmachook_arm64e.dylib\\\",\\\"/var/jb/usr/macOS/lib/libmachook.dylib\\\",\\\"/var/jb/usr/macOS/lib/libmachook_arm64.dylib\\\",\\\"/var/jb/usr/macOS/lib/libmachook_arm64e.dylib\\\"]:\n    print(hashlib.sha256(open(f,\\\"rb\\\").read()).hexdigest(), f)\"",
+  "command_sha256": "63d58c79f606c0a3035aaf07ffd747c30c61761325af406df8e35de6864055a3",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "4ccc724440c2df61e81221dcb8283cc48bbe86578fcab5be66c69c1778921910 /var/mnt/rootfs/usr/local/lib/libmachook.dylib\n5532a237c5fa29f5c54b7c2034ee1cc0b0175ba3ccc5950c990d28a92ddc1642 /var/mnt/rootfs/usr/local/lib/libmachook_arm64.dylib\n4ccc724440c2df61e81221dcb8283cc48bbe86578fcab5be66c69c1778921910 /var/mnt/rootfs/usr/local/lib/libmachook_arm64e.dylib\n4ccc724440c2df61e81221dcb8283cc48bbe86578fcab5be66c69c1778921910 /var/jb/usr/macOS/lib/libmachook.dylib\n5532a237c5fa29f5c54b7c2034ee1cc0b0175ba3ccc5950c990d28a92ddc1642 /var/jb/usr/macOS/lib/libmachook_arm64.dylib\n4ccc724440c2df61e81221dcb8283cc48bbe86578fcab5be66c69c1778921910 /var/jb/usr/macOS/lib/libmachook_arm64e.dylib\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-14T23:29:09.588749+08:00",
+  "finished": "2026-10-14T23:29:18.247164+08:00",
+  "command": "set -u\nERR=/var/jb/var/mobile/WindowServer.err\nlaunchctl remove UIKitApplication:com.macwsguide.windowserver 2>/dev/null\nSTARTLINE=$(wc -l < \"$ERR\" 2>/dev/null || echo 0)\nsetsid /var/jb/usr/macOS/bin/launchdchrootexec 0 0 /var/mnt/rootfs \\\n  /System/Library/PrivateFrameworks/SkyLight.framework/Resources/WindowServer \\\n  -virtualonly -daemon >> \"$ERR\" 2>&1 &\necho \"SPAWN_BG=$!\"\nsleep 8\nWSPID=$(pgrep -f \"Resources/WindowServer\" | head -1)\necho \"WSPID=$WSPID\"\necho \"=== new log lines ===\"\ntail -n +$((STARTLINE+1)) \"$ERR\" | grep -E \"CGXSYNTH|LOADER-OBS|CTOR-CANARY\" | head -20\n",
+  "command_sha256": "655d9476bcc611a0e4034e0a85303d63cc9f6ce983c78415600359e8a4e29ce2",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "SPAWN_BG=49468\nWSPID=\n=== new log lines ===\n",
+  "stderr": "sh: 10: pgrep: not found\n",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

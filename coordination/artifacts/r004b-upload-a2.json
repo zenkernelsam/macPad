@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-14T23:41:10.875405+08:00",
+  "finished": "2026-10-14T23:41:11.316315+08:00",
+  "command": "upload /tmp/lm_arm64.dylib -> /tmp/lm_a.new",
+  "command_sha256": "9aae8f1f7199d2d4fd25030fccf54c362652c46eeec5ee9a396e5946dd048c3a",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "",
+  "stderr": "",
+  "upload_source_sha256": "e496947d5bb99a37e340ab7f82108ec77ce175d044739f5fe5086cf4a3e274aa",
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

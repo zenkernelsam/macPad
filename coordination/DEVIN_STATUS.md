@@ -1,9 +1,89 @@
 # DEVIN_STATUS — current delivery
 
-State: **R004A audit/docs package** (active).  R003 diagnostic
-checkpoint delivered at `0f5b8f4` (+ artifact commits) — reusable
-bounded evidence, NOT an acceptance claim; `reviews/R003-final-20261014.md`
-lists its remaining scope.  R004A work below is docs/audit debt only.
+State: **R004B loader-observation** delivered (diagnostic checkpoint,
+not acceptance).  R003 checkpoint `0f5b8f4` and R004A audit/docs
+`be9dc08` accepted; see `reviews/`.
+
+## R004B bounded loader observation (2026-10-14)
+
+Scope (per `reviews/R004B-runtime-plan-20261014.md` + preflight):
+observe public `dlsym`/`dlopen` calls made *inside* the real
+`CGXSenderCanSynthesizeEvents` gate, via a thread-local bounded context
+wrapped around the already-validated original call.  Record-only: results,
+`errno` and `dlerror` state preserved; no new private offsets; not a hook
+engine.
+
+### What shipped
+
+- `libmachook/Diagnostics/MacWSLoaderObservation.{h,m}` — TLS depth/seq,
+  sink-based emit (stderr fallback), per-context record cap 32,
+  gate-context cap 64, reentrancy guard checked BEFORE consuming a record
+  slot (preflight fix), errno save/restore around every emit.
+- `libmachook/Diagnostics/MacWSRandomDiagnostics.m` — the existing
+  `dlsym` interposer now also calls `MacWSLoaderObservationNoteDlsym`
+  (result/errno unchanged).
+- `mac_hooks.m` gate wrapper: `Enter → orig → save errno → Exit → log →
+  restore errno` — caller sees the original's `errno` (preflight fix).
+- `misc/test_loader_observation.py` — 26-check contract fixture built as
+  a separate dylib + exe so real dyld interpose is exercised (not mocks):
+  outside-context silent, seq continuity, nesting, errno, record cap,
+  foreign-thread silence, reentrant sink, real `dlsym` interpose e2e,
+  missing-symbol/missing-library failure parity, `dlerror` ownership,
+  context-cap boundary + suppression.  **ALL-PASS** (26/26).
+
+### Runtime finding that changed the design
+
+Interposing `dlopen` is UNSAFE here and was **removed**: dyld resolves
+`@loader_path` relative to the *calling* image — the shim makes libmachook
+the caller, so `launchservicesd`'s
+`dlopen("@loader_path/launchservicesd.dylib")` resolved under
+`/usr/local/lib/` and the whole `macos_gui.sh start coexist` pipeline
+failed (`artifacts/r004b-gui-start.json`, real exit 1).  After removing
+the interposer the pipeline completed (exit 0, `r004b-gui-start2.json`).
+`NoteDlopen` stays available for direct callers; no dlopen hook remains.
+
+### Bounded runtime post — observed result
+
+Deploy: pre-sign fat `f1927e21…`; staged slices arm64e `fe93559c…` /
+arm64 `d81e2d0c…`; device post-sign arm64e `c408dc94…` / arm64
+`56224d25…` (all six target paths, `BOOT-TRUST added=1` ×6,
+`r004b-deploy3.json`, `r004b-postsign-hashes.json`).  Baseline
+`chroot /bin/echo HI → HI` rc=0.
+
+The production pipeline strips `/tmp/macws_runtime_diagnostics` during
+start (sentinel verified absent → `diag=0` → gate hook never installs —
+that is ALSO why `CGXSYNTH-INSTALL` is absent in a production WS: the
+install log and hook both sit behind the opt-in).  One diagnostic WS
+generation (pid 53005) was booted via the project job with the sentinel
+armed: `CGXSYNTH-INSTALL … isWS=1 diag=1 permitFn=0x104cfec24 permit=0`.
+
+Single canonical post (`macos_ws_event_probe post`, PROBE_RC=0):
+
+```
+#### CGXSYNTH cred=0x16b177220 size=52 euid=0 pid=53213 rc=0 seq=1
+#### CGXSYNTH cred=0x16b177228 size=52 euid=0 pid=53213 rc=0 seq=2
+```
+
+**LOADER-OBS records emitted: 0.**  The original gate fired twice during
+the post and made *no observed public `dlsym` calls* — the lazy checker
+resolution does not go through public `dlsym` on this path
+(`r004b-canonical-post2.json`).  Result is an honest negative, not a
+root cause: `dlopen` is deliberately unobserved, and `dlsym` silence does
+not exclude loader activity via private/internal entry points.  Input
+remains `SLSPostEventRecord → 1002`; no input acceptance claimed.
+
+Cleanup: `macos_gui.sh stop` (iOS restored), sentinel absent in BOTH
+`/var/mnt/rootfs/tmp/` and `/tmp/` namespaces, zero WS/probe orphans
+(`r004b-cleanup.json`).
+
+### Still open
+
+- checker identity / rights-cache producer → IDA on
+  `analysis/SkyLight_22F82` (UUID 96676A53-…, sha256 `13d7a0ca…`) —
+  static RE channel still pending user-side.
+- `com.apple.SkyLight.loginwindow` entitlement absent on probe —
+  candidate blocker for session-aware post acceptance.
+- Input acceptance: unresolved (`1002`).
 
 ## R004A revised delivery
 

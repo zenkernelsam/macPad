@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-14T23:56:02.521501+08:00",
+  "finished": "2026-10-14T23:56:03.023934+08:00",
+  "command": "set -u\nARCH=/var/mnt/rootfs/tmp/diag-archive\nmkdir -p \"$ARCH\"\nif [ -f /var/mnt/rootfs/tmp/macws_runtime_diagnostics ]; then\n  mv /var/mnt/rootfs/tmp/macws_runtime_diagnostics \"$ARCH/macws_runtime_diagnostics.r004b-20261014\"\n  echo \"archived chroot sentinel\"\nfi\nfor p in /var/mnt/rootfs/tmp/macws_runtime_diagnostics /tmp/macws_runtime_diagnostics; do\n  [ -e \"$p\" ] && echo \"STILL EXISTS: $p\" || echo \"absent: $p\"\ndone\nps aux | grep -iE \"windowserver|evprobe|ws_event\" | grep -v grep || echo \"no ws/probe processes\"\n",
+  "command_sha256": "7e07e3e7d48bc39495d51ed9293c1ffa9a1626bba704f11391451f916967e798",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "absent: /var/mnt/rootfs/tmp/macws_runtime_diagnostics\nabsent: /tmp/macws_runtime_diagnostics\nno ws/probe processes\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

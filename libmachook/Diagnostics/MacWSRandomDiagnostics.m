@@ -2,6 +2,7 @@
 @import Security;
 
 #import "interpose.h"
+#import "MacWSLoaderObservation.h"
 
 #include <dlfcn.h>
 #include <fcntl.h>
@@ -69,6 +70,9 @@ static int MacWSDiagnosticGetEntropy(void *bytes, size_t count) {
 static void *MacWSDiagnosticDlsym(void *handle, const char *symbol) {
     void *result = dlsym(handle, symbol);
     int savedError = errno;
+    // R004B: bounded gate-context loader observation.  Inert outside the
+    // thread-local context; preserves result/errno; never calls dlerror.
+    MacWSLoaderObservationNoteDlsym(handle, symbol, result);
     if (MacWSRandomDiagnosticsEnabled() && symbol &&
         strcmp(symbol, "getentropy") == 0) {
         gMacWSRealGetEntropy = (MacWSGetEntropyFunction)result;

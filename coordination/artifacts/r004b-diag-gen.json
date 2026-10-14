@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-14T23:54:51.798996+08:00",
+  "finished": "2026-10-14T23:55:04.633326+08:00",
+  "command": "set -u\nERR=/var/jb/var/mobile/WindowServer.err\ntouch /var/mnt/rootfs/tmp/macws_runtime_diagnostics\necho \"SENTINEL_ARMED rc=$?\"\nSTART=$(wc -l < \"$ERR\" 2>/dev/null || echo 0)\nlaunchctl kickstart -k user/501/UIKitApplication:com.macwsguide.windowserver 2>&1 || true\nsleep 12\necho \"=== new gen CGXSYNTH-INSTALL ===\"\ntail -n +$((START+1)) \"$ERR\" | grep -nE \"CGXSYNTH-INSTALL|LOADER-OBS|CTOR-CANARY\" | head -10\necho \"=== WS pid ===\"\nps aux | awk '/Resources\\/WindowServer/ && !/awk/' | head -3\n",
+  "command_sha256": "fdc912d8742aed244e47e99d1d5a48c07a8b505fe91a36bb535d7aa9e6d68fbb",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "SENTINEL_ARMED rc=0\n=== new gen CGXSYNTH-INSTALL ===\n7:#### MACWS-CTOR-CANARY InitStuff entered\n19:#### CGXSYNTH-INSTALL gate=0x1977e9464 slot=0x1eaf921b8 hdr=0x1974d1000 isWS=1 diag=1 permitFn=0x104cfec24 permit=0\n123:#### MACWS-CTOR-CANARY InitStuff done\n=== WS pid ===\nroot           53005   0.0  0.4 408561712  67504   ??  Ss   11:54PM   0:00.22 /System/Library/PrivateFrameworks/SkyLight.framework/Resources/WindowServer -virtualonly -daemon\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

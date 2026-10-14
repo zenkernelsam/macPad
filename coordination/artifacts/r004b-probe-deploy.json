@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-14T23:48:20.658873+08:00",
+  "finished": "2026-10-14T23:48:21.341875+08:00",
+  "command": "set -u\nDST=/var/jb/usr/macOS/bin/macos_ws_event_probe\n/var/jb/usr/bin/python3 -c \"import hashlib;print('uploaded',hashlib.sha256(open('/tmp/evprobe.new','rb').read()).hexdigest())\"\ninstall -m755 /tmp/evprobe.new $DST.new && mv $DST.new $DST\nldid -S $DST && ldid -S $DST && echo signed\npython3 /var/jb/usr/macOS/bin/macws_boot_trust.py --readd $DST 2>&1 | tail -1\n/var/jb/usr/bin/python3 -c \"import hashlib;print('postsign',hashlib.sha256(open('$DST','rb').read()).hexdigest())\"\nls -la $DST\nrm -f /tmp/evprobe.new\n",
+  "command_sha256": "2386c7b2bea61435c97d4c264e65b56afc1180fde5a2fe2d286f15c6a52f2443",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "uploaded b33d4e4acafe9106d51466491d3e6bb44828afb29a6e8f41d2bc306f4aeeae20\nsigned\nBOOT-TRUST {\"added\": 1, \"backend\": \"libjailbreak\", \"cached\": 0, \"files\": 1, \"hashes\": 1, \"images\": 1, \"resource_hits\": 0, \"scan_seconds\": 0.0, \"total_seconds\": 0.065}\npostsign da04a959e6d317e231396b41a2d6b5963a3e113dca7603a4224f144bfe50e1a9\n-rwxr-xr-x 1 root staff 36560 Oct 14 23:48 /var/jb/usr/macOS/bin/macos_ws_event_probe\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

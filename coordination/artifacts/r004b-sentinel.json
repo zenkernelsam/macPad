@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-14T23:41:58.355302+08:00",
+  "finished": "2026-10-14T23:41:58.769086+08:00",
+  "command": "touch /var/mnt/rootfs/tmp/macws_runtime_diagnostics && echo SENTINEL_ARMED; ls -la /var/mnt/rootfs/tmp/macws_runtime_diagnostics",
+  "command_sha256": "42b7947d5b521ce3819fca61029533ac514fc0d73fccdf20ed37b53475287e71",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "SENTINEL_ARMED\n-rw-r--r-- 1 root wheel 0 Oct 14 23:41 /var/mnt/rootfs/tmp/macws_runtime_diagnostics\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

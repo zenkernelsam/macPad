@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-14T23:27:27.189125+08:00",
+  "finished": "2026-10-14T23:27:28.643333+08:00",
+  "command": "find /var/jb /Library/LaunchDaemons /var/mobile/Library -name \"*windowserver*\" -o -name \"*macwsguide*\" 2>/dev/null | head -10; launchctl print user/foreground/UIKitApplication:com.macwsguide.windowserver 2>&1 | head -8",
+  "command_sha256": "8df3f30686a5bd9a218442eae3942c172bdcb00543027c5a9ab34d6d0e91e65e",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "/var/mobile/Library/Caches/com.macwsguide.host\n/var/mobile/Library/Saved Application State/com.macwsguide.host.savedState\nCould not find service \"UIKitApplication:com.macwsguide.windowserver\" in domain for uid: 501\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

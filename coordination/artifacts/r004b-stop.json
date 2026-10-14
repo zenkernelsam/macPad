@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-14T23:55:46.472687+08:00",
+  "finished": "2026-10-14T23:55:55.439687+08:00",
+  "command": "bash /var/jb/usr/macOS/bin/macos_gui.sh stop",
+  "command_sha256": "23a48dd32aa82406e5ea814e80c6f1f2a3f8a56789e32b0fdeeea5e118c9946c",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "[macos_gui] Cleaning up previous macOS GUI services...\n[macos_gui] Cleanup done.\n[macos_gui] Restoring iOS (SpringBoard / backboardd)...\n[macos_gui] Stopped. The iPad is back on iOS.\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}
