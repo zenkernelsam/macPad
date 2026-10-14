@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T07:36:47.606257+08:00",
+  "finished": "2026-10-15T07:36:56.053800+08:00",
+  "command": "zsh /var/jb/usr/macOS/bin/macos_gui.sh stop; echo \"STOP_RC=$?\"",
+  "command_sha256": "06aacdb70f56aab994ac4a1b79cf85c7e404db83589defd87d12349998010584",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "[macos_gui] Cleaning up previous macOS GUI services...\n[macos_gui] Cleanup done.\n[macos_gui] Restoring iOS (SpringBoard / backboardd)...\n[macos_gui] Stopped. The iPad is back on iOS.\nSTOP_RC=0\n",
+  "stderr": "cleanup_macos:39: no matches found: /var/mnt/rootfs/private/tmp/macws_menu_client.*.sock\ncleanup_macos:40: no matches found: /var/mnt/rootfs/private/tmp/macws_menu_snapshot.*.bin\ndiagnostic_flag_paths:3: BASH_SOURCE[0]: parameter not set\nclear_diagnostic_state:12: command not found: rm\nclear_diagnostic_state:21: command not found: rm\nclear_diagnostic_state:36: command not found: rm\nclear_diagnostic_state:48: command not found: rm\n",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

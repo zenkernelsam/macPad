@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T07:37:40.012221+08:00",
+  "finished": "2026-10-15T07:37:40.682425+08:00",
+  "command": "echo \"=== macws jobs (expect only UIKit host) ===\"; launchctl list | grep -iE \"macwsguide|macosbooter\"; echo \"=== owned/chroot procs (expect none) ===\"; ps aux | grep -E \"/var/mnt/rootfs|launchdchrootexec|WindowServer|OSXvnc|tccd *system\" | grep -v grep; ps aux | grep -E \"diskarbitrationd|filecoordinationd|cfprefsd|locationd|launchservicesd|coreaudiod\" | grep -v grep; echo \"=== owned debug procs (expect none) ===\"; ps aux | grep -E \"lldb|tmux|ws_event_probe|tccdprobe\" | grep -v grep; echo \"=== native iOS ===\"; ps aux | grep -E \"backboardd|SpringBoard\" | grep -v grep; launchctl print system/com.apple.backboardd 2>/dev/null | grep -E \"state\"; echo \"=== chroot baseline ===\"; /var/jb/usr/bin/chroot /var/mnt/rootfs /bin/echo HI 2>/dev/null; echo \"CHROOT_RC=$?\"; echo \"=== thermal ===\"; /var/jb/usr/macOS/bin/macwsthermal; echo \"THERMAL_RC=$?\"; echo \"=== state file ===\"; cat /var/jb/var/mobile/macws_gui_start_state 2>/dev/null; ls /var/jb/var/mobile/macws_gui_start_state* 2>/dev/null",
+  "command_sha256": "95cb19d14a77e6df9a095ef3c7f1236ab92bdb46daa51a24047aa39990d14639",
+  "exit": 1,
+  "timeout": false,
+  "stdout": "=== macws jobs (expect only UIKit host) ===\n15797\t0\tUIKitApplication:com.macwsguide.host[bf12][rb-legacy]\n=== owned/chroot procs (expect none) ===\nroot           70696   0.0  0.0        0      0   ??  ?s   Mon01AM   0:00.00 /usr/sbin/filecoordinationd\nroot           70628   0.0  0.0        0      0   ??  ?s   Mon01AM   0:00.00 /usr/sbin/cfprefsd daemon\nroot           70601   0.0  0.0        0      0   ??  ?s   Mon01AM   0:00.00 /usr/libexec/locationd\n=== owned debug procs (expect none) ===\n=== native iOS ===\nmobile         23168   0.0  0.0        0      0   ??  ?s   Mon07AM   0:00.00 /System/Library/CoreServices/SpringBoard.app/SpringBoard\nmobile         70595   0.0  0.0        0      0   ??  ?s   Mon01AM   0:00.00 /usr/libexec/backboardd\n\tstate = running\n\tjob state = running\n=== chroot baseline ===\nHI\nCHROOT_RC=0\n=== thermal ===\nthermal-state=serious raw=2 low-power=no battery-temp-centic=3700 virtual-temp-centic=3700 effective-temp-centic=3700 uptime=353239.506\nTHERMAL_RC=3\n=== state file ===\n",
+  "stderr": "zsh:1: no matches found: /var/jb/var/mobile/macws_gui_start_state*\n",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

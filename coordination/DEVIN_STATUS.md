@@ -1,6 +1,16 @@
 # DEVIN_STATUS — current delivery
 
-State: **R008 reproducible system-tccd transport delivered**
+State: **PAUSED — human-requested shutdown** (2026-10-15). macPad
+stopped via `zsh /var/jb/usr/macOS/bin/macos_gui.sh stop` (rc=0):
+all `macwsguide`/`macosbooter` jobs retired, owned execprobe jobs
+removed, no chroot processes/debuggers; native iOS healthy
+(backboardd pid 70595, SpringBoard 23168, native tccd 23321
+untouched); chroot `echo HI` baseline rc=0; thermal serious 37.0°C.
+Do not resume on generic heartbeat — explicit human "continue"
+required. Evidence: `coordination/artifacts/r008-pause-*.json`,
+`coordination/user-pause-state.json`.
+
+Prior state: **R008 reproducible system-tccd transport delivered**
 (2026-10-15): all four R007 review findings addressed in source —
 see `docs/evidence/r008-tccd-transport-repro-20261015.md`.
 

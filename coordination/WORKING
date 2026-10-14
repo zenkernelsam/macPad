@@ -1,3 +1,25 @@
+*** PAUSED — human requested immediate shutdown + pause (2026-10-15) ***
+State: PAUSED. Do NOT resume on generic heartbeat — wait for explicit
+human "continue". coordination/user-pause-state.json state=PAUSED.
+
+Shutdown executed: `zsh /var/jb/usr/macOS/bin/macos_gui.sh stop`
+(installed pipeline), STOP_RC=0 — "Stopped. The iPad is back on iOS."
+Verified post-state: zero macwsguide/macosbooter launchd jobs (only
+the iOS UIKit host app remains), zero chroot processes, no
+lldb/tmux/probe/debugger processes; owned execprobe{,A,B} stale jobs
+removed (chroot diskarbitrationd pid 67454 killed via launchctl remove).
+Native iOS healthy: backboardd pid 70595 + SpringBoard 23168 running,
+native com.apple.tccd pid 23321 untouched in user/501.
+Chroot intact: chroot /var/mnt/rootfs /bin/echo HI -> HI rc=0.
+Thermal: serious 37.0C (was 36.89C pre-stop; monitor next session).
+Evidence JSONs: coordination/artifacts/r008-pause-{prestate,stop2,
+poststate,execprobe-clean,final}.json.
+Known limitation: first exec attempt failed with exec format error
+(script lacks shebang, expected `bash`/`zsh` invocation); rerun under
+zsh succeeded. GUI start-state file absent post-stop (harmless).
+
+R008 (committed 529c412) state below remains accurate for resume:
+
 R008 REPRODUCIBLE SYSTEM-TCCD TRANSPORT — 2026-10-15
 All four R007 review findings addressed in source; device-side
 verification pending (no MACWS_DEVICE/MACWS_SSH_PASSWORD this session).

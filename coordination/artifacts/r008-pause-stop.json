@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T07:36:45.445904+08:00",
+  "finished": "2026-10-15T07:36:45.757635+08:00",
+  "command": "/var/jb/usr/macOS/bin/macos_gui.sh stop; echo \"STOP_RC=$?\"",
+  "command_sha256": "08809534e4119213fd4b18250852422dcf5bc116eaeb330ece3e2d2192709dbb",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "STOP_RC=126\n",
+  "stderr": "zsh:1: exec format error: /var/jb/usr/macOS/bin/macos_gui.sh\n",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

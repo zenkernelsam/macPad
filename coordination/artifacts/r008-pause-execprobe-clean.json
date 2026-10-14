@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T07:37:23.436695+08:00",
+  "finished": "2026-10-15T07:37:23.972794+08:00",
+  "command": "for label in com.macwsguide.execprobe com.macwsguide.execprobeA com.macwsguide.execprobeB; do for dom in system user/501 user/0 gui/501; do launchctl print \"$dom/$label\" >/dev/null 2>&1 && echo \"FOUND $dom/$label\"; done; done; echo \"--- removing ---\"; for label in com.macwsguide.execprobe com.macwsguide.execprobeA com.macwsguide.execprobeB; do launchctl remove \"$label\" 2>&1; echo \"remove $label rc=$?\"; done; echo \"--- after ---\"; launchctl list | grep -E \"execprobe|macwsguide\" ; echo \"LIST_DONE\"",
+  "command_sha256": "6087b14b907a28b40f1c174a05c13b7ff04c58faf81318bc05a2c2baa8c5ac01",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "FOUND system/com.macwsguide.execprobe\nFOUND user/501/com.macwsguide.execprobe\nFOUND system/com.macwsguide.execprobeA\nFOUND user/501/com.macwsguide.execprobeA\nFOUND system/com.macwsguide.execprobeB\nFOUND user/501/com.macwsguide.execprobeB\n--- removing ---\nremove com.macwsguide.execprobe rc=0\nremove com.macwsguide.execprobeA rc=0\nremove com.macwsguide.execprobeB rc=0\n--- after ---\n15797\t0\tUIKitApplication:com.macwsguide.host[bf12][rb-legacy]\n67454\t0\tcom.macwsguide.execprobeA\nLIST_DONE\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}
