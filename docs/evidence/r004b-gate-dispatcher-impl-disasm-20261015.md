@@ -48,17 +48,21 @@ pidver = audit_token_to_pidversion(audit)   ; stub → libbsm (0x1dff3f360)
 if pid == 0:            return (rightDesc[0x20] != 0)      ; auid path
 if pid == getpid():     return 1                            ; SELF allowed
 key = pid | pidver<<32
-if cacheSentinel @0x1d8ba6b48 == -1:        ; normal mode
-    cached = rightsCache @0x1d8ba6b40 ? CFDictionaryGetValue(cache,key) : 0
-    if (rightDesc[0x18] & cached) || (rightDesc[0x10] & cached):
-        return 1                          ; cached permit mask
-    result = impl(audit_copy, rightDesc[0])  ; blraaz — the checker call
-    bits   = result ? rightDesc[0x10] : rightDesc[8]
+if onceToken @0x1d8ba6b48 != -1:            ; getProcessCredentialCache
+    dispatch_once(&onceToken, initBlock)    ; build rightsCache @0x1d8ba6b40
+cached = rightsCache ? CFDictionaryGetValue(cache,key) : 0
+if (cached & rightDesc[0x18]) == 0:         ; no "known" bits → real miss
+    result = impl(audit_copy, rightDesc[0]) ; blraaz — the checker call
+    bits   = result ? rightDesc[0x10] : rightDesc[8]   ; allow / deny mask
     if rightsCache:
         bits |= cached
         CFDictionaryContainsKey ? CFDictionarySetValue(cache,key,bits)
-                                : insert via dict-helper @0x185425a60
+                                : WSDoWithCredentials(root) +
+                                  __setProcessFlagsInCache_block_invoke → SetValue,
+                                  then register_for_port_notification_in_session
+                                  (processCredentialCacheRemoveDeadProcess)
     return result
+return (cached & rightDesc[0x10]) != 0      ; known bits → allow iff allow-bit set
 ```
 
 The cache is a per-WS-process CFDictionary keyed by `{pid | pidversion<<32}`
@@ -90,7 +94,7 @@ observed window.
 
 ## 4. rightDesc contents (file-verified @ __DATA_CONST)
 
-| address | name object → string | [8] | [0x10] | [0x18] | [0x20] |
+| address | name object → string | [8] deny | [0x10] allow | [0x18] known | [0x20] pid0-byte |
 |---|---|---|---|---|---|
 | `0x1d3dcb6c8` | **`kTCCServicePostEvent`** | 1 | 2 | 3 | 1 |
 | `0x1d3dcb760` | `com.apple.private.SkyLight.event.monitor` | 4 | 8 | 0xc | 0 |
@@ -103,20 +107,37 @@ compares the produced value against a global constant
 (`cset w0, eq`) — an **entitlement-equality check** for the
 `event.monitor` path, not a TCC service.
 
-## 5. What this proves for the 1002 denial
+## 5. Static branches that can produce rc=0 — runtime discrimination pending
 
-`SLSPostEventRecord → gate → dispatcher → cache miss → impl →
-TCCAccessPreflightWithAuditToken("kTCCServicePostEvent", sender_audit, 0)
-!= 0` → impl 0 → dispatcher caches `rightDesc[8]=1` deny bits → gate rc=0
-→ WS reply 1002.
+The observed `gate rc=0` (R004B seq=1,2) is consistent with MULTIPLE
+static paths; which one actually ran is NOT established by this
+disassembly or by LOADER-OBS=0:
 
-The authentic Ventura input path therefore requires a **real TCC grant for
-`kTCCServicePostEvent` on the sender's audit token** (or same-pid posts,
-which WS allows unconditionally).  This is RE-confirmed against the pinned
-binary; the producer that would normally satisfy the grant on macOS is the
-loginwindow/user-session TCC path — matching the earlier runtime fact that
-the probe lacks `com.apple.SkyLight.loginwindow` and that
-`SLSCreateLoginSession` yields `sid=0` here.
+1. **Cached deny** — a prior evaluation wrote `{rightDesc[8]=1}` bits for
+   this `{pid|pidver<<32}` key.  `cached & +0x18 ≠ 0`, `cached & +0x10 == 0`
+   → returns 0 directly, **no impl call, no loader activity** — fully
+   consistent with the silent window.
+2. **Real miss, cached checker pointer** — `lazyChecker` was resolved on
+   an earlier miss (once per process); impl calls the cached
+   `TCCAccessPreflightWithAuditToken` pointer via `blraaz` and the raw
+   TCC return was **nonzero** (`cset eq` → 0).  Also produces no
+   observed dlsym.
+3. **Real miss, resolution path** — first-ever `tcc_lookup_symbol` run
+   (would issue SkyLight's own dlopen/dlsym), or it FAILS (TCC load or
+   symbol miss → `cbz x0` → impl returns 0, deny bits folded).
+
+All three end in `rc=0 → reply 1002`.  Discriminating requires a live
+WindowServer: R005 scope is bounded breakpoints at the validated
+addresses (`0x185425e08` raw `w0`, cached-flag dump, checker
+entry/return) in ONE WS generation — no constant-return, no right/flag
+mutation.
+
+The hypothesis that loginwindow/session registration normally produces
+the `kTCCServicePostEvent` grant remains **THEORY, unproven**: the
+probe's missing `com.apple.SkyLight.loginwindow` entitlement and
+`sid=0` session are observed facts, but no causal link to this denial
+has been established — the deny could equally come from TCC's policy
+evaluation of the sender identity itself.
 
 ## 6. Non-claims
 
