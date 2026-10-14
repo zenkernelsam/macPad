@@ -1,0 +1,20 @@
+{
+  "time": "2026-10-15T01:45:15.786492+08:00",
+  "review_commit": "f4655fd",
+  "packet": "R006",
+  "session_id": "EE473D24-793C-48E3-B8A9-2298BB40327F",
+  "cli_pid": 86525,
+  "agent_pid": 90827,
+  "tty": "/dev/ttys001",
+  "cwd": "/Users/ciscohe/Desktop/macPad",
+  "handover_verified_before_send": true,
+  "dry_run_exit": 0,
+  "send_exit": 0,
+  "body_sent_once": true,
+  "cr_sent_once": true,
+  "body_sha256": "01311ed084625d34d509c43349e9bce1a76a711088138f711abf4b7786a71d8a",
+  "receipt": "Subsequent verified screen shows R006 TCC inventory commands and Thinking; handover_ready=false.",
+  "git_owner": "Devin for R006",
+  "additional_messages_planned": false,
+  "scheduler_changed": false
+}

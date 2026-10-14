@@ -1,0 +1,67 @@
+{
+  "time": "2026-10-15T02:30:18.421468+08:00",
+  "source_sha256_before": "408f4b6afc30c6ccc3ee9af581430ef4288e99a9d760a2bfea1516665e4153b6",
+  "checks": [
+    {
+      "argv": [
+        "xcrun",
+        "clang",
+        "-arch",
+        "arm64",
+        "misc/macos_ws_event_probe.c",
+        "-framework",
+        "CoreFoundation",
+        "-framework",
+        "CoreGraphics",
+        "-framework",
+        "IOKit",
+        "-o",
+        "coordination/artifacts/R006-review-build/probe-arm64"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "xcrun",
+        "clang",
+        "-arch",
+        "arm64e",
+        "misc/macos_ws_event_probe.c",
+        "-framework",
+        "CoreFoundation",
+        "-framework",
+        "CoreGraphics",
+        "-framework",
+        "IOKit",
+        "-o",
+        "coordination/artifacts/R006-review-build/probe-arm64e"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "python3",
+        "misc/audit_runtime_switches.py"
+      ],
+      "exit": 0,
+      "stdout": "runtime-switch audit OK: 309 source/plist env names, 86 source flag files, 467 total recorded entries\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    }
+  ],
+  "source_sha256_after": "408f4b6afc30c6ccc3ee9af581430ef4288e99a9d760a2bfea1516665e4153b6",
+  "stable": true
+}

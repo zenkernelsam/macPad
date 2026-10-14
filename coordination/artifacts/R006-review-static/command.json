@@ -1,0 +1,23 @@
+{
+  "time": "2026-10-15T02:18:56.716895+08:00",
+  "input": "analysis/TCC_22F82",
+  "sha256": "09b841378285a120a04b1c8718dd5c7e3b98b4e59849eea0d8767f845d02f2de",
+  "argv": [
+    "xcrun",
+    "lldb",
+    "--batch",
+    "-o",
+    "target create --arch arm64e analysis/TCC_22F82",
+    "-o",
+    "image list",
+    "-o",
+    "disassemble --name TCCAccessPreflightWithAuditToken --bytes",
+    "-o",
+    "disassemble --name tccd --bytes",
+    "-o",
+    "disassemble --name tccd_send_message --bytes",
+    "-o",
+    "disassemble --start-address 0x1850ccebc --count 110 --bytes"
+  ],
+  "exit": 0
+}

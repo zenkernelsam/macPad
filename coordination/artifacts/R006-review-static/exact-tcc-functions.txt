@@ -1,0 +1,806 @@
+(lldb) target create --arch arm64e analysis/TCC_22F82
+Current executable set to '/Users/ciscohe/Desktop/macPad/analysis/TCC_22F82' (arm64e).
+(lldb) image list
+[  0] 1238D7CA-719A-36A4-94B1-2F387E6B3BF1 0x00000001850c7000 /Users/ciscohe/Desktop/macPad/analysis/TCC_22F82 
+(lldb) disassemble --name TCCAccessPreflightWithAuditToken --bytes
+TCC_22F82`TCCAccessPreflightWithAuditToken:
+TCC_22F82[0x1850d03bc] <+0>:   0xd503237f   pacibsp 
+TCC_22F82[0x1850d03c0] <+4>:   0xd103c3ff   sub    sp, sp, #0xf0
+TCC_22F82[0x1850d03c4] <+8>:   0x6d0b23e9   stp    d9, d8, [sp, #0xb0]
+TCC_22F82[0x1850d03c8] <+12>:  0xa90c57f6   stp    x22, x21, [sp, #0xc0]
+TCC_22F82[0x1850d03cc] <+16>:  0xa90d4ff4   stp    x20, x19, [sp, #0xd0]
+TCC_22F82[0x1850d03d0] <+20>:  0xa90e7bfd   stp    x29, x30, [sp, #0xe0]
+TCC_22F82[0x1850d03d4] <+24>:  0x910383fd   add    x29, sp, #0xe0
+TCC_22F82[0x1850d03d8] <+28>:  0xaa0003f3   mov    x19, x0
+TCC_22F82[0x1850d03dc] <+32>:  0x9028cba8   adrp   x8, 334196
+TCC_22F82[0x1850d03e0] <+36>:  0xf9461d08   ldr    x8, [x8, #0xc38]
+TCC_22F82[0x1850d03e4] <+40>:  0xf9400108   ldr    x8, [x8]
+TCC_22F82[0x1850d03e8] <+44>:  0xf81c83a8   stur   x8, [x29, #-0x38]
+TCC_22F82[0x1850d03ec] <+48>:  0x910163f5   add    x21, sp, #0x58
+TCC_22F82[0x1850d03f0] <+52>:  0xa905d7ff   stp    xzr, x21, [sp, #0x58]
+TCC_22F82[0x1850d03f4] <+56>:  0x900000a8   adrp   x8, 20
+TCC_22F82[0x1850d03f8] <+60>:  0xfd429100   ldr    d0, [x8, #0x520]
+TCC_22F82[0x1850d03fc] <+64>:  0xfd0037e0   str    d0, [sp, #0x68]
+TCC_22F82[0x1850d0400] <+68>:  0x52800028   mov    w8, #0x1
+TCC_22F82[0x1850d0404] <+72>:  0xb90073e8   str    w8, [sp, #0x70]
+TCC_22F82[0x1850d0408] <+76>:  0xd0276768   adrp   x8, 322798
+TCC_22F82[0x1850d040c] <+80>:  0x91006108   add    x8, x8, #0x18             ; __block_descriptor_tmp.328 + 32
+TCC_22F82[0x1850d0410] <+84>:  0x3dc00100   ldr    q0, [x8]
+TCC_22F82[0x1850d0414] <+88>:  0x3c9b03a0   stur   q0, [x29, #-0x50]
+TCC_22F82[0x1850d0418] <+92>:  0xf9400908   ldr    x8, [x8, #0x10]
+TCC_22F82[0x1850d041c] <+96>:  0xf81c03a8   stur   x8, [x29, #-0x40]
+TCC_22F82[0x1850d0420] <+100>: 0xf81983a1   stur   x1, [x29, #-0x68]
+TCC_22F82[0x1850d0424] <+104>: 0x9100c3e8   add    x8, sp, #0x30
+TCC_22F82[0x1850d0428] <+108>: 0x9028cbb0   adrp   x16, 334196
+TCC_22F82[0x1850d042c] <+112>: 0xf9460a10   ldr    x16, [x16, #0xc10]
+TCC_22F82[0x1850d0430] <+116>: 0xaa0803f1   mov    x17, x8
+TCC_22F82[0x1850d0434] <+120>: 0xf2ed5c31   movk   x17, #0x6ae1, lsl #48
+TCC_22F82[0x1850d0438] <+124>: 0xdac10a30   pacda  x16, x17
+TCC_22F82[0x1850d043c] <+128>: 0xf9001bf0   str    x16, [sp, #0x30]
+TCC_22F82[0x1850d0440] <+132>: 0x900000a9   adrp   x9, 20
+TCC_22F82[0x1850d0444] <+136>: 0xfd428d28   ldr    d8, [x9, #0x518]
+TCC_22F82[0x1850d0448] <+140>: 0xfd001fe8   str    d8, [sp, #0x38]
+TCC_22F82[0x1850d044c] <+144>: 0x91004109   add    x9, x8, #0x10
+TCC_22F82[0x1850d0450] <+148>: 0x90000010   adrp   x16, 0
+TCC_22F82[0x1850d0454] <+152>: 0x91152210   add    x16, x16, #0x548          ; __TCCAccessPreflightWithAuditToken_block_invoke
+TCC_22F82[0x1850d0458] <+156>: 0xdac10130   pacia  x16, x9
+TCC_22F82[0x1850d045c] <+160>: 0xf02c1dc9   adrp   x9, 361403
+TCC_22F82[0x1850d0460] <+164>: 0x91310129   add    x9, x9, #0xc40            ; __block_descriptor_tmp.336
+TCC_22F82[0x1850d0464] <+168>: 0xa90427f0   stp    x16, x9, [sp, #0x40]
+TCC_22F82[0x1850d0468] <+172>: 0xf9002bf5   str    x21, [sp, #0x50]
+TCC_22F82[0x1850d046c] <+176>: 0xd028cbc9   adrp   x9, 334202
+TCC_22F82[0x1850d0470] <+180>: 0xf9449929   ldr    x9, [x9, #0x930]
+TCC_22F82[0x1850d0474] <+184>: 0xf9400129   ldr    x9, [x9]
+TCC_22F82[0x1850d0478] <+188>: 0xa93a27a8   stp    x8, x9, [x29, #-0x60]
+TCC_22F82[0x1850d047c] <+192>: 0xd028cbc4   adrp   x4, 334202
+TCC_22F82[0x1850d0480] <+196>: 0xf946b084   ldr    x4, [x4, #0xd60]
+TCC_22F82[0x1850d0484] <+200>: 0xd10143a1   sub    x1, x29, #0x50
+TCC_22F82[0x1850d0488] <+204>: 0xd101a3a2   sub    x2, x29, #0x68
+TCC_22F82[0x1850d048c] <+208>: 0xd2800000   mov    x0, #0x0
+TCC_22F82[0x1850d0490] <+212>: 0x52800063   mov    w3, #0x3
+TCC_22F82[0x1850d0494] <+216>: 0xd2800005   mov    x5, #0x0
+TCC_22F82[0x1850d0498] <+220>: 0x94003da2   bl     0x1850dfb20               ; symbol stub for: CFDictionaryCreate
+TCC_22F82[0x1850d049c] <+224>: 0xb4000300   cbz    x0, 0x1850d04fc           ; <+320>
+TCC_22F82[0x1850d04a0] <+228>: 0xaa0003f4   mov    x20, x0
+TCC_22F82[0x1850d04a4] <+232>: 0x910023e8   add    x8, sp, #0x8
+TCC_22F82[0x1850d04a8] <+236>: 0x9028cbb0   adrp   x16, 334196
+TCC_22F82[0x1850d04ac] <+240>: 0xf9460a10   ldr    x16, [x16, #0xc10]
+TCC_22F82[0x1850d04b0] <+244>: 0xaa0803f1   mov    x17, x8
+TCC_22F82[0x1850d04b4] <+248>: 0xf2ed5c31   movk   x17, #0x6ae1, lsl #48
+TCC_22F82[0x1850d04b8] <+252>: 0xdac10a30   pacda  x16, x17
+TCC_22F82[0x1850d04bc] <+256>: 0xf90007f0   str    x16, [sp, #0x8]
+TCC_22F82[0x1850d04c0] <+260>: 0xfd000be8   str    d8, [sp, #0x10]
+TCC_22F82[0x1850d04c4] <+264>: 0x91004108   add    x8, x8, #0x10
+TCC_22F82[0x1850d04c8] <+268>: 0x90000010   adrp   x16, 0
+TCC_22F82[0x1850d04cc] <+272>: 0x91158210   add    x16, x16, #0x560          ; __TCCAccessPreflightWithAuditToken_block_invoke.337
+TCC_22F82[0x1850d04d0] <+276>: 0xdac10110   pacia  x16, x8
+TCC_22F82[0x1850d04d4] <+280>: 0xf02c1dc8   adrp   x8, 361403
+TCC_22F82[0x1850d04d8] <+284>: 0x9131c108   add    x8, x8, #0xc70            ; __block_descriptor_tmp.340
+TCC_22F82[0x1850d04dc] <+288>: 0xa901a3f0   stp    x16, x8, [sp, #0x18]
+TCC_22F82[0x1850d04e0] <+292>: 0xf90017f5   str    x21, [sp, #0x28]
+TCC_22F82[0x1850d04e4] <+296>: 0x910023e2   add    x2, sp, #0x8
+TCC_22F82[0x1850d04e8] <+300>: 0xaa1303e0   mov    x0, x19
+TCC_22F82[0x1850d04ec] <+304>: 0xaa1403e1   mov    x1, x20
+TCC_22F82[0x1850d04f0] <+308>: 0x97ffe22b   bl     0x1850c8d9c               ; TCCAccessRequest
+TCC_22F82[0x1850d04f4] <+312>: 0xaa1403e0   mov    x0, x20
+TCC_22F82[0x1850d04f8] <+316>: 0x94003dd6   bl     0x1850dfc50               ; symbol stub for: CFRelease
+TCC_22F82[0x1850d04fc] <+320>: 0xf94033e8   ldr    x8, [sp, #0x60]
+TCC_22F82[0x1850d0500] <+324>: 0xb9401913   ldr    w19, [x8, #0x18]
+TCC_22F82[0x1850d0504] <+328>: 0x910163e0   add    x0, sp, #0x58
+TCC_22F82[0x1850d0508] <+332>: 0x52800101   mov    w1, #0x8
+TCC_22F82[0x1850d050c] <+336>: 0x94003e6d   bl     0x1850dfec0               ; symbol stub for: _Block_object_dispose
+TCC_22F82[0x1850d0510] <+340>: 0xf85c83a8   ldur   x8, [x29, #-0x38]
+TCC_22F82[0x1850d0514] <+344>: 0x9028cba9   adrp   x9, 334196
+TCC_22F82[0x1850d0518] <+348>: 0xf9461d29   ldr    x9, [x9, #0xc38]
+TCC_22F82[0x1850d051c] <+352>: 0xf9400129   ldr    x9, [x9]
+TCC_22F82[0x1850d0520] <+356>: 0xeb08013f   cmp    x9, x8
+TCC_22F82[0x1850d0524] <+360>: 0x54000101   b.ne   0x1850d0544               ; <+392>
+TCC_22F82[0x1850d0528] <+364>: 0xaa1303e0   mov    x0, x19
+TCC_22F82[0x1850d052c] <+368>: 0xa94e7bfd   ldp    x29, x30, [sp, #0xe0]
+TCC_22F82[0x1850d0530] <+372>: 0xa94d4ff4   ldp    x20, x19, [sp, #0xd0]
+TCC_22F82[0x1850d0534] <+376>: 0xa94c57f6   ldp    x22, x21, [sp, #0xc0]
+TCC_22F82[0x1850d0538] <+380>: 0x6d4b23e9   ldp    d9, d8, [sp, #0xb0]
+TCC_22F82[0x1850d053c] <+384>: 0x9103c3ff   add    sp, sp, #0xf0
+TCC_22F82[0x1850d0540] <+388>: 0xd65f0fff   retab  
+TCC_22F82[0x1850d0544] <+392>: 0x94003e7b   bl     0x1850dff30               ; symbol stub for: __stack_chk_fail
+(lldb) disassemble --name tccd --bytes
+TCC_22F82`tccd:
+TCC_22F82[0x1850c9584] <+0>:   0xd503237f   pacibsp 
+TCC_22F82[0x1850c9588] <+4>:   0xd101c3ff   sub    sp, sp, #0x70
+TCC_22F82[0x1850c958c] <+8>:   0xa9035ff8   stp    x24, x23, [sp, #0x30]
+TCC_22F82[0x1850c9590] <+12>:  0xa90457f6   stp    x22, x21, [sp, #0x40]
+TCC_22F82[0x1850c9594] <+16>:  0xa9054ff4   stp    x20, x19, [sp, #0x50]
+TCC_22F82[0x1850c9598] <+20>:  0xa9067bfd   stp    x29, x30, [sp, #0x60]
+TCC_22F82[0x1850c959c] <+24>:  0x910183fd   add    x29, sp, #0x60
+TCC_22F82[0x1850c95a0] <+28>:  0xaa0103f3   mov    x19, x1
+TCC_22F82[0x1850c95a4] <+32>:  0xaa0003f6   mov    x22, x0
+TCC_22F82[0x1850c95a8] <+36>:  0x52800014   mov    w20, #0x0
+TCC_22F82[0x1850c95ac] <+40>:  0xf028cbc8   adrp   x8, 334203
+TCC_22F82[0x1850c95b0] <+44>:  0xf9461d08   ldr    x8, [x8, #0xc38]
+TCC_22F82[0x1850c95b4] <+48>:  0xf9400108   ldr    x8, [x8]
+TCC_22F82[0x1850c95b8] <+52>:  0xf90017e8   str    x8, [sp, #0x28]
+TCC_22F82[0x1850c95bc] <+56>:  0x35000620   cbnz   w0, 0x1850c9680           ; <+252>
+TCC_22F82[0x1850c95c0] <+60>:  0xb4000613   cbz    x19, 0x1850c9680          ; <+252>
+TCC_22F82[0x1850c95c4] <+64>:  0xad400660   ldp    q0, q1, [x19]
+TCC_22F82[0x1850c95c8] <+68>:  0xad0007e0   stp    q0, q1, [sp]
+TCC_22F82[0x1850c95cc] <+72>:  0x910003e0   mov    x0, sp
+TCC_22F82[0x1850c95d0] <+76>:  0x94005aa4   bl     0x1850e0060               ; symbol stub for: audit_token_to_auid
+TCC_22F82[0x1850c95d4] <+80>:  0xaa0003f5   mov    x21, x0
+TCC_22F82[0x1850c95d8] <+84>:  0x94005ad6   bl     0x1850e0130               ; symbol stub for: getuid
+TCC_22F82[0x1850c95dc] <+88>:  0xaa0003f4   mov    x20, x0
+TCC_22F82[0x1850c95e0] <+92>:  0x310006bf   cmn    w21, #0x1
+TCC_22F82[0x1850c95e4] <+96>:  0x54000381   b.ne   0x1850c9654               ; <+208>
+TCC_22F82[0x1850c95e8] <+100>: 0xad400660   ldp    q0, q1, [x19]
+TCC_22F82[0x1850c95ec] <+104>: 0xad0007e0   stp    q0, q1, [sp]
+TCC_22F82[0x1850c95f0] <+108>: 0x910003e0   mov    x0, sp
+TCC_22F82[0x1850c95f4] <+112>: 0x94005a9f   bl     0x1850e0070               ; symbol stub for: audit_token_to_euid
+TCC_22F82[0x1850c95f8] <+116>: 0xaa0003f5   mov    x21, x0
+TCC_22F82[0x1850c95fc] <+120>: 0xd02b1b68   adrp   x8, 353134
+TCC_22F82[0x1850c9600] <+124>: 0xf9479508   ldr    x8, [x8, #0xf28]
+TCC_22F82[0x1850c9604] <+128>: 0xb100051f   cmn    x8, #0x1
+TCC_22F82[0x1850c9608] <+132>: 0x540008e1   b.ne   0x1850c9724               ; <+416>
+TCC_22F82[0x1850c960c] <+136>: 0xd02b1b68   adrp   x8, 353134
+TCC_22F82[0x1850c9610] <+140>: 0xf9478116   ldr    x22, [x8, #0xf00]
+TCC_22F82[0x1850c9614] <+144>: 0xaa1603e0   mov    x0, x22
+TCC_22F82[0x1850c9618] <+148>: 0x52800021   mov    w1, #0x1
+TCC_22F82[0x1850c961c] <+152>: 0x94005ae9   bl     0x1850e01c0               ; symbol stub for: os_log_type_enabled
+TCC_22F82[0x1850c9620] <+156>: 0x340001a0   cbz    w0, 0x1850c9654           ; <+208>
+TCC_22F82[0x1850c9624] <+160>: 0x52802008   mov    w8, #0x100
+TCC_22F82[0x1850c9628] <+164>: 0x72a08008   movk   w8, #0x400, lsl #16
+TCC_22F82[0x1850c962c] <+168>: 0x290057e8   stp    w8, w21, [sp]
+TCC_22F82[0x1850c9630] <+172>: 0xd0ffffe0   adrp   x0, -2
+TCC_22F82[0x1850c9634] <+176>: 0x91000000   add    x0, x0, #0x0
+TCC_22F82[0x1850c9638] <+180>: 0xd00000c3   adrp   x3, 26
+TCC_22F82[0x1850c963c] <+184>: 0x913ebc63   add    x3, x3, #0xfaf            ; "auid = -1; routing based on euid (%u) instead"
+TCC_22F82[0x1850c9640] <+188>: 0x910003e4   mov    x4, sp
+TCC_22F82[0x1850c9644] <+192>: 0xaa1603e1   mov    x1, x22
+TCC_22F82[0x1850c9648] <+196>: 0x52800022   mov    w2, #0x1
+TCC_22F82[0x1850c964c] <+200>: 0x52800105   mov    w5, #0x8
+TCC_22F82[0x1850c9650] <+204>: 0x94005a5c   bl     0x1850dffc0               ; symbol stub for: _os_log_impl
+TCC_22F82[0x1850c9654] <+208>: 0x52800028   mov    w8, #0x1
+TCC_22F82[0x1850c9658] <+212>: 0x7100029f   cmp    w20, #0x0
+TCC_22F82[0x1850c965c] <+216>: 0x1a9f07e9   cset   w9, ne
+TCC_22F82[0x1850c9660] <+220>: 0x6b1402bf   cmp    w21, w20
+TCC_22F82[0x1850c9664] <+224>: 0x1a8903e9   csel   w9, wzr, w9, eq
+TCC_22F82[0x1850c9668] <+228>: 0x9a9303ea   csel   x10, xzr, x19, eq
+TCC_22F82[0x1850c966c] <+232>: 0x1a95028b   csel   w11, w20, w21, eq
+TCC_22F82[0x1850c9670] <+236>: 0x31000ebf   cmn    w21, #0x3
+TCC_22F82[0x1850c9674] <+240>: 0x1a898116   csel   w22, w8, w9, hi
+TCC_22F82[0x1850c9678] <+244>: 0x9a8a8273   csel   x19, x19, x10, hi
+TCC_22F82[0x1850c967c] <+248>: 0x1a8b82b4   csel   w20, w21, w11, hi
+TCC_22F82[0x1850c9680] <+252>: 0x710002df   cmp    w22, #0x0
+TCC_22F82[0x1850c9684] <+256>: 0x1a9f07e8   cset   w8, ne
+TCC_22F82[0x1850c9688] <+260>: 0xb00000c9   adrp   x9, 25
+TCC_22F82[0x1850c968c] <+264>: 0x9103e529   add    x9, x9, #0xf9             ; "com.apple.tccd.system"
+TCC_22F82[0x1850c9690] <+268>: 0xb00000ca   adrp   x10, 25
+TCC_22F82[0x1850c9694] <+272>: 0x9103a94a   add    x10, x10, #0xea           ; "com.apple.tccd"
+TCC_22F82[0x1850c9698] <+276>: 0x9a890155   csel   x21, x10, x9, eq
+TCC_22F82[0x1850c969c] <+280>: 0xd37ff917   lsl    x23, x8, #1
+TCC_22F82[0x1850c96a0] <+284>: 0xd2800000   mov    x0, #0x0
+TCC_22F82[0x1850c96a4] <+288>: 0xd2800001   mov    x1, #0x0
+TCC_22F82[0x1850c96a8] <+292>: 0x94005a7e   bl     0x1850e00a0               ; symbol stub for: dispatch_get_global_queue
+TCC_22F82[0x1850c96ac] <+296>: 0xaa0003e1   mov    x1, x0
+TCC_22F82[0x1850c96b0] <+300>: 0xaa1503e0   mov    x0, x21
+TCC_22F82[0x1850c96b4] <+304>: 0xaa1703e2   mov    x2, x23
+TCC_22F82[0x1850c96b8] <+308>: 0x94005b16   bl     0x1850e0310               ; symbol stub for: xpc_connection_create_mach_service
+TCC_22F82[0x1850c96bc] <+312>: 0xaa0003f5   mov    x21, x0
+TCC_22F82[0x1850c96c0] <+316>: 0xb4000180   cbz    x0, 0x1850c96f0           ; <+364>
+TCC_22F82[0x1850c96c4] <+320>: 0x350000b6   cbnz   w22, 0x1850c96d8          ; <+340>
+TCC_22F82[0x1850c96c8] <+324>: 0xb4000093   cbz    x19, 0x1850c96d8          ; <+340>
+TCC_22F82[0x1850c96cc] <+328>: 0xaa1503e0   mov    x0, x21
+TCC_22F82[0x1850c96d0] <+332>: 0xaa1403e1   mov    x1, x20
+TCC_22F82[0x1850c96d4] <+336>: 0x94005b27   bl     0x1850e0370               ; symbol stub for: xpc_connection_set_target_uid
+TCC_22F82[0x1850c96d8] <+340>: 0xf02c1e01   adrp   x1, 361411
+TCC_22F82[0x1850c96dc] <+344>: 0x91110021   add    x1, x1, #0x440            ; __block_literal_global.581
+TCC_22F82[0x1850c96e0] <+348>: 0xaa1503e0   mov    x0, x21
+TCC_22F82[0x1850c96e4] <+352>: 0x94005b1f   bl     0x1850e0360               ; symbol stub for: xpc_connection_set_event_handler
+TCC_22F82[0x1850c96e8] <+356>: 0xaa1503e0   mov    x0, x21
+TCC_22F82[0x1850c96ec] <+360>: 0x94005b11   bl     0x1850e0330               ; symbol stub for: xpc_connection_resume
+TCC_22F82[0x1850c96f0] <+364>: 0xf94017e8   ldr    x8, [sp, #0x28]
+TCC_22F82[0x1850c96f4] <+368>: 0xf028cbc9   adrp   x9, 334203
+TCC_22F82[0x1850c96f8] <+372>: 0xf9461d29   ldr    x9, [x9, #0xc38]
+TCC_22F82[0x1850c96fc] <+376>: 0xf9400129   ldr    x9, [x9]
+TCC_22F82[0x1850c9700] <+380>: 0xeb08013f   cmp    x9, x8
+TCC_22F82[0x1850c9704] <+384>: 0x540001c1   b.ne   0x1850c973c               ; <+440>
+TCC_22F82[0x1850c9708] <+388>: 0xaa1503e0   mov    x0, x21
+TCC_22F82[0x1850c970c] <+392>: 0xa9467bfd   ldp    x29, x30, [sp, #0x60]
+TCC_22F82[0x1850c9710] <+396>: 0xa9454ff4   ldp    x20, x19, [sp, #0x50]
+TCC_22F82[0x1850c9714] <+400>: 0xa94457f6   ldp    x22, x21, [sp, #0x40]
+TCC_22F82[0x1850c9718] <+404>: 0xa9435ff8   ldp    x24, x23, [sp, #0x30]
+TCC_22F82[0x1850c971c] <+408>: 0x9101c3ff   add    sp, sp, #0x70
+TCC_22F82[0x1850c9720] <+412>: 0xd65f0fff   retab  
+TCC_22F82[0x1850c9724] <+416>: 0xd02b1b60   adrp   x0, 353134
+TCC_22F82[0x1850c9728] <+420>: 0x913ca000   add    x0, x0, #0xf28            ; tcc_log_handle.onceToken
+TCC_22F82[0x1850c972c] <+424>: 0xd02c1e01   adrp   x1, 361410
+TCC_22F82[0x1850c9730] <+428>: 0x91194021   add    x1, x1, #0x650            ; __block_literal_global
+TCC_22F82[0x1850c9734] <+432>: 0x94005a5f   bl     0x1850e00b0               ; symbol stub for: dispatch_once
+TCC_22F82[0x1850c9738] <+436>: 0x17ffffb5   b      0x1850c960c               ; <+136>
+TCC_22F82[0x1850c973c] <+440>: 0x940059fd   bl     0x1850dff30               ; symbol stub for: __stack_chk_fail
+(lldb) disassemble --name tccd_send_message --bytes
+TCC_22F82`tccd_send_message:
+TCC_22F82[0x1850c9740] <+0>:    0xd503237f   pacibsp 
+TCC_22F82[0x1850c9744] <+4>:    0xd10543ff   sub    sp, sp, #0x150
+TCC_22F82[0x1850c9748] <+8>:    0xa90f6ffc   stp    x28, x27, [sp, #0xf0]
+TCC_22F82[0x1850c974c] <+12>:   0xa91067fa   stp    x26, x25, [sp, #0x100]
+TCC_22F82[0x1850c9750] <+16>:   0xa9115ff8   stp    x24, x23, [sp, #0x110]
+TCC_22F82[0x1850c9754] <+20>:   0xa91257f6   stp    x22, x21, [sp, #0x120]
+TCC_22F82[0x1850c9758] <+24>:   0xa9134ff4   stp    x20, x19, [sp, #0x130]
+TCC_22F82[0x1850c975c] <+28>:   0xa9147bfd   stp    x29, x30, [sp, #0x140]
+TCC_22F82[0x1850c9760] <+32>:   0x910503fd   add    x29, sp, #0x140
+TCC_22F82[0x1850c9764] <+36>:   0xaa0403f5   mov    x21, x4
+TCC_22F82[0x1850c9768] <+40>:   0xaa0303fa   mov    x26, x3
+TCC_22F82[0x1850c976c] <+44>:   0xaa0203f4   mov    x20, x2
+TCC_22F82[0x1850c9770] <+48>:   0x910283fc   add    x28, sp, #0xa0
+TCC_22F82[0x1850c9774] <+52>:   0xf028cbc8   adrp   x8, 334203
+TCC_22F82[0x1850c9778] <+56>:   0xf9461d08   ldr    x8, [x8, #0xc38]
+TCC_22F82[0x1850c977c] <+60>:   0xf9400108   ldr    x8, [x8]
+TCC_22F82[0x1850c9780] <+64>:   0xf81983a8   stur   x8, [x29, #-0x68]
+TCC_22F82[0x1850c9784] <+68>:   0x6b0400bf   cmp    w5, w4
+TCC_22F82[0x1850c9788] <+72>:   0x54000d02   b.hs   0x1850c9928               ; <+488>
+TCC_22F82[0x1850c978c] <+76>:   0xaa0503f6   mov    x22, x5
+TCC_22F82[0x1850c9790] <+80>:   0xaa0103f8   mov    x24, x1
+TCC_22F82[0x1850c9794] <+84>:   0xaa0003f7   mov    x23, x0
+TCC_22F82[0x1850c9798] <+88>:   0xd02b1b7b   adrp   x27, 353134
+TCC_22F82[0x1850c979c] <+92>:   0xf9479768   ldr    x8, [x27, #0xf28]
+TCC_22F82[0x1850c97a0] <+96>:   0xb100051f   cmn    x8, #0x1
+TCC_22F82[0x1850c97a4] <+100>:  0x54002fe1   b.ne   0x1850c9da0               ; <+1632>
+TCC_22F82[0x1850c97a8] <+104>:  0xd02b1b73   adrp   x19, 353134
+TCC_22F82[0x1850c97ac] <+108>:  0xf9478260   ldr    x0, [x19, #0xf00]
+TCC_22F82[0x1850c97b0] <+112>:  0x52800021   mov    w1, #0x1
+TCC_22F82[0x1850c97b4] <+116>:  0x94005a83   bl     0x1850e01c0               ; symbol stub for: os_log_type_enabled
+TCC_22F82[0x1850c97b8] <+120>:  0x34001500   cbz    w0, 0x1850c9a58           ; <+792>
+TCC_22F82[0x1850c97bc] <+124>:  0xf90013fa   str    x26, [sp, #0x20]
+TCC_22F82[0x1850c97c0] <+128>:  0xd2800000   mov    x0, #0x0
+TCC_22F82[0x1850c97c4] <+132>:  0xd2800001   mov    x1, #0x0
+TCC_22F82[0x1850c97c8] <+136>:  0x94005942   bl     0x1850dfcd0               ; symbol stub for: CFStringCreateMutable
+TCC_22F82[0x1850c97cc] <+140>:  0xb4000ee0   cbz    x0, 0x1850c99a8           ; <+616>
+TCC_22F82[0x1850c97d0] <+144>:  0xaa0003f9   mov    x25, x0
+TCC_22F82[0x1850c97d4] <+148>:  0xb00000c1   adrp   x1, 25
+TCC_22F82[0x1850c97d8] <+152>:  0x9100dc21   add    x1, x1, #0x37             ; "TCCD_MSG_ID"
+TCC_22F82[0x1850c97dc] <+156>:  0xaa1403e0   mov    x0, x20
+TCC_22F82[0x1850c97e0] <+160>:  0x94005b1c   bl     0x1850e0450               ; symbol stub for: xpc_dictionary_get_string
+TCC_22F82[0x1850c97e4] <+164>:  0xf90003e0   str    x0, [sp]
+TCC_22F82[0x1850c97e8] <+168>:  0xd02c1e02   adrp   x2, 361410
+TCC_22F82[0x1850c97ec] <+172>:  0x910de042   add    x2, x2, #0x378            ; @0x00100001850e20ac
+TCC_22F82[0x1850c97f0] <+176>:  0xaa1903e0   mov    x0, x25
+TCC_22F82[0x1850c97f4] <+180>:  0xd2800001   mov    x1, #0x0
+TCC_22F82[0x1850c97f8] <+184>:  0x9400592a   bl     0x1850dfca0               ; symbol stub for: CFStringAppendFormat
+TCC_22F82[0x1850c97fc] <+188>:  0x900000c1   adrp   x1, 24
+TCC_22F82[0x1850c9800] <+192>:  0x910c5021   add    x1, x1, #0x314            ; "function"
+TCC_22F82[0x1850c9804] <+196>:  0xb02767b3   adrp   x19, 322805
+TCC_22F82[0x1850c9808] <+200>:  0x91070273   add    x19, x19, #0x1c0          ; tccd_copy_request_message_description.common_keys + 8
+TCC_22F82[0x1850c980c] <+204>:  0xd02c1e1a   adrp   x26, 361410
+TCC_22F82[0x1850c9810] <+208>:  0x910e635a   add    x26, x26, #0x398          ; @0x00100001850e20b7
+TCC_22F82[0x1850c9814] <+212>:  0xaa1403e0   mov    x0, x20
+TCC_22F82[0x1850c9818] <+216>:  0x94005b0e   bl     0x1850e0450               ; symbol stub for: xpc_dictionary_get_string
+TCC_22F82[0x1850c981c] <+220>:  0xb40000e0   cbz    x0, 0x1850c9838           ; <+248>
+TCC_22F82[0x1850c9820] <+224>:  0xf85f8268   ldur   x8, [x19, #-0x8]
+TCC_22F82[0x1850c9824] <+228>:  0xa90003e8   stp    x8, x0, [sp]
+TCC_22F82[0x1850c9828] <+232>:  0xaa1903e0   mov    x0, x25
+TCC_22F82[0x1850c982c] <+236>:  0xd2800001   mov    x1, #0x0
+TCC_22F82[0x1850c9830] <+240>:  0xaa1a03e2   mov    x2, x26
+TCC_22F82[0x1850c9834] <+244>:  0x9400591b   bl     0x1850dfca0               ; symbol stub for: CFStringAppendFormat
+TCC_22F82[0x1850c9838] <+248>:  0xf8408661   ldr    x1, [x19], #0x8
+TCC_22F82[0x1850c983c] <+252>:  0xb5fffec1   cbnz   x1, 0x1850c9814           ; <+212>
+TCC_22F82[0x1850c9840] <+256>:  0x900000c1   adrp   x1, 24
+TCC_22F82[0x1850c9844] <+260>:  0x910cbc21   add    x1, x1, #0x32f            ; "target_token"
+TCC_22F82[0x1850c9848] <+264>:  0xb02767ba   adrp   x26, 322805
+TCC_22F82[0x1850c984c] <+268>:  0x9107a35a   add    x26, x26, #0x1e8          ; tccd_copy_request_message_description.token_keys + 8
+TCC_22F82[0x1850c9850] <+272>:  0xf028cbd3   adrp   x19, 334203
+TCC_22F82[0x1850c9854] <+276>:  0xf947f673   ldr    x19, [x19, #0xfe8]
+TCC_22F82[0x1850c9858] <+280>:  0xaa1403e0   mov    x0, x20
+TCC_22F82[0x1850c985c] <+284>:  0x94005b05   bl     0x1850e0470               ; symbol stub for: xpc_dictionary_get_value
+TCC_22F82[0x1850c9860] <+288>:  0xb4000500   cbz    x0, 0x1850c9900           ; <+448>
+TCC_22F82[0x1850c9864] <+292>:  0xaa0003fb   mov    x27, x0
+TCC_22F82[0x1850c9868] <+296>:  0x94005b22   bl     0x1850e04f0               ; symbol stub for: xpc_get_type
+TCC_22F82[0x1850c986c] <+300>:  0xeb13001f   cmp    x0, x19
+TCC_22F82[0x1850c9870] <+304>:  0x54000481   b.ne   0x1850c9900               ; <+448>
+TCC_22F82[0x1850c9874] <+308>:  0x6f00e400   movi.2d v0, #0000000000000000
+TCC_22F82[0x1850c9878] <+312>:  0x3d800780   str    q0, [x28, #0x10]
+TCC_22F82[0x1850c987c] <+316>:  0x3d802be0   str    q0, [sp, #0xa0]
+TCC_22F82[0x1850c9880] <+320>:  0x910283e1   add    x1, sp, #0xa0
+TCC_22F82[0x1850c9884] <+324>:  0xaa1b03e0   mov    x0, x27
+TCC_22F82[0x1850c9888] <+328>:  0xd2800002   mov    x2, #0x0
+TCC_22F82[0x1850c988c] <+332>:  0x52800403   mov    w3, #0x20
+TCC_22F82[0x1850c9890] <+336>:  0x94005ac8   bl     0x1850e03b0               ; symbol stub for: xpc_data_get_bytes
+TCC_22F82[0x1850c9894] <+340>:  0xf100801f   cmp    x0, #0x20
+TCC_22F82[0x1850c9898] <+344>:  0x54000341   b.ne   0x1850c9900               ; <+448>
+TCC_22F82[0x1850c989c] <+348>:  0xf9004fff   str    xzr, [sp, #0x98]
+TCC_22F82[0x1850c98a0] <+352>:  0xb90097ff   str    wzr, [sp, #0x94]
+TCC_22F82[0x1850c98a4] <+356>:  0x3dc02be0   ldr    q0, [sp, #0xa0]
+TCC_22F82[0x1850c98a8] <+360>:  0x3dc00781   ldr    q1, [x28, #0x10]
+TCC_22F82[0x1850c98ac] <+364>:  0xad0387e0   stp    q0, q1, [sp, #0x70]
+TCC_22F82[0x1850c98b0] <+368>:  0xf90003ff   str    xzr, [sp]
+TCC_22F82[0x1850c98b4] <+372>:  0x9101c3e0   add    x0, sp, #0x70
+TCC_22F82[0x1850c98b8] <+376>:  0x910263e1   add    x1, sp, #0x98
+TCC_22F82[0x1850c98bc] <+380>:  0x910253e2   add    x2, sp, #0x94
+TCC_22F82[0x1850c98c0] <+384>:  0x910273e6   add    x6, sp, #0x9c
+TCC_22F82[0x1850c98c4] <+388>:  0xd2800003   mov    x3, #0x0
+TCC_22F82[0x1850c98c8] <+392>:  0xd2800004   mov    x4, #0x0
+TCC_22F82[0x1850c98cc] <+396>:  0xd2800005   mov    x5, #0x0
+TCC_22F82[0x1850c98d0] <+400>:  0xd2800007   mov    x7, #0x0
+TCC_22F82[0x1850c98d4] <+404>:  0x940059df   bl     0x1850e0050               ; symbol stub for: audit_token_to_au32
+TCC_22F82[0x1850c98d8] <+408>:  0xf85f8348   ldur   x8, [x26, #-0x8]
+TCC_22F82[0x1850c98dc] <+412>:  0x295327ea   ldp    w10, w9, [sp, #0x98]
+TCC_22F82[0x1850c98e0] <+416>:  0xb94097eb   ldr    w11, [sp, #0x94]
+TCC_22F82[0x1850c98e4] <+420>:  0xa9012fea   stp    x10, x11, [sp, #0x10]
+TCC_22F82[0x1850c98e8] <+424>:  0xa90027e8   stp    x8, x9, [sp]
+TCC_22F82[0x1850c98ec] <+428>:  0xaa1903e0   mov    x0, x25
+TCC_22F82[0x1850c98f0] <+432>:  0xd2800001   mov    x1, #0x0
+TCC_22F82[0x1850c98f4] <+436>:  0xd02c1e02   adrp   x2, 361410
+TCC_22F82[0x1850c98f8] <+440>:  0x910ee042   add    x2, x2, #0x3b8            ; @0x00100001850e20bf
+TCC_22F82[0x1850c98fc] <+444>:  0x940058e9   bl     0x1850dfca0               ; symbol stub for: CFStringAppendFormat
+TCC_22F82[0x1850c9900] <+448>:  0xf8408741   ldr    x1, [x26], #0x8
+TCC_22F82[0x1850c9904] <+452>:  0xb5fffaa1   cbnz   x1, 0x1850c9858           ; <+280>
+TCC_22F82[0x1850c9908] <+456>:  0xaa1903e0   mov    x0, x25
+TCC_22F82[0x1850c990c] <+460>:  0x97fffeb3   bl     0x1850c93d8               ; stringCopyUTF8String
+TCC_22F82[0x1850c9910] <+464>:  0xaa0003fa   mov    x26, x0
+TCC_22F82[0x1850c9914] <+468>:  0xaa1903e0   mov    x0, x25
+TCC_22F82[0x1850c9918] <+472>:  0x940058ce   bl     0x1850dfc50               ; symbol stub for: CFRelease
+TCC_22F82[0x1850c991c] <+476>:  0xd02b1b73   adrp   x19, 353134
+TCC_22F82[0x1850c9920] <+480>:  0xd02b1b7b   adrp   x27, 353134
+TCC_22F82[0x1850c9924] <+484>:  0x14000022   b      0x1850c99ac               ; <+620>
+TCC_22F82[0x1850c9928] <+488>:  0xaa1403e0   mov    x0, x20
+TCC_22F82[0x1850c992c] <+492>:  0x94005a99   bl     0x1850e0390               ; symbol stub for: xpc_copy_description
+TCC_22F82[0x1850c9930] <+496>:  0xaa0003f6   mov    x22, x0
+TCC_22F82[0x1850c9934] <+500>:  0xd02b1b73   adrp   x19, 353134
+TCC_22F82[0x1850c9938] <+504>:  0xf9479668   ldr    x8, [x19, #0xf28]
+TCC_22F82[0x1850c993c] <+508>:  0xb100051f   cmn    x8, #0x1
+TCC_22F82[0x1850c9940] <+512>:  0x540023c1   b.ne   0x1850c9db8               ; <+1656>
+TCC_22F82[0x1850c9944] <+516>:  0xd02b1b78   adrp   x24, 353134
+TCC_22F82[0x1850c9948] <+520>:  0xf9478317   ldr    x23, [x24, #0xf00]
+TCC_22F82[0x1850c994c] <+524>:  0xaa1703e0   mov    x0, x23
+TCC_22F82[0x1850c9950] <+528>:  0x52800201   mov    w1, #0x10
+TCC_22F82[0x1850c9954] <+532>:  0x94005a1b   bl     0x1850e01c0               ; symbol stub for: os_log_type_enabled
+TCC_22F82[0x1850c9958] <+536>:  0x35001840   cbnz   w0, 0x1850c9c60           ; <+1312>
+TCC_22F82[0x1850c995c] <+540>:  0xaa1603e0   mov    x0, x22
+TCC_22F82[0x1850c9960] <+544>:  0x940059ec   bl     0x1850e0110               ; symbol stub for: free
+TCC_22F82[0x1850c9964] <+548>:  0xd2800000   mov    x0, #0x0
+TCC_22F82[0x1850c9968] <+552>:  0xd2800001   mov    x1, #0x0
+TCC_22F82[0x1850c996c] <+556>:  0xd2800002   mov    x2, #0x0
+TCC_22F82[0x1850c9970] <+560>:  0x94005a9c   bl     0x1850e03e0               ; symbol stub for: xpc_dictionary_create
+TCC_22F82[0x1850c9974] <+564>:  0xb4002780   cbz    x0, 0x1850c9e64           ; <+1828>
+TCC_22F82[0x1850c9978] <+568>:  0xaa0003f4   mov    x20, x0
+TCC_22F82[0x1850c997c] <+572>:  0x900000c1   adrp   x1, 24
+TCC_22F82[0x1850c9980] <+576>:  0x910f6421   add    x1, x1, #0x3d9            ; "do_not_cache"
+TCC_22F82[0x1850c9984] <+580>:  0x52800022   mov    w2, #0x1
+TCC_22F82[0x1850c9988] <+584>:  0x94005ac2   bl     0x1850e0490               ; symbol stub for: xpc_dictionary_set_bool
+TCC_22F82[0x1850c998c] <+588>:  0xaa1a03e8   mov    x8, x26
+TCC_22F82[0x1850c9990] <+592>:  0xf8410d09   ldr    x9, [x8, #0x10]!
+TCC_22F82[0x1850c9994] <+596>:  0xaa1a03e0   mov    x0, x26
+TCC_22F82[0x1850c9998] <+600>:  0xaa1403e1   mov    x1, x20
+TCC_22F82[0x1850c999c] <+604>:  0xd73f0928   blraa  x9, x8
+TCC_22F82[0x1850c99a0] <+608>:  0xaa1403e0   mov    x0, x20
+TCC_22F82[0x1850c99a4] <+612>:  0x140000f0   b      0x1850c9d64               ; <+1572>
+TCC_22F82[0x1850c99a8] <+616>:  0xd280001a   mov    x26, #0x0
+TCC_22F82[0x1850c99ac] <+620>:  0xaa1703e0   mov    x0, x23
+TCC_22F82[0x1850c99b0] <+624>:  0x94005a5c   bl     0x1850e0320               ; symbol stub for: xpc_connection_get_name
+TCC_22F82[0x1850c99b4] <+628>:  0xaa0003f9   mov    x25, x0
+TCC_22F82[0x1850c99b8] <+632>:  0xf9479768   ldr    x8, [x27, #0xf28]
+TCC_22F82[0x1850c99bc] <+636>:  0xb100051f   cmn    x8, #0x1
+TCC_22F82[0x1850c99c0] <+640>:  0x54002081   b.ne   0x1850c9dd0               ; <+1680>
+TCC_22F82[0x1850c99c4] <+644>:  0xf947827b   ldr    x27, [x19, #0xf00]
+TCC_22F82[0x1850c99c8] <+648>:  0xaa1b03e0   mov    x0, x27
+TCC_22F82[0x1850c99cc] <+652>:  0x52800021   mov    w1, #0x1
+TCC_22F82[0x1850c99d0] <+656>:  0x940059fc   bl     0x1850e01c0               ; symbol stub for: os_log_type_enabled
+TCC_22F82[0x1850c99d4] <+660>:  0x340003a0   cbz    w0, 0x1850c9a48           ; <+776>
+TCC_22F82[0x1850c99d8] <+664>:  0xb00000c8   adrp   x8, 25
+TCC_22F82[0x1850c99dc] <+668>:  0x91015d08   add    x8, x8, #0x57             ; "asynchronous"
+TCC_22F82[0x1850c99e0] <+672>:  0x5280a049   mov    w9, #0x502
+TCC_22F82[0x1850c99e4] <+676>:  0x72a08009   movk   w9, #0x400, lsl #16
+TCC_22F82[0x1850c99e8] <+680>:  0x29145be9   stp    w9, w22, [sp, #0xa0]
+TCC_22F82[0x1850c99ec] <+684>:  0x52808009   mov    w9, #0x400
+TCC_22F82[0x1850c99f0] <+688>:  0x790153e9   strh   w9, [sp, #0xa8]
+TCC_22F82[0x1850c99f4] <+692>:  0xb00000c9   adrp   x9, 25
+TCC_22F82[0x1850c99f8] <+696>:  0x91012d29   add    x9, x9, #0x4b             ; "synchronous"
+TCC_22F82[0x1850c99fc] <+700>:  0x7100031f   cmp    w24, #0x0
+TCC_22F82[0x1850c9a00] <+704>:  0xb800a395   stur   w21, [x28, #0xa]
+TCC_22F82[0x1850c9a04] <+708>:  0x9a880128   csel   x8, x9, x8, eq
+TCC_22F82[0x1850c9a08] <+712>:  0x52810449   mov    w9, #0x822
+TCC_22F82[0x1850c9a0c] <+716>:  0x79015fe9   strh   w9, [sp, #0xae]
+TCC_22F82[0x1850c9a10] <+720>:  0xf9005be8   str    x8, [sp, #0xb0]
+TCC_22F82[0x1850c9a14] <+724>:  0x790173e9   strh   w9, [sp, #0xb8]
+TCC_22F82[0x1850c9a18] <+728>:  0xf801a399   stur   x25, [x28, #0x1a]
+TCC_22F82[0x1850c9a1c] <+732>:  0x790187e9   strh   w9, [sp, #0xc2]
+TCC_22F82[0x1850c9a20] <+736>:  0xf802439a   stur   x26, [x28, #0x24]
+TCC_22F82[0x1850c9a24] <+740>:  0xd0ffffe0   adrp   x0, -2
+TCC_22F82[0x1850c9a28] <+744>:  0x91000000   add    x0, x0, #0x0
+TCC_22F82[0x1850c9a2c] <+748>:  0xd00000c3   adrp   x3, 26
+TCC_22F82[0x1850c9a30] <+752>:  0x91351063   add    x3, x3, #0xd44            ; "SEND: %d/%d %{public}s to %{public}s: request: %{public}s"
+TCC_22F82[0x1850c9a34] <+756>:  0x910283e4   add    x4, sp, #0xa0
+TCC_22F82[0x1850c9a38] <+760>:  0xaa1b03e1   mov    x1, x27
+TCC_22F82[0x1850c9a3c] <+764>:  0x52800022   mov    w2, #0x1
+TCC_22F82[0x1850c9a40] <+768>:  0x52800585   mov    w5, #0x2c
+TCC_22F82[0x1850c9a44] <+772>:  0x9400595f   bl     0x1850dffc0               ; symbol stub for: _os_log_impl
+TCC_22F82[0x1850c9a48] <+776>:  0xaa1a03e0   mov    x0, x26
+TCC_22F82[0x1850c9a4c] <+780>:  0x940059b1   bl     0x1850e0110               ; symbol stub for: free
+TCC_22F82[0x1850c9a50] <+784>:  0xf94013fa   ldr    x26, [sp, #0x20]
+TCC_22F82[0x1850c9a54] <+788>:  0xd02b1b7b   adrp   x27, 353134
+TCC_22F82[0x1850c9a58] <+792>:  0xaa1703e0   mov    x0, x23
+TCC_22F82[0x1850c9a5c] <+796>:  0x34000458   cbz    w24, 0x1850c9ae4          ; <+932>
+TCC_22F82[0x1850c9a60] <+800>:  0x94005ab8   bl     0x1850e0540               ; symbol stub for: xpc_retain
+TCC_22F82[0x1850c9a64] <+804>:  0xaa1403e0   mov    x0, x20
+TCC_22F82[0x1850c9a68] <+808>:  0x94005ab6   bl     0x1850e0540               ; symbol stub for: xpc_retain
+TCC_22F82[0x1850c9a6c] <+812>:  0xd2800000   mov    x0, #0x0
+TCC_22F82[0x1850c9a70] <+816>:  0xd2800001   mov    x1, #0x0
+TCC_22F82[0x1850c9a74] <+820>:  0x9400598b   bl     0x1850e00a0               ; symbol stub for: dispatch_get_global_queue
+TCC_22F82[0x1850c9a78] <+824>:  0xaa0003e2   mov    x2, x0
+TCC_22F82[0x1850c9a7c] <+828>:  0x9100a3e8   add    x8, sp, #0x28
+TCC_22F82[0x1850c9a80] <+832>:  0xf028cbd0   adrp   x16, 334203
+TCC_22F82[0x1850c9a84] <+836>:  0xf9460a10   ldr    x16, [x16, #0xc10]
+TCC_22F82[0x1850c9a88] <+840>:  0xaa0803f1   mov    x17, x8
+TCC_22F82[0x1850c9a8c] <+844>:  0xf2ed5c31   movk   x17, #0x6ae1, lsl #48
+TCC_22F82[0x1850c9a90] <+848>:  0xdac10a30   pacda  x16, x17
+TCC_22F82[0x1850c9a94] <+852>:  0xf90017f0   str    x16, [sp, #0x28]
+TCC_22F82[0x1850c9a98] <+856>:  0xf00000c9   adrp   x9, 27
+TCC_22F82[0x1850c9a9c] <+860>:  0xfd428d20   ldr    d0, [x9, #0x518]
+TCC_22F82[0x1850c9aa0] <+864>:  0xfd001be0   str    d0, [sp, #0x30]
+TCC_22F82[0x1850c9aa4] <+868>:  0x91004108   add    x8, x8, #0x10
+TCC_22F82[0x1850c9aa8] <+872>:  0xb0000010   adrp   x16, 1
+TCC_22F82[0x1850c9aac] <+876>:  0x910cd210   add    x16, x16, #0x334          ; __tccd_send_message_block_invoke
+TCC_22F82[0x1850c9ab0] <+880>:  0xdac10110   pacia  x16, x8
+TCC_22F82[0x1850c9ab4] <+884>:  0xf02c1e08   adrp   x8, 361411
+TCC_22F82[0x1850c9ab8] <+888>:  0x91104108   add    x8, x8, #0x410            ; __block_descriptor_tmp.565
+TCC_22F82[0x1850c9abc] <+892>:  0xa903a3f0   stp    x16, x8, [sp, #0x38]
+TCC_22F82[0x1850c9ac0] <+896>:  0xa9055ff4   stp    x20, x23, [sp, #0x50]
+TCC_22F82[0x1850c9ac4] <+900>:  0xf90027fa   str    x26, [sp, #0x48]
+TCC_22F82[0x1850c9ac8] <+904>:  0x290c57f8   stp    w24, w21, [sp, #0x60]
+TCC_22F82[0x1850c9acc] <+908>:  0xb9006bf6   str    w22, [sp, #0x68]
+TCC_22F82[0x1850c9ad0] <+912>:  0x9100a3e3   add    x3, sp, #0x28
+TCC_22F82[0x1850c9ad4] <+916>:  0xaa1703e0   mov    x0, x23
+TCC_22F82[0x1850c9ad8] <+920>:  0xaa1403e1   mov    x1, x20
+TCC_22F82[0x1850c9adc] <+924>:  0x94005a19   bl     0x1850e0340               ; symbol stub for: xpc_connection_send_message_with_reply
+TCC_22F82[0x1850c9ae0] <+928>:  0x140000a2   b      0x1850c9d68               ; <+1576>
+TCC_22F82[0x1850c9ae4] <+932>:  0xaa1403e1   mov    x1, x20
+TCC_22F82[0x1850c9ae8] <+936>:  0x94005a1a   bl     0x1850e0350               ; symbol stub for: xpc_connection_send_message_with_reply_sync
+TCC_22F82[0x1850c9aec] <+940>:  0xaa0003f8   mov    x24, x0
+TCC_22F82[0x1850c9af0] <+944>:  0xf028cbc8   adrp   x8, 334203
+TCC_22F82[0x1850c9af4] <+948>:  0xf947d508   ldr    x8, [x8, #0xfa8]
+TCC_22F82[0x1850c9af8] <+952>:  0xeb08001f   cmp    x0, x8
+TCC_22F82[0x1850c9afc] <+956>:  0x54000560   b.eq   0x1850c9ba8               ; <+1128>
+TCC_22F82[0x1850c9b00] <+960>:  0xf028cbc8   adrp   x8, 334203
+TCC_22F82[0x1850c9b04] <+964>:  0xf947d908   ldr    x8, [x8, #0xfb0]
+TCC_22F82[0x1850c9b08] <+968>:  0xeb08031f   cmp    x24, x8
+TCC_22F82[0x1850c9b0c] <+972>:  0x54000880   b.eq   0x1850c9c1c               ; <+1244>
+TCC_22F82[0x1850c9b10] <+976>:  0xf9479768   ldr    x8, [x27, #0xf28]
+TCC_22F82[0x1850c9b14] <+980>:  0xb100051f   cmn    x8, #0x1
+TCC_22F82[0x1850c9b18] <+984>:  0x54001681   b.ne   0x1850c9de8               ; <+1704>
+TCC_22F82[0x1850c9b1c] <+988>:  0xf9478260   ldr    x0, [x19, #0xf00]
+TCC_22F82[0x1850c9b20] <+992>:  0x52800021   mov    w1, #0x1
+TCC_22F82[0x1850c9b24] <+996>:  0x940059a7   bl     0x1850e01c0               ; symbol stub for: os_log_type_enabled
+TCC_22F82[0x1850c9b28] <+1000>: 0x34000360   cbz    w0, 0x1850c9b94           ; <+1108>
+TCC_22F82[0x1850c9b2c] <+1004>: 0xaa1803e0   mov    x0, x24
+TCC_22F82[0x1850c9b30] <+1008>: 0x940000de   bl     0x1850c9ea8               ; tccd_reply_description_redacted
+TCC_22F82[0x1850c9b34] <+1012>: 0xaa0003f4   mov    x20, x0
+TCC_22F82[0x1850c9b38] <+1016>: 0xf9479768   ldr    x8, [x27, #0xf28]
+TCC_22F82[0x1850c9b3c] <+1020>: 0xb100051f   cmn    x8, #0x1
+TCC_22F82[0x1850c9b40] <+1024>: 0x540016c1   b.ne   0x1850c9e18               ; <+1752>
+TCC_22F82[0x1850c9b44] <+1028>: 0xf9478275   ldr    x21, [x19, #0xf00]
+TCC_22F82[0x1850c9b48] <+1032>: 0xaa1503e0   mov    x0, x21
+TCC_22F82[0x1850c9b4c] <+1036>: 0x52800021   mov    w1, #0x1
+TCC_22F82[0x1850c9b50] <+1040>: 0x9400599c   bl     0x1850e01c0               ; symbol stub for: os_log_type_enabled
+TCC_22F82[0x1850c9b54] <+1044>: 0x340001c0   cbz    w0, 0x1850c9b8c           ; <+1100>
+TCC_22F82[0x1850c9b58] <+1048>: 0x52802048   mov    w8, #0x102
+TCC_22F82[0x1850c9b5c] <+1052>: 0x72a10448   movk   w8, #0x822, lsl #16
+TCC_22F82[0x1850c9b60] <+1056>: 0xb900a3e8   str    w8, [sp, #0xa0]
+TCC_22F82[0x1850c9b64] <+1060>: 0xf80a43f4   stur   x20, [sp, #0xa4]
+TCC_22F82[0x1850c9b68] <+1064>: 0xd0ffffe0   adrp   x0, -2
+TCC_22F82[0x1850c9b6c] <+1068>: 0x91000000   add    x0, x0, #0x0
+TCC_22F82[0x1850c9b70] <+1072>: 0xd00000c3   adrp   x3, 26
+TCC_22F82[0x1850c9b74] <+1076>: 0x91398c63   add    x3, x3, #0xe63            ; "RECV: synchronous reply %{public}s"
+TCC_22F82[0x1850c9b78] <+1080>: 0x910283e4   add    x4, sp, #0xa0
+TCC_22F82[0x1850c9b7c] <+1084>: 0xaa1503e1   mov    x1, x21
+TCC_22F82[0x1850c9b80] <+1088>: 0x52800022   mov    w2, #0x1
+TCC_22F82[0x1850c9b84] <+1092>: 0x52800185   mov    w5, #0xc
+TCC_22F82[0x1850c9b88] <+1096>: 0x9400590e   bl     0x1850dffc0               ; symbol stub for: _os_log_impl
+TCC_22F82[0x1850c9b8c] <+1100>: 0xaa1403e0   mov    x0, x20
+TCC_22F82[0x1850c9b90] <+1104>: 0x94005960   bl     0x1850e0110               ; symbol stub for: free
+TCC_22F82[0x1850c9b94] <+1108>: 0xaa1a03e8   mov    x8, x26
+TCC_22F82[0x1850c9b98] <+1112>: 0xf8410d09   ldr    x9, [x8, #0x10]!
+TCC_22F82[0x1850c9b9c] <+1116>: 0xaa1a03e0   mov    x0, x26
+TCC_22F82[0x1850c9ba0] <+1120>: 0xaa1803e1   mov    x1, x24
+TCC_22F82[0x1850c9ba4] <+1124>: 0x1400006e   b      0x1850c9d5c               ; <+1564>
+TCC_22F82[0x1850c9ba8] <+1128>: 0xf9479768   ldr    x8, [x27, #0xf28]
+TCC_22F82[0x1850c9bac] <+1132>: 0xb100051f   cmn    x8, #0x1
+TCC_22F82[0x1850c9bb0] <+1136>: 0x54001281   b.ne   0x1850c9e00               ; <+1728>
+TCC_22F82[0x1850c9bb4] <+1140>: 0xf9478279   ldr    x25, [x19, #0xf00]
+TCC_22F82[0x1850c9bb8] <+1144>: 0xaa1903e0   mov    x0, x25
+TCC_22F82[0x1850c9bbc] <+1148>: 0x52800001   mov    w1, #0x0
+TCC_22F82[0x1850c9bc0] <+1152>: 0x94005980   bl     0x1850e01c0               ; symbol stub for: os_log_type_enabled
+TCC_22F82[0x1850c9bc4] <+1156>: 0x340001c0   cbz    w0, 0x1850c9bfc           ; <+1212>
+TCC_22F82[0x1850c9bc8] <+1160>: 0x52802008   mov    w8, #0x100
+TCC_22F82[0x1850c9bcc] <+1164>: 0x72a10008   movk   w8, #0x800, lsl #16
+TCC_22F82[0x1850c9bd0] <+1168>: 0xb900a3e8   str    w8, [sp, #0xa0]
+TCC_22F82[0x1850c9bd4] <+1172>: 0xf80a43f4   stur   x20, [sp, #0xa4]
+TCC_22F82[0x1850c9bd8] <+1176>: 0xd0ffffe0   adrp   x0, -2
+TCC_22F82[0x1850c9bdc] <+1180>: 0x91000000   add    x0, x0, #0x0
+TCC_22F82[0x1850c9be0] <+1184>: 0xd00000c3   adrp   x3, 26
+TCC_22F82[0x1850c9be4] <+1188>: 0x9135f863   add    x3, x3, #0xd7e            ; "send_message_with_reply_sync(): connection interrupted for message: %p."
+TCC_22F82[0x1850c9be8] <+1192>: 0x910283e4   add    x4, sp, #0xa0
+TCC_22F82[0x1850c9bec] <+1196>: 0xaa1903e1   mov    x1, x25
+TCC_22F82[0x1850c9bf0] <+1200>: 0x52800002   mov    w2, #0x0
+TCC_22F82[0x1850c9bf4] <+1204>: 0x52800185   mov    w5, #0xc
+TCC_22F82[0x1850c9bf8] <+1208>: 0x940058f2   bl     0x1850dffc0               ; symbol stub for: _os_log_impl
+TCC_22F82[0x1850c9bfc] <+1212>: 0x110006c5   add    w5, w22, #0x1
+TCC_22F82[0x1850c9c00] <+1216>: 0xaa1703e0   mov    x0, x23
+TCC_22F82[0x1850c9c04] <+1220>: 0x52800001   mov    w1, #0x0
+TCC_22F82[0x1850c9c08] <+1224>: 0xaa1403e2   mov    x2, x20
+TCC_22F82[0x1850c9c0c] <+1228>: 0xaa1a03e3   mov    x3, x26
+TCC_22F82[0x1850c9c10] <+1232>: 0xaa1503e4   mov    x4, x21
+TCC_22F82[0x1850c9c14] <+1236>: 0x97fffecb   bl     0x1850c9740               ; <+0>
+TCC_22F82[0x1850c9c18] <+1240>: 0x14000052   b      0x1850c9d60               ; <+1568>
+TCC_22F82[0x1850c9c1c] <+1244>: 0xb00000c1   adrp   x1, 25
+TCC_22F82[0x1850c9c20] <+1248>: 0x91019021   add    x1, x1, #0x64             ; "user_tccd_unavailable"
+TCC_22F82[0x1850c9c24] <+1252>: 0xaa1403e0   mov    x0, x20
+TCC_22F82[0x1850c9c28] <+1256>: 0x940059f6   bl     0x1850e0400               ; symbol stub for: xpc_dictionary_get_bool
+TCC_22F82[0x1850c9c2c] <+1260>: 0xf9479768   ldr    x8, [x27, #0xf28]
+TCC_22F82[0x1850c9c30] <+1264>: 0xb100051f   cmn    x8, #0x1
+TCC_22F82[0x1850c9c34] <+1268>: 0x360003c0   tbz    w0, #0x0, 0x1850c9cac     ; <+1388>
+TCC_22F82[0x1850c9c38] <+1272>: 0x54000fc1   b.ne   0x1850c9e30               ; <+1776>
+TCC_22F82[0x1850c9c3c] <+1276>: 0xf9478275   ldr    x21, [x19, #0xf00]
+TCC_22F82[0x1850c9c40] <+1280>: 0xaa1503e0   mov    x0, x21
+TCC_22F82[0x1850c9c44] <+1284>: 0x52800201   mov    w1, #0x10
+TCC_22F82[0x1850c9c48] <+1288>: 0x9400595e   bl     0x1850e01c0               ; symbol stub for: os_log_type_enabled
+TCC_22F82[0x1850c9c4c] <+1292>: 0x340007e0   cbz    w0, 0x1850c9d48           ; <+1544>
+TCC_22F82[0x1850c9c50] <+1296>: 0xaa1403e0   mov    x0, x20
+TCC_22F82[0x1850c9c54] <+1300>: 0xaa1503e1   mov    x1, x21
+TCC_22F82[0x1850c9c58] <+1304>: 0x94004a71   bl     0x1850dc61c               ; tccd_send_message.cold.1
+TCC_22F82[0x1850c9c5c] <+1308>: 0x1400003b   b      0x1850c9d48               ; <+1544>
+TCC_22F82[0x1850c9c60] <+1312>: 0x52806048   mov    w8, #0x302
+TCC_22F82[0x1850c9c64] <+1316>: 0x72a08008   movk   w8, #0x400, lsl #16
+TCC_22F82[0x1850c9c68] <+1320>: 0x291457e8   stp    w8, w21, [sp, #0xa0]
+TCC_22F82[0x1850c9c6c] <+1324>: 0x52810008   mov    w8, #0x800
+TCC_22F82[0x1850c9c70] <+1328>: 0x790153e8   strh   w8, [sp, #0xa8]
+TCC_22F82[0x1850c9c74] <+1332>: 0xf800a394   stur   x20, [x28, #0xa]
+TCC_22F82[0x1850c9c78] <+1336>: 0x52810448   mov    w8, #0x822
+TCC_22F82[0x1850c9c7c] <+1340>: 0x790167e8   strh   w8, [sp, #0xb2]
+TCC_22F82[0x1850c9c80] <+1344>: 0xf8014396   stur   x22, [x28, #0x14]
+TCC_22F82[0x1850c9c84] <+1348>: 0xd0ffffe0   adrp   x0, -2
+TCC_22F82[0x1850c9c88] <+1352>: 0x91000000   add    x0, x0, #0x0
+TCC_22F82[0x1850c9c8c] <+1356>: 0xd00000c3   adrp   x3, 26
+TCC_22F82[0x1850c9c90] <+1360>: 0x91331863   add    x3, x3, #0xcc6            ; "Limit (%d) reached; cannot send request (%p): %{public}s"
+TCC_22F82[0x1850c9c94] <+1364>: 0x910283e4   add    x4, sp, #0xa0
+TCC_22F82[0x1850c9c98] <+1368>: 0xaa1703e1   mov    x1, x23
+TCC_22F82[0x1850c9c9c] <+1372>: 0x52800202   mov    w2, #0x10
+TCC_22F82[0x1850c9ca0] <+1376>: 0x52800385   mov    w5, #0x1c
+TCC_22F82[0x1850c9ca4] <+1380>: 0x940058bf   bl     0x1850dffa0               ; symbol stub for: _os_log_error_impl
+TCC_22F82[0x1850c9ca8] <+1384>: 0x17ffff2d   b      0x1850c995c               ; <+540>
+TCC_22F82[0x1850c9cac] <+1388>: 0x54000ce1   b.ne   0x1850c9e48               ; <+1800>
+TCC_22F82[0x1850c9cb0] <+1392>: 0xf9478277   ldr    x23, [x19, #0xf00]
+TCC_22F82[0x1850c9cb4] <+1396>: 0xaa1703e0   mov    x0, x23
+TCC_22F82[0x1850c9cb8] <+1400>: 0x52800001   mov    w1, #0x0
+TCC_22F82[0x1850c9cbc] <+1404>: 0x94005941   bl     0x1850e01c0               ; symbol stub for: os_log_type_enabled
+TCC_22F82[0x1850c9cc0] <+1408>: 0x340001c0   cbz    w0, 0x1850c9cf8           ; <+1464>
+TCC_22F82[0x1850c9cc4] <+1412>: 0x52802008   mov    w8, #0x100
+TCC_22F82[0x1850c9cc8] <+1416>: 0x72a10008   movk   w8, #0x800, lsl #16
+TCC_22F82[0x1850c9ccc] <+1420>: 0xb900a3e8   str    w8, [sp, #0xa0]
+TCC_22F82[0x1850c9cd0] <+1424>: 0xf80a43f4   stur   x20, [sp, #0xa4]
+TCC_22F82[0x1850c9cd4] <+1428>: 0xd0ffffe0   adrp   x0, -2
+TCC_22F82[0x1850c9cd8] <+1432>: 0x91000000   add    x0, x0, #0x0
+TCC_22F82[0x1850c9cdc] <+1436>: 0xd00000c3   adrp   x3, 26
+TCC_22F82[0x1850c9ce0] <+1440>: 0x91371863   add    x3, x3, #0xdc6            ; "send_message_with_reply_sync(): user tccd unavailable, sending %p to system tccd"
+TCC_22F82[0x1850c9ce4] <+1444>: 0x910283e4   add    x4, sp, #0xa0
+TCC_22F82[0x1850c9ce8] <+1448>: 0xaa1703e1   mov    x1, x23
+TCC_22F82[0x1850c9cec] <+1452>: 0x52800002   mov    w2, #0x0
+TCC_22F82[0x1850c9cf0] <+1456>: 0x52800185   mov    w5, #0xc
+TCC_22F82[0x1850c9cf4] <+1460>: 0x940058b3   bl     0x1850dffc0               ; symbol stub for: _os_log_impl
+TCC_22F82[0x1850c9cf8] <+1464>: 0x52800020   mov    w0, #0x1
+TCC_22F82[0x1850c9cfc] <+1468>: 0xd2800001   mov    x1, #0x0
+TCC_22F82[0x1850c9d00] <+1472>: 0x97fffe21   bl     0x1850c9584               ; tccd
+TCC_22F82[0x1850c9d04] <+1476>: 0xb4000220   cbz    x0, 0x1850c9d48           ; <+1544>
+TCC_22F82[0x1850c9d08] <+1480>: 0xaa0003f7   mov    x23, x0
+TCC_22F82[0x1850c9d0c] <+1484>: 0xb00000c1   adrp   x1, 25
+TCC_22F82[0x1850c9d10] <+1488>: 0x91019021   add    x1, x1, #0x64             ; "user_tccd_unavailable"
+TCC_22F82[0x1850c9d14] <+1492>: 0xaa1403e0   mov    x0, x20
+TCC_22F82[0x1850c9d18] <+1496>: 0x52800022   mov    w2, #0x1
+TCC_22F82[0x1850c9d1c] <+1500>: 0x940059dd   bl     0x1850e0490               ; symbol stub for: xpc_dictionary_set_bool
+TCC_22F82[0x1850c9d20] <+1504>: 0x110006c5   add    w5, w22, #0x1
+TCC_22F82[0x1850c9d24] <+1508>: 0xaa1703e0   mov    x0, x23
+TCC_22F82[0x1850c9d28] <+1512>: 0x52800001   mov    w1, #0x0
+TCC_22F82[0x1850c9d2c] <+1516>: 0xaa1403e2   mov    x2, x20
+TCC_22F82[0x1850c9d30] <+1520>: 0xaa1a03e3   mov    x3, x26
+TCC_22F82[0x1850c9d34] <+1524>: 0xaa1503e4   mov    x4, x21
+TCC_22F82[0x1850c9d38] <+1528>: 0x97fffe82   bl     0x1850c9740               ; <+0>
+TCC_22F82[0x1850c9d3c] <+1532>: 0xaa1703e0   mov    x0, x23
+TCC_22F82[0x1850c9d40] <+1536>: 0x940059fc   bl     0x1850e0530               ; symbol stub for: xpc_release
+TCC_22F82[0x1850c9d44] <+1540>: 0x14000007   b      0x1850c9d60               ; <+1568>
+TCC_22F82[0x1850c9d48] <+1544>: 0xaa1a03e8   mov    x8, x26
+TCC_22F82[0x1850c9d4c] <+1548>: 0xf8410d09   ldr    x9, [x8, #0x10]!
+TCC_22F82[0x1850c9d50] <+1552>: 0xf028cbc1   adrp   x1, 334203
+TCC_22F82[0x1850c9d54] <+1556>: 0xf947d821   ldr    x1, [x1, #0xfb0]
+TCC_22F82[0x1850c9d58] <+1560>: 0xaa1a03e0   mov    x0, x26
+TCC_22F82[0x1850c9d5c] <+1564>: 0xd73f0928   blraa  x9, x8
+TCC_22F82[0x1850c9d60] <+1568>: 0xaa1803e0   mov    x0, x24
+TCC_22F82[0x1850c9d64] <+1572>: 0x940059f3   bl     0x1850e0530               ; symbol stub for: xpc_release
+TCC_22F82[0x1850c9d68] <+1576>: 0xf85983a8   ldur   x8, [x29, #-0x68]
+TCC_22F82[0x1850c9d6c] <+1580>: 0xf028cbc9   adrp   x9, 334203
+TCC_22F82[0x1850c9d70] <+1584>: 0xf9461d29   ldr    x9, [x9, #0xc38]
+TCC_22F82[0x1850c9d74] <+1588>: 0xf9400129   ldr    x9, [x9]
+TCC_22F82[0x1850c9d78] <+1592>: 0xeb08013f   cmp    x9, x8
+TCC_22F82[0x1850c9d7c] <+1596>: 0x54000721   b.ne   0x1850c9e60               ; <+1824>
+TCC_22F82[0x1850c9d80] <+1600>: 0xa9547bfd   ldp    x29, x30, [sp, #0x140]
+TCC_22F82[0x1850c9d84] <+1604>: 0xa9534ff4   ldp    x20, x19, [sp, #0x130]
+TCC_22F82[0x1850c9d88] <+1608>: 0xa95257f6   ldp    x22, x21, [sp, #0x120]
+TCC_22F82[0x1850c9d8c] <+1612>: 0xa9515ff8   ldp    x24, x23, [sp, #0x110]
+TCC_22F82[0x1850c9d90] <+1616>: 0xa95067fa   ldp    x26, x25, [sp, #0x100]
+TCC_22F82[0x1850c9d94] <+1620>: 0xa94f6ffc   ldp    x28, x27, [sp, #0xf0]
+TCC_22F82[0x1850c9d98] <+1624>: 0x910543ff   add    sp, sp, #0x150
+TCC_22F82[0x1850c9d9c] <+1628>: 0xd65f0fff   retab  
+TCC_22F82[0x1850c9da0] <+1632>: 0xd02b1b60   adrp   x0, 353134
+TCC_22F82[0x1850c9da4] <+1636>: 0x913ca000   add    x0, x0, #0xf28            ; tcc_log_handle.onceToken
+TCC_22F82[0x1850c9da8] <+1640>: 0xd02c1e01   adrp   x1, 361410
+TCC_22F82[0x1850c9dac] <+1644>: 0x91194021   add    x1, x1, #0x650            ; __block_literal_global
+TCC_22F82[0x1850c9db0] <+1648>: 0x940058c0   bl     0x1850e00b0               ; symbol stub for: dispatch_once
+TCC_22F82[0x1850c9db4] <+1652>: 0x17fffe7d   b      0x1850c97a8               ; <+104>
+TCC_22F82[0x1850c9db8] <+1656>: 0xd02b1b60   adrp   x0, 353134
+TCC_22F82[0x1850c9dbc] <+1660>: 0x913ca000   add    x0, x0, #0xf28            ; tcc_log_handle.onceToken
+TCC_22F82[0x1850c9dc0] <+1664>: 0xd02c1e01   adrp   x1, 361410
+TCC_22F82[0x1850c9dc4] <+1668>: 0x91194021   add    x1, x1, #0x650            ; __block_literal_global
+TCC_22F82[0x1850c9dc8] <+1672>: 0x940058ba   bl     0x1850e00b0               ; symbol stub for: dispatch_once
+TCC_22F82[0x1850c9dcc] <+1676>: 0x17fffede   b      0x1850c9944               ; <+516>
+TCC_22F82[0x1850c9dd0] <+1680>: 0xd02b1b60   adrp   x0, 353134
+TCC_22F82[0x1850c9dd4] <+1684>: 0x913ca000   add    x0, x0, #0xf28            ; tcc_log_handle.onceToken
+TCC_22F82[0x1850c9dd8] <+1688>: 0xd02c1e01   adrp   x1, 361410
+TCC_22F82[0x1850c9ddc] <+1692>: 0x91194021   add    x1, x1, #0x650            ; __block_literal_global
+TCC_22F82[0x1850c9de0] <+1696>: 0x940058b4   bl     0x1850e00b0               ; symbol stub for: dispatch_once
+TCC_22F82[0x1850c9de4] <+1700>: 0x17fffef8   b      0x1850c99c4               ; <+644>
+TCC_22F82[0x1850c9de8] <+1704>: 0xd02b1b60   adrp   x0, 353134
+TCC_22F82[0x1850c9dec] <+1708>: 0x913ca000   add    x0, x0, #0xf28            ; tcc_log_handle.onceToken
+TCC_22F82[0x1850c9df0] <+1712>: 0xd02c1e01   adrp   x1, 361410
+TCC_22F82[0x1850c9df4] <+1716>: 0x91194021   add    x1, x1, #0x650            ; __block_literal_global
+TCC_22F82[0x1850c9df8] <+1720>: 0x940058ae   bl     0x1850e00b0               ; symbol stub for: dispatch_once
+TCC_22F82[0x1850c9dfc] <+1724>: 0x17ffff48   b      0x1850c9b1c               ; <+988>
+TCC_22F82[0x1850c9e00] <+1728>: 0xd02b1b60   adrp   x0, 353134
+TCC_22F82[0x1850c9e04] <+1732>: 0x913ca000   add    x0, x0, #0xf28            ; tcc_log_handle.onceToken
+TCC_22F82[0x1850c9e08] <+1736>: 0xd02c1e01   adrp   x1, 361410
+TCC_22F82[0x1850c9e0c] <+1740>: 0x91194021   add    x1, x1, #0x650            ; __block_literal_global
+TCC_22F82[0x1850c9e10] <+1744>: 0x940058a8   bl     0x1850e00b0               ; symbol stub for: dispatch_once
+TCC_22F82[0x1850c9e14] <+1748>: 0x17ffff68   b      0x1850c9bb4               ; <+1140>
+TCC_22F82[0x1850c9e18] <+1752>: 0xd02b1b60   adrp   x0, 353134
+TCC_22F82[0x1850c9e1c] <+1756>: 0x913ca000   add    x0, x0, #0xf28            ; tcc_log_handle.onceToken
+TCC_22F82[0x1850c9e20] <+1760>: 0xd02c1e01   adrp   x1, 361410
+TCC_22F82[0x1850c9e24] <+1764>: 0x91194021   add    x1, x1, #0x650            ; __block_literal_global
+TCC_22F82[0x1850c9e28] <+1768>: 0x940058a2   bl     0x1850e00b0               ; symbol stub for: dispatch_once
+TCC_22F82[0x1850c9e2c] <+1772>: 0x17ffff46   b      0x1850c9b44               ; <+1028>
+TCC_22F82[0x1850c9e30] <+1776>: 0xd02b1b60   adrp   x0, 353134
+TCC_22F82[0x1850c9e34] <+1780>: 0x913ca000   add    x0, x0, #0xf28            ; tcc_log_handle.onceToken
+TCC_22F82[0x1850c9e38] <+1784>: 0xd02c1e01   adrp   x1, 361410
+TCC_22F82[0x1850c9e3c] <+1788>: 0x91194021   add    x1, x1, #0x650            ; __block_literal_global
+TCC_22F82[0x1850c9e40] <+1792>: 0x9400589c   bl     0x1850e00b0               ; symbol stub for: dispatch_once
+TCC_22F82[0x1850c9e44] <+1796>: 0x17ffff7e   b      0x1850c9c3c               ; <+1276>
+TCC_22F82[0x1850c9e48] <+1800>: 0xd02b1b60   adrp   x0, 353134
+TCC_22F82[0x1850c9e4c] <+1804>: 0x913ca000   add    x0, x0, #0xf28            ; tcc_log_handle.onceToken
+TCC_22F82[0x1850c9e50] <+1808>: 0xd02c1e01   adrp   x1, 361410
+TCC_22F82[0x1850c9e54] <+1812>: 0x91194021   add    x1, x1, #0x650            ; __block_literal_global
+TCC_22F82[0x1850c9e58] <+1816>: 0x94005896   bl     0x1850e00b0               ; symbol stub for: dispatch_once
+TCC_22F82[0x1850c9e5c] <+1820>: 0x17ffff95   b      0x1850c9cb0               ; <+1392>
+TCC_22F82[0x1850c9e60] <+1824>: 0x94005834   bl     0x1850dff30               ; symbol stub for: __stack_chk_fail
+TCC_22F82[0x1850c9e64] <+1828>: 0xf9479668   ldr    x8, [x19, #0xf28]
+TCC_22F82[0x1850c9e68] <+1832>: 0xb100051f   cmn    x8, #0x1
+TCC_22F82[0x1850c9e6c] <+1836>: 0x54000121   b.ne   0x1850c9e90               ; <+1872>
+TCC_22F82[0x1850c9e70] <+1840>: 0xf9478313   ldr    x19, [x24, #0xf00]
+TCC_22F82[0x1850c9e74] <+1844>: 0xaa1303e0   mov    x0, x19
+TCC_22F82[0x1850c9e78] <+1848>: 0x52800221   mov    w1, #0x11
+TCC_22F82[0x1850c9e7c] <+1852>: 0x940058d1   bl     0x1850e01c0               ; symbol stub for: os_log_type_enabled
+TCC_22F82[0x1850c9e80] <+1856>: 0x34000060   cbz    w0, 0x1850c9e8c           ; <+1868>
+TCC_22F82[0x1850c9e84] <+1860>: 0xaa1303e0   mov    x0, x19
+TCC_22F82[0x1850c9e88] <+1864>: 0x94004a00   bl     0x1850dc688               ; tccd_send_message.cold.2
+TCC_22F82[0x1850c9e8c] <+1868>: 0x94005865   bl     0x1850e0020               ; symbol stub for: abort
+TCC_22F82[0x1850c9e90] <+1872>: 0xd02b1b60   adrp   x0, 353134
+TCC_22F82[0x1850c9e94] <+1876>: 0x913ca000   add    x0, x0, #0xf28            ; tcc_log_handle.onceToken
+TCC_22F82[0x1850c9e98] <+1880>: 0xd02c1e01   adrp   x1, 361410
+TCC_22F82[0x1850c9e9c] <+1884>: 0x91194021   add    x1, x1, #0x650            ; __block_literal_global
+TCC_22F82[0x1850c9ea0] <+1888>: 0x94005884   bl     0x1850e00b0               ; symbol stub for: dispatch_once
+TCC_22F82[0x1850c9ea4] <+1892>: 0x17fffff3   b      0x1850c9e70               ; <+1840>
+(lldb) disassemble --start-address 0x1850ccebc --count 110 --bytes
+TCC_22F82`:
+TCC_22F82[0x1850ccebc] <+0>:   0xd503237f   pacibsp 
+TCC_22F82[0x1850ccec0] <+4>:   0xd101c3ff   sub    sp, sp, #0x70
+TCC_22F82[0x1850ccec4] <+8>:   0xa9035ff8   stp    x24, x23, [sp, #0x30]
+TCC_22F82[0x1850ccec8] <+12>:  0xa90457f6   stp    x22, x21, [sp, #0x40]
+TCC_22F82[0x1850ccecc] <+16>:  0xa9054ff4   stp    x20, x19, [sp, #0x50]
+TCC_22F82[0x1850cced0] <+20>:  0xa9067bfd   stp    x29, x30, [sp, #0x60]
+TCC_22F82[0x1850cced4] <+24>:  0x910183fd   add    x29, sp, #0x60
+TCC_22F82[0x1850cced8] <+28>:  0xaa0103f4   mov    x20, x1
+TCC_22F82[0x1850ccedc] <+32>:  0xaa0003f3   mov    x19, x0
+TCC_22F82[0x1850ccee0] <+36>:  0xaa0103e0   mov    x0, x1
+TCC_22F82[0x1850ccee4] <+40>:  0x94004d83   bl     0x1850e04f0               ; symbol stub for: xpc_get_type
+TCC_22F82[0x1850ccee8] <+44>:  0xb028cbc8   adrp   x8, 334201
+TCC_22F82[0x1850cceec] <+48>:  0xf9400908   ldr    x8, [x8, #0x10]
+TCC_22F82[0x1850ccef0] <+52>:  0xeb08001f   cmp    x0, x8
+TCC_22F82[0x1850ccef4] <+56>:  0x540008c0   b.eq   0x1850cd00c               ; <+336>
+TCC_22F82[0x1850ccef8] <+60>:  0xb00000a1   adrp   x1, 21
+TCC_22F82[0x1850ccefc] <+64>:  0x910e6421   add    x1, x1, #0x399            ; "abort"
+TCC_22F82[0x1850ccf00] <+68>:  0xaa1403e0   mov    x0, x20
+TCC_22F82[0x1850ccf04] <+72>:  0x94004d53   bl     0x1850e0450               ; symbol stub for: xpc_dictionary_get_string
+TCC_22F82[0x1850ccf08] <+76>:  0xb5000f00   cbnz   x0, 0x1850cd0e8           ; <+556>
+TCC_22F82[0x1850ccf0c] <+80>:  0xb00000a1   adrp   x1, 21
+TCC_22F82[0x1850ccf10] <+84>:  0x910eac21   add    x1, x1, #0x3ab            ; "extension"
+TCC_22F82[0x1850ccf14] <+88>:  0xaa1403e0   mov    x0, x20
+TCC_22F82[0x1850ccf18] <+92>:  0x94004d56   bl     0x1850e0470               ; symbol stub for: xpc_dictionary_get_value
+TCC_22F82[0x1850ccf1c] <+96>:  0xf9401a68   ldr    x8, [x19, #0x30]
+TCC_22F82[0x1850ccf20] <+100>: 0xb4000a68   cbz    x8, 0x1850cd06c           ; <+432>
+TCC_22F82[0x1850ccf24] <+104>: 0xb00000a1   adrp   x1, 21
+TCC_22F82[0x1850ccf28] <+108>: 0x910ed421   add    x1, x1, #0x3b5            ; "preflight_unknown"
+TCC_22F82[0x1850ccf2c] <+112>: 0xaa1403e0   mov    x0, x20
+TCC_22F82[0x1850ccf30] <+116>: 0x94004d34   bl     0x1850e0400               ; symbol stub for: xpc_dictionary_get_bool
+TCC_22F82[0x1850ccf34] <+120>: 0xaa0003f6   mov    x22, x0
+TCC_22F82[0x1850ccf38] <+124>: 0xb00000a1   adrp   x1, 21
+TCC_22F82[0x1850ccf3c] <+128>: 0x910f1c21   add    x1, x1, #0x3c7            ; "restricted"
+TCC_22F82[0x1850ccf40] <+132>: 0xaa1403e0   mov    x0, x20
+TCC_22F82[0x1850ccf44] <+136>: 0x94004d2f   bl     0x1850e0400               ; symbol stub for: xpc_dictionary_get_bool
+TCC_22F82[0x1850ccf48] <+140>: 0xaa0003f7   mov    x23, x0
+TCC_22F82[0x1850ccf4c] <+144>: 0xb00000a1   adrp   x1, 21
+TCC_22F82[0x1850ccf50] <+148>: 0x910f4821   add    x1, x1, #0x3d2            ; "result"
+TCC_22F82[0x1850ccf54] <+152>: 0xaa1403e0   mov    x0, x20
+TCC_22F82[0x1850ccf58] <+156>: 0x94004d2a   bl     0x1850e0400               ; symbol stub for: xpc_dictionary_get_bool
+TCC_22F82[0x1850ccf5c] <+160>: 0xaa0003f5   mov    x21, x0
+TCC_22F82[0x1850ccf60] <+164>: 0xb00000a1   adrp   x1, 21
+TCC_22F82[0x1850ccf64] <+168>: 0x910f6421   add    x1, x1, #0x3d9            ; "do_not_cache"
+TCC_22F82[0x1850ccf68] <+172>: 0xaa1403e0   mov    x0, x20
+TCC_22F82[0x1850ccf6c] <+176>: 0x94004d25   bl     0x1850e0400               ; symbol stub for: xpc_dictionary_get_bool
+TCC_22F82[0x1850ccf70] <+180>: 0x39410668   ldrb   w8, [x19, #0x41]
+TCC_22F82[0x1850ccf74] <+184>: 0x340003c8   cbz    w8, 0x1850ccfec           ; <+304>
+TCC_22F82[0x1850ccf78] <+188>: 0x370003a0   tbnz   w0, #0x0, 0x1850ccfec     ; <+304>
+TCC_22F82[0x1850ccf7c] <+192>: 0xf9401e60   ldr    x0, [x19, #0x38]
+TCC_22F82[0x1850ccf80] <+196>: 0x94004b38   bl     0x1850dfc60               ; symbol stub for: CFRetain
+TCC_22F82[0x1850ccf84] <+200>: 0xf02b1b48   adrp   x8, 353131
+TCC_22F82[0x1850ccf88] <+204>: 0xf9477500   ldr    x0, [x8, #0xee8]
+TCC_22F82[0x1850ccf8c] <+208>: 0x910003e8   mov    x8, sp
+TCC_22F82[0x1850ccf90] <+212>: 0x9028cbd0   adrp   x16, 334200
+TCC_22F82[0x1850ccf94] <+216>: 0xf9460a10   ldr    x16, [x16, #0xc10]
+TCC_22F82[0x1850ccf98] <+220>: 0xaa0803f1   mov    x17, x8
+TCC_22F82[0x1850ccf9c] <+224>: 0xf2ed5c31   movk   x17, #0x6ae1, lsl #48
+TCC_22F82[0x1850ccfa0] <+228>: 0xdac10a30   pacda  x16, x17
+TCC_22F82[0x1850ccfa4] <+232>: 0xf90003f0   str    x16, [sp]
+TCC_22F82[0x1850ccfa8] <+236>: 0x900000c9   adrp   x9, 24
+TCC_22F82[0x1850ccfac] <+240>: 0xfd428920   ldr    d0, [x9, #0x510]
+TCC_22F82[0x1850ccfb0] <+244>: 0xfd0007e0   str    d0, [sp, #0x8]
+TCC_22F82[0x1850ccfb4] <+248>: 0x91004108   add    x8, x8, #0x10
+TCC_22F82[0x1850ccfb8] <+252>: 0xb0000010   adrp   x16, 1
+TCC_22F82[0x1850ccfbc] <+256>: 0x91042210   add    x16, x16, #0x108          ; __TCCAccessRequest_block_invoke.211
+TCC_22F82[0x1850ccfc0] <+260>: 0xdac10110   pacia  x16, x8
+TCC_22F82[0x1850ccfc4] <+264>: 0xb0276788   adrp   x8, 322801
+TCC_22F82[0x1850ccfc8] <+268>: 0x91398108   add    x8, x8, #0xe60            ; __block_descriptor_tmp.212
+TCC_22F82[0x1850ccfcc] <+272>: 0xa90123f0   stp    x16, x8, [sp, #0x10]
+TCC_22F82[0x1850ccfd0] <+276>: 0x3900a3f6   strb   w22, [sp, #0x28]
+TCC_22F82[0x1850ccfd4] <+280>: 0xf9401e68   ldr    x8, [x19, #0x38]
+TCC_22F82[0x1850ccfd8] <+284>: 0xf90013e8   str    x8, [sp, #0x20]
+TCC_22F82[0x1850ccfdc] <+288>: 0x3900a7f5   strb   w21, [sp, #0x29]
+TCC_22F82[0x1850ccfe0] <+292>: 0x3900abf7   strb   w23, [sp, #0x2a]
+TCC_22F82[0x1850ccfe4] <+296>: 0x910003e1   mov    x1, sp
+TCC_22F82[0x1850ccfe8] <+300>: 0x94004c2a   bl     0x1850e0090               ; symbol stub for: dispatch_async
+TCC_22F82[0x1850ccfec] <+304>: 0xf9401660   ldr    x0, [x19, #0x28]
+TCC_22F82[0x1850ccff0] <+308>: 0xb4000240   cbz    x0, 0x1850cd038           ; <+380>
+TCC_22F82[0x1850ccff4] <+312>: 0xaa0003e8   mov    x8, x0
+TCC_22F82[0x1850ccff8] <+316>: 0xf8410d09   ldr    x9, [x8, #0x10]!
+TCC_22F82[0x1850ccffc] <+320>: 0xaa1603e1   mov    x1, x22
+TCC_22F82[0x1850cd000] <+324>: 0xaa1703e2   mov    x2, x23
+TCC_22F82[0x1850cd004] <+328>: 0xd73f0928   blraa  x9, x8
+TCC_22F82[0x1850cd008] <+332>: 0x1400000c   b      0x1850cd038               ; <+380>
+TCC_22F82[0x1850cd00c] <+336>: 0xd02b1b48   adrp   x8, 353130
+TCC_22F82[0x1850cd010] <+340>: 0xf9479508   ldr    x8, [x8, #0xf28]
+TCC_22F82[0x1850cd014] <+344>: 0xb100051f   cmn    x8, #0x1
+TCC_22F82[0x1850cd018] <+348>: 0x540005c1   b.ne   0x1850cd0d0               ; <+532>
+TCC_22F82[0x1850cd01c] <+352>: 0xd02b1b48   adrp   x8, 353130
+TCC_22F82[0x1850cd020] <+356>: 0xf9478115   ldr    x21, [x8, #0xf00]
+TCC_22F82[0x1850cd024] <+360>: 0xaa1503e0   mov    x0, x21
+TCC_22F82[0x1850cd028] <+364>: 0x52800201   mov    w1, #0x10
+TCC_22F82[0x1850cd02c] <+368>: 0x94004c65   bl     0x1850e01c0               ; symbol stub for: os_log_type_enabled
+TCC_22F82[0x1850cd030] <+372>: 0x35000480   cbnz   w0, 0x1850cd0c0           ; <+516>
+TCC_22F82[0x1850cd034] <+376>: 0x52800015   mov    w21, #0x0
+TCC_22F82[0x1850cd038] <+380>: 0xf9401260   ldr    x0, [x19, #0x20]
+TCC_22F82[0x1850cd03c] <+384>: 0xaa0003e8   mov    x8, x0
+TCC_22F82[0x1850cd040] <+388>: 0xf8410d09   ldr    x9, [x8, #0x10]!
+TCC_22F82[0x1850cd044] <+392>: 0xaa1503e1   mov    x1, x21
+TCC_22F82[0x1850cd048] <+396>: 0xd73f0928   blraa  x9, x8
+TCC_22F82[0x1850cd04c] <+400>: 0xf9401e60   ldr    x0, [x19, #0x38]
+TCC_22F82[0x1850cd050] <+404>: 0x94004b00   bl     0x1850dfc50               ; symbol stub for: CFRelease
+TCC_22F82[0x1850cd054] <+408>: 0xa9467bfd   ldp    x29, x30, [sp, #0x60]
+TCC_22F82[0x1850cd058] <+412>: 0xa9454ff4   ldp    x20, x19, [sp, #0x50]
+TCC_22F82[0x1850cd05c] <+416>: 0xa94457f6   ldp    x22, x21, [sp, #0x40]
+TCC_22F82[0x1850cd060] <+420>: 0xa9435ff8   ldp    x24, x23, [sp, #0x30]
+TCC_22F82[0x1850cd064] <+424>: 0x9101c3ff   add    sp, sp, #0x70
+TCC_22F82[0x1850cd068] <+428>: 0xd65f0fff   retab  
+TCC_22F82[0x1850cd06c] <+432>: 0x39410268   ldrb   w8, [x19, #0x40]
+TCC_22F82[0x1850cd070] <+436>: 0x35fff5a8   cbnz   w8, 0x1850ccf24           ; <+104>

@@ -1,0 +1,12 @@
+{
+  "argv": [
+    "xcrun",
+    "lldb",
+    "--batch",
+    "-o",
+    "target create --arch arm64e analysis/TCC_22F82",
+    "-o",
+    "disassemble --start-address 0x1850d0548 --count 18 --bytes"
+  ],
+  "exit": 0
+}

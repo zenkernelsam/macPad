@@ -1,0 +1,18 @@
+{
+  "time": "2026-10-15T02:12:45.748682+08:00",
+  "old_head": "685641cafcc584d0945b81a456dadf8a445c91f4",
+  "new_head": "ff6024695928017bfb056ed11f8b2e0431e063bb",
+  "mapping": {
+    "a3c703854bf3d6f66a7d6109c35b1df4541deffa": "79ad78fd931aaceea699841bba2d4c2390e357a9",
+    "685641cafcc584d0945b81a456dadf8a445c91f4": "ff6024695928017bfb056ed11f8b2e0431e063bb"
+  },
+  "removed_git_path": "analysis/TCC_22F82",
+  "local_file_preserved": true,
+  "local_file_sha256": "09b841378285a120a04b1c8718dd5c7e3b98b4e59849eea0d8767f845d02f2de",
+  "tree_diff": "D\tanalysis/TCC_22F82",
+  "backup": "tmp/local-history/R006-before-binary-removal.bundle",
+  "backup_sha256": "96f6210cbe0f0ac0402252f1f58a735962397ba68784908087bbee1a1abd9d9f",
+  "backup_verified": true,
+  "remote_changed": false,
+  "source_and_evidence_unchanged_except_removed_binary": true
+}

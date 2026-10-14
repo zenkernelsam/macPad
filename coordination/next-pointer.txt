@@ -1,1 +1,1 @@
-R005 已审核为 APPROVED_WITH_LIMITS。请阅读 coordination/reviews/R005-20261015.md 和 coordination/DEVIN_TASK.md，执行 R006；只追查实际 TCC 返回生产者，保留检查，不猜授权。完成冻结候选并以 (handover to codex now) 交接，我会等交接后集中审核。
+R006 审核完成（传输/default1结论可用，仍有证据与探针限制）。请阅读 coordination/reviews/R006-20261015.md 和 coordination/DEVIN_TASK.md 执行 R007：先确认准确端点/域，再恢复真实兼容 TCC 服务链；保留检查，禁止绕过授权。注意本地提交已去除误入库的 Apple 文件。完成后明确 handover。
