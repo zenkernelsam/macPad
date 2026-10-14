@@ -1,0 +1,11 @@
+{
+  "started": "2026-10-14T22:32:13.781958+08:00",
+  "finished": "2026-10-14T22:32:14.152377+08:00",
+  "command": "set -e\nmv /tmp/macos_ws_event_probe.new /var/mnt/rootfs/tmp/macos_ws_event_probe\n/var/jb/usr/bin/ldid -S/var/jb/usr/macOS/bin/entitlements.plist /var/mnt/rootfs/tmp/macos_ws_event_probe\n/var/jb/usr/bin/python3 /var/jb/usr/macOS/bin/macws_boot_trust.py --readd /var/mnt/rootfs/tmp/macos_ws_event_probe\necho \"DEPLOY_DONE\"\nsha256sum /var/mnt/rootfs/tmp/macos_ws_event_probe || /var/jb/usr/bin/shasum -a 256 /var/mnt/rootfs/tmp/macos_ws_event_probe\n",
+  "command_sha256": "8710293775b8104e4d21bf43ad7288197c64794c24bd1b2b884dbb404eb00fe6",
+  "exit": 1,
+  "timeout": false,
+  "stdout": "",
+  "stderr": "mv: cannot stat '/tmp/macos_ws_event_probe.new': No such file or directory\n",
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}
