@@ -1,0 +1,4 @@
+# DevinWatchdog_mac：只跟踪源码 / 文档 / 配置，运行产物与依赖环境不入库
+.venv-iterm/
+__pycache__/
+*.log

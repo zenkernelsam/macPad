@@ -1,0 +1,78 @@
+{
+  "time": "2026-10-14T21:42:53.527675+08:00",
+  "head": "96d0149e2086aa99267b23386df9c6c0bafa4059",
+  "checks": [
+    {
+      "argv": [
+        "xcrun",
+        "clang",
+        "-arch",
+        "arm64",
+        "-fsyntax-only",
+        "-Wall",
+        "-Wextra",
+        "misc/macos_mshook_provider_probe.c"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": "",
+      "sha256_before": "2d61927dec521bc61e3939d8de06f3df3afff12f2cb237edff4b94bee2d7abab",
+      "sha256_after": "2d61927dec521bc61e3939d8de06f3df3afff12f2cb237edff4b94bee2d7abab",
+      "stable": true
+    },
+    {
+      "argv": [
+        "xcrun",
+        "clang",
+        "-arch",
+        "arm64e",
+        "-fsyntax-only",
+        "-Wall",
+        "-Wextra",
+        "misc/macos_mshook_provider_probe.c"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": "",
+      "sha256_before": "2d61927dec521bc61e3939d8de06f3df3afff12f2cb237edff4b94bee2d7abab",
+      "sha256_after": "2d61927dec521bc61e3939d8de06f3df3afff12f2cb237edff4b94bee2d7abab",
+      "stable": true
+    },
+    {
+      "argv": [
+        "xcrun",
+        "clang",
+        "-arch",
+        "arm64",
+        "-fsyntax-only",
+        "-Wall",
+        "-Wextra",
+        "misc/macos_ws_event_probe.c"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": "",
+      "sha256_before": "7ec1f43091a3fe226258ad9c8f1e56eb9284d6163fcdc9f4050fa78365246c74",
+      "sha256_after": "7ec1f43091a3fe226258ad9c8f1e56eb9284d6163fcdc9f4050fa78365246c74",
+      "stable": true
+    },
+    {
+      "argv": [
+        "xcrun",
+        "clang",
+        "-arch",
+        "arm64e",
+        "-fsyntax-only",
+        "-Wall",
+        "-Wextra",
+        "misc/macos_ws_event_probe.c"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": "",
+      "sha256_before": "7ec1f43091a3fe226258ad9c8f1e56eb9284d6163fcdc9f4050fa78365246c74",
+      "sha256_after": "7ec1f43091a3fe226258ad9c8f1e56eb9284d6163fcdc9f4050fa78365246c74",
+      "stable": true
+    }
+  ]
+}
