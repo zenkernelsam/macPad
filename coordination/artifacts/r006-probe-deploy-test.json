@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T01:48:09.271479+08:00",
+  "finished": "2026-10-15T01:48:09.984802+08:00",
+  "command": "ENT=/var/mnt/rootfs/usr/local/lib/libmachook_ent.plist; ldid -S$ENT /tmp/mwe.new && ldid -S$ENT /tmp/mwe.new && install -m755 /tmp/mwe.new /var/mnt/rootfs/tmp/macos_ws_event_probe.new && mv /var/mnt/rootfs/tmp/macos_ws_event_probe.new /var/mnt/rootfs/tmp/macos_ws_event_probe && python3 /var/jb/usr/macOS/bin/macws_boot_trust.py --readd /var/mnt/rootfs/tmp/macos_ws_event_probe 2>&1 | tail -1 && /var/jb/usr/bin/python3 -c \"import hashlib;print(hashlib.sha256(open('/var/mnt/rootfs/tmp/macos_ws_event_probe','rb').read()).hexdigest())\" && rm -f /tmp/mwe.new && /var/jb/usr/macOS/bin/launchdchrootexec 0 0 /var/mnt/rootfs /tmp/macos_ws_event_probe postmin; echo PROBE_RC=$?",
+  "command_sha256": "cb22e4fd30ec738df5a56635dc4bc7b3e88dd71b429ce88dc39b5c8365247412",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "BOOT-TRUST {\"added\": 1, \"backend\": \"libjailbreak\", \"cached\": 0, \"files\": 1, \"hashes\": 1, \"images\": 1, \"resource_hits\": 0, \"scan_seconds\": 0.0, \"total_seconds\": 0.064}\nca8e6d41e04eebd56f8ece5a73daa150ef153600dc45160e1232ba42f6060590\nmode=postmin\npostmin: cid=0 postRecord=0x8f050001a8fca788 getRecord=0x3c1d0001a90990e4\nPROBE_RC=0\n",
+  "stderr": "chdir: No such file or directory\n[launchdchrootexec] target=/tmp/macos_ws_event_probe arch=arm64e insert=/usr/local/lib/libmachook.dylib\n#### MACWS-CTOR-CANARY InitStuff entered\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\n#### MACWS-CTOR-CANARY InitStuff done\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\n",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

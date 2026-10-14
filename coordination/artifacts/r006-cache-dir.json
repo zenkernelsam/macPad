@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T01:43:32.605383+08:00",
+  "finished": "2026-10-15T01:43:32.976756+08:00",
+  "command": "ls -lah /var/mnt/rootfs/System/Library/dyld/ | head -20; du -sh /var/mnt/rootfs/System/Library/dyld/dyld_shared_cache_arm64e 2>/dev/null",
+  "command_sha256": "e47b32c3d5acc101bad779735739eefd03e5097caef03006d57840001852458f",
+  "exit": 1,
+  "timeout": false,
+  "stdout": "",
+  "stderr": "ls: cannot access '/var/mnt/rootfs/System/Library/dyld/': No such file or directory\n",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

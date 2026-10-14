@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T01:50:32.995303+08:00",
+  "finished": "2026-10-15T01:50:44.972388+08:00",
+  "command": "export LC_CTYPE=UTF-8 TMUX_TMPDIR=/var/tmp; tmux send-keys -t devin_r006 'memory read -f x -s 4 -c 1 0x1974b5740' Enter; sleep 2; tmux send-keys -t devin_r006 'memory read -f x -s 4 -c 1 0x1974bc7b0' Enter; sleep 2; tmux send-keys -t devin_r006 'memory read -f x -s 4 -c 1 0x1974b4d9c' Enter; sleep 2; tmux send-keys -t devin_r006 'memory read -f x -s 4 -c 1 0x1974b5584' Enter; sleep 2; tmux send-keys -t devin_r006 'memory read -f x -s 4 -c 1 0x197811e0c' Enter; sleep 3; tmux capture-pane -p -t devin_r006 | tail -18",
+  "command_sha256": "17e03e41f2b0c34cca83063da6360cdbc2fc972b0aa762df20a528d8e0c918b5",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "on = signal SIGSTOP\n    frame #0: 0x00000001927b4834 libsystem_kernel.dylib`poll + 8\nlibsystem_kernel.dylib`poll:\n->  0x1927b4834 <+8>:  b.lo   0x1927b4854               ; <+40>\n    0x1927b4838 <+12>: pacibsp\n    0x1927b483c <+16>: stp    x29, x30, [sp, #-0x10]!\n    0x1927b4840 <+20>: mov    x29, sp\nmemory read -f x -s 4 -c 1 0x1974b5740\n0x1974b5740: 0xd503237f\nmemory read -f x -s 4 -c 1 0x1974bc7b0\n0x1974bc7b0: 0xd503237f\nmemory read -f x -s 4 -c 1 0x1974b4d9c\n0x1974b4d9c: 0xd503237f\nmemory read -f x -s 4 -c 1 0x1974b5584\n0x1974b5584: 0xd503237f\nmemory read -f x -s 4 -c 1 0x197811e0c\n0x197811e0c: 0x7100001f\n\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

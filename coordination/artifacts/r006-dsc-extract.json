@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T01:44:29.536935+08:00",
+  "finished": "2026-10-15T01:44:29.934301+08:00",
+  "command": "/var/jb/usr/bin/python3 -c \"\nimport ctypes, os\nbundle = ctypes.CDLL('/var/mnt/rootfs/usr/lib/dsc_extractor.bundle')\nfn = bundle.dyld_shared_cache_extract_dylibs_progress\nfn.restype = ctypes.c_int\nfn.argtypes = [ctypes.c_char_p, ctypes.c_char_p, ctypes.c_void_p]\ncache = '/var/mnt/rootfs/System/Cryptexes/OS/System/Library/dyld/dyld_shared_cache_arm64e'\nout = '/tmp/dscout_ventura'\nos.makedirs(out, exist_ok=True)\nprint('extracting', flush=True)\nrc = fn(cache.encode(), out.encode(), None)\nprint('rc=', rc, flush=True)\n\" 2>&1 | tail -10",
+  "command_sha256": "dd55a346f38639bbb7ffc91e169f0d797ed30eb5d74828fce575b41e05bbc8d1",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "Traceback (most recent call last):\n  File \"<string>\", line 3, in <module>\n  File \"/var/jb/usr/lib/python3.9/ctypes/__init__.py\", line 374, in __init__\n    self._handle = _dlopen(self._name, mode)\nOSError: dlopen(/var/mnt/rootfs/usr/lib/dsc_extractor.bundle, 0x0006): tried: '/var/mnt/rootfs/usr/lib/dsc_extractor.bundle' (mach-o file (/var/mnt/rootfs/usr/lib/dsc_extractor.bundle), but incompatible platform (have 'macOS', need 'iOS')), '/private/preboot/Cryptexes/OS/var/mnt/rootfs/usr/lib/dsc_extractor.bundle' (errno=2), '/var/mnt/rootfs/usr/lib/dsc_extractor.bundle' (mach-o file (/var/mnt/rootfs/usr/lib/dsc_extractor.bundle), but incompatible platform (have 'macOS', need 'iOS')), '/private/var/mnt/rootfs/usr/lib/dsc_extractor.bundle' (mach-o file (/private/var/mnt/rootfs/usr/lib/dsc_extractor.bundle), but incompatible platform (have 'macOS', need 'iOS')), '/private/preboot/Cryptexes/OS/private/var/mnt/rootfs/usr/lib/dsc_extractor.bundle' (errno=2), '/private/var/mnt/rootfs/usr/lib/dsc_extractor.bundle' (mach-o file (/private/var/mnt/rootfs/usr/lib/dsc_extractor.bundle), but incompatible platform (have 'macOS', need 'iOS'))\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

@@ -88,6 +88,10 @@ static void probe_bootstrap_service(const char *name) {
 //   post — inventory + cursor warp + CGEventPost witness + ONE
 //     canonical SLSPostEventRecord.  Bounded surface per R003 review:
 //     no guessed-arg variants, no unverified-ABI calls.
+//   postmin — R006 minimal attribution mode: SLSMainConnectionID +
+//     ONE canonical SLSPostEventRecord and nothing else.  No warp, no
+//     CGEventPost witness, no inventory phases, no session mutation —
+//     exactly one _XPostEventRecord reaches WindowServer per run.
 //   mutate — reserved for later explicitly-authorized runs.  postTo
 //     direct delivery, SLEventTapPostEvent and SLEventTapCreate are
 //     DISABLED in this build (their argument contracts are not
@@ -95,11 +99,12 @@ static void probe_bootstrap_service(const char *name) {
 //     all until the exact signatures are disassembled).  Session
 //     mutation remains behind 'mutate'.
 // Unknown private ABIs stay fail-closed and opt-in only.
-enum { M_INVENTORY, M_POST, M_MUTATE };
+enum { M_INVENTORY, M_POST, M_POSTMIN, M_MUTATE };
 static int probe_mode(int argc, char **argv) {
     if (argc < 2) return M_INVENTORY;
     if (!strcmp(argv[1], "inventory")) return M_INVENTORY;
     if (!strcmp(argv[1], "post")) return M_POST;
+    if (!strcmp(argv[1], "postmin")) return M_POSTMIN;
     if (!strcmp(argv[1], "mutate")) return M_MUTATE;
     fprintf(stderr, "unknown mode '%s' — running inventory\n", argv[1]);
     return M_INVENTORY;
@@ -109,7 +114,30 @@ int main(int argc, char **argv) {
     setbuf(stdout, NULL);   // unbuffered — survive a crash mid-probe
     int mode = probe_mode(argc, argv);
     printf("mode=%s\n", mode == M_MUTATE ? "mutate" :
+           mode == M_POSTMIN ? "postmin" :
            mode == M_POST ? "post" : "inventory");
+    if (mode == M_POSTMIN) {
+        // R006: one attributable _XPostEventRecord, nothing else.
+        MainConnectionIDFn mc =
+            (MainConnectionIDFn)dlsym(RTLD_DEFAULT, "SLSMainConnectionID");
+        PostEventRecordFn pr =
+            (PostEventRecordFn)dlsym(RTLD_DEFAULT, "SLSPostEventRecord");
+        GetEventRecordFn gr =
+            (GetEventRecordFn)dlsym(RTLD_DEFAULT, "SLEventGetEventRecord");
+        uint32_t cid = mc ? mc() : 0;
+        printf("postmin: cid=%u postRecord=%p getRecord=%p\n",
+               cid, (void *)pr, (void *)gr);
+        if (cid && pr && gr) {
+            uint8_t canon[0xf8];
+            memset(canon, 0, sizeof(canon));
+            CGEventRef mv = CGEventCreateMouseEvent(
+                NULL, kCGEventMouseMoved, CGPointMake(500, 500), 0);
+            if (mv) { gr(mv, canon, 0xf8); CFRelease(mv); }
+            printf("postmin: SLSPostEventRecord -> rc=%d\n",
+                   pr(cid, canon, 0xf8, 0));
+        }
+        return 0;
+    }
     mach_port_t evport = MACH_PORT_NULL;
     GetEventPortFn getEventPort =
         (GetEventPortFn)dlsym(RTLD_DEFAULT, "SLSGetEventPort");

@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T01:44:59.951357+08:00",
+  "finished": "2026-10-15T01:45:00.352131+08:00",
+  "command": "cat /var/mnt/rootfs/usr/local/lib/libmachook_ent.plist 2>/dev/null | head -30; ls /var/jb/usr/macOS/bin/*.plist /var/jb/usr/macOS/bin/entitlements.plist 2>/dev/null",
+  "command_sha256": "91ccf72bb94c4496ae2b3fe845d0bb115115bcc7c9d46750618321dbadd5f7db",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n<plist version=\"1.0\">\n<dict>\n\t<key>com.apple.QuartzCore.occlusion-override</key>\n\t<true/>\n\t<key>com.apple.symptom_diagnostics.report</key>\n\t<true/>\n\t<key>com.apple.appledfr.client</key>\n\t<true/>\n\t<key>com.apple.developer.kernel.extended-virtual-addressing</key>\n\t<true/>\n\t<key>com.apple.private.tcc.allow</key>\n\t<array>\n\t\t<string>kTCCServiceListenEvent</string>\n\t\t<string>kTCCServiceSystemPolicyAllFiles</string>\n\t</array>\n\t<key>com.apple.private.graphics-restart-no-kill</key>\n\t<true/>\n\t<key>com.apple.aop.hid-device.user-client</key>\n\t<dict>\n\t\t<key>orientation</key>\n\t\t<dict>\n\t\t\t<key>send-command</key>\n\t\t\t<dict/>\n\t\t</dict>\n\t</dict>\n\t<key>com.apple.private.security.no-container</key>\n\t<true/>\n\t<key>com.apple.runningboard.hereditarygrantoriginator</key>\n/var/jb/usr/macOS/bin/appearance-extension-entitlements.plist\n/var/jb/usr/macOS/bin/cfprefsd-entitlements.plist\n/var/jb/usr/macOS/bin/coreaudiod-ios-audio.entitlements.plist\n/var/jb/usr/macOS/bin/corelocationagent-native-entitlements.plist\n/var/jb/usr/macOS/bin/diskarbitrationd-native-entitlements.plist\n/var/jb/usr/macOS/bin/entitlements.plist\n/var/jb/usr/macOS/bin/entitlements.plist\n/var/jb/usr/macOS/bin/extensionkitservice-entitlements.plist\n/var/jb/usr/macOS/bin/geod-native-entitlements.plist\n/var/jb/usr/macOS/bin/interop-location-entitlements.plist\n/var/jb/usr/macOS/bin/locationd-native-entitlements.plist\n/var/jb/usr/macOS/bin/settings-extension-entitlements.plist\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

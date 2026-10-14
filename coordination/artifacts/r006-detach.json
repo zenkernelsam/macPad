@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T02:00:41.382775+08:00",
+  "finished": "2026-10-15T02:00:48.052013+08:00",
+  "command": "export LC_CTYPE=UTF-8 TMUX_TMPDIR=/var/tmp; tmux send-keys -t devin_r006 'breakpoint disable' Enter; sleep 2; tmux send-keys -t devin_r006 'process detach' Enter; sleep 4; tmux capture-pane -p -t devin_r006 | tail -8; tmux kill-session -t devin_r006 2>/dev/null; tmux ls 2>&1; ps -axo pid,stat,comm | grep -E 'WindowServer|lldb' | grep -v grep | head -5",
+  "command_sha256": "8e1a11ddb97f4e43766c92270c3eccaa2806e887312c964a988b3755d20a3e72",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "(lldb)  continue\nProcess 61460 resuming\nCommand #2 'continue' continued the target.\n(lldb)                          breakpoint disable\nAll breakpoints disabled. (14 breakpoints)\nprocess detach\nProcess 61460 detached\n\nno server running on /private/var/tmp/tmux-0/default\n61460 Ss   /System/Library/PrivateFrameworks/SkyLight.framework/Resources/WindowServer\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

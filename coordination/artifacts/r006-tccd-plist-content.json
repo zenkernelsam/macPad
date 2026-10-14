@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T02:00:23.148960+08:00",
+  "finished": "2026-10-15T02:00:23.594172+08:00",
+  "command": "cat /var/mnt/rootfs/System/Library/LaunchDaemons/com.apple.tccd.system.plist | head -40",
+  "command_sha256": "032428dc8676cfbe15118bbce57d4c3eb7d228cf52dc0bbaf6d6f83ac4dd9f0d",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n<plist version=\"1.0\">\n<dict>\n\t<key>Label</key>\n\t<string>com.apple.tccd.system</string>\n\t<key>ProgramArguments</key>\n\t<array>\n\t\t<string>/System/Library/PrivateFrameworks/TCC.framework/Support/tccd</string>\n\t\t<string>system</string>\n\t</array>\n\t<key>MachServices</key>\n\t<dict>\n\t\t<key>com.apple.tccd.system</key>\n\t\t<true/>\n\t</dict>\n\t<key>POSIXSpawnType</key>\n\t<string>Adaptive</string>\n\t<key>EnablePressuredExit</key>\n\t<true/>\n\t<key>PublishesEvents</key>\n\t<dict>\n\t\t<key>com.apple.tccd.events</key>\n\t\t<dict>\n\t\t\t<key>DomainInternal</key>\n\t\t\t<true/>\n\t\t</dict>\n\t</dict>\n</dict>\n</plist>\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

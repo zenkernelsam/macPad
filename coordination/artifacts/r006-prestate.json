@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T01:48:19.751675+08:00",
+  "finished": "2026-10-15T01:48:20.409186+08:00",
+  "command": "ps -axo pid,comm | grep -E 'WindowServer|lldb|debugserver|tmux|macws' | grep -v grep; echo '---thermal---'; pmset -g therm 2>/dev/null | head -5 || true; echo '---backboardd---'; ps -axo pid,comm | grep -i backboard | grep -v grep; echo '---ws job---'; /var/jb/usr/macOS/bin/macos_gui.sh status 2>&1 | head -15",
+  "command_sha256": "d6d7b7fb78bf6e717602efa2962a74f502d4108e62daad11e7e6f54f55d98eba",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "---thermal---\n---backboardd---\n70595 /usr/libexec/backboardd\n---ws job---\nzsh:1: exec format error: /var/jb/usr/macOS/bin/macos_gui.sh\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

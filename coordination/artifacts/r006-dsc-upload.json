@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T01:45:04.913063+08:00",
+  "finished": "2026-10-15T01:45:05.403182+08:00",
+  "command": "upload /tmp/dsc_extract -> /tmp/dsc_extract.new",
+  "command_sha256": "522b1834d9966aa564fd1f882b58e06aab619bdb823b5ec2b6c897b9d2d644f5",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "",
+  "stderr": "",
+  "upload_source_sha256": "4591f329e066177f00a82a1f828d1feb99e4326927d2c079a3e2049835547aca",
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

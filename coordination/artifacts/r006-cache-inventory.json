@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T01:43:23.797157+08:00",
+  "finished": "2026-10-15T01:43:29.967764+08:00",
+  "command": "ls -lh /var/mnt/rootfs/System/Library/dyld/ 2>/dev/null | head -15; ls /var/mnt/rootfs/usr/lib/dsc_extractor.bundle 2>/dev/null; find /var/mnt/rootfs -name 'dsc_extractor*' 2>/dev/null | head",
+  "command_sha256": "6bb8bef3e0edb10925c40dce172980df2d26b10e471f3a1957b74c49931179da",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "/var/mnt/rootfs/usr/lib/dsc_extractor.bundle\n/var/mnt/rootfs/usr/lib/dsc_extractor.bundle\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

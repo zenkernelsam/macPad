@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T01:48:08.586667+08:00",
+  "finished": "2026-10-15T01:48:09.217091+08:00",
+  "command": "upload /tmp/macws_ws_event_probe -> /tmp/mwe.new",
+  "command_sha256": "f2e884653343f0d2b6981d5eaa3aa99f72703f60db7df31072df16193d23b508",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "",
+  "stderr": "",
+  "upload_source_sha256": "26dde6ad3a6106bb9eb97e477519b279f9199f8a7181fdda8655b2cba3139957",
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

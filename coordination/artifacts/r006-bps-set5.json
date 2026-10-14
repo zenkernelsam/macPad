@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T01:56:55.585498+08:00",
+  "finished": "2026-10-15T01:57:16.453292+08:00",
+  "command": "export LC_CTYPE=UTF-8 TMUX_TMPDIR=/var/tmp; tmux send-keys -t devin_r006 'breakpoint disable tccreplyok' Enter; sleep 1; tmux send-keys -t devin_r006 'breakpoint disable tccreplyerr' Enter; sleep 1; tmux send-keys -t devin_r006 'breakpoint disable tccresult' Enter; sleep 1; tmux send-keys -t devin_r006 'command source /tmp/r006_bps5.txt' Enter; sleep 12; tmux send-keys -t devin_r006 'breakpoint list' Enter; sleep 5; tmux capture-pane -p -t devin_r006 -S -80 | tail -60",
+  "command_sha256": "b0fe65280503b7e48fc3ded3a3b8bd5310cf3983e2ce3adb6cb2d65537189050",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "nt = 3\n    Breakpoint commands:\n      register read w0\n      continue\n\n  Names:\n    skyraw\n\n  10.1: where = SkyLight`audit_token_check_tcc_access + 108, address = 0x0000000\n197811e0c, resolved, hit count = 3\n\n11: address = TCC[0x00000001850c8aec], locations = 1, resolved = 1, hit count =\n0\n    Breakpoint commands:\n      register read x0\n      continue\n\n  Names:\n    syncreply\n\n  11.1: where = TCC`TCC[0x00000001850c8aec], address = 0x00000001974b4aec, resol\nved, hit count = 0\n\n12: address = TCC[0x00000001850c8ba8], locations = 1, resolved = 1, hit count =\n0\n    Breakpoint commands:\n      register read x20\n      continue\n\n  Names:\n    syncintr\n\n  12.1: where = TCC`TCC[0x00000001850c8ba8], address = 0x00000001974b4ba8, resol\nved, hit count = 0\n\n13: address = TCC[0x00000001850c8c1c], locations = 1, resolved = 1, hit count =\n0\n    Breakpoint commands:\n      register read x24\n      continue\n\n  Names:\n    dictreply\n\n  13.1: where = TCC`TCCAccessCheckAuditToken + 100, address = 0x00000001974b4c1c\n, resolved, hit count = 0\n\n14: address = TCC[0x00000001850c8d5c], locations = 1, resolved = 1, hit count =\n0\n    Breakpoint commands:\n      register read x0 x1\n      continue\n\n  Names:\n    handlercall\n\n  14.1: where = TCC`TCCAccessCheckAuditToken + 420, address = 0x00000001974b4d5c\n, resolved, hit count = 0\n\n\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

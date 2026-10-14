@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T01:42:57.094749+08:00",
+  "finished": "2026-10-15T01:42:57.828478+08:00",
+  "command": "ls -lL /var/mnt/rootfs/System/Library/PrivateFrameworks/TCC.framework/TCC; /var/jb/usr/bin/chroot /var/mnt/rootfs /usr/bin/openssl dgst -sha256 -r /System/Library/PrivateFrameworks/TCC.framework/Versions/A/TCC 2>/dev/null; cp /var/mnt/rootfs/System/Library/PrivateFrameworks/TCC.framework/Versions/A/TCC /tmp/TCC_22F82 && ls -l /tmp/TCC_22F82",
+  "command_sha256": "37c5a7e9195fcb18c0ddeb5cac5d6468318b02f33604c31b906aada5016c307f",
+  "exit": 1,
+  "timeout": false,
+  "stdout": "",
+  "stderr": "ls: cannot access '/var/mnt/rootfs/System/Library/PrivateFrameworks/TCC.framework/TCC': No such file or directory\ncp: cannot stat '/var/mnt/rootfs/System/Library/PrivateFrameworks/TCC.framework/Versions/A/TCC': No such file or directory\n",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

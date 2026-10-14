@@ -1,16 +1,25 @@
 # DEVIN_STATUS — current delivery
 
-State: **R005 live branch trace delivered** (2026-10-15): the 1002
-denial's real path is now runtime-confirmed — fresh miss →
-`audit_token_check_tcc_access` → `TCCAccessPreflightWithAuditToken`
-raw return **1** (deny at this callsite) → deny bits folded into the
-per-process rights cache → gate 0 → 1002.  NOT a cached deny, not a
-failed checker resolution.  Input still unfixed; the TCC grant producer
-for `kTCCServicePostEvent` is the open question.
-Full evidence: `docs/evidence/r005-live-tcc-branch-20261015.md`,
-raw pane captures `coordination/artifacts/r005-lldb-pane{1,2}.txt`.
-R004B accepted (bounded diagnostic, INCONCLUSIVE); R004A `be9dc08`
-and R003 `0f5b8f4` accepted.
+State: **R006 live TCC-producer trace delivered** (2026-10-15): the raw
+`1` is now proven to be a **transport-failure artifact**, not a daemon
+policy reply.  Inside WindowServer (pid 61460, single coexist
+generation) every `xpc_connection_send_message_with_reply_sync` to
+tccd returns `_xpc_error_connection_invalid` — TCC routes `flags=1`
+requests to `xpc_connection_create_mach_service("com.apple.tccd.system")`
+and **the `com.apple.tccd.system` launchd job is not loaded in the
+chroot** (plist exists in the rootfs; only the iOS `com.apple.tccd`
+user daemon runs).  No request ever reaches a tccd; the reply parser
+never runs; `TCCAccessPreflightWithAuditToken`'s result field keeps
+its initialized default `1` (fail-closed) → `cset eq` deny → cached
+deny → 1002.  Upstream invariant: missing macOS system-tccd endpoint
+in the chroot bootstrap.  All checks preserved, nothing patched.
+Full evidence: `docs/evidence/r006-tcc-producer-20261015.md`,
+pane `coordination/artifacts/r006-lldb-pane.txt`,
+exact image `analysis/TCC_22F82` (UUID `1238D7CA-719A-36A4-94B1-2F387E6B3BF1`,
+sha256 `09b84137…`, extracted from the live dyld cache and UUID-matched
+to the loaded image).
+R005 approved with limits; R004B accepted (INCONCLUSIVE); R004A
+`be9dc08` and R003 `0f5b8f4` accepted.
 
 ## R004B bounded loader observation (2026-10-14)
 

@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T02:00:58.902971+08:00",
+  "finished": "2026-10-15T02:01:07.806259+08:00",
+  "command": "bash /var/jb/usr/macOS/bin/macos_gui.sh stop 2>&1 | tail -8; echo '---verify---'; ps -axo pid,comm | grep -E 'WindowServer|lldb|debugserver|tmux|macos_ws_event' | grep -v grep; ps -axo pid,comm | grep -i backboard | grep -v grep; ls -la /tmp/macws_runtime_diagnostics /var/mnt/rootfs/tmp/macws_runtime_diagnostics 2>&1; /var/jb/usr/bin/chroot /var/mnt/rootfs /bin/echo HI; echo HI_RC=$?; pmset -g therm 2>/dev/null | head -4",
+  "command_sha256": "59eed1bb30f197eac017550b3e06224b333625074dfc89fcdaf5d7ee1401c62a",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "[macos_gui] Cleaning up previous macOS GUI services...\n[macos_gui] Cleanup done.\n[macos_gui] Restoring iOS (SpringBoard / backboardd)...\n[macos_gui] Stopped. The iPad is back on iOS.\n---verify---\n70595 /usr/libexec/backboardd\nls: cannot access '/tmp/macws_runtime_diagnostics': No such file or directory\nls: cannot access '/var/mnt/rootfs/tmp/macws_runtime_diagnostics': No such file or directory\nHI\nHI_RC=0\n",
+  "stderr": "#### MACWS-CTOR-CANARY InitStuff entered\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\n#### MACWS-CTOR-CANARY InitStuff done\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\n",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

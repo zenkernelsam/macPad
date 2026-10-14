@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T01:50:23.776262+08:00",
+  "finished": "2026-10-15T01:50:27.463113+08:00",
+  "command": "grep -aE 'SkyLight|TCC\\.framework' /var/tmp/r006-pane.txt; export LC_CTYPE=UTF-8 TMUX_TMPDIR=/var/tmp; tmux send-keys -t devin_r006 'process status' Enter; sleep 3; tmux capture-pane -p -t devin_r006 | tail -12",
+  "command_sha256": "e064153511c96e364079827d536596ae5cb894c83679e62a03bebdb53377ec4f",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "Executable module set to \"/System/Library/PrivateFrameworks/SkyLight.framework/Versions/A/Resources/WindowServer\".\n[  1] 465422C7-3CFC-3E9F-9C04-813F3A265AA6 0x000000010493c000 /System/Library/PrivateFrameworks/SkyLight.framework/Versions/A/Resources/WindowServer (0x000000010493c000)\n[  3] 96676A53-B1E0-3D7E-B98B-B73873CD1880 0x00000001974d1000 /System/Library/PrivateFrameworks/SkyLight.framework/Versions/A/SkyLight (0x00000001974d1000)\n[127] 1238D7CA-719A-36A4-94B1-2F387E6B3BF1 0x00000001974b3000 /System/Library/PrivateFrameworks/TCC.framework/Versions/A/TCC (0x00000001974b3000)\n[278] 983665BA-B173-392C-9874-65213940AEF1 0x000000010e3a8000 /System/Library/PrivateFrameworks/SkyLight.framework/Versions/A/Resources/CursorAsset (0x000000010e3a8000)\n1000)\nprocess status\nProcess 61460 stopped\n* thread #1, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reas\non = signal SIGSTOP\n    frame #0: 0x00000001927b4834 libsystem_kernel.dylib`poll + 8\nlibsystem_kernel.dylib`poll:\n->  0x1927b4834 <+8>:  b.lo   0x1927b4854               ; <+40>\n    0x1927b4838 <+12>: pacibsp\n    0x1927b483c <+16>: stp    x29, x30, [sp, #-0x10]!\n    0x1927b4840 <+20>: mov    x29, sp\n\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

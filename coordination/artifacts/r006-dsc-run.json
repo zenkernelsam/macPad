@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T01:45:09.367205+08:00",
+  "finished": "2026-10-15T01:45:18.046247+08:00",
+  "command": "/var/jb/usr/macOS/bin/launchdchrootexec 0 0 /var/mnt/rootfs /usr/local/bin/dsc_extract /System/Cryptexes/OS/System/Library/dyld/dyld_shared_cache_arm64e /tmp/dscout_ventura 2>&1 | tail -8",
+  "command_sha256": "c3e5aa0688f6a6d7c00377beb0ff7d2f5f30f3195d251dec634475d756dfa575",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "extract 2112/2499\nextract 2176/2499\nextract 2240/2499\nextract 2304/2499\nextract 2368/2499\nextract 2432/2499\nextract 2496/2499\nextract rc=0\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

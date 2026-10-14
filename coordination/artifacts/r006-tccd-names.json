@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T02:00:05.693529+08:00",
+  "finished": "2026-10-15T02:00:06.758159+08:00",
+  "command": "/var/jb/usr/macOS/bin/launchdchrootexec 0 0 /var/mnt/rootfs /tmp/macos_ws_event_probe inventory 2>/dev/null | grep -i 'tccd'; echo '---'; /var/jb/usr/macOS/bin/launchdchrootexec 0 0 /var/mnt/rootfs /bin/launchctl list 2>/dev/null | grep -i tcc; echo '---ios system tccd names---'; launchctl print user/501/com.apple.tccd 2>/dev/null | grep -iE 'name =|machservices|endpoints' | head -10",
+  "command_sha256": "1b007738e4f67d534a06d89f1123fce9ed30ef1d9aede5fba435010080262a9c",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "bootstrap_look_up com.apple.tccd -> rc=0 port=3343\n---\n---ios system tccd names---\n\t\tXPC_SERVICE_NAME => com.apple.tccd\n\tusername = mobile\n\tendpoints = {\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T01:54:17.065327+08:00",
+  "finished": "2026-10-15T01:54:38.581177+08:00",
+  "command": "export LC_CTYPE=UTF-8 TMUX_TMPDIR=/var/tmp; tmux send-keys -t devin_r006 'command source /tmp/r006_bps4.txt' Enter; sleep 15; tmux send-keys -t devin_r006 'breakpoint list' Enter; sleep 6; tmux capture-pane -p -t devin_r006 -S -60 | tail -50",
+  "command_sha256": "66dc1b50f1037f6c47eee064800aaad64c45f2cff4dc615e27d427d96bf57c12",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "    tccreplyok\n\n  6.1: where = TCC`__TCCAccessSetPidResponsibleForPid_block_invoke_2 + 52, addre\nss = 0x00000001974bc7e4, resolved, hit count = 0\n\n7: address = TCC[0x00000001850d0804], locations = 1, resolved = 1, hit count = 0\n    Breakpoint commands:\n      register read x0 x1\n      continue\n\n  Names:\n    tccreplyerr\n\n  7.1: where = TCC`__TCCAccessSetPidResponsibleForPid_block_invoke_2 + 84, addre\nss = 0x00000001974bc804, resolved, hit count = 0\n\n8: address = TCC[0x00000001850d07f8], locations = 1, resolved = 1, hit count = 0\n    Breakpoint commands:\n      register read w0 x8\n      continue\n\n  Names:\n    tccresult\n\n  8.1: where = TCC`__TCCAccessSetPidResponsibleForPid_block_invoke_2 + 72, addre\nss = 0x00000001974bc7f8, resolved, hit count = 0\n\n9: address = TCC[0x00000001850c9584], locations = 1, resolved = 1, hit count = 0\n    Breakpoint commands:\n      register read w0 x1\n      continue\n\n  Names:\n    tccdget\n\n  9.1: where = TCC`tccd, address = 0x00000001974b5584, resolved, hit count = 0\n\n10: address = SkyLight[0x0000000185425e0c], locations = 1, resolved = 1, hit cou\nnt = 0\n    Breakpoint commands:\n      register read w0\n      continue\n\n  Names:\n    skyraw\n\n  10.1: where = SkyLight`audit_token_check_tcc_access + 108, address = 0x0000000\n197811e0c, resolved, hit count = 0\n\n\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

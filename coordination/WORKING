@@ -1,28 +1,15 @@
-R005 LIVE TRACE DONE — 2026-10-15
-lldb-16 on-device, WS pid 55506, slide 0x123ec000, UUID/words verified.
-Branch CONFIRMED: real miss -> audit_token_check_tcc_access ->
-TCCAccessPreflightWithAuditToken("kTCCServicePostEvent") raw w0=1 (deny)
--> cached deny bits -> gate 0 -> 1002.  Not cached deny, not resolver
-failure.  Raw captures: artifacts/r005-lldb-pane{1,2}.txt.
-Cleaned: detach ok, stack stopped, sentinels absent, HI baseline ok.
-OPEN: why TCC denies this sender's audit token (grant producer).
-Git writes pending release.  Input still not accepted.
-
-FROZEN R004B — 2026-10-14 (awaiting review → R005)
-Bounded TLS loader observation around the real CGXSYNTH gate.
-Outcome: gate fired (seq=1,2, rc=0); ZERO public dlsym calls in window —
-INCONCLUSIVE by design (dlopen unobserved; no claim about checker).
-dlopen interpose REMOVED — proven to corrupt @loader_path (launchservicesd
-pipeline failure, real evidence). 26/26 fixture checks ALL-PASS.
-Deployed post-sign: arm64e c408dc94…, arm64 56224d25…; baseline HI rc=0.
-Stack stopped; sentinels absent both namespaces; no orphans.
-Input still 1002 — no acceptance.  Git writes released to Devin.
-
-ERRATA 10-15: LLDB on pinned binary resolved real symbols —
-WSAuditTokenHoldsCachedProcessRight / audit_token_check_tcc_access /
-tcc_lookup_symbol; right object kWSTCCServicePostEvent (payload
-"kTCCServicePostEvent"); TCC raw 0 = pass at this callsite (earlier
-"preflight 1 = allow" retracted); two-stage cache (+0x18 known / +0x10
-allow).  See docs/evidence/ventura-22F82-tcc-checker-20261015.md +
-artifacts/R005-static/.  R005 scope per reviewer: one-generation WS
-breakpoint capture of raw TCC w0 — no overrides.
+R006 TCC PRODUCER FOUND — 2026-10-15
+Raw w0=1 = transport-failure default, NOT a daemon deny.
+send_message_with_reply_sync to tccd -> _xpc_error_connection_invalid
+on every attempt (flags=1 routes to com.apple.tccd.system; that launchd
+job is NOT loaded in the chroot — only iOS com.apple.tccd runs).
+No request reaches tccd; reply parser never runs; preflight's init-1
+survives -> cset eq deny -> cached deny -> 1002.
+Exact image analysis/TCC_22F82 UUID 1238D7CA-…94B12F387E6B3BF1
+(dyld-cache extract, runtime-matched). postmin probe mode added
+(one canonical post, no preamble). Evidence:
+docs/evidence/r006-tcc-producer-20261015.md + artifacts/r006-*.json/txt.
+Upstream invariant: macOS system tccd endpoint absent in chroot.
+Cleaned: detach ok, 14 bp disabled, tmux killed, stack stopped,
+HI baseline ok, zero orphans.  Input still 1002 — not accepted.
+Git writes pending release.

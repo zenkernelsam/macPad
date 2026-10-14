@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T02:00:13.269046+08:00",
+  "finished": "2026-10-15T02:00:13.757935+08:00",
+  "command": "ls /var/mnt/rootfs/System/Library/LaunchDaemons/ | grep -i tcc; for p in /var/mnt/rootfs/System/Library/LaunchDaemons/com.apple.tccd*.plist; do echo \"== $p\"; /usr/libexec/PlistBuddy -c 'Print :Label' -c 'Print :MachServices' $p 2>/dev/null; done; echo '=== chroot launchd jobs ==='; /var/jb/usr/macOS/bin/launchdchrootexec 0 0 /var/mnt/rootfs /bin/launchctl print system 2>/dev/null | grep -i tcc; ps -axo pid,comm | grep -i 'TCC.framework' | grep -v grep",
+  "command_sha256": "bef4aacaeaa0ece8b6ac3161c625dc189c77da5596c9e637de28f937208b3ec2",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "com.apple.tccd.system.plist\n== /var/mnt/rootfs/System/Library/LaunchDaemons/com.apple.tccd.system.plist\n=== chroot launchd jobs ===\n23321 /System/Library/PrivateFrameworks/TCC.framework/Support/tccd\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

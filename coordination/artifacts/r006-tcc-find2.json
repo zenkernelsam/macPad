@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T01:43:04.965149+08:00",
+  "finished": "2026-10-15T01:43:05.702871+08:00",
+  "command": "find /var/mnt/rootfs/System/Library/PrivateFrameworks/TCC.framework/Versions -type f -o -type l 2>/dev/null | head -20; ls -la /var/mnt/rootfs/System/Library/PrivateFrameworks/TCC.framework/Versions/ /var/mnt/rootfs/System/Library/PrivateFrameworks/TCC.framework/Versions/A/ 2>/dev/null | head -20",
+  "command_sha256": "fda89f6a7f051c56315f9fb63dfccaca641e49fb3817171df2775f995a0a48b1",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "/var/mnt/rootfs/System/Library/PrivateFrameworks/TCC.framework/Versions/Current\n/var/mnt/rootfs/System/Library/PrivateFrameworks/TCC.framework/Versions/A/Resources/Localizable.loctable\n/var/mnt/rootfs/System/Library/PrivateFrameworks/TCC.framework/Versions/A/Resources/TCCMigration.bundle/Contents/Info.plist\n/var/mnt/rootfs/System/Library/PrivateFrameworks/TCC.framework/Versions/A/Resources/TCCMigration.bundle/Contents/MacOS/TCCMigration\n/var/mnt/rootfs/System/Library/PrivateFrameworks/TCC.framework/Versions/A/Resources/TCCMigration.bundle/Contents/version.plist\n/var/mnt/rootfs/System/Library/PrivateFrameworks/TCC.framework/Versions/A/Resources/Info.plist\n/var/mnt/rootfs/System/Library/PrivateFrameworks/TCC.framework/Versions/A/Resources/version.plist\n/var/mnt/rootfs/System/Library/PrivateFrameworks/TCC.framework/Versions/:\ntotal 0\ndrwxr-xr-x 4 root wheel 128 Oct  6 21:40 .\ndrwxr-xr-x 6 root wheel 192 Oct  6 21:40 ..\ndrwxr-xr-x 4 root wheel 128 Oct  6 21:40 A\nlrwxrwxrwx 1 root wheel   1 Jun 15  2023 Current -> A\n\n/var/mnt/rootfs/System/Library/PrivateFrameworks/TCC.framework/Versions/A/:\ntotal 0\ndrwxr-xr-x  4 root wheel  128 Oct  6 21:40 .\ndrwxr-xr-x  4 root wheel  128 Oct  6 21:40 ..\ndrwxr-xr-x 45 root wheel 1440 Jun 15  2023 Resources\ndrwxr-xr-x  2 root wheel   64 Jun 15  2023 _CodeSignature\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

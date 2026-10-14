@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T01:59:59.845850+08:00",
+  "finished": "2026-10-15T02:00:00.410147+08:00",
+  "command": "echo '=== iOS side ==='; ps -axo pid,comm | grep -i tccd | grep -v grep; launchctl print system/com.apple.tccd 2>&1 | head -8; echo '=== chroot launchd tccd ==='; /var/jb/usr/macOS/bin/launchdchrootexec 0 0 /var/mnt/rootfs /bin/launchctl print system/com.apple.tccd 2>&1 | head -8; /var/jb/usr/macOS/bin/launchdchrootexec 0 0 /var/mnt/rootfs /bin/launchctl print system/com.apple.tccd.system 2>&1 | head -8",
+  "command_sha256": "441bb2adf1a06c26688b8bdaf5e87536e2a634cc1ca9ba90d8c3ae3858f95cd5",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "=== iOS side ===\n23321 /System/Library/PrivateFrameworks/TCC.framework/Support/tccd\nWarning: Please switch to user/foreground/com.apple.tccd service identifier\nuser/501/com.apple.tccd = {\n\tactive count = 5\n\tpath = /System/Library/LaunchDaemons/com.apple.tccd.plist\n\ttype = LaunchDaemon\n\tstate = running\n\n\tprogram = /System/Library/PrivateFrameworks/TCC.framework/Support/tccd\n=== chroot launchd tccd ===\nchdir: No such file or directory\n[launchdchrootexec] target=/bin/launchctl arch=arm64e insert=/usr/local/lib/libmachook.dylib\n#### MACWS-CTOR-CANARY InitStuff entered\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nchdir: No such file or directory\n[launchdchrootexec] target=/bin/launchctl arch=arm64e insert=/usr/local/lib/libmachook.dylib\n#### MACWS-CTOR-CANARY InitStuff entered\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T01:42:59.854289+08:00",
+  "finished": "2026-10-15T01:43:00.503682+08:00",
+  "command": "ls -l /var/mnt/rootfs/System/Library/PrivateFrameworks/TCC.framework/ 2>&1 | head; find /var/mnt/rootfs/System/Library/PrivateFrameworks/TCC.framework -name 'TCC*' 2>/dev/null | head",
+  "command_sha256": "7e1532648e9033250fe2d6eb2f3bede9915c0d746e2e7ac0cc0d902031fdf82d",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "total 0\nlrwxrwxrwx 1 root wheel  26 Jun 15  2023 Resources -> Versions/Current/Resources\ndrwxr-xr-x 3 root wheel  96 Jun 15  2023 Support\nlrwxrwxrwx 1 root wheel  20 Jun 15  2023 TCC -> Versions/Current/TCC\ndrwxr-xr-x 4 root wheel 128 Oct  6 21:40 Versions\n/var/mnt/rootfs/System/Library/PrivateFrameworks/TCC.framework\n/var/mnt/rootfs/System/Library/PrivateFrameworks/TCC.framework/Versions/A/Resources/TCCMigration.bundle\n/var/mnt/rootfs/System/Library/PrivateFrameworks/TCC.framework/Versions/A/Resources/TCCMigration.bundle/Contents/MacOS/TCCMigration\n/var/mnt/rootfs/System/Library/PrivateFrameworks/TCC.framework/TCC\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

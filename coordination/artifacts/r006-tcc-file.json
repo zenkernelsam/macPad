@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T01:42:51.770748+08:00",
+  "finished": "2026-10-15T01:42:52.413500+08:00",
+  "command": "ls -l /var/mnt/rootfs/System/Library/PrivateFrameworks/TCC.framework/TCC 2>/dev/null; /var/jb/usr/bin/chroot /var/mnt/rootfs /usr/bin/openssl dgst -sha256 /System/Library/PrivateFrameworks/TCC.framework/TCC 2>/dev/null | tail -1",
+  "command_sha256": "7059ef61d1e350cb509fd7568dac588e1a12f1ccf4eb13dde69d47118fca00ba",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "lrwxrwxrwx 1 root wheel 20 Jun 15  2023 /var/mnt/rootfs/System/Library/PrivateFrameworks/TCC.framework/TCC -> Versions/Current/TCC\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

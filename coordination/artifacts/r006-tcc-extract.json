@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T01:45:21.001930+08:00",
+  "finished": "2026-10-15T01:45:21.619302+08:00",
+  "command": "find /tmp/dscout_ventura -path '*TCC.framework*' -type f | head; T=/tmp/dscout_ventura/System/Library/PrivateFrameworks/TCC.framework/Versions/A/TCC; ls -l $T; /var/jb/usr/bin/chroot /var/mnt/rootfs /usr/bin/openssl dgst -sha256 -r $T 2>/dev/null || /var/jb/usr/bin/python3 -c \"import hashlib;print(hashlib.sha256(open('$T','rb').read()).hexdigest())\"; cp $T /tmp/TCC_22F82 && /var/jb/usr/bin/python3 -c \"import hashlib;print('staged:',hashlib.sha256(open('/tmp/TCC_22F82','rb').read()).hexdigest())\"",
+  "command_sha256": "19c15ca96acce991282173cde0af4a312f9123df66a20c847712a53a13bbd252",
+  "exit": 1,
+  "timeout": false,
+  "stdout": "09b841378285a120a04b1c8718dd5c7e3b98b4e59849eea0d8767f845d02f2de */tmp/dscout_ventura/System/Library/PrivateFrameworks/TCC.framework/Versions/A/TCC\n",
+  "stderr": "find: ‘/tmp/dscout_ventura’: No such file or directory\nls: cannot access '/tmp/dscout_ventura/System/Library/PrivateFrameworks/TCC.framework/Versions/A/TCC': No such file or directory\ncp: cannot stat '/tmp/dscout_ventura/System/Library/PrivateFrameworks/TCC.framework/Versions/A/TCC': No such file or directory\n",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

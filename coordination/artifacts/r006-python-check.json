@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T01:44:01.898884+08:00",
+  "finished": "2026-10-15T01:44:02.404669+08:00",
+  "command": "ls /var/jb/usr/bin/python* 2>/dev/null; /var/jb/usr/bin/python3 --version 2>/dev/null; df -h /var/mnt/rootfs /var/jb 2>/dev/null | tail -3",
+  "command_sha256": "1d2eebb7b6adb2c5a681d6bdf0f228c8c57a2640329dbb679c30a9fc65d8312f",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "/var/jb/usr/bin/python\n/var/jb/usr/bin/python3\n/var/jb/usr/bin/python3-config\n/var/jb/usr/bin/python3.9\n/var/jb/usr/bin/python3.9-config\nPython 3.9.9\nFilesystem                                                                                                                                                     Size   Used  Avail Capacity iused       ifree %iused  Mounted on\n/dev/disk1s2                                                                                                                                                  1.8Ti  813Gi  1.0Ti    44% 1754561 10923940040    0%   /private/var\n/dev/disk1s6                                                                                                                                                  1.8Ti  4.1Gi  1.0Ti     1%   15867 10923940040    0%   /private/preboot\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

@@ -1,0 +1,1517 @@
+(lldb) command source -s 0 '/tmp/r006_lldb_cmds.txt'
+Executing commands in '/tmp/r006_lldb_cmds.txt'.
+(lldb) process attach -p 61460
+warning: libobjc.A.dylib is being read from process memory. This indicates that LLDB could not read from the host's in-memory shared cache. This will likely reduce debugging performance.
+
+Process 61460 stopped
+* thread #1, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = signal SIGSTOP
+    frame #0: 0x00000001927b4834 libsystem_kernel.dylib`poll + 8
+libsystem_kernel.dylib`poll:
+->  0x1927b4834 <+8>:  b.lo   0x1927b4854               ; <+40>
+    0x1927b4838 <+12>: pacibsp 
+    0x1927b483c <+16>: stp    x29, x30, [sp, #-0x10]!
+    0x1927b4840 <+20>: mov    x29, sp
+Target 0: (WindowServer) stopped.
+Executable module set to "/System/Library/PrivateFrameworks/SkyLight.framework/Versions/A/Resources/WindowServer".
+Architecture set to: arm64-apple-ios-.
+(lldb) image list
+[  0] 2237410F-D39C-30CE-9A94-13AACB66B766 0x000000019248e000 /usr/lib/dyld (0x000000019248e000)
+[  1] 465422C7-3CFC-3E9F-9C04-813F3A265AA6 0x000000010493c000 /System/Library/PrivateFrameworks/SkyLight.framework/Versions/A/Resources/WindowServer (0x000000010493c000)
+[  2] C9C6764F-12D3-3864-AD94-A3A0C908D0B1 0x0000000104c3c000 /usr/local/lib/libmachook_arm64.dylib (0x0000000104c3c000)
+[  3] 96676A53-B1E0-3D7E-B98B-B73873CD1880 0x00000001974d1000 /System/Library/PrivateFrameworks/SkyLight.framework/Versions/A/SkyLight (0x00000001974d1000)
+[  4] AAF3F8D3-CAF8-331B-9268-4E5A50B85247 0x0000000198b86000 /System/Library/PrivateFrameworks/RunningBoardServices.framework/Versions/A/RunningBoardServices (0x0000000198b86000)
+[  5] 47EC7C0A-9667-375E-BB9F-04028D6D518E 0x0000000197434000 /usr/lib/libMobileGestalt.dylib (0x0000000197434000)
+[  6] EFF13F2D-1DFC-3BB5-AAA3-1701BB07FD4B 0x00000001ab569000 /System/Library/PrivateFrameworks/IOSurfaceAccelerator.framework/Versions/A/IOSurfaceAccelerator (0x00000001ab569000)
+[  7] 26D9D5E9-E9BB-327E-9ECC-3341A164BFD7 0x00000001a04a7000 /System/Library/PrivateFrameworks/WatchdogClient.framework/Versions/A/WatchdogClient (0x00000001a04a7000)
+[  8] 56834D23-1BFF-310F-89FB-622D1F16A1BF 0x000000019e176000 /usr/lib/libSystem.B.dylib (0x000000019e176000)
+[  9] 5F4D482C-9AE0-39BE-B4F2-14E6FB91A396 0x000000019e412000 /usr/lib/libcompression.dylib (0x000000019e412000)
+[ 10] D18937A2-3F28-328F-BCEB-9B6F0C750EB7 0x000000019991c000 /usr/lib/libDiagnosticMessagesClient.dylib (0x000000019991c000)
+[ 11] D5337CC6-A075-3CA0-B5BF-B49DA8878337 0x00000001937e5000 /System/Library/Frameworks/Foundation.framework/Versions/C/Foundation (0x00000001937e5000)
+[ 12] 203E4401-8C2E-3157-A24B-92F52551D43E 0x000000019284b000 /System/Library/Frameworks/CoreFoundation.framework/Versions/A/CoreFoundation (0x000000019284b000)
+[ 13] CEBC104B-395E-3A6E-B588-CB44BF2B907E 0x00000001934b2000 /System/Library/Frameworks/SystemConfiguration.framework/Versions/A/SystemConfiguration (0x00000001934b2000)
+[ 14] 56DB5D71-E187-36CD-B890-FA9FC308642B 0x00000001a57bf000 /System/Library/Frameworks/Accelerate.framework/Versions/A/Accelerate (0x00000001a57bf000)
+[ 15] C10A5C6A-B4A3-3457-89A6-081585D72C7E 0x00000001a550e000 /System/Library/Frameworks/CoreServices.framework/Versions/A/CoreServices (0x00000001a550e000)
+[ 16] D2BEF1C5-2028-369B-BF5F-C7E0C962662B 0x0000000194327000 /System/Library/Frameworks/CoreDisplay.framework/Versions/A/CoreDisplay (0x0000000194327000)
+[ 17] FDC3C9F5-51DB-3AC8-81DA-CC9E19958B29 0x00000001978fd000 /System/Library/Frameworks/CoreGraphics.framework/Versions/A/CoreGraphics (0x00000001978fd000)
+[ 18] 7AC531B7-05F5-38FE-92E5-DA6D86D22A14 0x000000019d40e000 /System/Library/PrivateFrameworks/IOMobileFramebuffer.framework/Versions/A/IOMobileFramebuffer (0x000000019d40e000)
+[ 19] 7A87E668-9ED8-3B36-8ED3-23305CB791C0 0x000000019be46000 /System/Library/Frameworks/CoreMedia.framework/Versions/A/CoreMedia (0x000000019be46000)
+[ 20] 0A7853CE-21E3-33F9-9940-D9B0F7BD9A4A 0x000000019bc2a000 /System/Library/PrivateFrameworks/IOAccelerator.framework/Versions/A/IOAccelerator (0x000000019bc2a000)
+[ 21] 5299A9D2-E26E-3368-AD3A-A0A1ECCC0310 0x0000000195971000 /System/Library/Frameworks/IOKit.framework/Versions/A/IOKit (0x0000000195971000)
+[ 22] 2B44B850-7D19-34F3-AB8E-A3B93016A96D 0x000000019bc12000 /System/Library/Frameworks/IOSurface.framework/Versions/A/IOSurface (0x000000019bc12000)
+[ 23] 2BAB169C-42DA-36E3-955A-F30B709EC2AD 0x000000019bc34000 /System/Library/Frameworks/Metal.framework/Versions/A/Metal (0x000000019bc34000)
+[ 24] 23A7C243-4552-3F81-B4F7-B9723EE40A45 0x000000019a575000 /System/Library/Frameworks/CoreVideo.framework/Versions/A/CoreVideo (0x000000019a575000)
+[ 25] 3666089A-6A28-381B-A69C-98E10867598B 0x000000019e40a000 /System/Library/Frameworks/MetalPerformanceShaders.framework/Versions/A/MetalPerformanceShaders (0x000000019e40a000)
+[ 26] 83D12FA6-0922-3461-9CBC-9B705828B846 0x00000001a04ab000 /System/Library/PrivateFrameworks/MultitouchSupport.framework/Versions/A/MultitouchSupport (0x00000001a04ab000)
+[ 27] EACF1749-882E-30E2-9965-D8AFAE0C7127 0x0000000194f7c000 /System/Library/Frameworks/Security.framework/Versions/A/Security (0x0000000194f7c000)
+[ 28] CF853BBD-01B6-3F46-ADA1-EC70FD2DC9DC 0x0000000199daa000 /System/Library/Frameworks/QuartzCore.framework/Versions/A/QuartzCore (0x0000000199daa000)
+[ 29] E0D4F1CD-2193-38F1-9049-E4A5D5558D3A 0x000000019d732000 /usr/lib/libbsm.0.dylib (0x000000019d732000)
+[ 30] 967060A4-534B-3795-B350-B7C1B6254A53 0x000000019e17c000 /System/Library/PrivateFrameworks/SoftLinking.framework/Versions/A/SoftLinking (0x000000019e17c000)
+[ 31] 80F58A75-B306-353B-BF77-1382A792D3E7 0x000000019e0bc000 /usr/lib/libz.1.dylib (0x000000019e0bc000)
+[ 32] 9B506B48-201C-3617-B175-F4FF5CCD0F29 0x00000001998ee000 /System/Library/PrivateFrameworks/CoreAnalytics.framework/Versions/A/CoreAnalytics (0x00000001998ee000)
+[ 33] B060C5C6-0C27-30E7-A378-A79C1F9D73EA 0x00000001a04e8000 /System/Library/Frameworks/VideoToolbox.framework/Versions/A/VideoToolbox (0x00000001a04e8000)
+[ 34] 5BEAFA2B-3AF4-3ED2-B054-1F58A7C851EF 0x0000000192448000 /usr/lib/libobjc.A.dylib (0x0000000192448000)
+[ 35] 54E8FBE1-DF0D-33A2-B8FA-356565C12929 0x0000000192702000 /usr/lib/libc++.1.dylib (0x0000000192702000)
+[ 36] F90AF017-14E4-3342-B9CA-6C08072405DC 0x0000000198ac3000 /System/Library/PrivateFrameworks/BaseBoard.framework/Versions/A/BaseBoard (0x0000000198ac3000)
+[ 37] 0E79CB17-3EA4-33F7-8589-DA01432AFDE4 0x0000000197055000 /System/Library/Frameworks/CFNetwork.framework/Versions/A/CFNetwork (0x0000000197055000)
+[ 38] B44C0B34-8C7B-31F9-AF20-6FDF4B2E85CB 0x000000019a404000 /System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/FSEvents.framework/Versions/A/FSEvents (0x000000019a404000)
+[ 39] 5890DA87-2C6B-3798-9F72-D90D8716739A 0x00000001955ed000 /System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/CarbonCore.framework/Versions/A/CarbonCore (0x00000001955ed000)
+[ 40] 28095504-F2C8-3B94-A13E-DD7976B28EFA 0x0000000199960000 /System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/Metadata.framework/Versions/A/Metadata (0x0000000199960000)
+[ 41] D072219B-86C7-34B3-8813-74CE741CFF73 0x000000019de00000 /System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/OSServices.framework/Versions/A/OSServices (0x000000019de00000)
+[ 42] 76F7D8FD-A9B2-353E-A1C2-81DFC1429B17 0x000000019e33e000 /System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/SearchKit.framework/Versions/A/SearchKit (0x000000019e33e000)
+[ 43] 5CDA7016-E781-3E53-961C-4978B61C2DF1 0x0000000198be5000 /System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/AE.framework/Versions/A/AE (0x0000000198be5000)
+[ 44] 556590F5-8FED-36A6-830B-EA49BD95B1FE 0x0000000192d25000 /System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/LaunchServices.framework/Versions/A/LaunchServices (0x0000000192d25000)
+[ 45] 7A18189D-E039-3A2A-9251-821AA96A7265 0x000000019f607000 /System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/DictionaryServices.framework/Versions/A/DictionaryServices (0x000000019f607000)
+[ 46] DDAD0141-3797-3195-B0F1-8CE28609A7C5 0x000000019a411000 /System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/SharedFileList.framework/Versions/A/SharedFileList (0x000000019a411000)
+[ 47] 71BA43A4-8EA5-34EA-AAB9-A5F4F0538E09 0x000000019e3dc000 /usr/lib/libapple_nghttp2.dylib (0x000000019e3dc000)
+[ 48] ECD01450-C5B1-3E4E-973B-C3D9C66582AF 0x000000019532e000 /usr/lib/libicucore.A.dylib (0x000000019532e000)
+[ 49] 05EAE86F-3A19-3B84-B389-B528453863E5 0x0000000197051000 /usr/lib/libnetwork.dylib (0x0000000197051000)
+[ 50] 710E4989-2656-3774-8114-0C2936A8FC33 0x0000000198894000 /usr/lib/libsqlite3.dylib (0x0000000198894000)
+[ 51] F62B9AAC-1492-3A32-A6BF-77F8C26A0262 0x0000000198c6c000 /System/Library/Frameworks/Network.framework/Versions/A/Network (0x0000000198c6c000)
+[ 52] DC429505-F838-3D6D-9B03-5A826EFE86A4 0x00000001958f5000 /System/Library/PrivateFrameworks/CoreServicesInternal.framework/Versions/A/CoreServicesInternal (0x00000001958f5000)
+[ 53] FB664621-26AE-3F46-8F5A-DD5D890A5CE7 0x000000021f0b9000 /usr/lib/liboah.dylib (0x000000019e145000)
+[ 54] 6B73638E-12CE-3F14-8013-7E2A4FB15038 0x000000019e178000 /usr/lib/libfakelink.dylib (0x000000019e178000)
+[ 55] 52AA13E2-567C-36C2-9494-7B892FDBF245 0x000000019278f000 /usr/lib/libc++abi.dylib (0x000000019278f000)
+[ 56] FEA038BA-CC59-3085-93B0-AB8437AA6CE2 0x000000019e170000 /usr/lib/system/libcache.dylib (0x000000019e170000)
+[ 57] 34AC4B05-E145-3C58-8C24-1190770EAB31 0x000000019e12c000 /usr/lib/system/libcommonCrypto.dylib (0x000000019e12c000)
+[ 58] 1D6552C4-49C4-374F-8371-198BCFC4174D 0x000000019e157000 /usr/lib/system/libcompiler_rt.dylib (0x000000019e157000)
+[ 59] E61C2838-9EA2-33CE-B96B-85FF38DB7744 0x000000019e14d000 /usr/lib/system/libcopyfile.dylib (0x000000019e14d000)
+[ 60] 4A9F9101-A1B1-3FB7-89EA-746CFCE95099 0x0000000192581000 /usr/lib/system/libcorecrypto.dylib (0x0000000192581000)
+[ 61] C2FD3094-B465-39A4-B774-16583FF53C4B 0x0000000192638000 /usr/lib/system/libdispatch.dylib (0x0000000192638000)
+[ 62] A2947B47-B494-36D4-96C6-95977FFB51FB 0x00000001927f2000 /usr/lib/system/libdyld.dylib (0x00000001927f2000)
+[ 63] C4512BA5-7CA3-30AE-9793-5CC5417F0FC3 0x000000019e166000 /usr/lib/system/libkeymgr.dylib (0x000000019e166000)
+[ 64] 91A88FDF-FD27-32AF-A2CE-70F7E4065C3B 0x000000019e106000 /usr/lib/system/libmacho.dylib (0x000000019e106000)
+[ 65] A2D17FF6-CBC6-3D19-89E1-F5E57191E8A3 0x000000019d70b000 /usr/lib/system/libquarantine.dylib (0x000000019d70b000)
+[ 66] 2213EE66-253B-3234-AA4D-B46F07C3540E 0x000000019e163000 /usr/lib/system/libremovefile.dylib (0x000000019e163000)
+[ 67] 68D76774-F8B4-36EA-AA35-0AB4044D56C7 0x000000019749b000 /usr/lib/system/libsystem_asl.dylib (0x000000019749b000)
+[ 68] 5541DF62-A795-3F57-A54C-1AEC4DD3E44C 0x000000019251d000 /usr/lib/system/libsystem_blocks.dylib (0x000000019251d000)
+[ 69] 95A70E20-1DF3-3DDF-900C-315ED0B2C067 0x0000000192683000 /usr/lib/system/libsystem_c.dylib (0x0000000192683000)
+[ 70] BEB9DE52-6F49-370A-B45B-CBE6780E7083 0x000000019e15b000 /usr/lib/system/libsystem_collections.dylib (0x000000019e15b000)
+[ 71] 121F8B4D-3939-300D-BE22-979D6B476361 0x000000019cb4a000 /usr/lib/system/libsystem_configuration.dylib (0x000000019cb4a000)
+[ 72] 7CE9526A-B673-363A-8905-71D080974C0E 0x000000019bbe0000 /usr/lib/system/libsystem_containermanager.dylib (0x000000019bbe0000)
+[ 73] 54BF691A-0908-3548-95F2-34CFD58E5617 0x000000019ddfa000 /usr/lib/system/libsystem_coreservices.dylib (0x000000019ddfa000)
+[ 74] 579733C7-851D-3B3E-83B5-FD203BA50D02 0x00000001955e2000 /usr/lib/system/libsystem_darwin.dylib (0x00000001955e2000)
+[ 75] 4EFF0147-928F-3321-8268-655FE71DC209 0x000000019e167000 /usr/lib/system/libsystem_dnssd.dylib (0x000000019e167000)
+[ 76] 5068382F-DC0F-3824-8ED5-18A24B35FEF9 0x0000000192680000 /usr/lib/system/libsystem_featureflags.dylib (0x0000000192680000)
+[ 77] 4448FB99-7B1D-3E15-B7EE-3340FF0DA88D 0x000000019281e000 /usr/lib/system/libsystem_info.dylib (0x000000019281e000)
+[ 78] 82E529F5-C4DF-3D42-9113-3A4F87FEF1A0 0x000000019e0ce000 /usr/lib/system/libsystem_m.dylib (0x000000019e0ce000)
+[ 79] 0AC99C6E-CB01-30E5-AB10-65AB990652A5 0x000000019260c000 /usr/lib/system/libsystem_malloc.dylib (0x000000019260c000)
+[ 80] 3B2CC4A9-A5EE-3627-8293-4AF4D891074E 0x0000000197419000 /usr/lib/system/libsystem_networkextension.dylib (0x0000000197419000)
+[ 81] E4AA6E5F-2501-3382-BFB3-64464E6D8254 0x0000000195a4c000 /usr/lib/system/libsystem_notify.dylib (0x0000000195a4c000)
+[ 82] 99FDEFF2-36F1-3436-B8B2-DE0003B5A4BF 0x000000019cb4f000 /usr/lib/system/libsystem_sandbox.dylib (0x000000019cb4f000)
+[ 83] E529D1AC-D20A-3308-9033-E1712A9C655E 0x000000019e160000 /usr/lib/system/libsystem_secinit.dylib (0x000000019e160000)
+[ 84] 34A49B54-82B2-37A1-9314-F6A4A2BB3FF8 0x00000001927ab000 /usr/lib/system/libsystem_kernel.dylib (0x00000001927ab000)
+[ 85] F80C6971-C080-31F5-AB6E-BE01311154AF 0x0000000192817000 /usr/lib/system/libsystem_platform.dylib (0x0000000192817000)
+[ 86] 46D35233-A051-3F4F-BBA4-BA56DDDC4D1A 0x00000001927e5000 /usr/lib/system/libsystem_pthread.dylib (0x00000001927e5000)
+[ 87] F9F1F4BE-D97F-37A7-8382-552C22DF1BB4 0x0000000198c63000 /usr/lib/system/libsystem_symptoms.dylib (0x0000000198c63000)
+[ 88] 3F3E75B7-F0A7-30BB-9FD7-FD1307FE6055 0x0000000192566000 /usr/lib/system/libsystem_trace.dylib (0x0000000192566000)
+[ 89] E3BF7A76-2CBE-3DB9-8496-8BB6DBBE0CFC 0x000000019e13a000 /usr/lib/system/libunwind.dylib (0x000000019e13a000)
+[ 90] F3F19227-FF8F-389C-A094-6F4C16E458AF 0x0000000192522000 /usr/lib/system/libxpc.dylib (0x0000000192522000)
+[ 91] CFB7A795-FC64-3585-BEC5-482F44C873E4 0x0000000197432000 /usr/lib/libenergytrace.dylib (0x0000000197432000)
+[ 92] F111EBE9-5F2C-399B-884F-0F2E911F6FEC 0x000000019e10c000 /usr/lib/system/libkxld.dylib (0x000000019e10c000)
+[ 93] 751353A3-EABC-3B52-B450-CF57A8D18C46 0x000000021ef37000 /usr/lib/libCoreEntitlements.dylib (0x000000021ef37000)
+[ 94] 800749B8-32C8-3B55-A949-11AF54B4A897 0x000000020aeee000 /System/Library/PrivateFrameworks/MessageSecurity.framework/Versions/A/MessageSecurity (0x000000020aeee000)
+[ 95] E864483F-DC34-3E95-A004-F8CA0BB17AB3 0x000000019887a000 /System/Library/PrivateFrameworks/ProtocolBuffer.framework/Versions/A/ProtocolBuffer (0x000000019887a000)
+[ 96] 35EAC215-5E89-3E4D-950C-12AA9431E050 0x000000019dd28000 /System/Library/PrivateFrameworks/AppleFSCompression.framework/Versions/A/AppleFSCompression (0x000000019dd28000)
+[ 97] 6F05EEBE-D184-3328-95EA-2875FBF41494 0x000000019d71a000 /usr/lib/libcoretls.dylib (0x000000019d71a000)
+[ 98] 39D837D9-29DE-38B1-8EF4-2E90DCF2BB38 0x000000019f677000 /usr/lib/libcoretls_cfhelpers.dylib (0x000000019f677000)
+[ 99] CD3ADB84-518E-3D61-AC4F-7FF5D2062A15 0x000000019e40c000 /usr/lib/libpam.2.dylib (0x000000019e40c000)
+[100] 093F5DAE-3AFF-35E3-8610-181D07A862E5 0x000000019f6e2000 /usr/lib/libxar.1.dylib (0x000000019f6e2000)
+[101] F1BE0781-EDDF-3599-92F5-723C88C2110C 0x000000019a442000 /System/Library/PrivateFrameworks/CoreAutoLayout.framework/Versions/A/CoreAutoLayout (0x000000019a442000)
+[102] 0270F40C-070E-35CA-8AB6-E9787D156322 0x00000001999f8000 /System/Library/Frameworks/DiskArbitration.framework/Versions/A/DiskArbitration (0x00000001999f8000)
+[103] DE2B20B1-4AA9-30E0-9F98-9508C814081F 0x000000019e2b6000 /usr/lib/libarchive.2.dylib (0x000000019e2b6000)
+[104] 68CB4305-30E2-38C3-B1DB-276947869EE7 0x000000019a48c000 /usr/lib/libxml2.2.dylib (0x000000019a48c000)
+[105] F0BA5B75-8FA1-3811-8D2E-59262915142D 0x000000019cb5b000 /usr/lib/liblangid.dylib (0x000000019cb5b000)
+[106] 647B4DF3-2E19-30F9-A4D4-D9CFFACCD880 0x00000001a3448000 /System/Library/Frameworks/Combine.framework/Versions/A/Combine (0x00000001a3448000)
+[107] 5285709C-F140-3A18-95FF-AB77B12DC473 0x00000001a14fb000 /usr/lib/swift/libswiftCore.dylib (0x00000001a14fb000)
+[108] 9836BB91-759F-341E-930C-2323DB4A7400 0x00000001b5418000 /usr/lib/swift/libswiftCoreFoundation.dylib (0x00000001b5418000)
+[109] 28572C4D-7D27-3457-A7DF-A921F03A9CEE 0x00000001b338b000 /usr/lib/swift/libswiftDarwin.dylib (0x00000001b338b000)
+[110] E504BB5B-2325-3872-BDF3-17FF4ECBB53F 0x00000001a6a59000 /usr/lib/swift/libswiftDispatch.dylib (0x00000001a6a59000)
+[111] BA9AB50B-500E-3F4E-827E-C5C463049A4D 0x00000001b5439000 /usr/lib/swift/libswiftIOKit.dylib (0x00000001b5439000)
+[112] 23EE9423-4652-3832-976F-8487C6CEDC06 0x00000001a900e000 /usr/lib/swift/libswiftObjectiveC.dylib (0x00000001a900e000)
+[113] 531D3F74-E5DC-3607-82D7-8A5FAD2DC558 0x00000001b542c000 /usr/lib/swift/libswiftXPC.dylib (0x00000001b542c000)
+[114] A60D651E-1F8B-35B9-A760-F4E4B0647F32 0x000000021fe4a000 /usr/lib/swift/libswift_Concurrency.dylib (0x000000021fe4a000)
+[115] 1BCD41D4-42FD-3F7B-953B-41F7E8ABE164 0x000000021ff98000 /usr/lib/swift/libswift_StringProcessing.dylib (0x000000021ff98000)
+[116] 0F40167B-099D-3A6C-B206-8B9001B703DE 0x00000001a9012000 /usr/lib/swift/libswiftos.dylib (0x00000001a9012000)
+[117] AE83BFA8-7E57-30A5-BCF9-AE97636D081E 0x000000019cb57000 /System/Library/PrivateFrameworks/AppleSystemInfo.framework/Versions/A/AppleSystemInfo (0x000000019cb57000)
+[118] C5324546-A0FB-3C4E-9D22-8420306E2A4D 0x000000019e17d000 /usr/lib/libpcap.A.dylib (0x000000019e17d000)
+[119] 392039AF-BE63-3655-92FA-410FA8426484 0x0000000198c59000 /usr/lib/libdns_services.dylib (0x0000000198c59000)
+[120] D0CF8623-5E85-35D2-8ABA-8A7F0002AB0A 0x000000019f65e000 /usr/lib/liblzma.5.dylib (0x000000019f65e000)
+[121] C8BCFB5B-3E58-3658-B079-0C9CA979FC98 0x000000019dded000 /usr/lib/libbz2.1.0.dylib (0x000000019dded000)
+[122] 567709E5-6109-35A8-9E7E-C31E7A3D7CB4 0x000000019e1b2000 /usr/lib/libiconv.2.dylib (0x000000019e1b2000)
+[123] CC9C48D2-201B-3DA7-B514-9CC91573C12A 0x000000019e105000 /usr/lib/libcharset.1.dylib (0x000000019e105000)
+[124] 8F897DC0-916E-3EA6-B262-36F07EE2729D 0x000000021fee8000 /usr/lib/swift/libswift_RegexParser.dylib (0x000000021fee8000)
+[125] 4173E692-98C1-3AE5-8180-6CB85553FF9B 0x000000019fab1000 /usr/lib/libheimdal-asn1.dylib (0x000000019fab1000)
+[126] 0B996757-0E56-3173-B9B9-B1542197046A 0x000000019d70e000 /usr/lib/libCheckFix.dylib (0x000000019d70e000)
+[127] 1238D7CA-719A-36A4-94B1-2F387E6B3BF1 0x00000001974b3000 /System/Library/PrivateFrameworks/TCC.framework/Versions/A/TCC (0x00000001974b3000)
+[128] 07DB6A99-E7A7-333A-B168-2E9189F0273E 0x000000019cb5d000 /System/Library/PrivateFrameworks/CoreNLP.framework/Versions/A/CoreNLP (0x000000019cb5d000)
+[129] 0B7F36BF-AFD9-38FC-AA39-090B56C0DE1B 0x000000019991e000 /System/Library/PrivateFrameworks/MetadataUtilities.framework/Versions/A/MetadataUtilities (0x000000019991e000)
+[130] 2F149984-9314-3397-9133-8CB60600A3FF 0x000000019d744000 /usr/lib/libmecab.dylib (0x000000019d744000)
+[131] B11A2474-53A7-3E6D-A864-05771AA7E609 0x000000019353c000 /usr/lib/libCRFSuite.dylib (0x000000019353c000)
+[132] 0A6097EB-20DE-31EA-AE8B-817F568FEF15 0x000000019d7a0000 /usr/lib/libgermantok.dylib (0x000000019d7a0000)
+[133] F7004859-1B05-3569-9348-8A6008C3DE2D 0x000000019e3b5000 /usr/lib/libThaiTokenizer.dylib (0x000000019e3b5000)
+[134] 1A7D6863-4320-3E32-AF39-10A49D20DC85 0x0000000199a01000 /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vImage.framework/Versions/A/vImage (0x0000000199a01000)
+[135] F5957B1E-039A-3004-8465-5E94E991DACB 0x00000001a54e5000 /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/vecLib (0x00000001a54e5000)
+[136] 6338DDBB-28CB-36D6-ACC1-EABD87B83DA9 0x000000019f728000 /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libvMisc.dylib (0x000000019f728000)
+[137] D0B58FC0-4581-3D65-A013-25C0E1EF9638 0x000000019d30d000 /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libvDSP.dylib (0x000000019d30d000)
+[138] 21906AC0-A134-3B6E-A280-3B34B5108159 0x00000001930dd000 /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libBLAS.dylib (0x00000001930dd000)
+[139] C289597C-737B-358A-ABDF-D8FAFD44103B 0x000000019e4e7000 /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libLAPACK.dylib (0x000000019e4e7000)
+[140] 4B306B37-EE56-3B18-B1D7-D5C1686C1986 0x000000019d7a3000 /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libLinearAlgebra.dylib (0x000000019d7a3000)
+[141] B1AAE316-1897-3ECB-8987-FA21BBD40EFD 0x000000019e3f7000 /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libSparseBLAS.dylib (0x000000019e3f7000)
+[142] C318A15E-2D13-367B-B5B0-65BB3114A2F1 0x000000019e4e2000 /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libQuadrature.dylib (0x000000019e4e2000)
+[143] 73DB6CA3-038A-3B12-917A-24D9E843CA75 0x000000019cc52000 /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libBNNS.dylib (0x000000019cc52000)
+[144] 7EA4D2F0-4D87-3A43-9999-FA92FD7E9695 0x000000019344a000 /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libSparse.dylib (0x000000019344a000)
+[145] 0E29645B-8970-3B56-9028-A32FE25BA3A5 0x000000020a11c000 /System/Library/PrivateFrameworks/MIL.framework/Versions/A/MIL (0x000000020a11c000)
+[146] D08A1016-6A66-3BD1-A3F3-67567D3F5D43 0x000000019a3e4000 /System/Library/Frameworks/OpenDirectory.framework/Versions/A/Frameworks/CFOpenDirectory.framework/Versions/A/CFOpenDirectory (0x000000019a3e4000)
+[147] 84D7F13A-B6B7-3AD4-B791-12A49E8EFBE6 0x000000019a3d4000 /System/Library/Frameworks/OpenDirectory.framework/Versions/A/OpenDirectory (0x000000019a3d4000)
+[148] 0C6501C8-65D4-32F6-810C-C0B83D2A2A39 0x000000019f679000 /System/Library/PrivateFrameworks/APFS.framework/Versions/A/APFS (0x000000019f679000)
+[149] F7338D13-C97A-3088-B73A-2F9110ED155D 0x000000019d649000 /System/Library/Frameworks/SecurityFoundation.framework/Versions/A/SecurityFoundation (0x000000019d649000)
+[150] 2BE0C5BF-AB2E-3262-93B8-76C37EE213CE 0x000000019f6f1000 /usr/lib/libutil.dylib (0x000000019f6f1000)
+[151] 3BFA5169-F09E-3471-972B-9077F20253CF 0x0000000208f76000 /System/Library/PrivateFrameworks/InstalledContentLibrary.framework/Versions/A/InstalledContentLibrary (0x0000000208f76000)
+[152] DC0F826F-29E8-3E40-8B5A-7838CD4A6BEF 0x0000000195934000 /System/Library/PrivateFrameworks/CoreServicesStore.framework/Versions/A/CoreServicesStore (0x0000000195934000)
+[153] 7F84860B-C9A6-3FC5-A0A1-8859597F4B70 0x000000019a43b000 /usr/lib/libapp_launch_measurement.dylib (0x000000019a43b000)
+[154] 192386A4-74DC-37B3-BE79-B505FABB4AAE 0x00000001ffcbe000 /System/Library/PrivateFrameworks/AppleMobileFileIntegrity.framework/Versions/A/AppleMobileFileIntegrity (0x00000001ffcbe000)
+[155] 6A0A6312-0EB6-3F26-944E-D5B0AFD83ABF 0x00000001b53f8000 /usr/lib/libmis.dylib (0x00000001b53f8000)
+[156] 9A738073-064B-3DC5-892B-A1C071433FD8 0x00000001c35c1000 /System/Library/PrivateFrameworks/MobileSystemServices.framework/Versions/A/MobileSystemServices (0x00000001c35c1000)
+[157] 75A1B8E0-F913-33B4-AF2D-41689C99118B 0x00000001deafa000 /System/Library/PrivateFrameworks/ConfigProfileHelper.framework/Versions/A/ConfigProfileHelper (0x00000001deafa000)
+[158] 3DE8B7BC-B0C6-3A0B-AE03-C03A9ADE6F0B 0x000000019e3b7000 /System/Library/PrivateFrameworks/AppleSauce.framework/Versions/A/AppleSauce (0x000000019e3b7000)
+[159] 17112FFD-38B7-3AE0-8BA8-712F411881B3 0x00000001941ab000 /System/Library/PrivateFrameworks/LanguageModeling.framework/Versions/A/LanguageModeling (0x00000001941ab000)
+[160] 19527623-6844-3A3B-8834-22756E61B643 0x000000019f6f5000 /usr/lib/libxslt.1.dylib (0x000000019f6f5000)
+[161] 33C650BD-34BB-3EB0-9D53-5088A9923E25 0x000000019e2a4000 /usr/lib/libcmph.dylib (0x000000019e2a4000)
+[162] 54E4C718-1890-3946-B184-20D752443718 0x000000019d3fb000 /System/Library/PrivateFrameworks/CoreEmoji.framework/Versions/A/CoreEmoji (0x000000019d3fb000)
+[163] 8FEA83FA-B740-365A-9B86-58387AB35FA0 0x000000019cc4c000 /System/Library/PrivateFrameworks/LinguisticData.framework/Versions/A/LinguisticData (0x000000019cc4c000)
+[164] E05E8F32-5625-3856-92E6-A3883ED6D471 0x0000000193402000 /System/Library/PrivateFrameworks/Lexicon.framework/Versions/A/Lexicon (0x0000000193402000)
+[165] AEA11273-BFDB-37A4-8244-9D973CCF15D9 0x000000019d6db000 /System/Library/PrivateFrameworks/BackgroundTaskManagement.framework/Versions/A/BackgroundTaskManagement (0x000000019d6db000)
+[166] E2CBFE03-3A04-37F9-99D3-E96E5D8D5666 0x000000021f0da000 /usr/lib/libTLE.dylib (0x000000021f0da000)
+[167] F474EB8C-596A-39DE-AF02-E14E2459274E 0x000000019c46c000 /System/Library/Frameworks/ImageIO.framework/Versions/A/ImageIO (0x000000019c46c000)
+[168] E72D838D-6B86-3756-8C6F-3743B45D135D 0x000000019bf6f000 /System/Library/PrivateFrameworks/FontServices.framework/libFontParser.dylib (0x000000019bf6f000)
+[169] 483DEB04-F841-3EEF-9F11-52D32721E2E1 0x00000001a005f000 /System/Library/PrivateFrameworks/FontServices.framework/libhvf.dylib (0x00000001a005f000)
+[170] 5EA31AB4-5413-38B4-BA31-F802E9A003C6 0x00000001a0370000 /System/Library/PrivateFrameworks/AppleJPEG.framework/Versions/A/AppleJPEG (0x00000001a0370000)
+[171] 17A30CCE-FF07-3D11-803C-4DF88E8A5265 0x000000019fa96000 /usr/lib/libexpat.1.dylib (0x000000019fa96000)
+[172] A2D85652-F36F-3185-93A4-8A413994404C 0x0000000197f44000 /System/Library/Frameworks/ColorSync.framework/Versions/A/ColorSync (0x0000000197f44000)
+[173] 411F2DDB-D104-3556-906D-2431EF373C28 0x00000001a0942000 /System/Library/Frameworks/ImageIO.framework/Versions/A/Resources/libPng.dylib (0x00000001a0942000)
+[174] 152A482C-B51E-3E94-B0A8-91C8FD177A78 0x00000001a096d000 /System/Library/Frameworks/ImageIO.framework/Versions/A/Resources/libTIFF.dylib (0x00000001a096d000)
+[175] DDC789C7-6BC9-3231-98F1-B847E07ABD7D 0x00000001a0a55000 /System/Library/Frameworks/ImageIO.framework/Versions/A/Resources/libGIF.dylib (0x00000001a0a55000)
+[176] 075720A6-E6B1-3172-880B-B0750121F627 0x00000001a03b6000 /System/Library/Frameworks/ImageIO.framework/Versions/A/Resources/libJP2.dylib (0x00000001a03b6000)
+[177] CC3D100A-F59B-3AB7-90D8-617B22643512 0x000000019f7a4000 /usr/lib/libate.dylib (0x000000019f7a4000)
+[178] 8B55537E-657B-3CF5-84BC-2967EB367245 0x00000001a09fa000 /System/Library/Frameworks/ImageIO.framework/Versions/A/Resources/libJPEG.dylib (0x00000001a09fa000)
+[179] 3B154AEA-01FA-3517-B595-CAF88E2B0656 0x00000001a09f1000 /System/Library/Frameworks/ImageIO.framework/Versions/A/Resources/libRadiance.dylib (0x00000001a09f1000)
+[180] 9088F5DF-F41E-3324-878C-7C40C5F064FD 0x00000001a09ec000 /System/Library/PrivateFrameworks/GPUWrangler.framework/Versions/A/GPUWrangler (0x00000001a09ec000)
+[181] FDE4E3A0-490C-3462-823A-C9455D43367B 0x00000001a09cc000 /System/Library/PrivateFrameworks/IOPresentment.framework/Versions/A/IOPresentment (0x00000001a09cc000)
+[182] 1CD33E61-B20E-37D0-BF4C-9C313440900F 0x00000001a09f4000 /System/Library/PrivateFrameworks/DSExternalDisplay.framework/Versions/A/DSExternalDisplay (0x00000001a09f4000)
+[183] 78E06653-715E-36E1-A49A-C9104A0A1032 0x00000002055b5000 /System/Library/PrivateFrameworks/GPUCompiler.framework/Versions/31001/Libraries/libllvm-flatbuffers.dylib (0x00000002055b5000)
+[184] 75A8B838-5345-3BC0-B200-E32FB8BC8554 0x00000001f732f000 /System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libCoreFSCache.dylib (0x00000001f732f000)
+[185] 10F90176-A9F4-3536-9248-2AB007A04970 0x00000002055b1000 /System/Library/PrivateFrameworks/GPUCompiler.framework/Versions/31001/Libraries/libGPUCompilerUtils.dylib (0x00000002055b1000)
+[186] 71DE8CFA-A377-3B68-8EF8-D197197DFC00 0x00000001a0a5b000 /System/Library/PrivateFrameworks/CMCaptureCore.framework/Versions/A/CMCaptureCore (0x00000001a0a5b000)
+[187] A4A8EC55-1A9A-394D-9C23-089BB025E2AE 0x00000001a006a000 /usr/lib/libspindump.dylib (0x00000001a006a000)
+[188] 4C6D842E-31F6-30CA-984E-6281D387FE72 0x00000001948e8000 /System/Library/Frameworks/CoreAudio.framework/Versions/A/CoreAudio (0x00000001948e8000)
+[189] 740D9B87-0CC4-38DA-8C8F-23F866BA0A00 0x00000001f9cbd000 /System/Library/Frameworks/ExtensionFoundation.framework/Versions/A/ExtensionFoundation (0x00000001f9cbd000)
+[190] E2377CCA-A763-3AD9-964E-F7FCC6C1B8BC 0x00000001a7214000 /System/Library/PrivateFrameworks/CoreTime.framework/Versions/A/CoreTime (0x00000001a7214000)
+[191] 63AF4E94-1463-30AC-90BC-EA13FB2B8F56 0x00000001a0055000 /System/Library/PrivateFrameworks/AppServerSupport.framework/Versions/A/AppServerSupport (0x00000001a0055000)
+[192] 9E89D0BC-6941-39BD-A400-987EE4AF7288 0x00000001a2400000 /System/Library/PrivateFrameworks/perfdata.framework/Versions/A/perfdata (0x00000001a2400000)
+[193] B130545C-372F-3AC3-873D-7C4036801345 0x0000000194447000 /System/Library/PrivateFrameworks/AudioToolboxCore.framework/Versions/A/AudioToolboxCore (0x0000000194447000)
+[194] D793971D-25BE-323D-83A4-CC72FADAFE8D 0x000000019be1d000 /System/Library/PrivateFrameworks/caulk.framework/Versions/A/caulk (0x000000019be1d000)
+[195] 47357360-75D2-37ED-BEB3-4F7DC8D17755 0x00000001a1cb7000 /usr/lib/libAudioStatistics.dylib (0x00000001a1cb7000)
+[196] B7C0C806-ACCA-3C98-94D4-C6E8283FACDC 0x00000001b483a000 /System/Library/PrivateFrameworks/SystemPolicy.framework/Versions/A/SystemPolicy (0x00000001b483a000)
+[197] F6CC5D1E-7EE4-31E1-96AA-C7F6B89E5B98 0x00000001a1f57000 /usr/lib/libSMC.dylib (0x00000001a1f57000)
+[198] 73C9204E-07EF-3E4D-8401-3516BFC38586 0x00000001aac87000 /System/Library/Frameworks/CoreMIDI.framework/Versions/A/CoreMIDI (0x00000001aac87000)
+[199] 6D8A1FFD-3BD6-3050-8D96-CDFE68EB973C 0x00000001a090f000 /usr/lib/libAudioToolboxUtility.dylib (0x00000001a090f000)
+[200] A4BDFF57-307A-38D3-A7B6-BC9F9C944AA0 0x00000001b04ba000 /System/Library/PrivateFrameworks/OSAServicesClient.framework/Versions/A/OSAServicesClient (0x00000001b04ba000)
+[201] 084992D4-46BD-362E-9B53-15CFE3CB153F 0x00000001a240e000 /usr/lib/libperfcheck.dylib (0x00000001a240e000)
+[202] 6722746E-C383-35A7-84AA-F035AE585DAF 0x000000019f981000 /System/Library/PrivateFrameworks/PlugInKit.framework/Versions/A/PlugInKit (0x000000019f981000)
+[203] 59764C2E-46C0-30FB-B077-1861BCF6A13A 0x000000019d63b000 /System/Library/PrivateFrameworks/AssertionServices.framework/Versions/A/AssertionServices (0x000000019d63b000)
+[204] B37B4068-1E62-30D0-AF3E-DD1A3C1AC2CB 0x00000001f733c000 /System/Library/Frameworks/OpenGL.framework/Versions/A/OpenGL (0x00000001f733c000)
+[205] 4C7DD63C-6B9E-3F8F-9F2F-7D1949DD94C0 0x00000001f7391000 /System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGLU.dylib (0x00000001f7391000)
+[206] B6E4D423-0EEF-3DFD-AFC5-4E4EE680D52B 0x00000001f7350000 /System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGFXShared.dylib (0x00000001f7350000)
+[207] 29942D11-A1DC-33A3-8F20-B57ABA0D925D 0x00000001f752b000 /System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib (0x00000001f752b000)
+[208] 333E34E8-D0AD-3BA8-859F-C9E49E2B3BF3 0x00000001f7359000 /System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGLImage.dylib (0x00000001f7359000)
+[209] F79C4C41-AA2F-39A1-8719-642DD101BE22 0x00000001f734d000 /System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libCVMSPluginSupport.dylib (0x00000001f734d000)
+[210] D10AE90B-B0E0-3A07-B6AC-78EE8A940526 0x00000001f7336000 /System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libCoreVMClient.dylib (0x00000001f7336000)
+[211] 315E13C7-26D8-3553-B717-53AC0D0551BA 0x000000019cace000 /System/Library/Frameworks/MetalPerformanceShaders.framework/Versions/A/Frameworks/MPSCore.framework/Versions/A/MPSCore (0x000000019cace000)
+[212] 96288960-0947-39B4-A0C8-D15D21279024 0x000000019dc9e000 /System/Library/Frameworks/MetalPerformanceShaders.framework/Versions/A/Frameworks/MPSImage.framework/Versions/A/MPSImage (0x000000019dc9e000)
+[213] BDB06F82-0AF0-33AC-B92D-A0124C345C6D 0x000000019d7b8000 /System/Library/Frameworks/MetalPerformanceShaders.framework/Versions/A/Frameworks/MPSNeuralNetwork.framework/Versions/A/MPSNeuralNetwork (0x000000019d7b8000)
+[214] 5A6C9771-2CC0-3B76-98D4-6607883B9538 0x000000019dba0000 /System/Library/Frameworks/MetalPerformanceShaders.framework/Versions/A/Frameworks/MPSMatrix.framework/Versions/A/MPSMatrix (0x000000019dba0000)
+[215] 38E41677-8870-3348-8F2A-4D85912E7572 0x000000019d9b2000 /System/Library/Frameworks/MetalPerformanceShaders.framework/Versions/A/Frameworks/MPSRayIntersector.framework/Versions/A/MPSRayIntersector (0x000000019d9b2000)
+[216] 2DAA4967-9285-3E4C-84B9-655E0D74D77C 0x000000019dbcf000 /System/Library/Frameworks/MetalPerformanceShaders.framework/Versions/A/Frameworks/MPSNDArray.framework/Versions/A/MPSNDArray (0x000000019dbcf000)
+[217] D3E130C6-EDB3-3020-A156-D18220717064 0x00000001fb18d000 /System/Library/Frameworks/MetalPerformanceShaders.framework/Versions/A/Frameworks/MPSFunctions.framework/Versions/A/MPSFunctions (0x00000001fb18d000)
+[218] 254E6227-786F-37A6-9931-387244AB5F9A 0x0000000192fa2000 /System/Library/PrivateFrameworks/MetalTools.framework/Versions/A/MetalTools (0x0000000192fa2000)
+[219] 710CC45C-FCEE-3D94-8EE9-A446E1532B8E 0x000000019cb55000 /System/Library/PrivateFrameworks/AggregateDictionary.framework/Versions/A/AggregateDictionary (0x000000019cb55000)
+[220] 13E3F4E9-9B2A-38A4-89F8-AD2095F52B72 0x000000019f839000 /usr/lib/libIOReport.dylib (0x000000019f839000)
+[221] 780B768C-4B54-36C3-AC8E-9D6138C86592 0x000000019c770000 /System/Library/Frameworks/CoreImage.framework/Versions/A/CoreImage (0x000000019c770000)
+[222] 462D4F65-60CB-3D47-B960-FD29C45EB1EA 0x00000001a9e77000 /System/Library/PrivateFrameworks/ASEProcessing.framework/Versions/A/ASEProcessing (0x00000001a9e77000)
+[223] 0A16ED1B-C27C-362B-B868-B199EF5AD2F7 0x0000000194705000 /System/Library/Frameworks/CoreText.framework/Versions/A/CoreText (0x0000000194705000)
+[224] 2A3A90EF-B178-3C59-98EB-666C6A1BE544 0x000000020df6f000 /System/Library/PrivateFrameworks/PhotosensitivityProcessing.framework/Versions/A/PhotosensitivityProcessing (0x000000020df6f000)
+[225] 77E72764-8F14-342E-A33C-1AA3588A24F9 0x000000019fbf3000 /System/Library/PrivateFrameworks/GraphVisualizer.framework/Versions/A/GraphVisualizer (0x000000019fbf3000)
+[226] 82C05A20-2C8B-30CA-9F1F-8AA0C73525E7 0x00000002054d2000 /System/Library/PrivateFrameworks/FontServices.framework/Versions/A/FontServices (0x00000002054d2000)
+[227] 198098B2-9212-30A4-BDE3-9CCB49B56356 0x0000000196b66000 /System/Library/Frameworks/UniformTypeIdentifiers.framework/Versions/A/UniformTypeIdentifiers (0x0000000196b66000)
+[228] B6CCF813-86C2-3E9B-A5E8-CDBAC9DAFD05 0x00000001a0013000 /System/Library/PrivateFrameworks/OTSVG.framework/Versions/A/OTSVG (0x00000001a0013000)
+[229] 1AE72D0F-73B0-3A9D-8D8E-D5140F037741 0x000000019a128000 /System/Library/Frameworks/ApplicationServices.framework/Versions/A/Frameworks/ATS.framework/Versions/A/Resources/libFontRegistry.dylib (0x000000019a128000)
+[230] E377092A-9CBD-380E-AA5D-9878E5A4E6FB 0x00000002054d3000 /System/Library/PrivateFrameworks/FontServices.framework/libXTFontStaticRegistryData.dylib (0x00000002054d3000)
+[231] D9532F3F-8DE9-3947-9315-0EDC29F93891 0x00000001bfc39000 /usr/lib/swift/libswiftMetal.dylib (0x00000001bfc39000)
+[232] 337BEB90-AF70-36BA-B683-9C3382B24653 0x00000001b82f1000 /usr/lib/swift/libswiftsimd.dylib (0x00000001b82f1000)
+[233] D59E4582-E2E9-3A04-8240-06357816903C 0x0000000217f38000 /System/Library/PrivateFrameworks/VideoToolboxParavirtualizationSupport.framework/Versions/A/VideoToolboxParavirtualizationSupport (0x0000000217f38000)
+[234] FE89E886-CDB0-3CAF-979A-9E38764C4F0B 0x000000019fa4a000 /System/Library/PrivateFrameworks/AppleVA.framework/Versions/A/AppleVA (0x000000019fa4a000)
+[235] EC16F01C-5FE7-3D57-B0F1-3724BDC2E273 0x00000001049c0000 /System/Library/Frameworks/CydiaSubstrate.framework/CydiaSubstrate (0x00000001049c0000)
+[236] BEF3C5CF-2A8D-3FED-8859-E9E4AEB84FA4 0x00000001a1b1c000 /System/Library/Frameworks/AudioToolbox.framework/Versions/A/AudioToolbox (0x00000001a1b1c000)
+[237] 946D8043-F693-3762-BE95-AD647C0D5BBF 0x00000001a1c43000 /System/Library/PrivateFrameworks/AudioSession.framework/Versions/A/AudioSession (0x00000001a1c43000)
+[238] 1CE3941F-B96B-3265-8438-F73138D3E9D1 0x000000019fb4c000 /System/Library/PrivateFrameworks/MediaExperience.framework/Versions/A/MediaExperience (0x000000019fb4c000)
+[239] 37A87337-1111-39E3-AD69-02298A9D3685 0x00000001a1ae2000 /System/Library/PrivateFrameworks/AudioSession.framework/libSessionUtility.dylib (0x00000001a1ae2000)
+[240] 615ED68A-1FF5-3EAB-84BE-0BA8A3BA438A 0x00000001a20bc000 /System/Library/PrivateFrameworks/AudioResourceArbitration.framework/Versions/A/AudioResourceArbitration (0x00000001a20bc000)
+[241] 16258A6C-CA4B-3125-8445-488B55041765 0x00000001a6120000 /System/Library/PrivateFrameworks/PowerLog.framework/Versions/A/PowerLog (0x00000001a6120000)
+[242] 942AA4B8-655F-3E1E-8DE6-FF9E86BF9AE9 0x00000001984b3000 /System/Library/Frameworks/CoreData.framework/Versions/A/CoreData (0x00000001984b3000)
+[243] CE2B5551-857F-3EDD-9E4F-435215CC8C27 0x00000001af504000 /System/Library/PrivateFrameworks/IOGPU.framework/Versions/A/IOGPU (0x00000001af504000)
+[244] DDBDDD7B-EAA5-3316-B222-1D2135398410 0x00000001a0c77000 /System/Library/Frameworks/MediaToolbox.framework/Versions/A/MediaToolbox (0x00000001a0c77000)
+[245] F9139C2F-61F3-3151-9912-10A28D0565F3 0x00000001a633d000 /System/Library/PrivateFrameworks/CoreAVCHD.framework/Versions/A/CoreAVCHD (0x00000001a633d000)
+[246] 2124BAF0-98E1-34D2-B7A0-23F364EE9256 0x00000001a580a000 /System/Library/Frameworks/MediaAccessibility.framework/Versions/A/MediaAccessibility (0x00000001a580a000)
+[247] CA9F1535-8FB1-31D9-AF1D-1FA13E361964 0x00000001a6339000 /System/Library/PrivateFrameworks/Mangrove.framework/Versions/A/Mangrove (0x00000001a6339000)
+[248] F0B49B0A-5D45-39AE-8B48-E7D320DDD02F 0x0000000200867000 /System/Library/PrivateFrameworks/CMPhoto.framework/Versions/A/CMPhoto (0x0000000200867000)
+[249] C577D979-1DC2-3E84-AD8E-CE237E835BAF 0x00000001a8bd8000 /System/Library/Frameworks/ApplicationServices.framework/Versions/A/ApplicationServices (0x00000001a8bd8000)
+[250] A53184D7-46B7-3E18-9E57-8ADB9EF82364 0x00000001a632d000 /System/Library/PrivateFrameworks/CoreAUC.framework/Versions/A/CoreAUC (0x00000001a632d000)
+[251] 20BC0059-C0CF-3CB7-BFF2-4AF4A46B9A73 0x00000001a1cf7000 /System/Library/Frameworks/ApplicationServices.framework/Versions/A/Frameworks/ATS.framework/Versions/A/ATS (0x00000001a1cf7000)
+[252] AB1464A5-20E6-3C95-8548-1C03866FB283 0x0000000198036000 /System/Library/Frameworks/ApplicationServices.framework/Versions/A/Frameworks/HIServices.framework/Versions/A/HIServices (0x0000000198036000)
+[253] EB9ACEFA-8DA0-3D43-A020-436EB558A55C 0x00000001a0a67000 /System/Library/Frameworks/ApplicationServices.framework/Versions/A/Frameworks/PrintCore.framework/Versions/A/PrintCore (0x00000001a0a67000)
+[254] 51C3B8A6-AB5A-362C-A16E-6A28552D7E3D 0x00000001a20b0000 /System/Library/Frameworks/ApplicationServices.framework/Versions/A/Frameworks/QD.framework/Versions/A/QD (0x00000001a20b0000)
+[255] 0C278563-9E72-38D2-9A4B-89BC774E0106 0x00000001a20a4000 /System/Library/Frameworks/ApplicationServices.framework/Versions/A/Frameworks/ColorSyncLegacy.framework/Versions/A/ColorSyncLegacy (0x00000001a20a4000)
+[256] 28D3EE05-0AE8-336D-B1EA-51481A40ADA1 0x00000001a1ccb000 /System/Library/Frameworks/ApplicationServices.framework/Versions/A/Frameworks/SpeechSynthesis.framework/Versions/A/SpeechSynthesis (0x00000001a1ccb000)
+[257] F5CF3FB0-C0F0-373B-A389-036A567B19AC 0x00000001a0a25000 /System/Library/Frameworks/ApplicationServices.framework/Versions/A/Frameworks/ATSUI.framework/Versions/A/ATSUI (0x00000001a0a25000)
+[258] 33ADBC73-7355-35D2-A639-7E7C1C04AA60 0x00000001a2037000 /usr/lib/libcups.2.dylib (0x00000001a2037000)
+[259] 46D89D8B-5AC1-3151-BF3E-1FB71C7DBC2F 0x00000001a241c000 /System/Library/Frameworks/Kerberos.framework/Versions/A/Kerberos (0x00000001a241c000)
+[260] 04A66201-3864-3A1B-9D57-49FF9E6974CD 0x00000001a242d000 /System/Library/Frameworks/GSS.framework/Versions/A/GSS (0x00000001a242d000)
+[261] 4F634BA6-D08F-314B-9FE3-1A742F69FF8D 0x00000001a1d69000 /usr/lib/libresolv.9.dylib (0x00000001a1d69000)
+[262] 5CF43D99-D4C6-3956-AF9B-265366E88252 0x00000001a006f000 /System/Library/PrivateFrameworks/Heimdal.framework/Versions/A/Heimdal (0x00000001a006f000)
+[263] 44F42A1C-D4AF-3CB8-AA60-A22B93A77E75 0x00000001a8f90000 /System/Library/Frameworks/Kerberos.framework/Versions/A/Libraries/libHeimdalProxy.dylib (0x00000001a8f90000)
+[264] A9DB1E80-07F9-36C4-85E5-4B5C3AB01491 0x00000001a2485000 /System/Library/PrivateFrameworks/CommonAuth.framework/Versions/A/CommonAuth (0x00000001a2485000)
+[265] ED96D21E-C06D-3103-9D1F-5B6F4F6DBC15 0x00000001f8eca000 /System/Library/Frameworks/AVFAudio.framework/Versions/A/AVFAudio (0x00000001f8eca000)
+[266] 4EFF0CCF-30A9-3325-BB79-0947C8360B39 0x00000001b0509000 /System/Library/PrivateFrameworks/AXCoreUtilities.framework/Versions/A/AXCoreUtilities (0x00000001b0509000)
+[267] 768098BA-02A5-341B-AD79-DEADD377CAFD 0x00000001a31fa000 /System/Library/Frameworks/IOBluetooth.framework/Versions/A/IOBluetooth (0x00000001a31fa000)
+[268] 9AF6FF93-BA86-3891-81D7-F1E741E0D0AA 0x00000001a6060000 /System/Library/Frameworks/CoreBluetooth.framework/Versions/A/CoreBluetooth (0x00000001a6060000)
+[269] C95E9414-392C-3796-AD62-0CDA8CC96FB5 0x00000001a8f91000 /System/Library/Frameworks/AudioUnit.framework/Versions/A/AudioUnit (0x00000001a8f91000)
+[270] 43355267-36E8-3D1F-A37C-101A6C811215 0x000000019d49a000 /System/Library/PrivateFrameworks/CoreUtils.framework/Versions/A/CoreUtils (0x000000019d49a000)
+[271] 1595C0BF-F7AE-37A9-A4EB-C9496318C4CC 0x0000000203da9000 /System/Library/PrivateFrameworks/CoreUtilsExtras.framework/Versions/A/CoreUtilsExtras (0x0000000203da9000)
+[272] 990ACF94-FB90-3108-8A4C-31AFAF470AC1 0x0000000208e0c000 /System/Library/PrivateFrameworks/IO80211.framework/Versions/A/IO80211 (0x0000000208e0c000)
+[273] BD12C6EA-F028-3ADB-83E3-B954D80095E5 0x000000019d613000 /System/Library/PrivateFrameworks/MobileKeyBag.framework/Versions/A/MobileKeyBag (0x000000019d613000)
+[274] 1440ED5D-2C4A-3C9A-A882-55D4F81136D5 0x00000001c9e29000 /System/Library/PrivateFrameworks/BrightnessControl.framework/Versions/A/BrightnessControl (0x00000001c9e29000)
+[275] 4589066E-382E-39B6-B9DD-BBF478131410 0x00000001af4f0000 /System/Library/PrivateFrameworks/HID.framework/Versions/A/HID (0x00000001af4f0000)
+[276] 215EFDF0-A95B-352D-96CF-F27B86929F9D 0x00000001c76b6000 /System/Library/PrivateFrameworks/AFKUser.framework/Versions/A/AFKUser (0x00000001c76b6000)
+[277] ECCFB0C9-4C1C-36B7-9589-7DF9322CC833 0x0000000214916000 /System/Library/PrivateFrameworks/SystemStatus.framework/Versions/A/SystemStatus (0x0000000214916000)
+[278] 983665BA-B173-392C-9874-65213940AEF1 0x000000010e3a8000 /System/Library/PrivateFrameworks/SkyLight.framework/Versions/A/Resources/CursorAsset (0x000000010e3a8000)
+[279] 9651DE4E-F08E-33C5-BCDD-983CA499D167 0x00000001aadca000 /System/Library/PrivateFrameworks/AmbientDisplay.framework/Versions/A/AmbientDisplay (0x00000001aadca000)
+[280] E773765A-1A50-3907-B785-05C282A0EE2B 0x00000001aadbe000 /System/Library/Frameworks/Cocoa.framework/Versions/A/Cocoa (0x00000001aadbe000)
+[281] DC61B460-4975-3BEA-A527-B6DB1796D700 0x00000001abe93000 /System/Library/PrivateFrameworks/DisplayServices.framework/Versions/A/DisplayServices (0x00000001abe93000)
+[282] 041C7D21-21CC-3EEA-AE53-D39F5CA6A24E 0x0000000195ab1000 /System/Library/Frameworks/AppKit.framework/Versions/C/AppKit (0x0000000195ab1000)
+[283] 5C5F174F-9495-3750-A861-70081D5A14A5 0x00000001969c0000 /System/Library/PrivateFrameworks/UIFoundation.framework/Versions/A/UIFoundation (0x00000001969c0000)
+[284] A427F7C3-D06C-3F7B-8B2C-4EA89B5FF64D 0x0000000201317000 /System/Library/PrivateFrameworks/CollectionViewCore.framework/Versions/A/CollectionViewCore (0x0000000201317000)
+[285] 562C5A17-92E9-330B-B887-A9DC78ECFA3A 0x00000001a50e3000 /System/Library/PrivateFrameworks/RemoteViewServices.framework/Versions/A/RemoteViewServices (0x00000001a50e3000)
+[286] C60C26EE-4246-365C-A7DF-5C28604AD42A 0x000000019c42e000 /System/Library/PrivateFrameworks/XCTTargetBootstrap.framework/Versions/A/XCTTargetBootstrap (0x000000019c42e000)
+[287] 10CF1690-1739-3FDE-A149-8D1732978BE6 0x00000001a0b84000 /System/Library/PrivateFrameworks/InternationalSupport.framework/Versions/A/InternationalSupport (0x00000001a0b84000)
+[288] 0FD0F6DB-F243-3148-8620-F4B17FA81072 0x00000001a0c0b000 /System/Library/PrivateFrameworks/UserActivity.framework/Versions/A/UserActivity (0x00000001a0c0b000)
+[289] 08A8DE1C-A402-3D20-93B0-043EC6EE3813 0x00000002193cf000 /System/Library/PrivateFrameworks/WindowManagement.framework/Versions/A/WindowManagement (0x00000002193cf000)
+[290] FB9B58CB-684A-328B-A23F-246B2ECBE18D 0x000000019c434000 /System/Library/PrivateFrameworks/CoreSVG.framework/Versions/A/CoreSVG (0x000000019c434000)
+[291] 1D606610-E39F-3BE7-A402-256E7D3FB765 0x000000019fad7000 /System/Library/PrivateFrameworks/IconServices.framework/Versions/A/IconServices (0x000000019fad7000)
+[292] 4DCAD3E0-31FE-38CB-8E2B-39C62DB97E14 0x000000019c416000 /System/Library/PrivateFrameworks/DFRFoundation.framework/Versions/A/DFRFoundation (0x000000019c416000)
+[293] 8FB60F12-0967-39E9-B3DE-DAE5F9767E01 0x00000001a0b8f000 /System/Library/PrivateFrameworks/DataDetectorsCore.framework/Versions/A/DataDetectorsCore (0x00000001a0b8f000)
+[294] BFC8E3A0-B97E-30E1-97C3-368307BDD562 0x00000001b838b000 /System/Library/PrivateFrameworks/TextInput.framework/Versions/A/TextInput (0x00000001b838b000)
+[295] D800278B-4E6C-3032-B56F-027A938A51D6 0x000000019c0e2000 /System/Library/Frameworks/Carbon.framework/Versions/A/Frameworks/HIToolbox.framework/Versions/A/HIToolbox (0x000000019c0e2000)
+[296] F83CFC18-B5D6-3D37-960B-66CE9B118152 0x00000001a5123000 /System/Library/Frameworks/Carbon.framework/Versions/A/Frameworks/SpeechRecognition.framework/Versions/A/SpeechRecognition (0x00000001a5123000)
+[297] 1A566282-B444-3F61-B250-59E0681D30B7 0x000000019a17a000 /System/Library/PrivateFrameworks/CoreUI.framework/Versions/A/CoreUI (0x000000019a17a000)
+[298] 0A74EAE0-B22B-3EF5-8747-AD668E073503 0x000000019a3c8000 /System/Library/PrivateFrameworks/PerformanceAnalysis.framework/Versions/A/PerformanceAnalysis (0x000000019a3c8000)
+[299] 00220615-3226-3C76-8FF7-129C02E5C0AF 0x00000001a0adf000 /System/Library/PrivateFrameworks/TextureIO.framework/Versions/A/TextureIO (0x00000001a0adf000)
+[300] 8CF23E40-DAAF-3C18-A3C9-3F3EEA400423 0x000000019fabc000 /System/Library/PrivateFrameworks/IconFoundation.framework/Versions/A/IconFoundation (0x000000019fabc000)
+[301] 5FCB6A68-0E00-3431-A401-B1B71041F245 0x00000001a510f000 /System/Library/PrivateFrameworks/SpeechRecognitionCore.framework/Versions/A/SpeechRecognitionCore (0x00000001a510f000)
+[302] 0B57BCB7-B783-3A59-855F-1781FBB98AC4 0x00000001a0162000 /System/Library/PrivateFrameworks/CoreBrightness.framework/Versions/A/CoreBrightness (0x00000001a0162000)
+[303] 6C79AB53-9301-3F8B-9D85-F3CAE4EB2664 0x00000001c1445000 /System/Library/PrivateFrameworks/HIDPreferences.framework/Versions/A/HIDPreferences (0x00000001c1445000)
+[304] 5953F62B-DB93-3B24-8010-E64E18FEC0D8 0x00000001b5144000 /System/Library/PrivateFrameworks/HIDAnalytics.framework/Versions/A/HIDAnalytics (0x00000001b5144000)
+[305] E649F886-DBCE-3C2D-BB5D-E1200F914F6A 0x0000000104c00000 /System/Library/CoreServices/TouchBarEvent.bundle (0x0000000104c00000)
+[306] 8CE1A00E-9383-3CB9-8817-19E36AA0E069 0x00000001d3789000 /usr/lib/swift/libswiftNetwork.dylib (0x00000001d3789000)
+[307] 38B32BC2-4ACA-3F77-AEA1-2632AFE53122 0x00000001cb71c000 /usr/lib/swift/libswiftOSLog.dylib (0x00000001cb71c000)
+[308] DB1E557F-750A-3796-917C-0EC20C9106BC 0x00000001d1902000 /System/Library/Frameworks/OSLog.framework/Versions/A/OSLog (0x00000001d1902000)
+[309] D5DF5131-B4F0-3817-A141-E9A44572E014 0x00000001b535a000 /System/Library/PrivateFrameworks/LoggingSupport.framework/Versions/A/LoggingSupport (0x00000001b535a000)
+[310] 45EF5B78-7AE8-3262-BB5D-0047E52840E8 0x00000001c3179000 /usr/lib/swift/libswiftQuartzCore.dylib (0x00000001c3179000)
+[311] 727C250E-554D-3921-A5B3-48DAE6195B79 0x00000001f77a1000 /System/Library/Extensions/AGXMetal13_3.bundle/Contents/MacOS/AGXMetal13_3 (0x00000001f77a1000)
+[312] FDC14096-A6AC-3F3F-852C-5DD99D2F1042 0x00000001b540b000 /System/Library/PrivateFrameworks/GPURawCounter.framework/Versions/A/GPURawCounter (0x00000001b540b000)
+[313] 570C31F7-94C6-3B86-AE44-1694DB0A4BCD 0x00000001077f0000 /usr/lib/libobjc-trampolines.dylib (0x00000001077f0000)
+[314] 57F9DC31-B112-3F67-A16D-E8CE9C65B439 0x000000020f723000 /System/Library/PrivateFrameworks/SignpostMetrics.framework/Versions/A/SignpostMetrics (0x000000020f723000)
+[315] A636642D-87A5-364F-B805-4B563D7FC382 0x00000001b9e86000 /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vImage.framework/Versions/A/Libraries/libCGInterfaces.dylib (0x00000001b9e86000)
+[316] 3E2E9B60-027A-37EE-9972-6542FECB3589 0x00000001c1451000 /System/Library/PrivateFrameworks/HDRProcessing.framework/Versions/A/HDRProcessing (0x00000001c1451000)
+Process 61460 stopped
+* thread #1, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = signal SIGSTOP
+    frame #0: 0x00000001927b4834 libsystem_kernel.dylib`poll + 8
+libsystem_kernel.dylib`poll:
+->  0x1927b4834 <+8>:  b.lo   0x1927b4854               ; <+40>
+    0x1927b4838 <+12>: pacibsp 
+    0x1927b483c <+16>: stp    x29, x30, [sp, #-0x10]!
+    0x1927b4840 <+20>: mov    x29, sp
+0x1974b5740: 0xd503237f
+0x1974bc7b0: 0xd503237f
+0x1974b4d9c: 0xd503237f
+0x1974b5584: 0xd503237f
+0x197811e0c: 0x7100001f
+Executing commands in '/tmp/r006_bps.txt'.
+(lldb) breakpoint set -a 0x1974b5740 -N tccsend
+Breakpoint 1: where = TCC`tccd_send_message, address = 0x00000001974b5740
+(lldb) breakpoint command add tccsend
+(lldb) breakpoint set -a 0x1974bc7b0 -N tccreply
+Breakpoint 2: where = TCC`__TCCAccessSetPidResponsibleForPid_block_invoke_2, address = 0x00000001974bc7b0
+(lldb) breakpoint command add tccreply
+(lldb) breakpoint set -a 0x197811e0c -N skyraw
+Breakpoint 3: where = SkyLight`audit_token_check_tcc_access + 108, address = 0x0000000197811e0c
+(lldb) breakpoint command add skyraw
+(lldb) breakpoint set -a 0x1974b5584 -N tccdget
+Breakpoint 4: where = TCC`tccd, address = 0x00000001974b5584
+(lldb) breakpoint command add tccdget
+(lldb) breakpoint list
+Current breakpoints:
+1: address = TCC[0x00000001850c9740], locations = 1, resolved = 1, hit count = 0
+    Breakpoint commands:
+      expr -- (void)printf("[R006-SEND] conn=%s\n", (char*)xpc_copy_description((void*)$x0))
+      expr -- (void)printf("[R006-SEND] msg=%s\n", (char*)xpc_copy_description((void*)$x2))
+      continue
+
+  Names:
+    tccsend
+
+  1.1: where = TCC`tccd_send_message, address = 0x00000001974b5740, resolved, hit count = 0 
+
+2: address = TCC[0x00000001850d07b0], locations = 1, resolved = 1, hit count = 0
+    Breakpoint commands:
+      expr -- (void)printf("[R006-REPLY] reply=%s\n", (char*)xpc_copy_description((void*)$x1))
+      continue
+
+  Names:
+    tccreply
+
+  2.1: where = TCC`__TCCAccessSetPidResponsibleForPid_block_invoke_2, address = 0x00000001974bc7b0, resolved, hit count = 0 
+
+3: address = SkyLight[0x0000000185425e0c], locations = 1, resolved = 1, hit count = 0
+    Breakpoint commands:
+      expr -- (void)printf("[R006-SKYRAW] w0=%d thread=%u\n", $w0, (unsigned)$tid)
+      continue
+
+  Names:
+    skyraw
+
+  3.1: where = SkyLight`audit_token_check_tcc_access + 108, address = 0x0000000197811e0c, resolved, hit count = 0 
+
+4: address = TCC[0x00000001850c9584], locations = 1, resolved = 1, hit count = 0
+    Breakpoint commands:
+      expr -- (void)printf("[R006-TCCD] flags=%d\n", $w0)
+      continue
+
+  Names:
+    tccdget
+
+  4.1: where = TCC`tccd, address = 0x00000001974b5584, resolved, hit count = 0 
+
+(lldb) continue
+Process 61460 resuming
+[1G[J(lldb)  expr -- (void)printf("[R006-TCCD] flags=%d\n", $w0)
+[1G[J(lldb)  [41G[1G[Jerror: Aborting reading of commands after command #0: 'expr -- (void)printf("[R006-TCCD] flags=%d\n", $w0)' failed with error: couldn't install checkers, unknown error
+[1G[J(lldb)  [41G[1G[JProcess 61460 stopped
+* thread #1, name = 'ws_main_thread', queue = 'com.apple.tcc.preflight.kTCCServiceListenEvent', stop reason = breakpoint 4.1
+    frame #0: 0x00000001974b5584 TCC`tccd
+TCC`tccd:
+->  0x1974b5584 <+0>:  pacibsp 
+    0x1974b5588 <+4>:  sub    sp, sp, #0x70
+    0x1974b558c <+8>:  stp    x24, x23, [sp, #0x30]
+    0x1974b5590 <+12>: stp    x22, x21, [sp, #0x40]
+Target 0: (WindowServer) stopped.
+[1G[J(lldb)  [41GExecuting commands in '/tmp/r006_bps2.txt'.
+(lldb) breakpoint delete
+All breakpoints removed. (4 breakpoints)
+error: No auto repeat.
+No breakpoints currently set.
+Executing commands in '/tmp/r006_bps3.txt'.
+(lldb) breakpoint set -a 0x1974b5740 -N tccsend
+Breakpoint 5: where = TCC`tccd_send_message, address = 0x00000001974b5740
+(lldb) breakpoint command add tccsend
+(lldb) breakpoint set -a 0x1974bc7e4 -N tccreply-ok
+error: Invalid breakpoint name: tccreply-ok
+Current breakpoints:
+5: address = TCC[0x00000001850c9740], locations = 1, resolved = 1, hit count = 0
+    Breakpoint commands:
+      register read x0 x2 x3 w4 w5
+      continue
+
+  Names:
+    tccsend
+
+  5.1: where = TCC`tccd_send_message, address = 0x00000001974b5740, resolved, hit count = 0 
+
+Executing commands in '/tmp/r006_bps4.txt'.
+(lldb) breakpoint set -a 0x1974bc7e4 -N tccreplyok
+Breakpoint 6: where = TCC`__TCCAccessSetPidResponsibleForPid_block_invoke_2 + 52, address = 0x00000001974bc7e4
+(lldb) breakpoint command add tccreplyok
+(lldb) breakpoint set -a 0x1974bc804 -N tccreplyerr
+Breakpoint 7: where = TCC`__TCCAccessSetPidResponsibleForPid_block_invoke_2 + 84, address = 0x00000001974bc804
+(lldb) breakpoint command add tccreplyerr
+(lldb) breakpoint set -a 0x1974bc7f8 -N tccresult
+Breakpoint 8: where = TCC`__TCCAccessSetPidResponsibleForPid_block_invoke_2 + 72, address = 0x00000001974bc7f8
+(lldb) breakpoint command add tccresult
+(lldb) breakpoint set -a 0x1974b5584 -N tccdget
+Breakpoint 9: where = TCC`tccd, address = 0x00000001974b5584
+(lldb) breakpoint command add tccdget
+(lldb) breakpoint set -a 0x197811e0c -N skyraw
+Breakpoint 10: where = SkyLight`audit_token_check_tcc_access + 108, address = 0x0000000197811e0c
+(lldb) breakpoint command add skyraw
+Current breakpoints:
+5: address = TCC[0x00000001850c9740], locations = 1, resolved = 1, hit count = 0
+    Breakpoint commands:
+      register read x0 x2 x3 w4 w5
+      continue
+
+  Names:
+    tccsend
+
+  5.1: where = TCC`tccd_send_message, address = 0x00000001974b5740, resolved, hit count = 0 
+
+6: address = TCC[0x00000001850d07e4], locations = 1, resolved = 1, hit count = 0
+    Breakpoint commands:
+      register read x0 x1
+      continue
+
+  Names:
+    tccreplyok
+
+  6.1: where = TCC`__TCCAccessSetPidResponsibleForPid_block_invoke_2 + 52, address = 0x00000001974bc7e4, resolved, hit count = 0 
+
+7: address = TCC[0x00000001850d0804], locations = 1, resolved = 1, hit count = 0
+    Breakpoint commands:
+      register read x0 x1
+      continue
+
+  Names:
+    tccreplyerr
+
+  7.1: where = TCC`__TCCAccessSetPidResponsibleForPid_block_invoke_2 + 84, address = 0x00000001974bc804, resolved, hit count = 0 
+
+8: address = TCC[0x00000001850d07f8], locations = 1, resolved = 1, hit count = 0
+    Breakpoint commands:
+      register read w0 x8
+      continue
+
+  Names:
+    tccresult
+
+  8.1: where = TCC`__TCCAccessSetPidResponsibleForPid_block_invoke_2 + 72, address = 0x00000001974bc7f8, resolved, hit count = 0 
+
+9: address = TCC[0x00000001850c9584], locations = 1, resolved = 1, hit count = 0
+    Breakpoint commands:
+      register read w0 x1
+      continue
+
+  Names:
+    tccdget
+
+  9.1: where = TCC`tccd, address = 0x00000001974b5584, resolved, hit count = 0 
+
+10: address = SkyLight[0x0000000185425e0c], locations = 1, resolved = 1, hit count = 0
+    Breakpoint commands:
+      register read w0
+      continue
+
+  Names:
+    skyraw
+
+  10.1: where = SkyLight`audit_token_check_tcc_access + 108, address = 0x0000000197811e0c, resolved, hit count = 0 
+
+Process 61460 resuming
+[1G[J(lldb)  register read x0 x2 x3 w4 w5
+      x0 = 0x000000012e019f90
+      x2 = 0x000000013d683540
+      x3 = 0x000000016b4aa830
+      w4 = 0x00000007
+      w5 = 0x00000000
+[1G[J(lldb)  [17G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [17G[1G[JCommand #2 'continue' continued the target.
+[1G[J(lldb)  [17G[1G[J(lldb)  register read w0 x1
+      w0 = 0x00000001
+      x1 = 0x0000000000000000
+[1G[J(lldb)  [17G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [17G[1G[JCommand #2 'continue' continued the target.
+[1G[J(lldb)  [17G[1G[J(lldb)  register read x0 x2 x3 w4 w5
+      x0 = 0x000000012e00f180
+      x2 = 0x000000013d683540
+      x3 = 0x000000016b4aa830
+      w4 = 0x00000007
+      w5 = 0x00000001
+[1G[J(lldb)  [17G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [17G[1G[JCommand #2 'continue' continued the target.
+[1G[J(lldb)  [17G[1G[J(lldb)  register read w0
+      w0 = 0x00000001
+[1G[J(lldb)  [17G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [17G[1G[JCommand #2 'continue' continued the target.
+[1G[J(lldb)  [17G[1G[J(lldb)  register read w0 x1
+      w0 = 0x00000001
+      x1 = 0x000000016b4aac90
+[1G[J(lldb)  [17G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [17G[1G[JCommand #2 'continue' continued the target.
+[1G[J(lldb)  [17G[1G[J(lldb)  register read x0 x2 x3 w4 w5
+      x0 = 0x000000012e010c40
+      x2 = 0x000000013d6ff800
+      x3 = 0x000000016b4aa830
+      w4 = 0x00000007
+      w5 = 0x00000000
+[1G[J(lldb)  [17G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [17G[1G[JCommand #2 'continue' continued the target.
+[1G[J(lldb)  [17G[1G[J(lldb)  register read w0 x1
+      w0 = 0x00000001
+      x1 = 0x0000000000000000
+[1G[J(lldb)  [17G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [17G[1G[JCommand #2 'continue' continued the target.
+[1G[J(lldb)  [17G[1G[J(lldb)  register read x0 x2 x3 w4 w5
+      x0 = 0x000000012d612640
+      x2 = 0x000000013d6ff800
+      x3 = 0x000000016b4aa830
+      w4 = 0x00000007
+      w5 = 0x00000001
+[1G[J(lldb)  [17G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [17G[1G[JCommand #2 'continue' continued the target.
+[1G[J(lldb)  [17G[1G[J(lldb)  register read w0
+      w0 = 0x00000001
+[1G[J(lldb)  [17G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [17G[1G[JCommand #2 'continue' continued the target.
+[1G[J(lldb)  [17G[1G[J(lldb)  register read w0 x1
+      w0 = 0x00000001
+      x1 = 0x000000016b4aac30
+[1G[J(lldb)  [17G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [17G[1G[JCommand #2 'continue' continued the target.
+[1G[J(lldb)  [17G[1G[J(lldb)  register read x0 x2 x3 w4 w5
+      x0 = 0x000000011e3696d0
+      x2 = 0x000000011e060fb0
+      x3 = 0x000000016b4aa7d0
+      w4 = 0x00000007
+      w5 = 0x00000000
+[1G[J(lldb)  [17G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [17G[1G[JCommand #2 'continue' continued the target.
+[1G[J(lldb)  [17G[1G[J(lldb)  register read w0 x1
+      w0 = 0x00000001
+      x1 = 0x0000000000000000
+[1G[J(lldb)  [17G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [17G[1G[JCommand #2 'continue' continued the target.
+[1G[J(lldb)  [17G[1G[J(lldb)  register read x0 x2 x3 w4 w5
+      x0 = 0x000000013d651b00
+      x2 = 0x000000011e060fb0
+      x3 = 0x000000016b4aa7d0
+      w4 = 0x00000007
+      w5 = 0x00000001
+[1G[J(lldb)  [17G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [17G[1G[JCommand #2 'continue' continued the target.
+[1G[J(lldb)  [17G[1G[J(lldb)  register read w0
+      w0 = 0x00000001
+[1G[J(lldb)  [17G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [17G[1G[JCommand #2 'continue' continued the target.
+[1G[J(lldb)  [17Gerror: Process is running.  Use 'process interrupt' to pause execution.
+error: Process is running.  Use 'process interrupt' to pause execution.
+[1G[JProcess 61460 stopped
+* thread #1, name = 'ws_main_thread', queue = 'com.apple.main-thread', stop reason = signal SIGSTOP
+    frame #0: 0x00000001927b4834 libsystem_kernel.dylib`poll + 8
+libsystem_kernel.dylib`poll:
+->  0x1927b4834 <+8>:  b.lo   0x1927b4854               ; <+40>
+    0x1927b4838 <+12>: pacibsp 
+    0x1927b483c <+16>: stp    x29, x30, [sp, #-0x10]!
+    0x1927b4840 <+20>: mov    x29, sp
+Target 0: (WindowServer) stopped.
+[1G[J(lldb)  [26G0x16b4aa830: 0x003c9828 0x00000000 0x049a4000 0x00000001
+0x16b4aa7d0: 0x00000000 0x00000000 0x00000000 0x00000000
+1 breakpoints disabled.
+1 breakpoints disabled.
+1 breakpoints disabled.
+Executing commands in '/tmp/r006_bps5.txt'.
+(lldb) breakpoint set -a 0x1974b4aec -N syncreply
+Breakpoint 11: where = TCC`TCC[0x00000001850c8aec], address = 0x00000001974b4aec
+(lldb) breakpoint command add syncreply
+(lldb) breakpoint set -a 0x1974b4ba8 -N syncintr
+Breakpoint 12: where = TCC`TCC[0x00000001850c8ba8], address = 0x00000001974b4ba8
+(lldb) breakpoint command add syncintr
+(lldb) breakpoint set -a 0x1974b4c1c -N dictreply
+Breakpoint 13: where = TCC`TCCAccessCheckAuditToken + 100, address = 0x00000001974b4c1c
+(lldb) breakpoint command add dictreply
+(lldb) breakpoint set -a 0x1974b4d5c -N handlercall
+Breakpoint 14: where = TCC`TCCAccessCheckAuditToken + 420, address = 0x00000001974b4d5c
+(lldb) breakpoint command add handlercall
+(lldb) breakpoint command add tccsend
+Current breakpoints:
+5: address = TCC[0x00000001850c9740], locations = 1, resolved = 1, hit count = 6
+    Breakpoint commands:
+      register read x0 x2 x3 w4 w5
+      memory read -f x -c 4 $x3
+      continue
+
+  Names:
+    tccsend
+
+  5.1: where = TCC`tccd_send_message, address = 0x00000001974b5740, resolved, hit count = 6 
+
+6: address = TCC[0x00000001850d07e4], locations = 1 Options: disabled 
+    Breakpoint commands:
+      register read x0 x1
+      continue
+
+  Names:
+    tccreplyok
+
+  6.1: where = TCC`__TCCAccessSetPidResponsibleForPid_block_invoke_2 + 52, address = 0x00000001974bc7e4, unresolved, hit count = 0 
+
+7: address = TCC[0x00000001850d0804], locations = 1 Options: disabled 
+    Breakpoint commands:
+      register read x0 x1
+      continue
+
+  Names:
+    tccreplyerr
+
+  7.1: where = TCC`__TCCAccessSetPidResponsibleForPid_block_invoke_2 + 84, address = 0x00000001974bc804, unresolved, hit count = 0 
+
+8: address = TCC[0x00000001850d07f8], locations = 1 Options: disabled 
+    Breakpoint commands:
+      register read w0 x8
+      continue
+
+  Names:
+    tccresult
+
+  8.1: where = TCC`__TCCAccessSetPidResponsibleForPid_block_invoke_2 + 72, address = 0x00000001974bc7f8, unresolved, hit count = 0 
+
+9: address = TCC[0x00000001850c9584], locations = 1, resolved = 1, hit count = 5
+    Breakpoint commands:
+      register read w0 x1
+      continue
+
+  Names:
+    tccdget
+
+  9.1: where = TCC`tccd, address = 0x00000001974b5584, resolved, hit count = 5 
+
+10: address = SkyLight[0x0000000185425e0c], locations = 1, resolved = 1, hit count = 3
+    Breakpoint commands:
+      register read w0
+      continue
+
+  Names:
+    skyraw
+
+  10.1: where = SkyLight`audit_token_check_tcc_access + 108, address = 0x0000000197811e0c, resolved, hit count = 3 
+
+11: address = TCC[0x00000001850c8aec], locations = 1, resolved = 1, hit count = 0
+    Breakpoint commands:
+      register read x0
+      continue
+
+  Names:
+    syncreply
+
+  11.1: where = TCC`TCC[0x00000001850c8aec], address = 0x00000001974b4aec, resolved, hit count = 0 
+
+12: address = TCC[0x00000001850c8ba8], locations = 1, resolved = 1, hit count = 0
+    Breakpoint commands:
+      register read x20
+      continue
+
+  Names:
+    syncintr
+
+  12.1: where = TCC`TCC[0x00000001850c8ba8], address = 0x00000001974b4ba8, resolved, hit count = 0 
+
+13: address = TCC[0x00000001850c8c1c], locations = 1, resolved = 1, hit count = 0
+    Breakpoint commands:
+      register read x24
+      continue
+
+  Names:
+    dictreply
+
+  13.1: where = TCC`TCCAccessCheckAuditToken + 100, address = 0x00000001974b4c1c, resolved, hit count = 0 
+
+14: address = TCC[0x00000001850c8d5c], locations = 1, resolved = 1, hit count = 0
+    Breakpoint commands:
+      register read x0 x1
+      continue
+
+  Names:
+    handlercall
+
+  14.1: where = TCC`TCCAccessCheckAuditToken + 420, address = 0x00000001974b4d5c, resolved, hit count = 0 
+
+1 breakpoints deleted; 0 breakpoint locations disabled.
+1 breakpoints deleted; 0 breakpoint locations disabled.
+1 breakpoints deleted; 0 breakpoint locations disabled.
+1 breakpoints deleted; 0 breakpoint locations disabled.
+Executing commands in '/tmp/r006_bps6.txt'.
+(lldb) breakpoint set -a 0x1974b5aec -N syncreply2
+Breakpoint 15: where = TCC`tccd_send_message + 940, address = 0x00000001974b5aec
+(lldb) breakpoint command add syncreply2
+(lldb) breakpoint set -a 0x1974b5ba8 -N syncintr2
+Breakpoint 16: where = TCC`tccd_send_message + 1128, address = 0x00000001974b5ba8
+(lldb) breakpoint command add syncintr2
+(lldb) breakpoint set -a 0x1974b5c1c -N dictreply2
+Breakpoint 17: where = TCC`tccd_send_message + 1244, address = 0x00000001974b5c1c
+(lldb) breakpoint command add dictreply2
+(lldb) breakpoint set -a 0x1974b5d5c -N handlercall2
+Breakpoint 18: where = TCC`tccd_send_message + 1564, address = 0x00000001974b5d5c
+(lldb) breakpoint command add handlercall2
+Current breakpoints:
+5: address = TCC[0x00000001850c9740], locations = 1, resolved = 1, hit count = 6
+    Breakpoint commands:
+      register read x0 x2 x3 w4 w5
+      memory read -f x -c 4 $x3
+      continue
+
+  Names:
+    tccsend
+
+  5.1: where = TCC`tccd_send_message, address = 0x00000001974b5740, resolved, hit count = 6 
+
+6: address = TCC[0x00000001850d07e4], locations = 1 Options: disabled 
+    Breakpoint commands:
+      register read x0 x1
+      continue
+
+  Names:
+    tccreplyok
+
+  6.1: where = TCC`__TCCAccessSetPidResponsibleForPid_block_invoke_2 + 52, address = 0x00000001974bc7e4, unresolved, hit count = 0 
+
+7: address = TCC[0x00000001850d0804], locations = 1 Options: disabled 
+    Breakpoint commands:
+      register read x0 x1
+      continue
+
+  Names:
+    tccreplyerr
+
+  7.1: where = TCC`__TCCAccessSetPidResponsibleForPid_block_invoke_2 + 84, address = 0x00000001974bc804, unresolved, hit count = 0 
+
+8: address = TCC[0x00000001850d07f8], locations = 1 Options: disabled 
+    Breakpoint commands:
+      register read w0 x8
+      continue
+
+  Names:
+    tccresult
+
+  8.1: where = TCC`__TCCAccessSetPidResponsibleForPid_block_invoke_2 + 72, address = 0x00000001974bc7f8, unresolved, hit count = 0 
+
+9: address = TCC[0x00000001850c9584], locations = 1, resolved = 1, hit count = 5
+    Breakpoint commands:
+      register read w0 x1
+      continue
+
+  Names:
+    tccdget
+
+  9.1: where = TCC`tccd, address = 0x00000001974b5584, resolved, hit count = 5 
+
+10: address = SkyLight[0x0000000185425e0c], locations = 1, resolved = 1, hit count = 3
+    Breakpoint commands:
+      register read w0
+      continue
+
+  Names:
+    skyraw
+
+  10.1: where = SkyLight`audit_token_check_tcc_access + 108, address = 0x0000000197811e0c, resolved, hit count = 3 
+
+15: address = TCC[0x00000001850c9aec], locations = 1, resolved = 1, hit count = 0
+    Breakpoint commands:
+      register read x0
+      continue
+
+  Names:
+    syncreply2
+
+  15.1: where = TCC`tccd_send_message + 940, address = 0x00000001974b5aec, resolved, hit count = 0 
+
+16: address = TCC[0x00000001850c9ba8], locations = 1, resolved = 1, hit count = 0
+    Breakpoint commands:
+      register read x20
+      continue
+
+  Names:
+    syncintr2
+
+  16.1: where = TCC`tccd_send_message + 1128, address = 0x00000001974b5ba8, resolved, hit count = 0 
+
+17: address = TCC[0x00000001850c9c1c], locations = 1, resolved = 1, hit count = 0
+    Breakpoint commands:
+      register read x24
+      continue
+
+  Names:
+    dictreply2
+
+  17.1: where = TCC`tccd_send_message + 1244, address = 0x00000001974b5c1c, resolved, hit count = 0 
+
+18: address = TCC[0x00000001850c9d5c], locations = 1, resolved = 1, hit count = 0
+    Breakpoint commands:
+      register read x0 x1
+      continue
+
+  Names:
+    handlercall2
+
+  18.1: where = TCC`tccd_send_message + 1564, address = 0x00000001974b5d5c, resolved, hit count = 0 
+
+Process 61460 resuming
+[1G[J(lldb)  register read w0 x1
+      w0 = 0x00000001
+      x1 = 0x000000016b4aac90
+[1G[J(lldb)  [17G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [17G[1G[JCommand #2 'continue' continued the target.
+[1G[J(lldb)  [17G[1G[J(lldb)  register read x0 x2 x3 w4 w5
+      x0 = 0x000000012d7be8c0
+      x2 = 0x000000011e054590
+      x3 = 0x000000016b4aa830
+      w4 = 0x00000007
+      w5 = 0x00000000
+[1G[J(lldb)  [17G[1G[J(lldb)  memory read -f x -c 4 $x3
+0x16b4aa830: 0xed7c3720 0x00000001 0x42000000 0x00000000
+[1G[J(lldb)  [17G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [17G[1G[JCommand #3 'continue' continued the target.
+[1G[J(lldb)  [17G[1G[J(lldb)  register read x0
+      x0 = 0x00000001ef528980  libxpc.dylib`_xpc_error_connection_invalid
+[1G[J(lldb)  [17G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [17G[1G[JCommand #2 'continue' continued the target.
+[1G[J(lldb)  [17G[1G[J(lldb)  register read x24
+     x24 = 0x00000001ef528980  libxpc.dylib`_xpc_error_connection_invalid
+[1G[J(lldb)  [17G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [17G[1G[JCommand #2 'continue' continued the target.
+[1G[J(lldb)  [17G[1G[J(lldb)  register read w0 x1
+      w0 = 0x00000001
+      x1 = 0x0000000000000000
+[1G[J(lldb)  [17G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [17G[1G[JCommand #2 'continue' continued the target.
+[1G[J(lldb)  [17G[1G[J(lldb)  register read x0 x2 x3 w4 w5
+      x0 = 0x000000012d7b9cb0
+      x2 = 0x000000011e054590
+      x3 = 0x000000016b4aa830
+      w4 = 0x00000007
+      w5 = 0x00000001
+[1G[J(lldb)  [17G[1G[J(lldb)  memory read -f x -c 4 $x3
+0x16b4aa830: 0xed7c3720 0x00000001 0x42000000 0x00000000
+[1G[J(lldb)  [17G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [17G[1G[JCommand #3 'continue' continued the target.
+[1G[J(lldb)  [17G[1G[J(lldb)  register read x0
+      x0 = 0x00000001ef528980  libxpc.dylib`_xpc_error_connection_invalid
+[1G[J(lldb)  [17G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [17G[1G[JCommand #2 'continue' continued the target.
+[1G[J(lldb)  [17G[1G[J(lldb)  register read x24
+     x24 = 0x00000001ef528980  libxpc.dylib`_xpc_error_connection_invalid
+[1G[J(lldb)  [17G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [17G[1G[JCommand #2 'continue' continued the target.
+[1G[J(lldb)  [17G[1G[J(lldb)  register read x0 x1
+      x0 = 0x000000016b4aa830
+      x1 = 0x00000001ef528980  libxpc.dylib`_xpc_error_connection_invalid
+[1G[J(lldb)  [17G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [17G[1G[JCommand #2 'continue' continued the target.
+[1G[J(lldb)  [17G[1G[J(lldb)  register read w0
+      w0 = 0x00000001
+[1G[J(lldb)  [17G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [17G[1G[JCommand #2 'continue' continued the target.
+[1G[J(lldb)  [17G[1G[J(lldb)  register read w0 x1
+      w0 = 0x00000001
+      x1 = 0x000000016b4aac30
+[1G[J(lldb)  [17G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [17G[1G[JCommand #2 'continue' continued the target.
+[1G[J(lldb)  [17G[1G[J(lldb)  register read x0 x2 x3 w4 w5
+      x0 = 0x000000011e371270
+      x2 = 0x000000011e0651b0
+      x3 = 0x000000016b4aa7d0
+      w4 = 0x00000007
+      w5 = 0x00000000
+[1G[J(lldb)  [17G[1G[J(lldb)  memory read -f x -c 4 $x3
+0x16b4aa7d0: 0xed7c3720 0x00000001 0x42000000 0x00000000
+[1G[J(lldb)  [17G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [17G[1G[JCommand #3 'continue' continued the target.
+[1G[J(lldb)  [17G[1G[J(lldb)  register read x0
+      x0 = 0x00000001ef528980  libxpc.dylib`_xpc_error_connection_invalid
+[1G[J(lldb)  [17G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [17G[1G[JCommand #2 'continue' continued the target.
+[1G[J(lldb)  [17G[1G[J(lldb)  register read x24
+     x24 = 0x00000001ef528980  libxpc.dylib`_xpc_error_connection_invalid
+[1G[J(lldb)  [17G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [17G[1G[JCommand #2 'continue' continued the target.
+[1G[J(lldb)  [17G[1G[J(lldb)  register read w0 x1
+      w0 = 0x00000001
+      x1 = 0x0000000000000000
+[1G[J(lldb)  [17G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [17G[1G[JCommand #2 'continue' continued the target.
+[1G[J(lldb)  [17G[1G[J(lldb)  register read x0 x2 x3 w4 w5
+      x0 = 0x000000013d651ee0
+      x2 = 0x000000011e0651b0
+      x3 = 0x000000016b4aa7d0
+      w4 = 0x00000007
+      w5 = 0x00000001
+[1G[J(lldb)  [17G[1G[J(lldb)  memory read -f x -c 4 $x3
+0x16b4aa7d0: 0xed7c3720 0x00000001 0x42000000 0x00000000
+[1G[J(lldb)  [17G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [17G[1G[JCommand #3 'continue' continued the target.
+[1G[J(lldb)  [17G[1G[J(lldb)  register read x0
+      x0 = 0x00000001ef528980  libxpc.dylib`_xpc_error_connection_invalid
+[1G[J(lldb)  [17G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [17G[1G[JCommand #2 'continue' continued the target.
+[1G[J(lldb)  [17G[1G[J(lldb)  register read x24
+     x24 = 0x00000001ef528980  libxpc.dylib`_xpc_error_connection_invalid
+[1G[J(lldb)  [17G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [17G[1G[JCommand #2 'continue' continued the target.
+[1G[J(lldb)  [17G[1G[J(lldb)  register read x0 x1
+      x0 = 0x000000016b4aa7d0
+      x1 = 0x00000001ef528980  libxpc.dylib`_xpc_error_connection_invalid
+[1G[J(lldb)  [17G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [17G[1G[JCommand #2 'continue' continued the target.
+[1G[J(lldb)  [17G[1G[J(lldb)  register read w0
+      w0 = 0x00000001
+[1G[J(lldb)  [17G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [17G[1G[JCommand #2 'continue' continued the target.
+[1G[J(lldb)  [17GExecuting commands in '/tmp/r006_bps7.txt'.
+(lldb) breakpoint command add tccsend
+(lldb) breakpoint set -a 0x1974bc7b0 -N parserentry
+Breakpoint 19: where = TCC`__TCCAccessSetPidResponsibleForPid_block_invoke_2, address = 0x00000001974bc7b0
+(lldb) breakpoint command add parserentry
+(lldb) breakpoint set -a 0x1974bc548 -N mini2
+Breakpoint 20: where = TCC`__TCCAccessPreflightWithAuditToken_block_invoke, address = 0x00000001974bc548
+(lldb) breakpoint command add mini2
+(lldb) breakpoint set -a 0x1974bc560 -N mini0
+Breakpoint 21: where = TCC`__TCCAccessPreflightWithAuditToken_block_invoke.337, address = 0x00000001974bc560
+(lldb) breakpoint command add mini0
+[1G[J(lldb)  register read w0 x1
+      w0 = 0x00000001
+      x1 = 0x000000016b4aac90
+[1G[J(lldb)  [42G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [42G[1G[JCommand #2 'continue' continued the target.
+[1G[J(lldb)  [42G[1G[J(lldb)  register read x0 x2 x3 w4 w5
+      x0 = 0x000000012d7be8c0
+      x2 = 0x000000012e015090
+      x3 = 0x000000016b4aa830
+      w4 = 0x00000007
+      w5 = 0x00000000
+[1G[J(lldb)  [42G[1G[J(lldb)  memory read -f x -c 8 $x3
+0x16b4aa830: 0xed7c3720 0x00000001 0x42000000 0x00000000
+0x16b4aa840: 0x974b8ebc 0x00000001 0xef877770 0x00000001
+[1G[J(lldb)  [42G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [42G[1G[JCommand #3 'continue' continued the target.
+[1G[J(lldb)  [42G[1G[J(lldb)  register read x0
+      x0 = 0x00000001ef528980  libxpc.dylib`_xpc_error_connection_invalid
+[1G[J(lldb)  [42G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [42G[1G[JCommand #2 'continue' continued the target.
+[1G[J(lldb)  [42G[1G[J(lldb)  register read x24
+     x24 = 0x00000001ef528980  libxpc.dylib`_xpc_error_connection_invalid
+[1G[J(lldb)  [42G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [42G[1G[JCommand #2 'continue' continued the target.
+[1G[J(lldb)  [42G[1G[J(lldb)  register read w0 x1
+      w0 = 0x00000001
+      x1 = 0x0000000000000000
+[1G[J(lldb)  [42G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [42G[1G[JCommand #2 'continue' continued the target.
+[1G[J(lldb)  [42G[1G[J(lldb)  register read x0 x2 x3 w4 w5
+      x0 = 0x000000011d604d80
+      x2 = 0x000000012e015090
+      x3 = 0x000000016b4aa830
+      w4 = 0x00000007
+      w5 = 0x00000001
+[1G[J(lldb)  [42G[1G[J(lldb)  memory read -f x -c 8 $x3
+0x16b4aa830: 0xed7c3720 0x00000001 0x42000000 0x00000000
+0x16b4aa840: 0x974b8ebc 0x00000001 0xef877770 0x00000001
+[1G[J(lldb)  [42G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [42G[1G[JCommand #3 'continue' continued the target.
+[1G[J(lldb)  [42G[1G[J(lldb)  register read x0
+      x0 = 0x00000001ef528980  libxpc.dylib`_xpc_error_connection_invalid
+[1G[J(lldb)  [42G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [42G[1G[JCommand #2 'continue' continued the target.
+[1G[J(lldb)  [42G[1G[J(lldb)  register read x24
+     x24 = 0x00000001ef528980  libxpc.dylib`_xpc_error_connection_invalid
+[1G[J(lldb)  [42G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [42G[1G[JCommand #2 'continue' continued the target.
+[1G[J(lldb)  [42G[1G[J(lldb)  register read x0 x1
+      x0 = 0x000000016b4aa830
+      x1 = 0x00000001ef528980  libxpc.dylib`_xpc_error_connection_invalid
+[1G[J(lldb)  [42G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [42G[1G[JCommand #2 'continue' continued the target.
+[1G[J(lldb)  [42G[1G[J(lldb)  register read w1
+      w1 = 0x00000000
+[1G[J(lldb)  [42G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [42G[1G[JCommand #2 'continue' continued the target.
+[1G[J(lldb)  [42G[1G[J(lldb)  register read w0
+      w0 = 0x00000001
+[1G[J(lldb)  [42G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [42G[1G[JCommand #2 'continue' continued the target.
+[1G[J(lldb)  [42G[1G[J(lldb)  register read w0 x1
+      w0 = 0x00000001
+      x1 = 0x000000016b4aac30
+[1G[J(lldb)  [42G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [42G[1G[JCommand #2 'continue' continued the target.
+[1G[J(lldb)  [42G[1G[J(lldb)  register read x0 x2 x3 w4 w5
+      x0 = 0x000000012d7be8c0
+      x2 = 0x000000011d60f950
+      x3 = 0x000000016b4aa7d0
+      w4 = 0x00000007
+      w5 = 0x00000000
+[1G[J(lldb)  [42G[1G[J(lldb)  memory read -f x -c 8 $x3
+0x16b4aa7d0: 0xed7c3720 0x00000001 0x42000000 0x00000000
+0x16b4aa7e0: 0x974b8ebc 0x00000001 0xef877770 0x00000001
+[1G[J(lldb)  [42G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [42G[1G[JCommand #3 'continue' continued the target.
+[1G[J(lldb)  [42G[1G[J(lldb)  register read x0
+      x0 = 0x00000001ef528980  libxpc.dylib`_xpc_error_connection_invalid
+[1G[J(lldb)  [42G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [42G[1G[JCommand #2 'continue' continued the target.
+[1G[J(lldb)  [42G[1G[J(lldb)  register read x24
+     x24 = 0x00000001ef528980  libxpc.dylib`_xpc_error_connection_invalid
+[1G[J(lldb)  [42G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [42G[1G[JCommand #2 'continue' continued the target.
+[1G[J(lldb)  [42G[1G[J(lldb)  register read w0 x1
+      w0 = 0x00000001
+      x1 = 0x0000000000000000
+[1G[J(lldb)  [42G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [42G[1G[JCommand #2 'continue' continued the target.
+[1G[J(lldb)  [42G[1G[J(lldb)  register read x0 x2 x3 w4 w5
+      x0 = 0x000000012e01c570
+      x2 = 0x000000011d60f950
+      x3 = 0x000000016b4aa7d0
+      w4 = 0x00000007
+      w5 = 0x00000001
+[1G[J(lldb)  [42G[1G[J(lldb)  memory read -f x -c 8 $x3
+0x16b4aa7d0: 0xed7c3720 0x00000001 0x42000000 0x00000000
+0x16b4aa7e0: 0x974b8ebc 0x00000001 0xef877770 0x00000001
+[1G[J(lldb)  [42G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [42G[1G[JCommand #3 'continue' continued the target.
+[1G[J(lldb)  [42G[1G[J(lldb)  register read x0
+      x0 = 0x00000001ef528980  libxpc.dylib`_xpc_error_connection_invalid
+[1G[J(lldb)  [42G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [42G[1G[JCommand #2 'continue' continued the target.
+[1G[J(lldb)  [42G[1G[J(lldb)  register read x24
+     x24 = 0x00000001ef528980  libxpc.dylib`_xpc_error_connection_invalid
+[1G[J(lldb)  [42G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [42G[1G[JCommand #2 'continue' continued the target.
+[1G[J(lldb)  [42G[1G[J(lldb)  register read x0 x1
+      x0 = 0x000000016b4aa7d0
+      x1 = 0x00000001ef528980  libxpc.dylib`_xpc_error_connection_invalid
+[1G[J(lldb)  [42G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [42G[1G[JCommand #2 'continue' continued the target.
+[1G[J(lldb)  [42G[1G[J(lldb)  register read w1
+      w1 = 0x00000000
+[1G[J(lldb)  [42G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [42G[1G[JCommand #2 'continue' continued the target.
+[1G[J(lldb)  [42G[1G[J(lldb)  register read w0
+      w0 = 0x00000001
+[1G[J(lldb)  [42G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [42G[1G[JCommand #2 'continue' continued the target.
+[1G[J(lldb)  [42GCurrent breakpoints:
+5: address = TCC[0x00000001850c9740], locations = 1, resolved = 1, hit count = 14
+    Breakpoint commands:
+      register read x0 x2 x3 w4 w5
+      memory read -f x -c 8 $x3
+      continue
+
+  Names:
+    tccsend
+
+  5.1: where = TCC`tccd_send_message, address = 0x00000001974b5740, resolved, hit count = 14 
+
+6: address = TCC[0x00000001850d07e4], locations = 1 Options: disabled 
+    Breakpoint commands:
+      register read x0 x1
+      continue
+
+  Names:
+    tccreplyok
+
+  6.1: where = TCC`__TCCAccessSetPidResponsibleForPid_block_invoke_2 + 52, address = 0x00000001974bc7e4, unresolved, hit count = 0 
+
+7: address = TCC[0x00000001850d0804], locations = 1 Options: disabled 
+    Breakpoint commands:
+      register read x0 x1
+      continue
+
+  Names:
+    tccreplyerr
+
+  7.1: where = TCC`__TCCAccessSetPidResponsibleForPid_block_invoke_2 + 84, address = 0x00000001974bc804, unresolved, hit count = 0 
+
+8: address = TCC[0x00000001850d07f8], locations = 1 Options: disabled 
+    Breakpoint commands:
+      register read w0 x8
+      continue
+
+  Names:
+    tccresult
+
+  8.1: where = TCC`__TCCAccessSetPidResponsibleForPid_block_invoke_2 + 72, address = 0x00000001974bc7f8, unresolved, hit count = 0 
+
+9: address = TCC[0x00000001850c9584], locations = 1, resolved = 1, hit count = 13
+    Breakpoint commands:
+      register read w0 x1
+      continue
+
+  Names:
+    tccdget
+
+  9.1: where = TCC`tccd, address = 0x00000001974b5584, resolved, hit count = 13 
+
+10: address = SkyLight[0x0000000185425e0c], locations = 1, resolved = 1, hit count = 7
+    Breakpoint commands:
+      register read w0
+      continue
+
+  Names:
+    skyraw
+
+  10.1: where = SkyLight`audit_token_check_tcc_access + 108, address = 0x0000000197811e0c, resolved, hit count = 7 
+
+15: address = TCC[0x00000001850c9aec], locations = 1, resolved = 1, hit count = 8
+    Breakpoint commands:
+      register read x0
+      continue
+
+  Names:
+    syncreply2
+
+  15.1: where = TCC`tccd_send_message + 940, address = 0x00000001974b5aec, resolved, hit count = 8 
+
+16: address = TCC[0x00000001850c9ba8], locations = 1, resolved = 1, hit count = 0
+    Breakpoint commands:
+      register read x20
+      continue
+
+  Names:
+    syncintr2
+
+  16.1: where = TCC`tccd_send_message + 1128, address = 0x00000001974b5ba8, resolved, hit count = 0 
+
+17: address = TCC[0x00000001850c9c1c], locations = 1, resolved = 1, hit count = 8
+    Breakpoint commands:
+      register read x24
+      continue
+
+  Names:
+    dictreply2
+
+  17.1: where = TCC`tccd_send_message + 1244, address = 0x00000001974b5c1c, resolved, hit count = 8 
+
+18: address = TCC[0x00000001850c9d5c], locations = 1, resolved = 1, hit count = 4
+    Breakpoint commands:
+      register read x0 x1
+      continue
+
+  Names:
+    handlercall2
+
+  18.1: where = TCC`tccd_send_message + 1564, address = 0x00000001974b5d5c, resolved, hit count = 4 
+
+19: address = TCC[0x00000001850d07b0], locations = 1, resolved = 1, hit count = 0
+    Breakpoint commands:
+      register read x0 x1
+      continue
+
+  Names:
+    parserentry
+
+  19.1: where = TCC`__TCCAccessSetPidResponsibleForPid_block_invoke_2, address = 0x00000001974bc7b0, resolved, hit count = 0 
+
+20: address = TCC[0x00000001850d0548], locations = 1, resolved = 1, hit count = 0
+    Breakpoint commands:
+      register read w1
+      continue
+
+  Names:
+    mini2
+
+  20.1: where = TCC`__TCCAccessPreflightWithAuditToken_block_invoke, address = 0x00000001974bc548, resolved, hit count = 0 
+
+21: address = TCC[0x00000001850d0560], locations = 1, resolved = 1, hit count = 2
+    Breakpoint commands:
+      register read w1
+      continue
+
+  Names:
+    mini0
+
+  21.1: where = TCC`__TCCAccessPreflightWithAuditToken_block_invoke.337, address = 0x00000001974bc560, resolved, hit count = 2 
+
+Executing commands in '/tmp/r006_bps8.txt'.
+(lldb) breakpoint set -a 0x1974b5b4c -N connname
+Breakpoint 22: where = TCC`tccd_send_message + 1036, address = 0x00000001974b5b4c
+(lldb) breakpoint command add connname
+[1G[J(lldb)  register read w0 x1
+      w0 = 0x00000001
+      x1 = 0x000000016b4aac90
+[1G[J(lldb)  [42G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [42G[1G[JCommand #2 'continue' continued the target.
+[1G[J(lldb)  [42G[1G[J(lldb)  register read x0 x2 x3 w4 w5
+      x0 = 0x000000011d604d80
+      x2 = 0x000000011e0f2c80
+      x3 = 0x000000016b4aa830
+      w4 = 0x00000007
+      w5 = 0x00000000
+[1G[J(lldb)  [42G[1G[J(lldb)  memory read -f x -c 8 $x3
+0x16b4aa830: 0xed7c3720 0x00000001 0x42000000 0x00000000
+0x16b4aa840: 0x974b8ebc 0x00000001 0xef877770 0x00000001
+[1G[J(lldb)  [42G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [42G[1G[JCommand #3 'continue' continued the target.
+[1G[J(lldb)  [42G[1G[J(lldb)  register read x0
+      x0 = 0x00000001ef528980  libxpc.dylib`_xpc_error_connection_invalid
+[1G[J(lldb)  [42G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [42G[1G[JCommand #2 'continue' continued the target.
+[1G[J(lldb)  [42G[1G[J(lldb)  register read x24
+     x24 = 0x00000001ef528980  libxpc.dylib`_xpc_error_connection_invalid
+[1G[J(lldb)  [42G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [42G[1G[JCommand #2 'continue' continued the target.
+[1G[J(lldb)  [42G[1G[J(lldb)  register read w0 x1
+      w0 = 0x00000001
+      x1 = 0x0000000000000000
+[1G[J(lldb)  [42G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [42G[1G[JCommand #2 'continue' continued the target.
+[1G[J(lldb)  [42G[1G[J(lldb)  register read x0 x2 x3 w4 w5
+      x0 = 0x000000012e017e00
+      x2 = 0x000000011e0f2c80
+      x3 = 0x000000016b4aa830
+      w4 = 0x00000007
+      w5 = 0x00000001
+[1G[J(lldb)  [42G[1G[J(lldb)  memory read -f x -c 8 $x3
+0x16b4aa830: 0xed7c3720 0x00000001 0x42000000 0x00000000
+0x16b4aa840: 0x974b8ebc 0x00000001 0xef877770 0x00000001
+[1G[J(lldb)  [42G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [42G[1G[JCommand #3 'continue' continued the target.
+[1G[J(lldb)  [42G[1G[J(lldb)  register read x0
+      x0 = 0x00000001ef528980  libxpc.dylib`_xpc_error_connection_invalid
+[1G[J(lldb)  [42G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [42G[1G[JCommand #2 'continue' continued the target.
+[1G[J(lldb)  [42G[1G[J(lldb)  register read x24
+     x24 = 0x00000001ef528980  libxpc.dylib`_xpc_error_connection_invalid
+[1G[J(lldb)  [42G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [42G[1G[JCommand #2 'continue' continued the target.
+[1G[J(lldb)  [42G[1G[J(lldb)  register read x0 x1
+      x0 = 0x000000016b4aa830
+      x1 = 0x00000001ef528980  libxpc.dylib`_xpc_error_connection_invalid
+[1G[J(lldb)  [42G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [42G[1G[JCommand #2 'continue' continued the target.
+[1G[J(lldb)  [42G[1G[J(lldb)  register read w1
+      w1 = 0x00000000
+[1G[J(lldb)  [42G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [42G[1G[JCommand #2 'continue' continued the target.
+[1G[J(lldb)  [42G[1G[J(lldb)  register read w0
+      w0 = 0x00000001
+[1G[J(lldb)  [42G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [42G[1G[JCommand #2 'continue' continued the target.
+[1G[J(lldb)  [42G[1G[J(lldb)  register read w0 x1
+      w0 = 0x00000001
+      x1 = 0x000000016b4aac30
+[1G[J(lldb)  [42G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [42G[1G[JCommand #2 'continue' continued the target.
+[1G[J(lldb)  [42G[1G[J(lldb)  register read x0 x2 x3 w4 w5
+      x0 = 0x000000011d604d80
+      x2 = 0x000000011d60a210
+      x3 = 0x000000016b4aa7d0
+      w4 = 0x00000007
+      w5 = 0x00000000
+[1G[J(lldb)  [42G[1G[J(lldb)  memory read -f x -c 8 $x3
+0x16b4aa7d0: 0xed7c3720 0x00000001 0x42000000 0x00000000
+0x16b4aa7e0: 0x974b8ebc 0x00000001 0xef877770 0x00000001
+[1G[J(lldb)  [42G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [42G[1G[JCommand #3 'continue' continued the target.
+[1G[J(lldb)  [42G[1G[J(lldb)  register read x0
+      x0 = 0x00000001ef528980  libxpc.dylib`_xpc_error_connection_invalid
+[1G[J(lldb)  [42G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [42G[1G[JCommand #2 'continue' continued the target.
+[1G[J(lldb)  [42G[1G[J(lldb)  register read x24
+     x24 = 0x00000001ef528980  libxpc.dylib`_xpc_error_connection_invalid
+[1G[J(lldb)  [42G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [42G[1G[JCommand #2 'continue' continued the target.
+[1G[J(lldb)  [42G[1G[J(lldb)  register read w0 x1
+      w0 = 0x00000001
+      x1 = 0x0000000000000000
+[1G[J(lldb)  [42G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [42G[1G[JCommand #2 'continue' continued the target.
+[1G[J(lldb)  [42G[1G[J(lldb)  register read x0 x2 x3 w4 w5
+      x0 = 0x000000011d60c850
+      x2 = 0x000000011d60a210
+      x3 = 0x000000016b4aa7d0
+      w4 = 0x00000007
+      w5 = 0x00000001
+[1G[J(lldb)  [42G[1G[J(lldb)  memory read -f x -c 8 $x3
+0x16b4aa7d0: 0xed7c3720 0x00000001 0x42000000 0x00000000
+0x16b4aa7e0: 0x974b8ebc 0x00000001 0xef877770 0x00000001
+[1G[J(lldb)  [42G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [42G[1G[JCommand #3 'continue' continued the target.
+[1G[J(lldb)  [42G[1G[J(lldb)  register read x0
+      x0 = 0x00000001ef528980  libxpc.dylib`_xpc_error_connection_invalid
+[1G[J(lldb)  [42G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [42G[1G[JCommand #2 'continue' continued the target.
+[1G[J(lldb)  [42G[1G[J(lldb)  register read x24
+     x24 = 0x00000001ef528980  libxpc.dylib`_xpc_error_connection_invalid
+[1G[J(lldb)  [42G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [42G[1G[JCommand #2 'continue' continued the target.
+[1G[J(lldb)  [42G[1G[J(lldb)  register read x0 x1
+      x0 = 0x000000016b4aa7d0
+      x1 = 0x00000001ef528980  libxpc.dylib`_xpc_error_connection_invalid
+[1G[J(lldb)  [42G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [42G[1G[JCommand #2 'continue' continued the target.
+[1G[J(lldb)  [42G[1G[J(lldb)  register read w1
+      w1 = 0x00000000
+[1G[J(lldb)  [42G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [42G[1G[JCommand #2 'continue' continued the target.
+[1G[J(lldb)  [42G[1G[J(lldb)  register read w0
+      w0 = 0x00000001
+[1G[J(lldb)  [42G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [42G[1G[JCommand #2 'continue' continued the target.
+[1G[J(lldb)  [42G22: address = TCC[0x00000001850c9b4c], locations = 1, resolved = 1, hit count = 0
+    Breakpoint commands:
+      memory read -f s -c 64 $x0
+      continue
+
+  Names:
+    connname
+
+  22.1: where = TCC`tccd_send_message + 1036, address = 0x00000001974b5b4c, resolved, hit count = 0 
+
+[1G[J(lldb)  register read w0 x1
+      w0 = 0x00000001
+      x1 = 0x000000016b4aac90
+[1G[J(lldb)  [33G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [33G[1G[JCommand #2 'continue' continued the target.
+[1G[J(lldb)  [33G[1G[J(lldb)  register read x0 x2 x3 w4 w5
+      x0 = 0x000000012e017e00
+      x2 = 0x000000011e053e30
+      x3 = 0x000000016b4aa830
+      w4 = 0x00000007
+      w5 = 0x00000000
+[1G[J(lldb)  [33G[1G[J(lldb)  memory read -f x -c 8 $x3
+0x16b4aa830: 0xed7c3720 0x00000001 0x42000000 0x00000000
+0x16b4aa840: 0x974b8ebc 0x00000001 0xef877770 0x00000001
+[1G[J(lldb)  [33G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [33G[1G[JCommand #3 'continue' continued the target.
+[1G[J(lldb)  [33G[1G[J(lldb)  register read x0
+      x0 = 0x00000001ef528980  libxpc.dylib`_xpc_error_connection_invalid
+[1G[J(lldb)  [33G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [33G[1G[JCommand #2 'continue' continued the target.
+[1G[J(lldb)  [33G[1G[J(lldb)  register read x24
+     x24 = 0x00000001ef528980  libxpc.dylib`_xpc_error_connection_invalid
+[1G[J(lldb)  [33G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [33G[1G[JCommand #2 'continue' continued the target.
+[1G[J(lldb)  [33G[1G[J(lldb)  register read w0 x1
+      w0 = 0x00000001
+      x1 = 0x0000000000000000
+[1G[J(lldb)  [33G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [33G[1G[JCommand #2 'continue' continued the target.
+[1G[J(lldb)  [33G[1G[J(lldb)  register read x0 x2 x3 w4 w5
+      x0 = 0x000000012e01d240
+      x2 = 0x000000011e053e30
+      x3 = 0x000000016b4aa830
+      w4 = 0x00000007
+      w5 = 0x00000001
+[1G[J(lldb)  [33G[1G[J(lldb)  memory read -f x -c 8 $x3
+0x16b4aa830: 0xed7c3720 0x00000001 0x42000000 0x00000000
+0x16b4aa840: 0x974b8ebc 0x00000001 0xef877770 0x00000001
+[1G[J(lldb)  [33G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [33G[1G[JCommand #3 'continue' continued the target.
+[1G[J(lldb)  [33G[1G[J(lldb)  register read x0
+      x0 = 0x00000001ef528980  libxpc.dylib`_xpc_error_connection_invalid
+[1G[J(lldb)  [33G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [33G[1G[JCommand #2 'continue' continued the target.
+[1G[J(lldb)  [33G[1G[J(lldb)  register read x24
+     x24 = 0x00000001ef528980  libxpc.dylib`_xpc_error_connection_invalid
+[1G[J(lldb)  [33G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [33G[1G[JCommand #2 'continue' continued the target.
+[1G[J(lldb)  [33G[1G[J(lldb)  register read x0 x1
+      x0 = 0x000000016b4aa830
+      x1 = 0x00000001ef528980  libxpc.dylib`_xpc_error_connection_invalid
+[1G[J(lldb)  [33G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [33G[1G[JCommand #2 'continue' continued the target.
+[1G[J(lldb)  [33G[1G[J(lldb)  register read w1
+      w1 = 0x00000000
+[1G[J(lldb)  [33G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [33G[1G[JCommand #2 'continue' continued the target.
+[1G[J(lldb)  [33G[1G[J(lldb)  register read w0
+      w0 = 0x00000001
+[1G[J(lldb)  [33G[1G[J(lldb)  continue
+Process 61460 resuming
+[1G[J(lldb)  [33G[1G[JCommand #2 'continue' continued the target.
+[1G[J(lldb)  [33GAll breakpoints disabled. (14 breakpoints)
+Process 61460 detached
+

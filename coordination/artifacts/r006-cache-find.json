@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T01:43:34.979582+08:00",
+  "finished": "2026-10-15T01:43:41.235282+08:00",
+  "command": "find /var/mnt/rootfs /var/jb -name 'dyld_shared_cache*' 2>/dev/null | head -15; ls -lh /var/jb/usr/macOS/dyld* 2>/dev/null | head",
+  "command_sha256": "1466fa47d7eaa9031d6d3f0015dca5a602fdcd87985dca32f9f0b5c1134446e5",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "/var/mnt/rootfs/System/Volumes/Preboot/Cryptexes/OS/System/DriverKit/System/Library/dyld/dyld_shared_cache_arm64e.symbols\n/var/mnt/rootfs/System/Volumes/Preboot/Cryptexes/OS/System/DriverKit/System/Library/dyld/dyld_shared_cache_x86_64.symbols\n/var/mnt/rootfs/System/Volumes/Preboot/Cryptexes/OS/System/DriverKit/System/Library/dyld/dyld_shared_cache_arm64e\n/var/mnt/rootfs/System/Volumes/Preboot/Cryptexes/OS/System/DriverKit/System/Library/dyld/dyld_shared_cache_x86_64\n/var/mnt/rootfs/System/Volumes/Preboot/Cryptexes/OS/System/Library/dyld/dyld_shared_cache_arm64e.map\n/var/mnt/rootfs/System/Volumes/Preboot/Cryptexes/OS/System/Library/dyld/dyld_shared_cache_arm64e.01\n/var/mnt/rootfs/System/Volumes/Preboot/Cryptexes/OS/System/Library/dyld/dyld_shared_cache_arm64e\n",
+  "stderr": "zsh:1: no matches found: /var/jb/usr/macOS/dyld*\n",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

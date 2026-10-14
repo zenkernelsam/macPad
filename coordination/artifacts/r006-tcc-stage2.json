@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T01:45:26.443448+08:00",
+  "finished": "2026-10-15T01:45:26.903913+08:00",
+  "command": "T=/var/mnt/rootfs/tmp/dscout_ventura/System/Library/PrivateFrameworks/TCC.framework/Versions/A/TCC; ls -l $T; cp $T /tmp/TCC_22F82 && /var/jb/usr/bin/python3 -c \"import hashlib;print('staged:',hashlib.sha256(open('/tmp/TCC_22F82','rb').read()).hexdigest())\"",
+  "command_sha256": "544c32e2733fa0273ab7488ed6c6fa58d807f501ba1a38a98b73c5da55f97695",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "-rw-r--r-- 1 root wheel 208896 Oct 15 01:45 /var/mnt/rootfs/tmp/dscout_ventura/System/Library/PrivateFrameworks/TCC.framework/Versions/A/TCC\nstaged: 09b841378285a120a04b1c8718dd5c7e3b98b4e59849eea0d8767f845d02f2de\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

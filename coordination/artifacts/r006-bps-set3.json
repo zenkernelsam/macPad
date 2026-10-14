@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T01:53:50.944771+08:00",
+  "finished": "2026-10-15T01:54:12.594060+08:00",
+  "command": "export LC_CTYPE=UTF-8 TMUX_TMPDIR=/var/tmp; tmux send-keys -t devin_r006 'command source /tmp/r006_bps3.txt' Enter; sleep 15; tmux send-keys -t devin_r006 'breakpoint list' Enter; sleep 6; tmux capture-pane -p -t devin_r006 -S -70 | tail -55",
+  "command_sha256": "2c6c899767514edc1fba78ea272c9cb60a56623c815178f27eda2b77b6b440ba",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "4: address = TCC[0x00000001850c9584], locations = 1, resolved = 1, hit count = 0\n    Breakpoint commands:\n      expr -- (void)printf(\"[R006-TCCD] flags=%d\\n\", $w0)\n      continue\n\n  Names:\n    tccdget\n\n  4.1: where = TCC`tccd, address = 0x00000001974b5584, resolved, hit count = 0\n\n(lldb) continue\nProcess 61460 resuming\n(lldb)  expr -- (void)printf(\"[R006-TCCD] flags=%d\\n\", $w0)\nerror: Aborting reading of commands after command #0: 'expr -- (void)printf(\"[R0\n06-TCCD] flags=%d\\n\", $w0)' failed with error: couldn't install checkers, unknow\nn error\nProcess 61460 stopped\n* thread #1, name = 'ws_main_thread', queue = 'com.apple.tcc.preflight.kTCCServi\nceListenEvent', stop reason = breakpoint 4.1\n    frame #0: 0x00000001974b5584 TCC`tccd\nTCC`tccd:\n->  0x1974b5584 <+0>:  pacibsp\n    0x1974b5588 <+4>:  sub    sp, sp, #0x70\n    0x1974b558c <+8>:  stp    x24, x23, [sp, #0x30]\n    0x1974b5590 <+12>: stp    x22, x21, [sp, #0x40]\nTarget 0: (WindowServer) stopped.\n(lldb)                                  command source /tmp/r006_bps2.txt\nExecuting commands in '/tmp/r006_bps2.txt'.\n(lldb) breakpoint delete\nAll breakpoints removed. (4 breakpoints)\n\nerror: No auto repeat.\nbreakpoint list\nNo breakpoints currently set.\ncommand source /tmp/r006_bps3.txt\nExecuting commands in '/tmp/r006_bps3.txt'.\n(lldb) breakpoint set -a 0x1974b5740 -N tccsend\nBreakpoint 5: where = TCC`tccd_send_message, address = 0x00000001974b5740\n(lldb) breakpoint command add tccsend\n(lldb) breakpoint set -a 0x1974bc7e4 -N tccreply-ok\nerror: Invalid breakpoint name: tccreply-ok\nbreakpoint list\nCurrent breakpoints:\n5: address = TCC[0x00000001850c9740], locations = 1, resolved = 1, hit count = 0\n    Breakpoint commands:\n      register read x0 x2 x3 w4 w5\n      continue\n\n  Names:\n    tccsend\n\n  5.1: where = TCC`tccd_send_message, address = 0x00000001974b5740, resolved, hi\nt count = 0\n\n\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

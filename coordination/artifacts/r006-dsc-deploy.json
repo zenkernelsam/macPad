@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T01:45:05.462900+08:00",
+  "finished": "2026-10-15T01:45:06.109571+08:00",
+  "command": "ENT=/var/mnt/rootfs/usr/local/lib/libmachook_ent.plist; ldid -S$ENT /tmp/dsc_extract.new && ldid -S$ENT /tmp/dsc_extract.new && install -m755 /tmp/dsc_extract.new /var/mnt/rootfs/usr/local/bin/dsc_extract.new && mv /var/mnt/rootfs/usr/local/bin/dsc_extract.new /var/mnt/rootfs/usr/local/bin/dsc_extract && python3 /var/jb/usr/macOS/bin/macws_boot_trust.py --readd /var/mnt/rootfs/usr/local/bin/dsc_extract 2>&1 | tail -1 && /var/jb/usr/bin/python3 -c \"import hashlib;print(hashlib.sha256(open('/var/mnt/rootfs/usr/local/bin/dsc_extract','rb').read()).hexdigest())\" && rm -f /tmp/dsc_extract.new",
+  "command_sha256": "3863aa0e93a0a1471801cedb11a407a7868d33d03d1368c4bc51a0e8968f831a",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "BOOT-TRUST {\"added\": 1, \"backend\": \"libjailbreak\", \"cached\": 0, \"files\": 1, \"hashes\": 1, \"images\": 1, \"resource_hits\": 0, \"scan_seconds\": 0.0, \"total_seconds\": 0.065}\n555e7fcbe2a41a6e5f0475e4dbdbc69d5c521f3afb3266bf8d98175156529b0c\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

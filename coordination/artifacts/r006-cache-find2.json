@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T01:43:43.885724+08:00",
+  "finished": "2026-10-15T01:43:55.876752+08:00",
+  "command": "find /var/mnt/rootfs -name 'dyld_shared_cache_arm64e*' -type f 2>/dev/null | grep -v Cryptexes | head; find /var/mnt/rootfs -name 'dyld_shared_cache_arm64e' -type l 2>/dev/null | head; ls -lh /var/mnt/rootfs/System/Cryptexes/OS/System/Library/dyld/ 2>/dev/null | head",
+  "command_sha256": "ee0dec169d5ebc5ebdfbc3ef139269237f4d554e76b1e223af55d90ecb085dbc",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "total 3.2G\n-rwxr-xr-x 1 root wheel 1.5G Jun 15  2023 dyld_shared_cache_arm64e\n-rwxr-xr-x 1 root wheel 1.8G Jun 15  2023 dyld_shared_cache_arm64e.01\n-rwxr-xr-x 1 root wheel 854K Jun 15  2023 dyld_shared_cache_arm64e.map\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}
