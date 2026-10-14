@@ -61,6 +61,16 @@ Hit sequence (full pane captures: `artifacts/r005-lldb-pane{1,2}.txt`):
    → blraaz → **raw w0 = 1** → impl 0 → deny folded
    (cached |= 1 → 0x105) → gate +128 **w0 = 0** →
    `SLSPostEventRecord → rc=1002`.
+
+   LIMITS (per R005 review): raw w0=1 is proven AT THE TCC CALLSITE
+   return — it is NOT yet proven that tccd received a request or
+   returned a policy verdict; the value may be produced locally inside
+   TCC.framework (input check, client cache, transport failure).
+   The probe's `post` mode also issues preflight + warp calls during
+   the same interval, so the observed evaluations are attributable to
+   the probe process but not to a single isolated API call.  bp1's
+   total hit count was 6429; the "141 hits" figure counts only the
+   retained pane samples.
 4. Second PostEvent evaluation — cached=0x105, `0x105 & 3 != 0` →
    known-hit, returns `(0x105 & 2) != 0` = 0, **no impl call** →
    gate w0 = 0.
@@ -74,8 +84,10 @@ bp1 was then conditioned `x20 != 0xd9ad` for the clean capture in pane2.)
 ANSWERED:
 - Branch taken: **live TCC evaluation**, raw return **1** → deny.
   Not a cached deny, not a failed checker resolution, not an early-bail.
-- The checker pointer resolves fine and is called via `blraaz`; TCC
-  itself answers (mach/XPC to tccd path inside TCC.framework).
+- The checker pointer resolves fine and is called via `blraaz`; the
+  TCC library function returned 1.  Whether that 1 was produced by a
+  tccd policy reply or locally inside the framework is UNPROVEN —
+  R006 scope.
 - Deny bits persist in the per-process cache keyed `{pid|pidver<<32}`;
   repeat checks for the same sender skip TCC entirely.
 
@@ -84,7 +96,7 @@ OPEN (next bounded step — R006 candidate):
   actual TCC request/response (service `kTCCServicePostEvent`,
   responsible/attributing process, session identity).  Candidates to
   verify live: sender's responsible-process resolution, missing
-  `com.apple.SkyLight.loginwindow` effect on TCC's policy decision,
+  `com.apple.private.SkyLight.loginwindow` effect on TCC's policy decision,
   tccd's target identity inside the chroot.  **No grant fabrication,
   no cache mutation, no entitlement patching** was performed or
   is proposed.

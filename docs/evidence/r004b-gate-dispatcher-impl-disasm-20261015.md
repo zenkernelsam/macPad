@@ -134,7 +134,7 @@ mutation.
 
 The hypothesis that loginwindow/session registration normally produces
 the `kTCCServicePostEvent` grant remains **THEORY, unproven**: the
-probe's missing `com.apple.SkyLight.loginwindow` entitlement and
+probe's missing `com.apple.private.SkyLight.loginwindow` entitlement and
 `sid=0` session are observed facts, but no causal link to this denial
 has been established — the deny could equally come from TCC's policy
 evaluation of the sender identity itself.
