@@ -12,9 +12,17 @@
 // 2026-10-14 RE correction: SLSGetEventPort's signature is
 //   kern_return_t SLSGetEventPort(CGSConnectionID cid, mach_port_t *out);
 // it resolves the connection object for `cid` and stores the event port
-// at connection+0x18.  The 1000 return is err-invalid-connection, not a
-// port value — the earlier "event port name is invalid" conclusion was an
-// artifact of calling it with no arguments.
+// at connection+0x18.  rc=0 means success (observed rc=0 port=4367).
+//
+// R001 error-code audit (22F82 disasm, no blanket convention):
+//   SLSGetEventPort:            0=success, 1000=invalid/no conn
+//   _XSetLoginwindowConnection: 1000 = second registry lookup miss
+//                               (0x1851f7cf4 NULL → w0=#0x3e8),
+//                               1001 = audit-token desc mismatch,
+//                               -0x12c/-0x130 = request validation
+//   _XPostEventRecord:          1002 = CGXSenderCanSynthesizeEvents==0
+//   "1000 == CGX-OK" is FALSE for these routines — 1000 is a distinct
+//   per-routine failure. Always decode against the specific impl.
 //
 // Build (on the macOS dev host, macOS SDK):
 //   xcrun clang -arch arm64e -o macos_ws_event_probe \
@@ -45,6 +53,8 @@
 #include <unistd.h>
 #include <mach/mach.h>
 #include <mach/bootstrap.h>
+#include <mach-o/dyld.h>
+#include <mach-o/loader.h>
 #include <sys/wait.h>
 #include <math.h>
 #include <CoreFoundation/CoreFoundation.h>
@@ -83,6 +93,47 @@ int main(int argc, char **argv) {
     probe_bootstrap_service("com.apple.iohid");
     probe_bootstrap_service("com.apple.CARenderServer");
     probe_bootstrap_service("macwsguide.windowserver.final-composite-replay");
+
+    // ── Phase 1b (R001): identity pins + tccd port for WS-log
+    // correlation.  SkyLight's loaded UUID must match the RE binary
+    // before any image-relative offset is trusted.  The tccd port name
+    // is global in this bootstrap domain — MACH-ALL-SEND lines from WS
+    // carrying remote=<tccdport> prove the gate reached the TCC check;
+    // their absence across a post proves an earlier bail.
+    {
+        for (uint32_t i = 0; i < _dyld_image_count(); i++) {
+            const char *n = _dyld_get_image_name(i);
+            if (n && strstr(n, "SkyLight.framework")) {
+                const struct mach_header_64 *h =
+                    (const struct mach_header_64 *)_dyld_get_image_header(i);
+                const struct load_command *lc = (const void *)(h + 1);
+                for (uint32_t c = 0; c < h->ncmds; c++) {
+                    if (lc->cmd == LC_UUID) {
+                        const struct uuid_command *u = (const void *)lc;
+                        printf("SkyLight loaded uuid ");
+                        for (int b = 0; b < 16; b++) printf("%02X", u->uuid[b]);
+                        printf(" (expect 96676A53B1E03D7EB98BB73873CD1880)\n");
+                        break;
+                    }
+                    lc = (const void *)((const char *)lc + lc->cmdsize);
+                }
+                break;
+            }
+        }
+        mach_port_t tccd = MACH_PORT_NULL;
+        kern_return_t tk = bootstrap_look_up(
+            bootstrap_port, "com.apple.tccd", &tccd);
+        printf("bootstrap_look_up com.apple.tccd -> rc=%d port=%u\n",
+               tk, (unsigned)tccd);
+        if (tk != KERN_SUCCESS || tccd == MACH_PORT_NULL) {
+            tk = bootstrap_look_up(
+                bootstrap_port, "com.apple.tccd.system", &tccd);
+            printf("bootstrap_look_up com.apple.tccd.system -> rc=%d port=%u\n",
+                   tk, (unsigned)tccd);
+        }
+        if (tccd != MACH_PORT_NULL)
+            mach_port_deallocate(mach_task_self(), tccd);
+    }
 
     // ── Phase 2: CGS connection (needed before the event-port query) ──
     MainConnectionIDFn mainConn =
@@ -260,8 +311,14 @@ int main(int argc, char **argv) {
         // TCC's evaluator?  SecTaskCopyValueForEntitlement uses the
         // same csops entitlement blob TCC consults — NULL means the
         // signature blob isn't trusted enough to expose ents.
+        // R001 ABI audit: real signature is
+        //   CFTypeRef SecTaskCopyValueForEntitlement(SecTaskRef,
+        //                                          CFStringRef,
+        //                                          CFErrorRef *);
+        // the earlier 2-arg typedef left x2 (error out) as register
+        // garbage — a potential write-through-wild-pointer.
         typedef void *(*SecTaskFn)(void *);
-        typedef void *(*SecTaskCopyFn)(void *, CFStringRef);
+        typedef void *(*SecTaskCopyFn)(void *, CFStringRef, void *);
         SecTaskFn create = (SecTaskFn)dlsym(RTLD_DEFAULT,
                                             "SecTaskCreateFromSelf");
         SecTaskCopyFn copyEnt = (SecTaskCopyFn)dlsym(
@@ -269,12 +326,12 @@ int main(int argc, char **argv) {
         if (create && copyEnt) {
             void *task = create(NULL);
             CFTypeRef v = task ? (CFTypeRef)copyEnt(
-                task, CFSTR("com.apple.private.tcc.allow")) : NULL;
+                task, CFSTR("com.apple.private.tcc.allow"), NULL) : NULL;
             printf("SecTask.tcc.allow -> %p\n", (void *)v);
             if (v) { CFShow(v); CFRelease(v); }
             CFTypeRef v2 = task ? (CFTypeRef)copyEnt(
-                task, CFSTR("com.apple.private.SkyLight.loginwindow"))
-                : NULL;
+                task, CFSTR("com.apple.private.SkyLight.loginwindow"),
+                NULL) : NULL;
             printf("SecTask.SkyLight.loginwindow -> %p\n", (void *)v2);
             if (v2) { CFShow(v2); CFRelease(v2); }
         } else printf("SecTask symbols absent\n");
@@ -383,7 +440,14 @@ int main(int argc, char **argv) {
     // pre-login session (257 / uid=88 / LoginDone=0).  Normally
     // loginwindow calls SLSCreateLoginSession; nobody did in the
     // chroot.  Try it ourselves and see whether the post gate moves.
-    // Dangerous-ish but reversible: SLSReleaseSession can undo.
+    // R001: session mutation is OPT-IN — only runs when argv[2]=="mutate".
+    // Read-only inventory (Phase 8) always runs; default runs make no
+    // session/connection state changes.
+    int allowMutate = (argc > 2 && strcmp(argv[2], "mutate") == 0);
+    if (!allowMutate) {
+        printf("Phase9 session-mutation skipped (pass 'mutate' as argv[2])\n");
+        goto phase10;
+    }
     typedef int (*CreateLoginFn)(uint32_t *sid);
     CreateLoginFn createLogin =
         (CreateLoginFn)dlsym(RTLD_DEFAULT, "SLSCreateLoginSession");
@@ -455,6 +519,7 @@ int main(int argc, char **argv) {
         }
     } else printf("SLSCreateLoginSession absent\n");
 
+phase10: ;
     // ── Phase 10: alternate post paths ─────────────────────────
     // Distinguish "posting is dead" from "mouse records rejected":
     //  (a) scroll-wheel record through the same funnel
@@ -504,9 +569,14 @@ int main(int argc, char **argv) {
     typedef void *(*TapCreateFn)(int, int, int, int, int, void *);
     TapCreateFn tapCreate =
         (TapCreateFn)dlsym(RTLD_DEFAULT, "SLEventTapCreate");
-    if (tapCreate) {
-        // (place, options, maskLo, maskHi, len?, cb) — ABI guess;
-        // run in a forked child since a wrong signature may abort.
+    if (tapCreate && allowMutate) {
+        // R001 ABI audit (RE-confirmed @0x185239a2c): SLEventTapCreate is
+        // a 6-arg wrapper that shifts x1..x5→x2..x6, inserts w1=0, and
+        // forwards to the impl at 0x185239a48.  Impl bounds-checks:
+        //   impl.w0(outer x0) <= 2, impl.w2(outer x1) <= 1,
+        //   impl.w1(=0),       impl.w3(outer x2) <= 1.
+        // All-zero args pass the checks; opt-in only because the exact
+        // semantics are still unverified.
         pid_t tp = fork();
         if (tp == 0) {
             void *t = tapCreate(0, 0, 0, 0, 0, NULL);
@@ -515,6 +585,8 @@ int main(int argc, char **argv) {
         }
         int st = 0; waitpid(tp, &st, 0);
         printf("SLEventTapCreate child status=0x%x\n", st);
+    } else if (tapCreate) {
+        printf("SLEventTapCreate skipped (pass 'mutate' as argv[2])\n");
     } else printf("SLEventTapCreate absent\n");
     return 0;
 }
