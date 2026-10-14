@@ -1,0 +1,11 @@
+{
+  "started": "2026-10-14T22:05:19.984899+08:00",
+  "finished": "2026-10-14T22:05:20.392612+08:00",
+  "command": "printf SSH_STATUS_OK; exit 0",
+  "command_sha256": "1cb6d132c42b6c321d4ad71e8b6a3d79a48b1eb7a5fa4a5dee3be3a7cb11e961",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "SSH_STATUS_OK",
+  "stderr": "",
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

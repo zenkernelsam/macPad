@@ -1,7 +1,9 @@
 # DEVIN_STATUS — R001 bounded evidence package
 
-State: **READY** (bounded package complete; provider = proven NO-OP;
-recommended next action = repair hook-provider invariant, see §6)
+State: **REVISING** — R003 CHANGES_REQUESTED (F01–F05).
+See reviews/R003-20261014.md; R001/R002 telemetry stands as bounded
+evidence only (toy hook + nonempty audit, NOT provider acceptance and
+NOT input success).
 
 Reviewer task: `coordination/DEVIN_TASK.md` R001.
 
@@ -250,3 +252,195 @@ Decoded (with full gate disasm @VA 0x1853fd464):
   volume up; sentinel `/tmp/macws_runtime_diagnostics` still present.
 - WS left STOPPED (bootout) pending review; CydiaSubstrate.old/.old2/
   .old3 kept beside framework for rollback.
+
+---
+
+## R003 progress (2026-10-14/15) — permit containment + hardening
+
+### Update — V2 contract finalized (post-addendum 22:08)
+
+- Permit API renamed **`MACWSHookPermitV2`** (4-arg contract). The V1
+  name is retired so a stale/mixed provider build resolves nothing at
+  the dlsym capability lookup and fails closed instead of being called
+  with a wrong signature. Probe exit 8 covers an old-provider mix.
+- **Every** non-installed path now returns a callable original
+  (`*result = symbol` as passed): refusal, thunk mmap/mprotect failure,
+  target vm_protect failure, and post-patch RX-restore failure.
+- Negative witness strengthened: the probe CALLS the refused result for
+  both input forms —
+  `nopermit-strip: res==input all16unchanged=1 res()=42`
+  (called via ptrauth_sign_unauthenticated, the caller's own PAC
+  contract) and `nopermit-raw: res==signed-input res()=42`
+  (called directly through the signed pointer). Both arches covered by
+  the same build (`__arm64e__` conditional).
+- Live results (post-V2 provider, `provider-probe-r003-v2*.json`):
+  wrong-uuid permit `-2`; permit `0`; patch bytes land; `target()=43`,
+  `orig()=42`; VERDICT=INSTALLED in normal AND `orig` mode (RC=0).
+- Third WS generation confirms the gate telemetry:
+  `CGXSYNTH-INSTALL isWS=1 diag=1 permitFn=… permit=0` and two
+  `#### CGXSYNTH cred=… size=52 euid=0 pid=<probe> rc=0` per post run
+  plus the 0x72ed reply `id=29421` as a real MACH-ALL-SEND.
+
+### Dispatcher RE (deny-point narrowed)
+
+`CGXSenderCanSynthesizeEvents` → dispatcher `0x1854257ec` decodes, with
+stub slots resolved LIVE and dladdr'd in-process:
+
+```
+stub A = libbsm.0.dylib : audit_token_to_pid          → sender pid
+stub B = libbsm.0.dylib : audit_token_to_pidversion   → sender pidversion
+stub C = libsystem_kernel: __getpid                   → WS's own pid
+stub D = CoreFoundation : CFDictionaryGetValue        → rights cache
+```
+
+Decision structure (RE-confirmed disasm):
+- `sender_pid == getpid()` → allow (posts from WindowServer itself).
+- `sender_pid == 0` → `rightDesc+0x20` byte decides.
+- else key `{pid | pidversion<<32}` → CFDictionaryGetValue on the
+  process-rights cache at `__DATA+0x1d8ba6b40` (sentinel -1 at +0xb48);
+  on cache miss → authoritative impl `0x185425da4` (blraaz) which
+  lazily resolves a checker symbol (name @0x1854dc3e, resolve via
+  stub pair 0x18547c99c/0x18547c9ac, cached at __DATA+0x1d8ba6b50) and
+  returns `(checker(rightName, audit, 0) == 0)`.
+
+**Addendum interpose theory refuted for this path**: the two audit
+decoders bound here are the REAL libbsm functions — mac_hooks'
+`audit_token_to_auid`/`audit_token_to_asid` interposes are not in this
+dispatcher. The denial is therefore a genuine cache-miss + checker
+verdict keyed by {pid,pidversion} — our process simply has no entry
+and the checker says no. Open: which checker symbol resolves
+(lazy-bound; not yet dladdr'd inside WS) and what populates the cache
+(loginwindow registration path is the leading candidate).
+
+### R003 candidate state
+
+Stable and reproducible across 3 WS generations. Deployed artifacts
+(post-ldid device hashes): see section above; this final build's local
+pre-sign hashes: CydiaSubstrate `ccf7575f…`, libmachook e `2b423d7e…`,
+arm64 `2cd2fc5c…`, provider probe `df4fcb7a…`, event probe
+`071ed6af…`. Every build/deploy command recorded with real exit codes
+via `DevinWatchdog_mac/macpad_ssh.py --record` artifacts.
+
+Review inputs: `reviews/R003-20261014.md` (F01–F05) and
+`reviews/R003-addendum-20261014.md` (identity pin, refusal contract,
+rollback, capability lookup, tap-surface disablement).
+
+### Provider contract (misc/cydiasubstrate_macos.m)
+
+- `MACWSHookPermit(image_base, expected_uuid16, offset, expected[4])`:
+  caller supplies the KNOWN-BUILD LC_UUID the offset was derived from;
+  registration returns **-2** when the live image's UUID differs —
+  identity is pinned, not self-copied. Registration also verifies the
+  16-byte prologue against live bytes (-1 mismatch, -3 no LC_UUID,
+  -4 table full).
+- Refusal path preserves the original no-op-scaffold contract:
+  `*result = symbol` (the caller's PAC-signed pointer, unchanged) +
+  `MACWSHook: REFUSED <why>` written to stderr via raw `write()`.
+  Legacy call sites that unconditionally call `*result` keep working.
+- RX-restore failure after patch write now restores the stolen bytes,
+  re-flushes, and retries RX; if restoration itself fails it emits a
+  loud `FATAL rx-restore` marker instead of silently leaving a
+  writable/non-exec code page.
+- All refusal paths audited: no permit, prologue drift, PC-relative or
+  terminal insn in the stolen window → refuse, bytes untouched.
+
+### Callsite (libmachook/mac_hooks.m CGXSYNTH block)
+
+- `MACWSHookPermit` resolved by **dlsym capability lookup**, not a
+  strong extern — an older/foreign provider without the symbol fails
+  closed instead of breaking libmachook's dyld load.
+- Supplies the expected SkyLight 22F82 UUID pin
+  `96676A53B1E03D7EB98BB73873CD1880` at registration.
+- Whole diagnostic additionally gated to the real WindowServer process
+  (`_NSGetExecutablePath` contains `SkyLight.framework/Resources/
+  WindowServer`) AND `macws_runtime_diagnostics_enabled()` — it cannot
+  arm inside probes or other injected clients.
+- F01 footgun removed: the constant-return `_audit_token_check_tcc_access
+  →1` install is deleted (was inert anyway — MSFindSymbol NULL on a
+  local `t` symbol).
+
+### Probe discipline (misc/macos_ws_event_probe.c)
+
+- `inventory` (default) is strictly read-only; `post` adds warp +
+  CGEventPost witness + ONE canonical SLSPostEventRecord; `mutate`
+  keeps session mutation opt-in.
+- **DISABLED (not merely gated)** pending exact RE contracts:
+  `SLPSPostEventRecordTo` (four guessed arg0 variants removed),
+  `SLEventTapPostEvent` (tap=NULL never validated), `SLEventTapCreate`,
+  `CGPostScrollWheelEvent`. Presence is still inventoried.
+- Phase 6b comment corrected: gCurMsgAudit is proven POPULATED on post
+  (R002 witness); denial is inside the audit→permission-cache lookup.
+- `argv[2]` exact "0"–"3" parsing removed along with postTo.
+
+### Runtime evidence (rebuilt artifacts, deployed hashes below)
+
+Provider probe, both modes, live provider:
+
+```
+nopermit: result=0x..ab0 (expect=same) all16unchanged=1 target()=42
+permit-wronguuid -> -2            (identity pin enforced)
+permit(image=…,off=0x3a7c) -> 0
+target-after: 51 00 00 58 20 02 1f d6 <replace64>   (real patch)
+target()=43  orig()=42
+VERDICT=INSTALLED   RC=0     (normal AND 'orig' modes; via_orig_returned=1)
+```
+
+WindowServer restart under new build:
+
+```
+CGXSYNTH-INSTALL gate=0x1977e9464 slot=0x1eaf921b8 hdr=0x1974d1000
+    isWS=1 diag=1 permitFn=0x1009aed88 permit=0      ← armed
+(probe process run showed isWS=0 → permit skipped, diag hooks did NOT
+arm in a non-WS process — process gate verified both directions)
+```
+
+Canonical post under armed gate (WS err delta):
+
+```
+#### CGXSYNTH cred=0x16f4c7220 size=52 euid=0 pid=45811 rc=0
+#### CGXSYNTH cred=0x16f4c7228 size=52 euid=0 pid=45811 rc=0
+#### MACH-ALL-SEND seq=3590 id=29421 bits=0x12 remote=67195
+```
+
+- Two gate firings (warp-path + canonical post) each return rc=0 →
+  `_XPostEventRecord` still writes 1002.
+- This run the 0x72ed reply logged as a real `MACH-ALL-SEND`
+  (earlier boots showed SENDFAIL invalid-dest — that was send-right
+  lifecycle, not dispatch failure).
+- Probe: `SLSPostEventRecord(canonical) -> rc=1002` — still denied.
+
+### Deployed artifact hashes (post-ldid, on device)
+
+```
+CydiaSubstrate          9824114ac8b6c7703a7f49fc44bc9d96f91d7ea948f9bf6dad583a719a178ad2
+libmachook.dylib (e)    001d21229891f297a62d9fa77ae32289421e06944ac6e13d192ecdc4856eedac
+libmachook_arm64.dylib  026491e9c478a6dee94501a84af7471c0511fe99c15469659cfb59060c7a02b2
+mshook_provider_probe   faa87d220408c6f803237d9886156c3df9f4d48d0890b13bdd1128e2412da49e
+macos_ws_event_probe    d7c790616fb52a4849ff60508e16b5f002d8be129b584d53b76b184736d13600
+```
+
+Local pre-sign hashes (build evidence): CydiaSubstrate
+`3e2d373f…`, libmachook e `748bd251…`, arm64 `58fa526c…`,
+probes `20a004c0…` / `1ab796ba…`. Every build command exited 0
+(clang/make/setver/scp/ldid/trustcache) — see R003 commands below.
+trustcache readd: `{"added":7,"files":6,"hashes":7}`.
+
+### Remaining unaccepted scope (explicit)
+
+- Provider accepted ONLY for the toy target under explicit permit.
+  The CGXSYNTH gate hook in WS is armed+ firing, but its own permit is
+  the only production permit; no arbitrary SkyLight target is hookable.
+- `rc=0` inside the gate is the dispatcher's (0x1854257ec) verdict, not
+  yet attributed: cache-table miss vs TCC-eval deny remains open.
+  Addendum THEORY (unverified): mac_hooks interposes
+  `audit_token_to_auid→501` / `audit_token_to_asid` fallback — if the
+  dispatcher's decoded key mismatches the cache's populated key, our own
+  interpose layer could be producing the denial. Next bounded step:
+  disasm the dispatcher's key computation, then a LOGGING wrapper or
+  debugger read of the effective lookup key vs cache contents. Do NOT
+  globally remove the compat interposes as an experiment.
+- No input success claimed: cursor still unmoved by posts (NO-DISPATCH,
+  rc=1002). Session registry still empty; `SetLoginwindowConnection`
+  remains 1000 (registry lookup miss).
+- MSHookMessageEx still no-op; no generic hook engine planned.
+- WS currently running (PID ~45786) for continued bounded experiments.

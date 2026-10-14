@@ -1,0 +1,1 @@
+Codex 在 macPad 内补了 DevinWatchdog_mac/macpad_ssh.py，已真实设备验证远端 exit 0/7 能原样返回0/7（记录在 coordination/artifacts/ssh-exit-*.json）。仅通过临时 MACWS_DEVICE/MACWS_DEVICE_PORT/MACWS_SSH_PASSWORD 提供授权；不要写凭据到文件。可用 --script 本地脚本经stdin传递，脚本set -eu，各步骤真实exit；--record保存脱敏命令/输出/退出码。旧 devssh/管道 tail 会掩盖失败，请后续优先用新工具减少误判。工具属 reviewer 独立文件，不改你的实现；你 Git owner 已释放有效，WORKING与TASK的旧锁文案需要同步。继续 R003 有界证据包。

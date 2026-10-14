@@ -80,8 +80,36 @@ static void probe_bootstrap_service(const char *name) {
         mach_port_deallocate(mach_task_self(), port);
 }
 
+// R003-F03 mode discipline (argv[1], exact token match only):
+//   inventory  (default) — strictly read-only: bootstrap lookups,
+//     loaded-UUID pin, tccd reachability, connection id, event-port
+//     query, display list, session dict/list, TCC preflight queries,
+//     SecTask entitlement vend. No warp/post/request/grant/create.
+//   post — inventory + cursor warp + CGEventPost witness + ONE
+//     canonical SLSPostEventRecord.  Bounded surface per R003 review:
+//     no guessed-arg variants, no unverified-ABI calls.
+//   mutate — reserved for later explicitly-authorized runs.  postTo
+//     direct delivery, SLEventTapPostEvent and SLEventTapCreate are
+//     DISABLED in this build (their argument contracts are not
+//     RE-established; gating is not enough — they are not callable at
+//     all until the exact signatures are disassembled).  Session
+//     mutation remains behind 'mutate'.
+// Unknown private ABIs stay fail-closed and opt-in only.
+enum { M_INVENTORY, M_POST, M_MUTATE };
+static int probe_mode(int argc, char **argv) {
+    if (argc < 2) return M_INVENTORY;
+    if (!strcmp(argv[1], "inventory")) return M_INVENTORY;
+    if (!strcmp(argv[1], "post")) return M_POST;
+    if (!strcmp(argv[1], "mutate")) return M_MUTATE;
+    fprintf(stderr, "unknown mode '%s' — running inventory\n", argv[1]);
+    return M_INVENTORY;
+}
+
 int main(int argc, char **argv) {
     setbuf(stdout, NULL);   // unbuffered — survive a crash mid-probe
+    int mode = probe_mode(argc, argv);
+    printf("mode=%s\n", mode == M_MUTATE ? "mutate" :
+           mode == M_POST ? "post" : "inventory");
     mach_port_t evport = MACH_PORT_NULL;
     GetEventPortFn getEventPort =
         (GetEventPortFn)dlsym(RTLD_DEFAULT, "SLSGetEventPort");
@@ -94,12 +122,12 @@ int main(int argc, char **argv) {
     probe_bootstrap_service("com.apple.CARenderServer");
     probe_bootstrap_service("macwsguide.windowserver.final-composite-replay");
 
-    // ── Phase 1b (R001): identity pins + tccd port for WS-log
-    // correlation.  SkyLight's loaded UUID must match the RE binary
-    // before any image-relative offset is trusted.  The tccd port name
-    // is global in this bootstrap domain — MACH-ALL-SEND lines from WS
-    // carrying remote=<tccdport> prove the gate reached the TCC check;
-    // their absence across a post proves an earlier bail.
+    // ── Phase 1b (R001): identity pins + tccd reachability.
+    // SkyLight's loaded UUID must match the RE binary before any
+    // image-relative offset is trusted.  tccd lookup proves only that
+    // the service is reachable from this bootstrap domain — Mach port
+    // names are PER-TASK, so this port number cannot be compared with
+    // remote= fields in WindowServer's own MACH-ALL-SEND log lines.
     {
         for (uint32_t i = 0; i < _dyld_image_count(); i++) {
             const char *n = _dyld_get_image_name(i);
@@ -135,6 +163,49 @@ int main(int argc, char **argv) {
             mach_port_deallocate(mach_task_self(), tccd);
     }
 
+    // ── Phase 1c (R003 addendum): dispatcher stub resolution ──
+    // CGXSenderCanSynthesizeEvents' dispatcher @VA 0x1854257ec calls
+    // three helpers through AUTH_CONST stub slots to build its
+    // permission-cache key: 0x18547c51c and 0x18547c52c decode the audit
+    // token, 0x18547cb2c supplies the comparison value, and
+    // 0x18547982c does the map lookup.  mac_hooks.m interposes
+    // audit_token_to_auid/asid — if these slots resolved to the
+    // interposed replacements, our compat layer may be producing the
+    // denial key.  Read-only: resolve the slots' bound pointers in this
+    // process and dladdr them for symbol+image names.
+    {
+        const struct mach_header *sky = NULL;
+        for (uint32_t i = 0; i < _dyld_image_count(); i++) {
+            const char *n = _dyld_get_image_name(i);
+            if (n && strstr(n, "SkyLight.framework")) {
+                sky = _dyld_get_image_header(i);
+                break;
+            }
+        }
+        if (sky) {
+            intptr_t slide = (intptr_t)sky - 0x1850e5000;
+            static const uint64_t slot_vas[] = {
+                0x1dff3f358, // stub 0x18547c51c — audit decode A
+                0x1dff3f360, // stub 0x18547c52c — audit decode B
+                0x1dfef4b98, // stub 0x18547cb2c — comparison source
+                0x1dff00d20, // stub 0x18547982c — map lookup
+            };
+            for (unsigned i = 0; i < 4; i++) {
+                const void *slot = (const void *)(slot_vas[i] + slide);
+                void *fn = *(void * const *)slot;   // bound pointer
+                Dl_info dfi;
+                memset(&dfi, 0, sizeof(dfi));
+                int ok = dladdr(fn, &dfi);
+                const char *img = ok && dfi.dli_fname ? dfi.dli_fname : "?";
+                const char *base = strrchr(img, '/');
+                printf("stub[%u] va=%#llx fn=%p -> %s:%s\n", i,
+                       (unsigned long long)slot_vas[i], fn,
+                       base ? base + 1 : img,
+                       ok && dfi.dli_sname ? dfi.dli_sname : "?");
+            }
+        }
+    }
+
     // ── Phase 2: CGS connection (needed before the event-port query) ──
     MainConnectionIDFn mainConn =
         (MainConnectionIDFn)dlsym(RTLD_DEFAULT, "SLSMainConnectionID");
@@ -153,7 +224,6 @@ int main(int argc, char **argv) {
     } else {
         printf("SLSGetEventPort symbol absent or no connection\n");
     }
-
     CGDirectDisplayID displays[16];
     uint32_t displayCount = 0;
     CGGetActiveDisplayList(16, displays, &displayCount);
@@ -164,97 +234,8 @@ int main(int argc, char **argv) {
     }
     printf("\n");
 
-    // ── Phase 4: is the client->WS control channel alive? ──
-    // CGWarpMouseCursorPosition is a synchronous connection call — if the
-    // cursor moves and reads back, the CGS connection itself works and only
-    // the event pipeline is dead.
-    CGEventRef ev = CGEventCreate(NULL);
-    CGPoint before = CGEventGetLocation(ev);
-    CFRelease(ev);
-    CGWarpMouseCursorPosition(CGPointMake(600, 500));
-    usleep(100000);
-    ev = CGEventCreate(NULL);
-    CGPoint after = CGEventGetLocation(ev);
-    CFRelease(ev);
-    printf("cursor before=(%.0f,%.0f) after-warp=(%.0f,%.0f) %s\n",
-           before.x, before.y, after.x, after.y,
-           (fabs(after.x - 600) < 2 && fabs(after.y - 500) < 2)
-               ? "WARP-OK" : "WARP-DEAD");
-
-    // ── Phase 4b: end-to-end event-port test — post via CGEventPost and
-    // check whether the cursor actually moves.  evport was proven valid
-    // above; if the cursor doesn't move the WS-side dispatch loop never
-    // drains it. ──
-    CGEventRef mv = CGEventCreateMouseEvent(NULL, kCGEventMouseMoved,
-                                          CGPointMake(700, 600), 0);
-    if (mv) {
-        CGEventPost(kCGHIDEventTap, mv);
-        usleep(100000);
-        CGEventRef cur = CGEventCreate(NULL);
-        CGPoint p = CGEventGetLocation(cur);
-        CFRelease(cur);
-        printf("CGEventPost(HID,moved 700,600) -> cursor=(%.0f,%.0f) %s\n",
-               p.x, p.y,
-               (fabs(p.x - 700) < 2 && fabs(p.y - 600) < 2)
-                   ? "DISPATCH-OK" : "NO-DISPATCH");
-        CFRelease(mv);
-    }
-
-    // ── Phase 5: does a raw mouse record survive SLSPostEventRecord? ──
-    // Record layout RE-confirmed from SLSPostMouseEventsVButtons' stack
-    // construction (SkyLight-22F82 __TEXT+0x156f34..): version=3 @0x00,
-    // length=0xf8 @0x04, CGEventType @0x08, double point @0x10/0x18,
-    // session=-1 @0x38, button index @0x91.  rc is WindowServer's reply:
-    // 0x3ea=1002 means WS received and rejected the post.
-    PostEventRecordFn postRecord =
-        (PostEventRecordFn)dlsym(RTLD_DEFAULT, "SLSPostEventRecord");
-    if (postRecord && cid) {
-        uint8_t rec[0xf8];
-        memset(rec, 0, sizeof(rec));
-        *(uint32_t *)(rec + 0x00) = 3;
-        *(uint32_t *)(rec + 0x04) = 0xf8;
-        *(uint32_t *)(rec + 0x08) = 5;          // kCGEventMouseMoved
-        *(double *)(rec + 0x10) = 900.0;
-        *(double *)(rec + 0x18) = 700.0;
-        *(int32_t *)(rec + 0x38) = -1;          // session from conn state
-        int32_t rc = postRecord(cid, rec, 0xf8, 0);
-        printf("SLSPostEventRecord(mouseMoved) -> rc=%d\n", rc);
-        *(uint32_t *)(rec + 0x08) = 1;          // down
-        *(uint8_t *)(rec + 0x91) = 0;
-        printf("SLSPostEventRecord(down) -> rc=%d\n",
-               postRecord(cid, rec, 0xf8, 0));
-        *(uint32_t *)(rec + 0x08) = 2;          // up
-        printf("SLSPostEventRecord(up)   -> rc=%d\n",
-               postRecord(cid, rec, 0xf8, 0));
-
-        // 5b: byte-perfect record via the real CGEvent->record converter.
-        // If WS still answers 1002 to a canonical record, the rejection is
-        // server-side policy (session/permission), not record shape.
-        GetEventRecordFn getRecord =
-            (GetEventRecordFn)dlsym(RTLD_DEFAULT, "SLEventGetEventRecord");
-        CGEventRef mv2 = CGEventCreateMouseEvent(NULL, kCGEventMouseMoved,
-                                                 CGPointMake(500, 500), 0);
-        if (getRecord && mv2) {
-            uint8_t canon[0xf8];
-            memset(canon, 0, sizeof(canon));
-            getRecord(mv2, canon, 0xf8);
-            printf("canonical record: v=%u len=%u type=%u\n",
-                   *(uint32_t *)(canon + 0x00), *(uint32_t *)(canon + 0x04),
-                   *(uint32_t *)(canon + 0x08));
-            printf("SLSPostEventRecord(canonical) -> rc=%d\n",
-                   postRecord(cid, canon, 0xf8, 0));
-        } else {
-            printf("SLEventGetEventRecord unavailable\n");
-        }
-        if (mv2) CFRelease(mv2);
-    } else {
-        printf("SLSPostEventRecord unavailable or no connection\n");
-    }
-
-    // ── Phase 6: TCC post-event access — preflight + request ──
-    // SLPreflightPostEventAccess / SLRequestPostEventAccess resolve the
-    // lazy TCC-client singleton; on real macOS a denied preflight is what
-    // makes the WS-side post handler return an error to the record.
+    // ── Phase 6: TCC post-event access — preflight is a read-only query
+    // (inventory); request can create/grant state → mutate only. ──
     typedef int (*AccessFn)(void);
     AccessFn preflight =
         (AccessFn)dlsym(RTLD_DEFAULT, "SLPreflightPostEventAccess");
@@ -264,21 +245,24 @@ int main(int argc, char **argv) {
         printf("SLPreflightPostEventAccess() -> %d\n", preflight());
     else
         printf("SLPreflightPostEventAccess absent\n");
-    if (request)
+    if (mode >= M_MUTATE && request)
         printf("SLRequestPostEventAccess()  -> %d\n", request());
+    else if (request)
+        printf("SLRequestPostEventAccess skipped (mutate-only)\n");
     else
         printf("SLRequestPostEventAccess absent\n");
 
     // ── Phase 6b: TCCAccessPreflightWithAuditToken on OUR OWN token ──
     // 2026-10-14 RE: _XPostEventRecord's 1002 comes from
-    // CGXSenderCanSynthesizeEvents, which reads gCurMsgAudit (only ever
-    // populated by PKGTransactionDecodeCAPayload) and calls
-    // TCCAccessPreflightWithAuditToken("kTCCServicePostEvent", audit, 0).
-    // Preflight OUR OWN audit token here: if it returns 0 the TCC path
-    // is healthy for this process and the 1002 is the WS-side audit
-    // context (NULL gCurMsgAudit / a different captured token); if it
-    // returns nonzero the TCC policy check itself fails even for an
-    // entitled, trustcache-admitted binary.
+    // CGXSenderCanSynthesizeEvents.  CORRECTED interpretation after the
+    // R002 runtime witness (cred!=NULL, size=52, euid/pid = sender):
+    // gCurMsgAudit IS populated on the event-post path, so the earlier
+    // "only PKGTransactionDecodeCAPayload writes it → NULL early-exit"
+    // theory is disproven.  The denial happens inside the audit→
+    // permission-cache lookup (dispatcher 0x1854257ec), whose exact
+    // producer/consumer key relationship is still open.  Preflight OUR
+    // OWN audit token here only establishes that TCC evaluates this
+    // process's token — it does NOT prove the WS-side lookup key.
     {
         audit_token_t tok;
         memset(&tok, 0, sizeof(tok));
@@ -337,10 +321,87 @@ int main(int argc, char **argv) {
         } else printf("SecTask symbols absent\n");
     }
 
+
+    if (mode < M_POST) {
+        printf("post/warp/mutation phases skipped (mode=inventory)\n");
+        goto phase8;
+    }
+
+    // ── Phase 4: is the client->WS control channel alive? ──
+    // CGWarpMouseCursorPosition is a synchronous connection call — if the
+    // cursor moves and reads back, the CGS connection itself works and only
+    // the event pipeline is dead.
+    CGEventRef ev = CGEventCreate(NULL);
+    CGPoint before = CGEventGetLocation(ev);
+    CFRelease(ev);
+    CGWarpMouseCursorPosition(CGPointMake(600, 500));
+    usleep(100000);
+    ev = CGEventCreate(NULL);
+    CGPoint after = CGEventGetLocation(ev);
+    CFRelease(ev);
+    printf("cursor before=(%.0f,%.0f) after-warp=(%.0f,%.0f) %s\n",
+           before.x, before.y, after.x, after.y,
+           (fabs(after.x - 600) < 2 && fabs(after.y - 500) < 2)
+               ? "WARP-OK" : "WARP-DEAD");
+
+    // ── Phase 4b: end-to-end event-port test — post via CGEventPost and
+    // check whether the cursor actually moves.  evport was proven valid
+    // above; if the cursor doesn't move the WS-side dispatch loop never
+    // drains it. ──
+    CGEventRef mv = CGEventCreateMouseEvent(NULL, kCGEventMouseMoved,
+                                          CGPointMake(700, 600), 0);
+    if (mv) {
+        CGEventPost(kCGHIDEventTap, mv);
+        usleep(100000);
+        CGEventRef cur = CGEventCreate(NULL);
+        CGPoint p = CGEventGetLocation(cur);
+        CFRelease(cur);
+        printf("CGEventPost(HID,moved 700,600) -> cursor=(%.0f,%.0f) %s\n",
+               p.x, p.y,
+               (fabs(p.x - 700) < 2 && fabs(p.y - 600) < 2)
+                   ? "DISPATCH-OK" : "NO-DISPATCH");
+        CFRelease(mv);
+    }
+
+    // ── Phase 5: does a raw mouse record survive SLSPostEventRecord? ──
+    // Record layout RE-confirmed from SLSPostMouseEventsVButtons' stack
+    // construction (SkyLight-22F82 __TEXT+0x156f34..): version=3 @0x00,
+    // length=0xf8 @0x04, CGEventType @0x08, double point @0x10/0x18,
+    // session=-1 @0x38, button index @0x91.  rc is WindowServer's reply:
+    // 0x3ea=1002 means WS received and rejected the post.
+    PostEventRecordFn postRecord =
+        (PostEventRecordFn)dlsym(RTLD_DEFAULT, "SLSPostEventRecord");
+    if (postRecord && cid) {
+        // ONE canonical post (R003 bounded surface): byte-perfect record
+        // via the real CGEvent->record converter.  The hand-built record
+        // family and scroll post were removed — one known-good record is
+        // enough to exercise _XPostEventRecord's gate.
+        GetEventRecordFn getRecord =
+            (GetEventRecordFn)dlsym(RTLD_DEFAULT, "SLEventGetEventRecord");
+        CGEventRef mv2 = CGEventCreateMouseEvent(NULL, kCGEventMouseMoved,
+                                                 CGPointMake(500, 500), 0);
+        if (getRecord && mv2) {
+            uint8_t canon[0xf8];
+            memset(canon, 0, sizeof(canon));
+            getRecord(mv2, canon, 0xf8);
+            printf("canonical record: v=%u len=%u type=%u\n",
+                   *(uint32_t *)(canon + 0x00), *(uint32_t *)(canon + 0x04),
+                   *(uint32_t *)(canon + 0x08));
+            printf("SLSPostEventRecord(canonical) -> rc=%d\n",
+                   postRecord(cid, canon, 0xf8, 0));
+        } else {
+            printf("SLEventGetEventRecord unavailable\n");
+        }
+        if (mv2) CFRelease(mv2);
+    } else {
+        printf("SLSPostEventRecord unavailable or no connection\n");
+    }
+
     // ── Phase 7: direct-to-connection delivery ──
     // SLPSPostEventRecordTo resolves a target connID to that connection's
     // event port and posts the record straight into its queue — bypassing
     // WS hit-testing/session policy entirely.  Target: Terminal's connID.
+    // R003-F03: mutation + guessed-arg0 experiment → mutate mode only.
     typedef int (*PostToFn)(uint32_t targetCid, const void *rec,
                             uint32_t size, int64_t flags);
     typedef kern_return_t (*ConnForPSNFn)(uint32_t ownCid, void *psn,
@@ -363,7 +424,16 @@ int main(int argc, char **argv) {
     FILE *pf = fopen("/tmp/ws_evprobe_target.pid", "r");
     if (pf) { fscanf(pf, "%d", (int *)&term); fclose(pf); }
     if (!term) term = 0;
-    if (postTo && connForPSN && procForPID && getRecord && term) {
+    // R003 (2026-10-14 review addendum): SLPSPostEventRecordTo is
+    // DISABLED — its four-arg contract is not RE-established and the
+    // guessed-arg0 variants were an unbounded trial surface.  The
+    // resolution queries below stay (they are read-only RPCs that
+    // produced useful evidence); the postTo call itself is compiled
+    // out pending exact signature recovery.
+    (void)postTo;
+    if (mode < M_MUTATE) {
+        printf("postTo direct-delivery skipped (mutate-only)\n");
+    } else if (connForPSN && procForPID && getRecord && term) {
         uint32_t psn[2] = {0};          // ProcessSerialNumber {high,low}
         uint32_t target = 0;
         kern_return_t kr = procForPID(term, psn);
@@ -371,42 +441,17 @@ int main(int argc, char **argv) {
                term, kr, psn[0], psn[1]);
         kr = connForPSN(cid, psn, &target);
         printf("SLSGetConnectionIDForPSN -> rc=%d cid=%u\n", kr, target);
-        CGEventRef mv3 = CGEventCreateMouseEvent(NULL, kCGEventMouseMoved,
-                                                 CGPointMake(500, 500), 0);
-        static uint8_t rec[0xf8];
-        memset(rec, 0, sizeof(rec));
-        if (mv3) getRecord(mv3, rec, 0xf8);
-        // try the target's event port as arg0 as well
         mach_port_t tport = MACH_PORT_NULL;
         kern_return_t trc = getEventPort(target, &tport);
         printf("SLSGetEventPort(target=%u) -> rc=%d port=%u\n",
                target, trc, (unsigned)tport);
-        // arg0 variant chosen by argv[1] — a wrong guess may kill the
-        // process, so each variant runs as a separate invocation.
-        int sel = -1;
-        if (argc > 1) sel = atoi(argv[1]);
-        struct { const char *name; uint32_t a0; } tries[] = {
-            {"connID",          target},
-            {"target-evport",   tport},
-            {"self-connID",     cid},
-            {"self-evport",     evport},
-        };
-        // Dangerous: only run the selected variant explicitly
-        // (probe N).  Default invocation skips this so the safe
-        // inventory phases below always execute.
-        for (int i = 0; i < 4; i++) {
-            if (sel != i) continue;
-            printf("  trying postTo(%s=%u)...\n", tries[i].name,
-                   tries[i].a0);
-            int rc2 = postTo(tries[i].a0, rec, 0xf8, 0);
-            printf("  postTo(%s=%u) -> rc=%d\n",
-                   tries[i].name, tries[i].a0, rc2);
-        }
-        if (sel < 0) printf("  postTo variants skipped (pass 0-3)\n");
+        printf("  SLPSPostEventRecordTo DISABLED pending exact RE "
+               "contract\n");
     } else {
         printf("direct-delivery symbols missing or no target pid\n");
     }
 
+phase8: ;
     // ── Phase 8: session inventory ─────────────────────────────
     // Hypothesis: WS rejects event injection because no loginwindow
     // ever created a "console session" — connections then carry an
@@ -440,12 +485,10 @@ int main(int argc, char **argv) {
     // pre-login session (257 / uid=88 / LoginDone=0).  Normally
     // loginwindow calls SLSCreateLoginSession; nobody did in the
     // chroot.  Try it ourselves and see whether the post gate moves.
-    // R001: session mutation is OPT-IN — only runs when argv[2]=="mutate".
-    // Read-only inventory (Phase 8) always runs; default runs make no
-    // session/connection state changes.
-    int allowMutate = (argc > 2 && strcmp(argv[2], "mutate") == 0);
+    // R003-F03: session mutation only in explicit mutate mode.
+    int allowMutate = (mode >= M_MUTATE);
     if (!allowMutate) {
-        printf("Phase9 session-mutation skipped (pass 'mutate' as argv[2])\n");
+        printf("Phase9 session-mutation skipped (mode != mutate)\n");
         goto phase10;
     }
     typedef int (*CreateLoginFn)(uint32_t *sid);
@@ -520,73 +563,29 @@ int main(int argc, char **argv) {
     } else printf("SLSCreateLoginSession absent\n");
 
 phase10: ;
-    // ── Phase 10: alternate post paths ─────────────────────────
-    // Distinguish "posting is dead" from "mouse records rejected":
-    //  (a) scroll-wheel record through the same funnel
-    //  (b) SLEventTapPostEvent — the event-tap injection entry
-    PostRecFn postRec10 =
-        (PostRecFn)dlsym(RTLD_DEFAULT, "SLSPostEventRecord");
+    // ── Phase 10/11: event-tap surface — DISABLED (R003 addendum) ──
+    // SLEventTapPostEvent, CGPostScrollWheelEvent and SLEventTapCreate
+    // are not callable in this build: their argument contracts are not
+    // RE-established (tap=NULL was never a validated input; the tap
+    // create wrapper's six-arg forwarding is confirmed but its
+    // parameter semantics are not).  Symbol-presence inventory only.
     typedef kern_return_t (*TapPostFn)(void * /*tap*/, void * /*record*/,
                                        uint32_t /*len*/, uint32_t /*fl*/);
     TapPostFn tapPost =
         (TapPostFn)dlsym(RTLD_DEFAULT, "SLEventTapPostEvent");
-    typedef void (*ScrollPostFn)(int32_t /*ignored*/, int32_t, int32_t,
-                                 int32_t, int32_t);
-    ScrollPostFn scrollPost =
-        (ScrollPostFn)dlsym(RTLD_DEFAULT, "CGPostScrollWheelEvent");
-    CGEventRef sw = CGEventCreateScrollWheelEvent(
-        NULL, kCGScrollEventUnitLine, 1, -3, 0);
-    if (sw && postRec10) {
-        static uint8_t rec5[0xf8];
-        memset(rec5, 0, sizeof(rec5));
-        if (getRecord) getRecord(sw, rec5, 0xf8);
-        kern_return_t rc4 = postRec10(cid, rec5, 0xf8, 0);
-        printf("SLSPostEventRecord(scroll) -> rc=%d\n", rc4);
-        if (tapPost) {
-            kern_return_t rc5 = tapPost(0, rec5, 0xf8, 0);
-            printf("SLEventTapPostEvent(tap=0,scroll) -> rc=%d\n", rc5);
-        } else printf("SLEventTapPostEvent absent\n");
-        CFRelease(sw);
-    }
-    if (scrollPost) {
-        scrollPost(0, -3, 0, 0, 0);   // (ignored, delta1, delta2, d3, d4)
-        printf("CGPostScrollWheelEvent -> issued (watch witness)\n");
-    } else printf("CGPostScrollWheelEvent absent\n");
-
-    // ── Phase 11: event-tap access ─────────────────────────────
-    // The canonical injection path on macOS is the event tap:
-    // if ListenEventAccess is granted, a tap can insert events into
-    // the HID stream.  Probe entitlements carry kTCCServiceListenEvent.
-    typedef int (*PreflightFn)(void);
-    PreflightFn preL =
-        (PreflightFn)dlsym(RTLD_DEFAULT, "SLPreflightListenEventAccess");
-    PreflightFn preP =
-        (PreflightFn)dlsym(RTLD_DEFAULT, "SLPreflightPostEventAccess");
-    if (preL) printf("SLPreflightListenEventAccess -> %d\n", preL());
-    else printf("SLPreflightListenEventAccess absent\n");
-    if (preP) printf("SLPreflightPostEventAccess   -> %d\n", preP());
-    else printf("SLPreflightPostEventAccess absent\n");
     typedef void *(*TapCreateFn)(int, int, int, int, int, void *);
     TapCreateFn tapCreate =
         (TapCreateFn)dlsym(RTLD_DEFAULT, "SLEventTapCreate");
-    if (tapCreate && allowMutate) {
-        // R001 ABI audit (RE-confirmed @0x185239a2c): SLEventTapCreate is
-        // a 6-arg wrapper that shifts x1..x5→x2..x6, inserts w1=0, and
-        // forwards to the impl at 0x185239a48.  Impl bounds-checks:
-        //   impl.w0(outer x0) <= 2, impl.w2(outer x1) <= 1,
-        //   impl.w1(=0),       impl.w3(outer x2) <= 1.
-        // All-zero args pass the checks; opt-in only because the exact
-        // semantics are still unverified.
-        pid_t tp = fork();
-        if (tp == 0) {
-            void *t = tapCreate(0, 0, 0, 0, 0, NULL);
-            printf("  SLEventTapCreate -> %p\n", t);
-            _exit(t ? 0 : 1);
-        }
-        int st = 0; waitpid(tp, &st, 0);
-        printf("SLEventTapCreate child status=0x%x\n", st);
-    } else if (tapCreate) {
-        printf("SLEventTapCreate skipped (pass 'mutate' as argv[2])\n");
-    } else printf("SLEventTapCreate absent\n");
+    printf("SLEventTapPostEvent symbol=%s (call DISABLED)\n",
+           tapPost ? "present" : "absent");
+    printf("SLEventTapCreate    symbol=%s (call DISABLED)\n",
+           tapCreate ? "present" : "absent");
+    (void)tapPost; (void)tapCreate;
+
+    typedef int (*PreflightFn)(void);
+    PreflightFn preL =
+        (PreflightFn)dlsym(RTLD_DEFAULT, "SLPreflightListenEventAccess");
+    if (preL) printf("SLPreflightListenEventAccess -> %d\n", preL());
+    else printf("SLPreflightListenEventAccess absent\n");
     return 0;
 }

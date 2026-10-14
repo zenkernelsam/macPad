@@ -1,0 +1,11 @@
+{
+  "started": "2026-10-14T22:05:20.456073+08:00",
+  "finished": "2026-10-14T22:05:20.766500+08:00",
+  "command": "printf SSH_EXPECTED_FAILURE; exit 7",
+  "command_sha256": "af1b67e96ffb3dbdf8d53572b65703b5188f1494a162f0f5cb9aa6ea86d6ea82",
+  "exit": 7,
+  "timeout": false,
+  "stdout": "SSH_EXPECTED_FAILURE",
+  "stderr": "",
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

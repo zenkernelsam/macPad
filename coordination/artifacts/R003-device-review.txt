@@ -1,0 +1,32 @@
+Reviewer read-only snapshot 2026-10-14T21:44:55.922371+08:00
+Remote commands: date '+%Y-%m-%dT%H:%M:%S%z'; /var/jb/usr/sbin/sysctl hw.machine kern.osversion; ps -axo pid,comm | grep -E 'WindowServer|macws|OSXvnc|backboardd'; ls -l /var/mnt/rootfs/System/Library/Frameworks/CydiaSubstrate.framework/CydiaSubstrate /var/mnt/rootfs/usr/local/lib/libmachook*.dylib; /var/jb/usr/bin/shasum -a 256 /var/mnt/rootfs/System/Library/Frameworks/CydiaSubstrate.framework/CydiaSubstrate /var/mnt/rootfs/usr/local/lib/libmachook.dylib /var/mnt/rootfs/usr/local/lib/libmachook_arm64.dylib; tail -n 120 /var/jb/var/mobile/WindowServer.err | grep -E 'CGXSYNTH|CGXSYNTH-INSTALL|Exception|abort|error'; test -e /var/mnt/rootfs/tmp/macws_runtime_diagnostics && echo DIAGNOSTIC_SENTINEL_PRESENT
+2026-10-14T21:44:55+0800
+hw.machine: iPad13,11
+kern.osversion: 20D47
+70595 /usr/libexec/backboardd
+-rwxr-xr-x 1 root wheel  134192 Oct 14 20:56 /var/mnt/rootfs/System/Library/Frameworks/CydiaSubstrate.framework/CydiaSubstrate
+-rwxr-xr-x 1 root wheel 1610720 Oct 14 03:28 /var/mnt/rootfs/usr/local/lib/libmachook.dylib
+-rwxr-xr-x 1 root wheel 1613232 Oct 14 03:28 /var/mnt/rootfs/usr/local/lib/libmachook_arm64.dylib
+-rwxr-xr-x 1 root wheel 1159488 Oct 13 02:54 /var/mnt/rootfs/usr/local/lib/libmachook_arm64e.dylib
+DIAGNOSTIC_SENTINEL_PRESENT
+
+NOTE: first multi-command exit=0 did not verify hash subcommand (no hashes emitted). Follow-up Python attempt timed out at 25s; no local orphan SSH/Python found. Retry with explicit password auth:
+2026-10-14T21:47:02.834791+08:00
+Remote source:
+import hashlib,json,os
+for p in ["/var/mnt/rootfs/System/Library/Frameworks/CydiaSubstrate.framework/CydiaSubstrate","/var/mnt/rootfs/usr/local/lib/libmachook.dylib","/var/mnt/rootfs/usr/local/lib/libmachook_arm64.dylib"]:
+ b=open(p,"rb").read();s=os.stat(p);print(json.dumps({"path":p,"size":len(b),"inode":s.st_ino,"sha256":hashlib.sha256(b).hexdigest()}))
+p="/var/jb/var/mobile/WindowServer.err"
+f=open(p,"rb");f.seek(max(0,os.fstat(f.fileno()).st_size-2000000));matches=[x for x in f.read().decode("utf8","replace").splitlines() if "#### CGXSYNTH " in x];print("bounded-log-tail matches="+str(len(matches)));print("\n".join(matches[-8:]))
+
+Exit=0
+{"path": "/var/mnt/rootfs/System/Library/Frameworks/CydiaSubstrate.framework/CydiaSubstrate", "size": 134192, "inode": 250312361, "sha256": "2990bc5aa037dd73df67bfe37728b06d1cc16b44929c16f04dc7f6b80a4a3704"}
+{"path": "/var/mnt/rootfs/usr/local/lib/libmachook.dylib", "size": 1610720, "inode": 250255746, "sha256": "16afc4de6756e1e4ee518b4c8219388246b1a8da1ab277553472921a278a6f73"}
+{"path": "/var/mnt/rootfs/usr/local/lib/libmachook_arm64.dylib", "size": 1613232, "inode": 250255747, "sha256": "e4a1cf0a9b8a2ce0c260c99f203c9665280fdb3a77e91705fa947ccc9c882fab"}
+bounded-log-tail matches=6
+#### CGXSYNTH cred=0x16da6b220 size=52 euid=0 pid=42636 rc=0
+#### CGXSYNTH cred=0x16da6b228 size=52 euid=0 pid=42636 rc=0
+#### CGXSYNTH cred=0x16da6b228 size=52 euid=0 pid=42636 rc=0
+#### CGXSYNTH cred=0x16da6b228 size=52 euid=0 pid=42636 rc=0
+#### CGXSYNTH cred=0x16da6b228 size=52 euid=0 pid=42636 rc=0
+#### CGXSYNTH cred=0x16da6b208 size=52 euid=0 pid=42636 rc=0

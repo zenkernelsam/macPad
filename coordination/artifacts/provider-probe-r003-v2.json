@@ -1,0 +1,11 @@
+{
+  "started": "2026-10-14T22:19:40.911771+08:00",
+  "finished": "2026-10-14T22:19:41.363921+08:00",
+  "command": "/var/jb/usr/macOS/bin/launchdchrootexec 0 0 /var/mnt/rootfs /tmp/mshook_provider_probe 2>&1 | grep -vE \"^####|MACWSHook: REFUSED|^chdir|launchdchrootexec\"",
+  "command_sha256": "0e25d734800c3525e68b23492fe83a2aac18b80207ed7747a2cfaef5b98695e1",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "provider-image=/System/Library/Frameworks/CydiaSubstrate.framework/CydiaSubstrate\nprovider-addr=0x6136800102236e50\nprovider-bytes @0x102236e50: 7f 23 03 d5 ff c3 02 d1 fd 7b 0a a9 fd 83 02 91\ntoy_target=0x2b1c8001021b7a2c toy_replace=0x8b578001021b7a88\ntarget-before @0x1021b7a2c: ff 43 00 d1 08 05 80 52 e8 0f 00 b9 28 00 80 52\nnopermit-before @0x1021b7a60: ff 43 00 d1 28 05 80 52 e8 0f 00 b9 28 00 80 52\nnopermit-strip: res=0x1021b7a60 all16unchanged=1 res()=42\nnopermit-raw:   res=0xba370001021b7a60 all16unchanged=1 res()=42\npermit-wronguuid -> -2 (expect -2)\npermit(image=0x1021b4000,off=0x3a2c) -> 0\ntarget-after  @0x1021b7a2c: 51 00 00 58 20 02 1f d6 88 7a 1b 02 01 00 00 00\norig=0xed360001022ac000\ntarget()=43 replace_called=1 via_orig_returned=0\norig()=42\nVERDICT=INSTALLED\n",
+  "stderr": "",
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

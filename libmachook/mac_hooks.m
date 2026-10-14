@@ -6016,30 +6016,67 @@ void loadImageCallback(const struct mach_header* header, intptr_t vmaddr_slide) 
             });
         }
         
-        // DIAGNOSTIC ONLY (gated 2026-10-15): constant-return on
-        // _audit_token_check_tcc_access would bypass every TCC check —
-        // forbidden as a fix by the task contract. Kept behind the
-        // runtime-diagnostics sentinel; inert otherwise. (Also a no-op
-        // today: MSFindSymbol cannot resolve local `t` symbols.)
-        if (macws_runtime_diagnostics_enabled())
-            MSHookFunction(MSFindSymbol((MSImageRef)header, "_audit_token_check_tcc_access"), hooked_return_1, NULL);
+        // R003-F01: the unconditional/sentinel-gated constant-return
+        // `_audit_token_check_tcc_access -> hooked_return_1` install was
+        // REMOVED. It was a blanket TCC override (forbidden as a fix),
+        // and the logging sentinel is not an independent safety gate.
+        // (Historically inert anyway: MSFindSymbol cannot resolve the
+        // local `t` symbol.)
 
         // DIAGNOSTIC (see definition): observe gCurMsgAudit at the
         // CGXSenderCanSynthesizeEvents gate.  Runtime witness: MSFindSymbol
         // returns NULL for the local `t` symbol on the 22F82 shared-cache
         // SkyLight, so resolve by the same RE'd image-relative offset the
         // audit slot already uses (SkyLight-22F82 va 0x1853fd464).
+        // R003-F02: register a permit for this exact target — the provider
+        // verifies live image UUID + expected prologue before patching.
+        // R003-addendum: the permit symbol is a capability lookup
+        // (dlsym, fail closed if absent) — a strong extern would break
+        // libmachook load under any provider lacking the symbol.  The
+        // diagnostic is additionally gated to the real WindowServer
+        // process AND the runtime-diagnostics opt-in, so it never arms
+        // inside probes or other injected clients.
         {
+            char exe[PATH_MAX]; uint32_t exelen = sizeof(exe);
+            BOOL isWS = (_NSGetExecutablePath(exe, &exelen) == 0 &&
+                strstr(exe, "SkyLight.framework/Resources/WindowServer"));
+            typedef int (*permit_fn_t)(const void *, const void *,
+                                       uint64_t, const uint32_t[4]);
+            // V2-symbol capability lookup: the 4-arg contract.  An old
+            // provider exporting only 3-arg MACWSHookPermit resolves
+            // nothing here → fail closed (no install), never mis-called.
+            permit_fn_t permitFn =
+                (permit_fn_t)dlsym(RTLD_DEFAULT, "MACWSHookPermitV2");
             void *gate = (void *)((uintptr_t)header +
                                   (0x1853fd464ull - 0x1850e5000ull));
             g_macws_cgx_audit_slot = (void **)(
                 (uintptr_t)header +
                 (0x1d8ba61b8ull - 0x1850e5000ull));
+            // SkyLight-22F82 LC_UUID identity pin — the offset below was
+            // derived from this exact build; the provider refuses to arm
+            // the permit if the live image is any other build.
+            static const uint8_t skylight_22f82_uuid[16] = {
+                0x96, 0x67, 0x6a, 0x53, 0xb1, 0xe0, 0x3d, 0x7e,
+                0xb9, 0x8b, 0xb7, 0x38, 0x73, 0xcd, 0x18, 0x80 };
+            // SkyLight-22F82 gate prologue @+0x318464 (RE-verified):
+            //   pacibsp / sub sp,#0x70 / stp x29,x30,[sp,#0x60] /
+            //   add x29,sp,#0x60
+            const uint32_t gate_prologue[4] = {
+                0xd503237f, 0xd101c3ff, 0xa9067bfd, 0x910183fd };
+            int permit = -9;
+            if (isWS && macws_runtime_diagnostics_enabled() && permitFn) {
+                permit = permitFn(header, skylight_22f82_uuid,
+                                  0x1853fd464ull - 0x1850e5000ull,
+                                  gate_prologue);
+            }
             fprintf(stderr,
-                    "#### CGXSYNTH-INSTALL gate=%p slot=%p hdr=%p\n",
-                    gate, g_macws_cgx_audit_slot, (void *)header);
+                    "#### CGXSYNTH-INSTALL gate=%p slot=%p hdr=%p "
+                    "isWS=%d diag=%d permitFn=%p permit=%d\n",
+                    gate, g_macws_cgx_audit_slot, (void *)header,
+                    isWS, macws_runtime_diagnostics_enabled(),
+                    (void *)permitFn, permit);
             fflush(stderr);
-            if (gate) {
+            if (gate && permit == 0) {
                 MSHookFunction(gate,
                                (void *)macws_diag_sender_can_synth,
                                (void **)&macws_orig_sender_can_synth);

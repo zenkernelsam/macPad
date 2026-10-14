@@ -14,12 +14,18 @@
 //   * MSFindSymbol: real implementation — LC_DYLD_INFO export-trie walk
 //     (dyld-4 shared-cache images carry no usable LC_SYMTAB), with LC_SYMTAB
 //     fallback and strict bounds checks.
-//   * MSHookFunction: REAL minimal trampoline implementation
-//     (2026-10-15, R001→R002 repair). 16-byte absolute-branch patch
-//     (ldr x17,#8 / br x17 / .quad) over the first 4 instructions plus a
-//     thunk holding the stolen bytes and a branch back to symbol+16.
-//     FAILS CLOSED (*result=NULL, target untouched) if any stolen
-//     instruction is PC-relative — those need real relocation fixups.
+//   * MSHookFunction: minimal trampoline implementation PLUS an
+//     explicit permit whitelist (R003-F02 containment).  A patch is
+//     installed only for targets pre-registered via MACWSHookPermit()
+//     with (EXPECTED image LC_UUID, image-relative offset, expected
+//     16-byte prologue); registration fails when the live UUID does not
+//     match the supplied pin.  Refused or failed calls return the
+//     original callable symbol pointer (the exact no-op-scaffold
+//     contract) and log a marker, so the ~70 unvetted MSHookFunction
+//     call sites in libmachook keep their previous pass-through
+//     behavior.  This is NOT presented as a general substrate repair:
+//     no relocation fixups, no thread-quiescence protocol, atomicity is
+//     limited to caller-chosen quiescent scope (ctor/add-image time).
 //   * MSHookMessageEx: NO-OP stub (method-swizzle not implemented).
 
 #include <dlfcn.h>
@@ -31,6 +37,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <sys/mman.h>
+#include <unistd.h>
 
 const struct mach_header *MSGetImageByName(const char *file) {
     if (!file) return NULL;
@@ -255,6 +262,110 @@ static int macws_insn_pc_relative(uint32_t i) {
     return 0;
 }
 
+// Defense-in-depth: also refuse terminators inside the stolen window.
+// A verbatim-copied ret/br/blr would execute in the thunk before the
+// branch-back is reached; while semantically equivalent for leaf ret,
+// the LR-signing interaction with a copied pacibsp is unsafe.
+static int macws_insn_terminal(uint32_t i) {
+    if ((i & 0xfffffc1f) == 0xd65f0000) return 1;   // ret Xn
+    if (i == 0xd65f0bff || i == 0xd65f0fff) return 1; // retaa / retab
+    if ((i & 0xfffffc1f) == 0xd61f0000) return 1;   // br Xn
+    if ((i & 0xfffffc1f) == 0xd63f0000) return 1;   // blr Xn
+    if (i == 0xd69f03e0) return 1;                  // eret
+    return 0;
+}
+
+// ── R003-F02 permit whitelist ─────────────────────────────────────
+// MSHookFunction only patches targets a callsite has registered with
+// exact (expected image UUID, image-relative offset, expected 16-byte
+// prologue).  The caller supplies the KNOWN-BUILD uuid it derived the
+// offset from; registration fails (-2) when the live image's LC_UUID
+// differs, so an offset can never be applied against an unverified
+// binary.  Call sites do the RE validation; the provider re-checks the
+// identity and bytes at patch time, so version drift or a wrong offset
+// fails closed.
+#define MACWS_MAX_HOOK_PERMITS 32
+struct macws_hook_permit {
+    uint8_t  uuid[16];        // expected LC_UUID identity pin
+    uint64_t image_offset;    // symbol - image base
+    uint32_t expected[4];     // first 4 instructions at symbol
+};
+static struct macws_hook_permit g_permits[MACWS_MAX_HOOK_PERMITS];
+static int g_permit_count;
+
+static const uint8_t *macws_lc_uuid(const struct mach_header_64 *h) {
+    if (!h || h->magic != MH_MAGIC_64) return NULL;
+    const struct load_command *lc = (const void *)(h + 1);
+    for (uint32_t i = 0; i < h->ncmds; i++) {
+        if (lc->cmd == LC_UUID)
+            return ((const struct uuid_command *)lc)->uuid;
+        lc = (const void *)((const char *)lc + lc->cmdsize);
+    }
+    return NULL;
+}
+
+// Register a permitted hook target. `image_base` is the load address of
+// the image (mach_header); `expected_uuid16` is the known-build identity
+// pin the offset was derived from.  Returns 0 armed, -1 bad args / byte
+// mismatch, -2 live-UUID-vs-pin mismatch, -3 no LC_UUID, -4 table full.
+// NOTE: versioned name — the 4-arg permit contract.  Callers resolve
+// this exact symbol by dlsym; an older provider exposing only the
+// 3-arg MACWSHookPermit is detected as absent and fails closed, so a
+// mixed-deployed intermediate build cannot be silently misused.
+int MACWSHookPermitV2(const void *image_base, const void *expected_uuid16,
+                      uint64_t image_offset, const uint32_t expected[4]) {
+    if (!image_base || !expected_uuid16 || !expected) return -1;
+    if (g_permit_count >= MACWS_MAX_HOOK_PERMITS) return -4;
+    const uint8_t *live_uuid =
+        macws_lc_uuid((const struct mach_header_64 *)image_base);
+    if (!live_uuid) return -3;
+    if (memcmp(live_uuid, expected_uuid16, 16) != 0) return -2;
+    // Registration-time prologue check: a wrong offset fails HERE rather
+    // than silently arming a permit that would corrupt some other code.
+    if (memcmp((const uint8_t *)image_base + image_offset,
+               expected, 16) != 0) return -1;
+    struct macws_hook_permit *p = &g_permits[g_permit_count++];
+    memcpy(p->uuid, expected_uuid16, 16);
+    p->image_offset = image_offset;
+    memcpy(p->expected, expected, 16);
+    return 0;
+}
+
+static const struct macws_hook_permit *macws_permit_for(
+        const void *symbol, const struct mach_header_64 **out_hdr) {
+    // Find the image that contains symbol by walking dyld's image list
+    // and comparing against each image's load range is unreliable for
+    // shared-cache images (no per-image VM extent query), so match on
+    // (uuid, offset): compute offset against every loaded image and a
+    // match requires both uuid equality AND expected bytes present.
+    uint32_t count = _dyld_image_count();
+    for (uint32_t i = 0; i < count; i++) {
+        const struct mach_header_64 *h =
+            (const struct mach_header_64 *)_dyld_get_image_header(i);
+        if (!h || (uintptr_t)symbol < (uintptr_t)h) continue;
+        uint64_t off = (uintptr_t)symbol - (uintptr_t)h;
+        if (off >= 0x2000000) continue;          // implausible offset
+        for (int p = 0; p < g_permit_count; p++) {
+            if (g_permits[p].image_offset != off) continue;
+            // verify uuid matches this image
+            const struct load_command *lc = (const void *)(h + 1);
+            const uint8_t *uuid = NULL;
+            for (uint32_t c = 0; c < h->ncmds; c++) {
+                if (lc->cmd == LC_UUID) {
+                    uuid = ((const struct uuid_command *)lc)->uuid;
+                    break;
+                }
+                lc = (const void *)((const char *)lc + lc->cmdsize);
+            }
+            if (uuid && !memcmp(uuid, g_permits[p].uuid, 16)) {
+                *out_hdr = h;
+                return &g_permits[p];
+            }
+        }
+    }
+    return NULL;
+}
+
 extern void sys_icache_invalidate(void *addr, size_t len);
 
 // arm64e callers may hand us PAC-signed pointers; a signed address stored
@@ -266,19 +377,54 @@ extern void sys_icache_invalidate(void *addr, size_t len);
 #define MACWS_PTRSTRIP(p) (p)
 #endif
 
+static void macws_hook_log(const char *msg) {
+    // Direct write(): fprintf may be filtered by the host process.
+    if (msg) write(2, msg, strlen(msg));
+}
+
 void MSHookFunction(void *symbol, void *replace, void **result) {
+    // Refusal contract: preserve the original scaffold behavior — the
+    // caller receives a callable pointer to the unpatched symbol (the
+    // PAC-signed pointer as passed in, not the stripped form) so legacy
+    // call sites that unconditionally invoke *result keep working. A
+    // refused hook is still a no-op; it is just no longer silent.
+    void *const orig_symbol = symbol;
     if (result) *result = NULL;
     if (!symbol || !replace) return;
     symbol = MACWS_PTRSTRIP(symbol);
     replace = MACWS_PTRSTRIP(replace);
     const uint32_t *src = (const uint32_t *)symbol;
+
+#define MACWS_REFUSE(why) do {                                          \
+        macws_hook_log("MACWSHook: REFUSED " why "\n");                 \
+        if (result) *result = orig_symbol;                              \
+        return;                                                         \
+    } while (0)
+
+    // R003-F02 containment: only whitelisted (image-uuid, offset,
+    // expected-prologue) targets may be patched. Unregistered call
+    // sites fail closed, preserving prior no-op behavior for unvetted
+    // sites.
+    const struct mach_header_64 *hdr = NULL;
+    const struct macws_hook_permit *permit =
+        macws_permit_for(symbol, &hdr);
+    if (!permit) MACWS_REFUSE("no permit for target");
+    if (memcmp(src, permit->expected, 16) != 0)
+        MACWS_REFUSE("prologue drift");
+
     for (int i = 0; i < 4; i++)
-        if (macws_insn_pc_relative(src[i])) return;   // fail closed
+        if (macws_insn_pc_relative(src[i]) ||
+            macws_insn_terminal(src[i]))
+            MACWS_REFUSE("PC-relative/terminal in stolen window");
 
     // Thunk: stolen bytes + branch back to symbol+16.
+    // Every failure path from here on must still hand back a callable
+    // original — the refusal contract applies to install failures too
+    // (a NULL result would crash callers that invoke *result).
     uint8_t *thunk = mmap(NULL, 4096, PROT_READ | PROT_WRITE,
                           MAP_PRIVATE | MAP_ANON, -1, 0);
-    if (thunk == MAP_FAILED) return;
+    if (thunk == MAP_FAILED)
+        MACWS_REFUSE("thunk mmap failed");
     uint32_t *tp = (uint32_t *)thunk;
     memcpy(tp, src, 16);
     tp[4] = 0x58000051;                              // ldr x17, #8
@@ -286,11 +432,16 @@ void MSHookFunction(void *symbol, void *replace, void **result) {
     *(uint64_t *)(tp + 6) = (uint64_t)((char *)symbol + 16);
     if (mprotect(thunk, 4096, PROT_READ | PROT_EXEC) != 0) {
         munmap(thunk, 4096);
-        return;
+        MACWS_REFUSE("thunk mprotect RX failed");
     }
     sys_icache_invalidate(thunk, 32);
 
     // Patch: absolute branch to replace over symbol[0..16).
+    // Caller responsibility: invoke at a quiescent scope (ctor /
+    // add-image callback before the target runs). No thread
+    // quiescence protocol is provided — documented limitation.
+    uint32_t stolen[4];
+    memcpy(stolen, src, 16);                          // for rollback
     vm_address_t page = (vm_address_t)symbol & ~0x3fffULL;
     vm_size_t span = ((vm_address_t)symbol + 16 - page + 0x3fff) & ~0x3fffULL;
     if (vm_protect(mach_task_self(), page, span, FALSE,
@@ -299,14 +450,33 @@ void MSHookFunction(void *symbol, void *replace, void **result) {
         vm_protect(mach_task_self(), page, span, FALSE,
                    VM_PROT_READ | VM_PROT_WRITE) != KERN_SUCCESS) {
         munmap(thunk, 4096);
-        return;
+        MACWS_REFUSE("target vm_protect RW failed");
     }
     uint32_t *dp = (uint32_t *)symbol;
     dp[0] = 0x58000051;                              // ldr x17, #8
     dp[1] = 0xd61f0220;                              // br x17
     *(uint64_t *)(dp + 2) = (uint64_t)replace;
-    vm_protect(mach_task_self(), page, span, FALSE,
-               VM_PROT_READ | VM_PROT_EXECUTE);
+    if (vm_protect(mach_task_self(), page, span, FALSE,
+                   VM_PROT_READ | VM_PROT_EXECUTE) != KERN_SUCCESS) {
+        // Roll back the patch bytes so the target is not left
+        // half-written and unexecutable. The page is already RW, so the
+        // byte restore always lands; then restore the RX protection the
+        // page had on entry. If the RX restore itself fails the code
+        // page is left writable-and-non-executable — every subsequent
+        // call into it would fault — so fail loudly instead of
+        // pretending the target is restored.
+        memcpy(dp, stolen, 16);
+        sys_icache_invalidate(symbol, 16);
+        if (vm_protect(mach_task_self(), page, span, FALSE,
+                       VM_PROT_READ | VM_PROT_EXECUTE) != KERN_SUCCESS) {
+            macws_hook_log("MACWSHook: FATAL rx-restore failed; "
+                           "code page left RW\n");
+        }
+        munmap(thunk, 4096);
+        // Target bytes restored — hand back the callable original so a
+        // caller invoking *result still reaches the real function.
+        MACWS_REFUSE("target rx restore after patch");
+    }
     sys_icache_invalidate(symbol, 16);
 #if __arm64e__
     // Callers invoke *result via blraaz — authenticate with key IA and

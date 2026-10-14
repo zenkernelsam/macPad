@@ -1,0 +1,11 @@
+{
+  "started": "2026-10-14T22:19:50.118026+08:00",
+  "finished": "2026-10-14T22:19:50.671862+08:00",
+  "command": "/var/jb/usr/macOS/bin/launchdchrootexec 0 0 /var/mnt/rootfs /tmp/mshook_provider_probe orig 2>&1 | tail -8",
+  "command_sha256": "873e5b2c26463780ee68a1a0f77ce5ef3fd0c8e756975dd89f8df22bddc2142a",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "nopermit-raw:   res=0x1076800104133a60 all16unchanged=1 res()=42\npermit-wronguuid -> -2 (expect -2)\npermit(image=0x104130000,off=0x3a2c) -> 0\ntarget-after  @0x104133a2c: 51 00 00 58 20 02 1f d6 94 3b 13 04 01 00 00 00\norig=0xe23a000104228000\ntarget()=43 replace_called=1 via_orig_returned=1\norig()=42\nVERDICT=INSTALLED\n",
+  "stderr": "",
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}
