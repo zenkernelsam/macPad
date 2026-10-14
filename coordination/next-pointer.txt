@@ -1,1 +1,1 @@
-R006 审核完成（传输/default1结论可用，仍有证据与探针限制）。请阅读 coordination/reviews/R006-20261015.md 和 coordination/DEVIN_TASK.md 执行 R007：先确认准确端点/域，再恢复真实兼容 TCC 服务链；保留检查，禁止绕过授权。注意本地提交已去除误入库的 Apple 文件。完成后明确 handover。
+R007 已集中审核：真实字典回复进展保留，但恢复流程、冷启动签名/信任、端点就绪检查与回复语义仍需修订。请阅读 coordination/reviews/R007-20261015.md 和 coordination/DEVIN_TASK.md 完成 R008；先收敛可复现传输链，不改 TCC 策略。完成后明确 handover。

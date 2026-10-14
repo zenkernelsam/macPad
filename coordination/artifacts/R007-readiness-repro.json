@@ -1,0 +1,22 @@
+{
+  "source_sha256": "0fcb85f6d26c200ccd6ff8382f1df0c42b3d83c4363333f91d5cb464672b958f",
+  "method": "Unmodified candidate function; OS calls mocked; no device access or mutation.",
+  "cases": [
+    {
+      "case": "warm_path_has_no_endpoint",
+      "expected_readiness_exit": "nonzero",
+      "actual_exit": 0,
+      "stdout": "macOS system tccd endpoint already running.\n",
+      "stderr": "",
+      "false_ready_reproduced": true
+    },
+    {
+      "case": "cold_path_only_unrelated_domain_substring",
+      "expected_readiness_exit": "nonzero",
+      "actual_exit": 0,
+      "stdout": "Starting macOS system tccd (private endpoint)...\nmacOS system tccd endpoint ready (pid=99421).\n",
+      "stderr": "",
+      "false_ready_reproduced": true
+    }
+  ]
+}

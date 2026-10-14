@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T05:05:49.050579+08:00",
+  "finished": "2026-10-15T05:05:49.628576+08:00",
+  "command": "echo \"=== procs ===\"; ps -axo pid,uid,etime,comm | grep -iE \"tccd|windowserver\" | grep -v grep; echo \"=== endpoints ===\"; launchctl print user/501 2>/dev/null | grep -E \"macosbooter.tccd|apple.tccd \"; echo \"=== lldb/tmux/probe residue ===\"; ps -axo pid,comm | grep -iE \"lldb|tmux|probe\" | grep -v grep; tmux ls 2>&1; ls /var/mnt/rootfs/tmp/macws_runtime_diagnostics /tmp/macws_runtime_diagnostics 2>&1 | head -4; echo \"=== HI ===\"; /var/jb/usr/bin/chroot /var/mnt/rootfs /bin/echo HI; echo \"=== backboardd ===\"; ps -axo pid,comm | grep -i backboard | grep -v grep | head -2",
+  "command_sha256": "e8ca3d9c2afdfe030e031488c774535337a000b78b130f69027dad79b78ebd93",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "=== procs ===\n23321   501 02-21:18:48 /System/Library/PrivateFrameworks/TCC.framework/Support/tccd\n74977     0       22:12 /System/Library/PrivateFrameworks/TCC.framework/Support/tccd\n75144     0       22:03 /System/Library/PrivateFrameworks/SkyLight.framework/Resources/WindowServer\n=== endpoints ===\n\t\t 0xc253f    M   A   com.apple.macosbooter.tccd.system\n=== lldb/tmux/probe residue ===\ntmux: need UTF-8 locale (LC_CTYPE) but have US-ASCII\nls: cannot access '/var/mnt/rootfs/tmp/macws_runtime_diagnostics': No such file or directory\nls: cannot access '/tmp/macws_runtime_diagnostics': No such file or directory\n=== HI ===\nHI\n=== backboardd ===\n70595 /usr/libexec/backboardd\n",
+  "stderr": "#### MACWS-CTOR-CANARY InitStuff entered\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\n#### MACWS-CTOR-CANARY InitStuff done\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\n",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

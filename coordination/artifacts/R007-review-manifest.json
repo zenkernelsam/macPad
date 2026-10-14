@@ -1,0 +1,763 @@
+{
+  "time": "2026-10-15T05:26:06.006249+08:00",
+  "candidate_head": "bd04a4a76b0dd04e1609265cb83aefa219d6c0da",
+  "changed_files": [
+    {
+      "path": "coordination/DEVIN_STATUS.md",
+      "sha256": "fd9981b3c75cf50c09456d9e18348a99c96b40baa85891e6e1a1b837c79b29d8",
+      "size": 38525
+    },
+    {
+      "path": "coordination/REVIEWER_STATE.md",
+      "sha256": "ecf71e8955004580de0ff9a4b2b3e040a57cad51a0cf0acd043f739b1f83928c",
+      "size": 7516
+    },
+    {
+      "path": "coordination/WORKING",
+      "sha256": "415d66aa6b020ccceab56e930a16e23ca33d4ffc86f067ac3585a0d076e70aa5",
+      "size": 1228
+    },
+    {
+      "path": "coordination/artifacts/R007-dispatch-receipt.json",
+      "sha256": "754874cd828ee7201a8eeb5dfaf4cbe860706f5074ca4a9fcb63a631dcdc6d5c",
+      "size": 644
+    },
+    {
+      "path": "coordination/artifacts/R007-heartbeat-20261015-024250.json",
+      "sha256": "2500a97c3d54626991d72c0ecb9d23adea2b85054c10ffb5f1549f539ddd5fb9",
+      "size": 2581
+    },
+    {
+      "path": "coordination/artifacts/R007-heartbeat-20261015-030250.json",
+      "sha256": "6f45de2681fe2c4fa2eff4d0ff2c1aac09e21cf7c2880091411a37e878c95750",
+      "size": 2949
+    },
+    {
+      "path": "coordination/artifacts/R007-heartbeat-20261015-032251.json",
+      "sha256": "1e1f3bf68d3d276aed694f5d6ea2dbcdae41dcf57b2ae36c71b0b2795ae99629",
+      "size": 2711
+    },
+    {
+      "path": "coordination/artifacts/R007-heartbeat-20261015-034251.json",
+      "sha256": "bd1adaa14afcf4d896823a505a2a67ee75c89a8fb844703c30430fdd7deba636",
+      "size": 3456
+    },
+    {
+      "path": "coordination/artifacts/R007-heartbeat-20261015-040251.json",
+      "sha256": "26d478be1801628c32ba3346a47457b4d41662e1d839e2d6117192c59a7595c6",
+      "size": 3125
+    },
+    {
+      "path": "coordination/artifacts/R007-heartbeat-20261015-042251.json",
+      "sha256": "042c19a307c1adbe78564b7c5c478f3a7fc3919822e6572bea09512e0a9bbcd9",
+      "size": 3095
+    },
+    {
+      "path": "coordination/artifacts/R007-heartbeat-20261015-044251.json",
+      "sha256": "ac5ee607ca06968e4dd45f9eedf764cb00f205ba5e01343d91e9d4b9a9a37a1a",
+      "size": 3335
+    },
+    {
+      "path": "coordination/artifacts/R007-heartbeat-20261015-050321.json",
+      "sha256": "38b2640013094edb906c8e5eebb66147af253d3129230bc4650fa6356849d5a0",
+      "size": 3222
+    },
+    {
+      "path": "coordination/artifacts/R007-receipt-screen.json",
+      "sha256": "8486b530893e6d2d7f14da951b03a369c77f709cb7c84c67e6f8fc3ad9225cf8",
+      "size": 3312
+    },
+    {
+      "path": "coordination/artifacts/r007-adhoc-exec.json",
+      "sha256": "0e370bac5e3936fd5bdee86c24def8e45918d3d865590e6c6c30c81152d02ce3",
+      "size": 825
+    },
+    {
+      "path": "coordination/artifacts/r007-adhoc-ios-crash.json",
+      "sha256": "d3b1fa177b6e92a720f922cfdc45cb1aec6806442c1a883af0a00abeb32e97e5",
+      "size": 2488
+    },
+    {
+      "path": "coordination/artifacts/r007-adhoc-test.json",
+      "sha256": "003fe13a2ab5797630a264b03eb7928630a4991320f86531e7ea66fed744fa25",
+      "size": 1280
+    },
+    {
+      "path": "coordination/artifacts/r007-authsecs.json",
+      "sha256": "fe88ec9ec55300e26aed61ec268795ed0080cc1c615a08d7b86b4495ad548206",
+      "size": 3524
+    },
+    {
+      "path": "coordination/artifacts/r007-bare-chroot.json",
+      "sha256": "9096c0bf87ff294a2fa5b70bf5c7a233a56539250d7f469ee09b3cdbec06983d",
+      "size": 836
+    },
+    {
+      "path": "coordination/artifacts/r007-bare-control.json",
+      "sha256": "d81be18dba40ace7d278fa96df4670ceb159cc4da6c30f187d96f24be7769196",
+      "size": 1116
+    },
+    {
+      "path": "coordination/artifacts/r007-bare-others.json",
+      "sha256": "fc919deb4aa9b1a0fedc5069a300271f46d86e26998bd136c7d03343d3049ca0",
+      "size": 4785
+    },
+    {
+      "path": "coordination/artifacts/r007-boot-fresh.json",
+      "sha256": "9280d522529f0269f0246075741e9ccdadf6d06bebda2bda40fe220e3b6fd0ca",
+      "size": 993
+    },
+    {
+      "path": "coordination/artifacts/r007-buildtree-find.json",
+      "sha256": "b34bcec7b0d1931030c0f6758419d0f768100622ca91d265897a15341ef89309",
+      "size": 659
+    },
+    {
+      "path": "coordination/artifacts/r007-cdhash.json",
+      "sha256": "d6394f6aeadf424e8114b6adadf8a4112b94e87c4ff63640627dfd7f7906a121",
+      "size": 2477
+    },
+    {
+      "path": "coordination/artifacts/r007-cdhash2.json",
+      "sha256": "aa21665fc8244dfd29b6ae444af6af5a4ec4dc1f5999b27e658d6a4a92944bc1",
+      "size": 1416
+    },
+    {
+      "path": "coordination/artifacts/r007-cdinfo.json",
+      "sha256": "e7a51c5f50ed8fadc69ca16c3315749584d59803f679a78db87370370fe8ce2e",
+      "size": 3929
+    },
+    {
+      "path": "coordination/artifacts/r007-cdinfo2.json",
+      "sha256": "19987311dc3e7ff38492f1e509fa2c22b02411c832d931b31cba1c2cf71f5c08",
+      "size": 3762
+    },
+    {
+      "path": "coordination/artifacts/r007-chroot-die.json",
+      "sha256": "95fed1ba985b0e15e0180d960abe4a05d3359261f753be2da04260e7f2b464ca",
+      "size": 1396
+    },
+    {
+      "path": "coordination/artifacts/r007-cpusub.json",
+      "sha256": "77a78c5846a364cbe55e6e3ed99145d320d37ac2afa34dc87e5a4110aba35f19",
+      "size": 4395
+    },
+    {
+      "path": "coordination/artifacts/r007-cte-matrix.json",
+      "sha256": "dd478db67fd4d79663977a569bb138f7eaaea0accee9c1bc01c63156e5ed310d",
+      "size": 1183
+    },
+    {
+      "path": "coordination/artifacts/r007-cte-stderr.json",
+      "sha256": "276d855feaaa1f1c8aeaec07f12cab59ad454c44dfbe8c33d26f66c00d6c273b",
+      "size": 931
+    },
+    {
+      "path": "coordination/artifacts/r007-cte.json",
+      "sha256": "88441a816c0be5c9ffba9624da38d6e07b3baaa44fe5b7bbaaf2b58dd78d1fb2",
+      "size": 754
+    },
+    {
+      "path": "coordination/artifacts/r007-da-boot.json",
+      "sha256": "0f346df32b627cc480da67c1e774c076437eb5536be7e7949e6accc885e3f2ae",
+      "size": 1015
+    },
+    {
+      "path": "coordination/artifacts/r007-dax.json",
+      "sha256": "b6e64683e70f2f06b046aed89f054a340d2b3b5645b821fcb857665eea96ebd8",
+      "size": 1682
+    },
+    {
+      "path": "coordination/artifacts/r007-deploy-verify.json",
+      "sha256": "aa6c2063997fdda5dff2c60d9be11ff11df9699cc752fd50c24944bcf5e8aa4e",
+      "size": 1303
+    },
+    {
+      "path": "coordination/artifacts/r007-deploy.json",
+      "sha256": "41bd6ae9ee5d65aaeb8eaf1d666195ca0536dfbafa39839e48a448f37b91781b",
+      "size": 2863
+    },
+    {
+      "path": "coordination/artifacts/r007-deploy.sh",
+      "sha256": "8af8f9384ef04cd6333fb2a1ffa41db9022bd6e954b66a4a615717112326c4c3",
+      "size": 1941
+    },
+    {
+      "path": "coordination/artifacts/r007-deploy2.sh",
+      "sha256": "f9e421db2389c23694a2f222148df269f1b1966c31134000622845a4fb6c2142",
+      "size": 1588
+    },
+    {
+      "path": "coordination/artifacts/r007-deploy3.json",
+      "sha256": "4b241da5718da3acac6836cda4e52a9fb3bf7221e35e9fde39210ab8522b1545",
+      "size": 2148
+    },
+    {
+      "path": "coordination/artifacts/r007-deploy4.json",
+      "sha256": "b2e9e5b953744827068955708aa31621f135594c8d4b5b8a88fd5893d2028af0",
+      "size": 2122
+    },
+    {
+      "path": "coordination/artifacts/r007-dmesg.json",
+      "sha256": "e02b783b790a799a5a862e6c88212c70063ea327071e83443be7041a87caca7d",
+      "size": 612
+    },
+    {
+      "path": "coordination/artifacts/r007-domain-check.json",
+      "sha256": "99de6f6c9ce5223e87eeab7564ff518684927f0fbfb2b3ae98e1d335d4c8b990",
+      "size": 2012
+    },
+    {
+      "path": "coordination/artifacts/r007-domain-detail.json",
+      "sha256": "90837cd2be2d2b42ae5544a4936309d25e87189597f9bacd884958ca8262f90e",
+      "size": 3153
+    },
+    {
+      "path": "coordination/artifacts/r007-domain-purge.json",
+      "sha256": "5570025bc5988e55f01c48cd38feecb54de3ada86efd5f2ee5f674699770ff12",
+      "size": 1907
+    },
+    {
+      "path": "coordination/artifacts/r007-domain-system.json",
+      "sha256": "d573864c5a5f5dca9fd3f7ee54c28951595b9969fcc35bb236a60146811674a6",
+      "size": 4695
+    },
+    {
+      "path": "coordination/artifacts/r007-domains.json",
+      "sha256": "ea3108025143149f93ea4e577f4d1885e0c541c68a5820dc90f3d5611725ff4b",
+      "size": 1994
+    },
+    {
+      "path": "coordination/artifacts/r007-dyld-print.json",
+      "sha256": "aec121e6e739b5e675a8fb03d67e21a2d2b71e1a774d34da301d08461b9088a7",
+      "size": 2405
+    },
+    {
+      "path": "coordination/artifacts/r007-dyld-tail.json",
+      "sha256": "9ea13fc65e3824715a789811b1b92a2e0f412169783290f4a64d14ad99387ac8",
+      "size": 3872
+    },
+    {
+      "path": "coordination/artifacts/r007-ent-find.json",
+      "sha256": "115bd7f55b39dfc6d0dc560a501dd4d6dfe43c20c54e5128a0cb71d9ab6d6734",
+      "size": 1242
+    },
+    {
+      "path": "coordination/artifacts/r007-entbisect.json",
+      "sha256": "b848a03b9e7a3a872fc7a05b10a929c4423c790e86180e19c8595578d7e4ed0c",
+      "size": 1453
+    },
+    {
+      "path": "coordination/artifacts/r007-entbisect2.json",
+      "sha256": "37c6dd301d53c9569237d92e04eb38ced5754cdfc6186b8606b671b463967139",
+      "size": 1778
+    },
+    {
+      "path": "coordination/artifacts/r007-entbisect3.json",
+      "sha256": "acf6837dfd6e56d01fad9bfd2f6c0b89cc2a0879a6d50bbc5a640a481df2a84a",
+      "size": 1399
+    },
+    {
+      "path": "coordination/artifacts/r007-entbisect4.json",
+      "sha256": "8e2f32f82939d7fae77a779d51ec26e79cf606262bcbd4ec7319241c51ca5aad",
+      "size": 1293
+    },
+    {
+      "path": "coordination/artifacts/r007-ents.json",
+      "sha256": "e2e47c82b66d81f4d966f073b89e58c6bfe24815f0eb4c2e5c29bd8921f5f78d",
+      "size": 13208
+    },
+    {
+      "path": "coordination/artifacts/r007-entscan.json",
+      "sha256": "5dcd8ed174916e461a1924c77f8556ec6e927b4d717f97a4d6074cb76b128927",
+      "size": 1100
+    },
+    {
+      "path": "coordination/artifacts/r007-exec-deny.json",
+      "sha256": "c8c9d12e9f5d13e22ef11be931e22a7d36d55a8edec15595cc952dd6d184ab13",
+      "size": 2212
+    },
+    {
+      "path": "coordination/artifacts/r007-exec-kernel.json",
+      "sha256": "7c009d338899965a41163ac794bfc562a477a23288edb38b92b4fc610ea92cde",
+      "size": 1767
+    },
+    {
+      "path": "coordination/artifacts/r007-execprobe.json",
+      "sha256": "a1e4d177023f160530e104bc72ac16af0c7188e4c4cb7df822773283a032df01",
+      "size": 762
+    },
+    {
+      "path": "coordination/artifacts/r007-execreason.json",
+      "sha256": "33f8fd1cff184dd5b7281058a0b55e3b552411d45d6ba171077d58aa1158549d",
+      "size": 2364
+    },
+    {
+      "path": "coordination/artifacts/r007-execve-errno.json",
+      "sha256": "8189cbf28b2c395deb867445c106228ba16f914b48c18b55734abe1d4b601004",
+      "size": 1840
+    },
+    {
+      "path": "coordination/artifacts/r007-execve-errno2.json",
+      "sha256": "f8e4c803f5e7d006a404d0cdb1363bc15a9457e6a3f522b2e4899681d2181c2b",
+      "size": 1016
+    },
+    {
+      "path": "coordination/artifacts/r007-fs-adhoc.json",
+      "sha256": "e1b72a0395e00551ffcb8a74ca61f50ca863d5e72a21efc6faf503af0c413790",
+      "size": 3688
+    },
+    {
+      "path": "coordination/artifacts/r007-fs-broad.json",
+      "sha256": "b4cad0b742901d28dd97af5d0e6e1fed257335a2d6bd393fe916b62cd5a65d4e",
+      "size": 1059
+    },
+    {
+      "path": "coordination/artifacts/r007-fs-deci.json",
+      "sha256": "b1b28358be3c1af22f5fb7558ef653d98524a230a7c586f9931db13fa3b74a66",
+      "size": 1592
+    },
+    {
+      "path": "coordination/artifacts/r007-fs-matrix.json",
+      "sha256": "9a37ccb3b354f6010c1316582e1868a1b922f06fae157713e66ee3427cd8815c",
+      "size": 2669
+    },
+    {
+      "path": "coordination/artifacts/r007-fsusage.json",
+      "sha256": "72a3555687d999e85406ef9e9ce920325c53d3fa94f0bc8220f7be9665f40c6c",
+      "size": 6919
+    },
+    {
+      "path": "coordination/artifacts/r007-gui-start.json",
+      "sha256": "1332adf96dbe3cf7c8176367e623c4cdf6dc9d850f09285a2d28f36f3488e6ea",
+      "size": 3692
+    },
+    {
+      "path": "coordination/artifacts/r007-guistart.json",
+      "sha256": "ee967861c67e619dac43b98092e1bf0ceb9efbb7daba9d67e2b2dcf4877483c7",
+      "size": 1729
+    },
+    {
+      "path": "coordination/artifacts/r007-guistart2.json",
+      "sha256": "422feb2b1d44f791636424d07437a42863c4116157921d58a896d40fe07054e6",
+      "size": 754
+    },
+    {
+      "path": "coordination/artifacts/r007-ident.json",
+      "sha256": "7f7cfefb29f27364f285610c450ee2064cf01644e26285804bc730b0df11f145",
+      "size": 1620
+    },
+    {
+      "path": "coordination/artifacts/r007-ios-exec-die.json",
+      "sha256": "af5268cea405d6ffd40fa39f803e40bacb16c9ac06fe10078ad222fefd04f9f4",
+      "size": 2957
+    },
+    {
+      "path": "coordination/artifacts/r007-jbctl-tc.json",
+      "sha256": "4f85d94b0bac5f5ed157ac203fb9513c4dcc51835e4264d9b49e505319fe9f29",
+      "size": 1023
+    },
+    {
+      "path": "coordination/artifacts/r007-jobload.json",
+      "sha256": "4685859bdf0df98f764add006a378f1d223f8358aa5f0346bd76c98a387def6c",
+      "size": 1269
+    },
+    {
+      "path": "coordination/artifacts/r007-kernel-log.json",
+      "sha256": "92f2d686bfccdf185fe87049aa64b247e2fa2cb6041c84cca2b3ad54eb68092d",
+      "size": 636
+    },
+    {
+      "path": "coordination/artifacts/r007-kernel2.json",
+      "sha256": "12993eb600902885974f23e1dd6a592fe1ade188c8e8a0abc2c8d3b65384c07c",
+      "size": 631
+    },
+    {
+      "path": "coordination/artifacts/r007-launchd-opens.json",
+      "sha256": "d90cb4d5c35cd471d31e6d71c17beb98a0dce3f8def905b9f949edc78c1ce476",
+      "size": 625
+    },
+    {
+      "path": "coordination/artifacts/r007-lce-deps.json",
+      "sha256": "27548bca1e7d34f7f01b148adb17f315a7f8a238f53df638a2a1f41434045f8e",
+      "size": 1121
+    },
+    {
+      "path": "coordination/artifacts/r007-lldb-pane-full.txt",
+      "sha256": "9997c8da2aec2a9d028e9cb53dc03a67ab8e9cdefe8ce9b040d804cd78c8a96a",
+      "size": 57862
+    },
+    {
+      "path": "coordination/artifacts/r007-lldb-pane.txt",
+      "sha256": "b5874ff2b0474dd03ee428b302311174105c45ec6e30de50969e92c87a8f726f",
+      "size": 12923
+    },
+    {
+      "path": "coordination/artifacts/r007-logprobe.json",
+      "sha256": "3d3ade6fa33e3837d46b8bad23752d9b9a48c7d7f29ac6c4bdcca50c54a0909f",
+      "size": 638
+    },
+    {
+      "path": "coordination/artifacts/r007-manual-verify.json",
+      "sha256": "a51f8dbb4c5ee04cbadc48fd2296c2ea2ede9d29823fc4a46ebe34167c4097d9",
+      "size": 1286
+    },
+    {
+      "path": "coordination/artifacts/r007-mysvcx.json",
+      "sha256": "e62f1ce827c55bae57138f343188db512193c8bb11ff6421c37f8371727ef5e2",
+      "size": 1709
+    },
+    {
+      "path": "coordination/artifacts/r007-noent-exec.json",
+      "sha256": "a3a53836bcaf8b978a94079126e8fa290153ae20d9d1e61eaf38962375517036",
+      "size": 717
+    },
+    {
+      "path": "coordination/artifacts/r007-noent-ios.json",
+      "sha256": "da9dedbe4073a01aedd774861ba4b21b7a3e6323d64e18ab6174e7e16b46881b",
+      "size": 1809
+    },
+    {
+      "path": "coordination/artifacts/r007-noent-sign.json",
+      "sha256": "de02bced60cdc21fe0a12187cbcfb7f7bd7cd6365b09dc840516cc1d3335b8da",
+      "size": 1444
+    },
+    {
+      "path": "coordination/artifacts/r007-nosig-check.json",
+      "sha256": "7f7e0bea7ef47c02c861f0a207558a069b7077331e214fb611e29d78f6ff7d10",
+      "size": 765
+    },
+    {
+      "path": "coordination/artifacts/r007-nosig.json",
+      "sha256": "8efcdaa2f3349560074ec685acc954207a356deb7f3391a3c6c37127eeeb54c8",
+      "size": 1026
+    },
+    {
+      "path": "coordination/artifacts/r007-platall.json",
+      "sha256": "272510f40769c379fee1b385a784119c8465e42bff67e3570d34477a3c15f8f1",
+      "size": 3700
+    },
+    {
+      "path": "coordination/artifacts/r007-platscan.json",
+      "sha256": "174db82415011299cd04debd5a2a42d53287cd6686f8ea3e139d7fff3e9a194e",
+      "size": 3107
+    },
+    {
+      "path": "coordination/artifacts/r007-platscan2.json",
+      "sha256": "126c0e03b6cf19a75d0ae97815b4093d157b79860d8d4e4bc3081e8f9e152bd7",
+      "size": 2435
+    },
+    {
+      "path": "coordination/artifacts/r007-postmin.json",
+      "sha256": "a44b01584c8f4f5cb5c8d68f6f985f015c1541f12872eaf0cb8d87a8a3e02e7d",
+      "size": 2411
+    },
+    {
+      "path": "coordination/artifacts/r007-postmin2.json",
+      "sha256": "015b231ce1c4de57fffaa0ffc23b7742ccfe7d7edc64eba6b3229dc6c879a286",
+      "size": 1256
+    },
+    {
+      "path": "coordination/artifacts/r007-postmin3.json",
+      "sha256": "48c3f77afb405c91f740cc30cd937679af7e36c3af39eeddc4c944593c5fab19",
+      "size": 952
+    },
+    {
+      "path": "coordination/artifacts/r007-postmin4.json",
+      "sha256": "aaf5f676fcea0b418ff1af82f49302028c5d18149bf39dbd0c4c56c16e32cb03",
+      "size": 1028
+    },
+    {
+      "path": "coordination/artifacts/r007-postmin5.json",
+      "sha256": "0a5c06af5dfb2a83e5327bfdd628c3a33c5f43b213699165783a67357f21f209",
+      "size": 823
+    },
+    {
+      "path": "coordination/artifacts/r007-postmin6.json",
+      "sha256": "d5cf7bee671de17c4f50e8e2f40590415b62417a4888d67bd4ec9edec9c7774c",
+      "size": 2167
+    },
+    {
+      "path": "coordination/artifacts/r007-postmin7.json",
+      "sha256": "ce3a8f9e9b113689d7ed4d796103a0baaaedc8d648d0e25adbfc66948894d2a9",
+      "size": 2654
+    },
+    {
+      "path": "coordination/artifacts/r007-probe-deploy.json",
+      "sha256": "de7e003618705791768389c10974dcf87e34ed6a1a160ce354e123ebc2bf392c",
+      "size": 1200
+    },
+    {
+      "path": "coordination/artifacts/r007-probe-diag.json",
+      "sha256": "5a6b1c76752a8fa7506d47210529ad0a87967ca0ec31ac0ad7a965b2e8fe188b",
+      "size": 3306
+    },
+    {
+      "path": "coordination/artifacts/r007-probe-run.json",
+      "sha256": "4aca9757b91ea02d1e5b4439e14ec7faa814c5c13f84df89b3c3b237e2e1c286",
+      "size": 636
+    },
+    {
+      "path": "coordination/artifacts/r007-probe-upload.json",
+      "sha256": "0c47ee24f14b2fb23da6be49c5e54205e910578673639c82af9627e4c5944999",
+      "size": 533
+    },
+    {
+      "path": "coordination/artifacts/r007-probeAB.json",
+      "sha256": "3f6e6535cebc484898e544c4814e58e4535f12fb9effa252bac54dadf3c55b0c",
+      "size": 1407
+    },
+    {
+      "path": "coordination/artifacts/r007-py.json",
+      "sha256": "596b12cf66db738f37c8f40656dd01d012cb2214cead98545337f754b950de1b",
+      "size": 901
+    },
+    {
+      "path": "coordination/artifacts/r007-reason.json",
+      "sha256": "9456c0704a3475ad54b566533e1ac6a70fde33b778cfff3f61c166a8c445b8d9",
+      "size": 1919
+    },
+    {
+      "path": "coordination/artifacts/r007-rename-test.json",
+      "sha256": "c44d846d8958c188ea888dee03730ab29ba4ec36b2be0fbbcb79bbac193b2caf",
+      "size": 1333
+    },
+    {
+      "path": "coordination/artifacts/r007-rundbg-find.json",
+      "sha256": "cc82ffeccdd7c2aa782118c9aa0db0026dc4bbb4f50c4679c1a946b1165798c9",
+      "size": 581
+    },
+    {
+      "path": "coordination/artifacts/r007-rundbg-ios.json",
+      "sha256": "514df5bf450eb14f117ff779fa53ce68dc10dd30ef0f9776447ad09abeb4cc0f",
+      "size": 2410
+    },
+    {
+      "path": "coordination/artifacts/r007-rundbg-tccd.json",
+      "sha256": "2a88fe231121ef16ad3aafd79e0f450afc15f53575b473473f907b708f01dd3c",
+      "size": 1423
+    },
+    {
+      "path": "coordination/artifacts/r007-spawnreason.json",
+      "sha256": "8d5239460244ded82a7582c6201aa9e6e64d4883c0c0ef689de01e5110e6ac22",
+      "size": 1680
+    },
+    {
+      "path": "coordination/artifacts/r007-spawnreason2.json",
+      "sha256": "aefd82d5f63350b5754bdd62ba65664bff9b62f88fe839de1d29147790c96171",
+      "size": 2214
+    },
+    {
+      "path": "coordination/artifacts/r007-svcx2.json",
+      "sha256": "d85a3c78ee845712c369917c601614038b005d7ed4f71440359f4dfbde4d75ec",
+      "size": 1125
+    },
+    {
+      "path": "coordination/artifacts/r007-tccd-canon.json",
+      "sha256": "c8256fe737459a6f223fa4b106222e98ed550fa230710e3f840d8e8a732a708d",
+      "size": 1675
+    },
+    {
+      "path": "coordination/artifacts/r007-tccd-exit.json",
+      "sha256": "8bd41a19ccacd43723fedf30c67803e30f583e9e2149ef569ab9d8e2031d8dfb",
+      "size": 1034
+    },
+    {
+      "path": "coordination/artifacts/r007-tccd-exit2.json",
+      "sha256": "a328f1267805c5c09045e26fbccbe5d51836c6ba5d18f0ea54e6f1c6ce2eb973",
+      "size": 2468
+    },
+    {
+      "path": "coordination/artifacts/r007-tccd-hdr.json",
+      "sha256": "bed4bbbb332629a69eeca5d0cfc1dc43541b03e7f0e5d6cd3981be53b5761b94",
+      "size": 885
+    },
+    {
+      "path": "coordination/artifacts/r007-tccd-hdr2.json",
+      "sha256": "b6a28ef523464f88812fef6fb59b1abd448c8b42daa3fbe8b8b2c57535609678",
+      "size": 1409
+    },
+    {
+      "path": "coordination/artifacts/r007-tccd-insitu.json",
+      "sha256": "65bdeae2a41db00a4a80ea65ed1697013edc809e47444aac40f04129332d8cc5",
+      "size": 1304
+    },
+    {
+      "path": "coordination/artifacts/r007-tccd-inventory.json",
+      "sha256": "10337b5317e2f693cd4532a4c80f2c0dbd0f93cd759eb5a10694576b4e99a40d",
+      "size": 3006
+    },
+    {
+      "path": "coordination/artifacts/r007-tccd-jobwatch.json",
+      "sha256": "eb72540a8f2c3e7566471b98a54ad7797e01ec5e1832d10f082d89964ba528b8",
+      "size": 1352
+    },
+    {
+      "path": "coordination/artifacts/r007-tccd-kick.json",
+      "sha256": "28fd53ceffff430e8e3c181a2e5f405cb2832e7826829f7ee364ac1bf9248fc4",
+      "size": 2445
+    },
+    {
+      "path": "coordination/artifacts/r007-tccd-manual.json",
+      "sha256": "0cab9bd49b189cef3ce515111c99eb319f2bef7c93f7dd9f2ef2f1898595b920",
+      "size": 769
+    },
+    {
+      "path": "coordination/artifacts/r007-tccd-min.json",
+      "sha256": "c279ced134b4addd31f7bd047da46be9e96c5eaf8a4519f38668fc512e3b6451",
+      "size": 1472
+    },
+    {
+      "path": "coordination/artifacts/r007-tccd-min2.json",
+      "sha256": "5090554cb9d5ff879495d0105e319a98ac7344b625646503a403f4c8e551b2af",
+      "size": 1464
+    },
+    {
+      "path": "coordination/artifacts/r007-tccd-paths.json",
+      "sha256": "81e3118a39c338bcf3e18422addf96bc5889b7e37612d2db61bd99c9dc2a4dea",
+      "size": 1106
+    },
+    {
+      "path": "coordination/artifacts/r007-tccd-strings.json",
+      "sha256": "9673f2d30789ef7d6ecfd60eb4e42eafc20a5fcf5ed16e2bac8401f00a529c8d",
+      "size": 1524
+    },
+    {
+      "path": "coordination/artifacts/r007-tccd-system-boot.json",
+      "sha256": "9dc2a9d095270e361a300868aa0b3df7d95aa53c68902ca99b03974d11212058",
+      "size": 1109
+    },
+    {
+      "path": "coordination/artifacts/r007-tccd-uuid.json",
+      "sha256": "23236a8256acd685aff02a2a0ebaf901090638fd92dedcb71b7d047ab78d3621",
+      "size": 1617
+    },
+    {
+      "path": "coordination/artifacts/r007-tccd-uuid2.json",
+      "sha256": "5d0ccebc5fa7fa6d8f21dd447930a009534bd956b77ce298e491aa8ef43e7b6f",
+      "size": 1441
+    },
+    {
+      "path": "coordination/artifacts/r007-tccda.json",
+      "sha256": "15ac9e9cbf71d1abbdf76d314804036837abb4460fb6b817377455b37774ead2",
+      "size": 1546
+    },
+    {
+      "path": "coordination/artifacts/r007-tccdadhoc.json",
+      "sha256": "c0bbcfc87545f30dc770ed49fa932eef9c5ff3ee6cd630692333f6ab932d3630",
+      "size": 1418
+    },
+    {
+      "path": "coordination/artifacts/r007-tccdm.json",
+      "sha256": "7d2bd7dbe229fbb3d3efc268733fadfcb1474f5afa337e6d7fcb188d3262239c",
+      "size": 2044
+    },
+    {
+      "path": "coordination/artifacts/r007-tccdns.json",
+      "sha256": "c7bf07ed6094ca70064f25094e006f71e73df60e06b436b945f5a4fed3da28c0",
+      "size": 1334
+    },
+    {
+      "path": "coordination/artifacts/r007-tccdp.json",
+      "sha256": "59c05e2c4314ae798c65ab36de38f4372977579325376830d92bcb179717a37f",
+      "size": 1050
+    },
+    {
+      "path": "coordination/artifacts/r007-tccdp2.json",
+      "sha256": "a0a6f87b681cff5dd081b10e2da1ad0268ddee76dfe1a74e04dd5177d74b869f",
+      "size": 879
+    },
+    {
+      "path": "coordination/artifacts/r007-tccdp3.json",
+      "sha256": "642ca44001fab268d100c23a4c28a8ef2165f83e8015ed890c6191fb3607de05",
+      "size": 1631
+    },
+    {
+      "path": "coordination/artifacts/r007-tccdp4.json",
+      "sha256": "3c81acd3573e7c805c8df381f069d4e5cf83a14c04956ad068b83c4b8009d444",
+      "size": 1679
+    },
+    {
+      "path": "coordination/artifacts/r007-tccdq.json",
+      "sha256": "854adc42492a6510b8451da731c6ca502013b4f856b21b4c14f7aa39590e945c",
+      "size": 1027
+    },
+    {
+      "path": "coordination/artifacts/r007-tccxpc.json",
+      "sha256": "30be2ed466f6df51db56d9c4efe59d9feb4f46f9d7194b00072c3a98b15e9762",
+      "size": 1948
+    },
+    {
+      "path": "coordination/artifacts/r007-tools.json",
+      "sha256": "d9d19520d4882c498c434fcddd62555a5b2101c007cf9c15ae4dca4615ffd5f2",
+      "size": 671
+    },
+    {
+      "path": "coordination/artifacts/r007-trust-query.json",
+      "sha256": "d4a5c59bfa7495b588ac051bbfd189459765421721e3435e689e81681d081b68",
+      "size": 831
+    },
+    {
+      "path": "coordination/artifacts/r007-trusttools.json",
+      "sha256": "5fbf00dd09e647794e27ceef5e0b4189de808dca8d4f533e30bfbee3e22f85ae",
+      "size": 662
+    },
+    {
+      "path": "coordination/artifacts/r007-verify1.json",
+      "sha256": "4df6df36438d7a932eb515f4a302f701577184800fadec32c6c810744c160387",
+      "size": 2645
+    },
+    {
+      "path": "coordination/artifacts/r007-ws-plat.json",
+      "sha256": "fb7b88159e641ea43c85d9f671c88982500505eff33ba999ac037dcb6625f5f3",
+      "size": 2124
+    },
+    {
+      "path": "coordination/artifacts/r007-xattr.json",
+      "sha256": "817fbcfead76793545fa5f4cad5c7d90fe5de1d7b0e406aee47249126a656326",
+      "size": 1095
+    },
+    {
+      "path": "coordination/relay-wait-state.json",
+      "sha256": "8da2bca4817f0c93b29f2a70b2ecc7a40f50a4321204b980b4bc985a5d3ab696",
+      "size": 1182
+    },
+    {
+      "path": "docs/evidence/r007-system-tccd-20261015.md",
+      "sha256": "f4fb5679c053504ddadf5d8f98b665c65b7838bea771ffe0a333df3f04440d5f",
+      "size": 7705
+    },
+    {
+      "path": "layout/usr/macOS/LaunchDaemons/com.macwsguide.tccd-system.plist",
+      "sha256": "d2e8669d752a4face78537d2ac4f538ffc1431e0d92ca0ba3e8f7de406a24f2f",
+      "size": 2265
+    },
+    {
+      "path": "layout/usr/macOS/bin/macos_gui.sh",
+      "sha256": "0fcb85f6d26c200ccd6ff8382f1df0c42b3d83c4363333f91d5cb464672b958f",
+      "size": 283695
+    },
+    {
+      "path": "libmachook/Metal_hooks.x",
+      "sha256": "a49c52c14319b7991977c2ff1a5e39c353ef2f3a6824e82bec9f8b7335291e4a",
+      "size": 1221478
+    },
+    {
+      "path": "libmachook/mac_hooks.m",
+      "sha256": "e8ae9dadfa5bb40701a681661cb7677e729f94b35807355f5ea5ae0af71eb08d",
+      "size": 1389148
+    },
+    {
+      "path": "misc/macos_ws_event_probe.c",
+      "sha256": "8d09d5b0744768df79f81fefea979e07b2c12b43fa8b11ad5fb0623b361444d0",
+      "size": 38095
+    },
+    {
+      "path": "misc/test_ws_event_probe_postmin_contract.py",
+      "sha256": "c2facefdf24e08256c6f8dab6324cdacaa6fd6a4bef99f0f2d78dd70be70a6e6",
+      "size": 5642
+    }
+  ],
+  "secret_scan_findings": [],
+  "new_binary_findings": []
+}

@@ -1,0 +1,64 @@
+{
+  "host_control_not_device_evidence": true,
+  "commands": [
+    {
+      "argv": [
+        "xcrun",
+        "clang",
+        "coordination/artifacts/R007-xpc-bool-control.c",
+        "-o",
+        "tmp/R007-review-builds/xpc-bool-control"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "tmp/R007-review-builds/xpc-bool-control"
+      ],
+      "exit": 0,
+      "stdout": "missing: value_present=0 bool=0\nexplicit_false: value_present=1 bool=0\nexplicit_true: value_present=1 bool=1\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "xcrun",
+        "clang",
+        "-arch",
+        "arm64",
+        "misc/macos_ws_event_probe.c",
+        "-framework",
+        "CoreFoundation",
+        "-framework",
+        "CoreGraphics",
+        "-o",
+        "tmp/R007-review-builds/event-probe-arm64"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "xcrun",
+        "clang",
+        "-arch",
+        "arm64e",
+        "misc/macos_ws_event_probe.c",
+        "-framework",
+        "CoreFoundation",
+        "-framework",
+        "CoreGraphics",
+        "-o",
+        "tmp/R007-review-builds/event-probe-arm64e"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    }
+  ],
+  "header_path": "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/xpc/xpc.h",
+  "header_sha256": "9f142133619b1167bd57e1fbcaab05399ece39fc6dd69fb7297a1a4c31b2ee2f",
+  "header_excerpt": " * @function xpc_dictionary_get_bool\n *\n * @abstract\n * Gets a <code>bool</code> primitive value from a dictionary directly.\n *\n * @param xdict\n * The dictionary object which is to be examined.\n *\n * @param key\n * The key whose value is to be obtained.\n *\n * @result\n * The underlying <code>bool</code> value for the specified key. false if the\n * the value for the specified key is not a Boolean value or if there is no\n * value for the specified key.\n */\n__OSX_AVAILABLE_STARTING(__MAC_10_7, __IPHONE_5_0)\nXPC_EXPORT XPC_WARN_RESULT XPC_NONNULL_ALL\nbool\nxpc_dictionary_get_bool(xpc_object_t xdict, const char *key);\n\n/*!\n * @function "
+}

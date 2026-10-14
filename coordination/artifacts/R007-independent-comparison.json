@@ -1,0 +1,53 @@
+{
+  "script_and_plist_hashes": [
+    {
+      "local_path": "layout/usr/macOS/bin/macos_gui.sh",
+      "local_sha256": "0fcb85f6d26c200ccd6ff8382f1df0c42b3d83c4363333f91d5cb464672b958f",
+      "deployed_sha256": "0fcb85f6d26c200ccd6ff8382f1df0c42b3d83c4363333f91d5cb464672b958f",
+      "matches": true
+    },
+    {
+      "local_path": "layout/usr/macOS/LaunchDaemons/com.macwsguide.tccd-system.plist",
+      "local_sha256": "d2e8669d752a4face78537d2ac4f538ffc1431e0d92ca0ba3e8f7de406a24f2f",
+      "deployed_sha256": "d2e8669d752a4face78537d2ac4f538ffc1431e0d92ca0ba3e8f7de406a24f2f",
+      "matches": true
+    }
+  ],
+  "tccd_entitlement_comparison": [
+    {
+      "slice_index": 0,
+      "original_keys": 12,
+      "current_keys": 124,
+      "missing_native_keys": [],
+      "changed_native_values": {
+        "com.apple.private.tcc.allow": {
+          "original": [
+            "kTCCServiceSystemPolicyAllFiles"
+          ],
+          "current": [
+            "kTCCServiceListenEvent",
+            "kTCCServiceSystemPolicyAllFiles"
+          ]
+        }
+      }
+    },
+    {
+      "slice_index": 1,
+      "original_keys": 12,
+      "current_keys": 124,
+      "missing_native_keys": [],
+      "changed_native_values": {
+        "com.apple.private.tcc.allow": {
+          "original": [
+            "kTCCServiceSystemPolicyAllFiles"
+          ],
+          "current": [
+            "kTCCServiceListenEvent",
+            "kTCCServiceSystemPolicyAllFiles"
+          ]
+        }
+      }
+    }
+  ],
+  "limits": "Original capture has one full per-slice plist and one truncated duplicate; no 24 distinct original keys are established. Compare each architecture explicitly before claiming preservation."
+}

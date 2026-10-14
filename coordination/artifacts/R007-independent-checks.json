@@ -1,0 +1,58 @@
+{
+  "time": "2026-10-15T05:26:59.756842+08:00",
+  "head_before": "bd04a4a76b0dd04e1609265cb83aefa219d6c0da",
+  "head_after": "bd04a4a76b0dd04e1609265cb83aefa219d6c0da",
+  "parallel_limit": 2,
+  "checks": [
+    {
+      "argv": [
+        "python3",
+        "misc/test_ws_event_probe_postmin_contract.py"
+      ],
+      "exit": 0,
+      "stdout": "TEST all-zero record rejected                             PASS\nTEST nonzero record accepted                              PASS\nTEST leading nonzero accepted                             PASS\nTEST zero-length record rejected                          PASS\nhost skylight_uuid_matches=0\nTEST uuid pin fails closed on unknown image               PASS\nTEST postmin parses                                       PASS\nTEST postminx is not postmin                              PASS\nTEST no-arg != postmin                                    PASS\nALL-PASS (fails=0)\n\nmode=postmin\npostmin: FAIL closed \u2014 loaded SkyLight uuid != pinned 22F82 build\n\n",
+      "stderr": "...\n----------------------------------------------------------------------\nRan 3 tests in 1.193s\n\nOK\n"
+    },
+    {
+      "argv": [
+        "python3",
+        "misc/audit_runtime_switches.py"
+      ],
+      "exit": 0,
+      "stdout": "runtime-switch audit OK: 309 source/plist env names, 86 source flag files, 467 total recorded entries\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "bash",
+        "-n",
+        "layout/usr/macOS/bin/macos_gui.sh"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "plutil",
+        "-lint",
+        "layout/usr/macOS/LaunchDaemons/com.macwsguide.tccd-system.plist"
+      ],
+      "exit": 0,
+      "stdout": "layout/usr/macOS/LaunchDaemons/com.macwsguide.tccd-system.plist: OK\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "git",
+        "diff",
+        "--check",
+        "842d181",
+        "HEAD"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    }
+  ]
+}
