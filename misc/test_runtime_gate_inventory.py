@@ -40,18 +40,27 @@ environment[@"MACWS_CHILD_CONTRACT"] = @"1";
             root = Path(directory)
             (root / 'analysis' / 'vendored').mkdir(parents=True)
             (root / 'src').mkdir()
+            (root / 'src' / 'analysis').mkdir()
             (root / 'analysis' / 'vendored' / 'ref.m').write_text(
                 'getenv("MACWS_REFERENCE_ONLY_SWITCH");')
             (root / 'src' / 'real.m').write_text(
                 'getenv("MACWS_REAL_PROJECT_SWITCH");')
+            # A nested src/analysis directory is ordinary project source
+            # and MUST still be scanned — only the root reference tree
+            # is excluded.
+            (root / 'src' / 'analysis' / 'nested.m').write_text(
+                'getenv("MACWS_NESTED_REAL_SWITCH");')
             env, _ = audit.discovered_switches(audit.source_files(root))
-            self.assertEqual(env, {'MACWS_REAL_PROJECT_SWITCH'})
+            self.assertEqual(env, {'MACWS_REAL_PROJECT_SWITCH',
+                                   'MACWS_NESTED_REAL_SWITCH'})
         # The live tree must behave the same way: no scanned file lives
-        # under analysis/, and the real hook source is still present.
+        # under the ROOT-level reference dir, and the real hook source
+        # is still present.
         files = audit.source_files()
         self.assertTrue(files)
         for path in files:
-            self.assertNotIn('analysis', path.parts, path)
+            self.assertNotEqual(path.relative_to(ROOT).parts[0],
+                                audit.ROOT_REFERENCE_DIR, path)
         self.assertIn(ROOT / 'libmachook' / 'mac_hooks.m', files)
 
     def test_shell_config_and_presence_gate_are_included(self):

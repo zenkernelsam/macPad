@@ -454,8 +454,8 @@ env	MACWS_LSXPC_TRACE_FILTER	off	diagnostic	Substring filter narrowing MACWS_LSX
 env	MACWS_MACH_MSG_ALL	off	diagnostic	Logs every outgoing mach_msg send for dispatch correlation; production leaves unset.
 env	MACWS_RS_CTX_TRACE	off	diagnostic	Read-only WindowServer render-server context trace.
 env	MACWS_SL_WCTX_TRACE	off	diagnostic	Read-only SkyLight window-context trace.
-env	MACWS_SKYLIGHT_MANUAL_POP	on	libmachook SkyLight compatibility	Manual symbol-pop fallback enabled by absence; explicit 0 is a diagnostic opt-out, matching the other production-default-on switches.
-env	RUN_DBG_CSUNKILL	off	standalone run_dbg probe	Exact-process codesign-kill observer option.
+env	MACWS_SKYLIGHT_MANUAL_POP	on	libmachook SkyLight state-stack scaffold	Manual deque pop_back repair used when SkyLight 22F82 strips the real symbol to localsyms; enabled by absence, explicit 0 is the A/B escape hatch.
+env	RUN_DBG_CSUNKILL	off	standalone run_dbg probe	=1 polls the child proc_ro csflags via libjailbreak KRW (kread/kwrite32); active kernel-memory diagnostic, not an observer.
 env	RUN_DBG_HOLD	off	standalone run_dbg probe	Holds the debugged child for debugger attach.
 env	RUN_DBG_KILLONSTOP	off	standalone run_dbg probe	Kills the debugged child on stop signal.
 env	RUN_DBG_LIVEWALK	off	standalone run_dbg probe	Live virtual-address space walk option.

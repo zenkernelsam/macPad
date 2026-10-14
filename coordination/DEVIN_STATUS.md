@@ -5,35 +5,42 @@ checkpoint delivered at `0f5b8f4` (+ artifact commits) — reusable
 bounded evidence, NOT an acceptance claim; `reviews/R003-final-20261014.md`
 lists its remaining scope.  R004A work below is docs/audit debt only.
 
-## R004A in progress
+## R004A revised delivery
 
-- `misc/audit_runtime_switches.py`: `analysis/` (git-ignored read-only
-  reference tree) excluded from scanning by directory name; real
-  project sources outside it are still scanned.  `source_files(root)`
-  now takes an injectable root for fixture tests.
-- `misc/test_runtime_gate_inventory.py`: new fixture test proves
-  reference-only switches are dropped while a real untracked source is
+- `misc/audit_runtime_switches.py`: only the ROOT-LEVEL `analysis/`
+  reference tree is excluded (by position, not bare name — a nested
+  `src/analysis` in a real project tree is still scanned).
+  `source_files(root)` takes an injectable root for fixture tests.
+- `misc/test_runtime_gate_inventory.py`: fixture proves reference-only
+  switches are dropped while real AND nested-`analysis` sources are
   still detected; 19/19 pass.
 - `docs/runtime-switches.tsv`: 23 real-tree env names + the
-  `/tmp/macws_ws_dispatch_witness` flag classified from their actual
-  consumers (all `off` diagnostics/standalone-probe controls, except
-  `MACWS_SKYLIGHT_MANUAL_POP` which is production-default-on like the
-  other `getenv("X") && strcmp(X,"0")` opt-outs).  Cleanup helper
-  regenerated via `--write-cleanup` and shell-checked.
-- Audit: `runtime-switch audit OK: 309 source/plist env names, 86
-  source flag files, 467 total recorded entries` (exit 0).
-- Doc corrections in `AGENTS.md`, `PROJECT-ARCHAEOLOGY.md`,
-  `ventura-22F82-session-reproduction-20261013.md`,
-  `ventura-22F82-bringup-state.md` and the 10-13 evidence doc retract:
-  event-port-invalid, `1000=success`, INSTALL-proves-hook,
-  always-NULL-audit, probe-globals-imply-WS-state.  Chroot-vs-iOS
-  sentinel namespace recorded; private host refs replaced with
-  placeholders.
-- `deploy-probe-r003c.json`: embedded base64 payload replaced with an
-  omitted-payload descriptor preserving `command_sha256` and the real
+  `/tmp/macws_ws_dispatch_witness` flag classified from actual
+  consumers.  Corrections per review: `RUN_DBG_CSUNKILL` is the
+  libjailbreak-KRW csflags poller (kread/kwrite32 — active, not an
+  observer); `MACWS_SKYLIGHT_MANUAL_POP` is the deque pop_back repair
+  scaffold (production default-on, `=0` A/B escape).
+- Audit: `runtime-switch audit OK: 309 env / 86 flags / 467 entries`
+  (exit 0).  Cleanup helper regenerated, `bash -n`/`sh -n` OK.
+- Doc corrections (dates fixed to 2026-10-14) in `AGENTS.md`,
+  `PROJECT-ARCHAEOLOGY.md`, `session-reproduction`,
+  `bringup-state` (top entry pointer added) and the 10-13 evidence §9
+  retract: event-port-invalid, `1000=success`, INSTALL-proves-hook,
+  always-NULL-audit, probe-globals-imply-WS-state.  `sid=0` cause is
+  labeled THEORY.  Chroot-vs-iOS sentinel namespace recorded; private
+  host refs replaced.
+- `deploy-probe-r003c.json`: embedded base64 replaced with an
+  omitted-payload descriptor preserving `command_sha256` and real
   `exit 127`.
-- Not done in this package: no device mutation, no new private-offset
-  reads, no behavior changes; IDA-dependent static RE stays pending.
+- Suite baseline PROVEN, not asserted: the 12 failing modules were
+  re-run at `2209ee3` (pre-R004A) and current HEAD in the same env —
+  identical 24-testID failure set both ways (16f+8e), proving all
+  failures pre-date this package.  Raw logs:
+  `artifacts/r004a-suite-2209ee3-baseline.log`,
+  `artifacts/r004a-suite-708cf9c.log`, IDs in
+  `artifacts/r004a-failing-testids.txt`.
+- Not done: no device mutation, no new private-offset reads, no
+  behavior changes; IDA-dependent static RE stays pending.
 
 ---
 
@@ -245,7 +252,7 @@ WS.err delta: grep id=29421 → 5 replies          —
 
 ---
 
-## R002 progress (2026-10-15) — provider repaired, gate telemetry live
+## R002 progress (2026-10-14) — provider repaired, gate telemetry live
 
 ### Hook provider invariant repaired
 

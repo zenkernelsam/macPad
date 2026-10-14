@@ -123,7 +123,7 @@ image-relative offset. See the same evidence doc §8 for the deploy
 landmines fixed (concatenated `ldid -Spath`, per-rebuild
 `set_macos_version.py`, thin-slice requirement) and the open anomaly
 (hooked gate provably installed but never fires during posts) —
-RESOLVED 2026-10-15: the deployed CydiaSubstrate MSHookFunction was a
+RESOLVED 2026-10-14: the deployed CydiaSubstrate MSHookFunction was a
 no-op scaffold; `misc/cydiasubstrate_macos.m` now carries a real
 16-byte trampoline implementation (fail-closed on PC-relative windows,
 PAC-safe), verified live by `misc/macos_mshook_provider_probe.c`
@@ -131,7 +131,7 @@ PAC-safe), verified live by `misc/macos_mshook_provider_probe.c`
 gCurMsgAudit populated (size=52, sender creds) and the genuine check
 chain (gate→dispatcher 0x1854257ec→impl) returns 0 → 1002. See
 coordination/DEVIN_STATUS.md R002 section.
-**Corrections ratified 2026-10-15 (R003/R004A):** retract these
+**Corrections ratified 2026-10-14 (R003/R004A):** retract these
 superseded claims wherever they appear in older docs — (a)
 "`SLSGetEventPort` is invalid" — it returns `rc=0` with a real receive
 right; (b) "Mach `1000` means success" — false, per-routine codes

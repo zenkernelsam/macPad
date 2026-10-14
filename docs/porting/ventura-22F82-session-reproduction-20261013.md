@@ -307,9 +307,11 @@ which was never confirmed as the gate):
    loginwindow/session-owner registration path is the leading suspect
    (`SLSSetLoginwindowConnection` entitlement
    `com.apple.private.SkyLight.loginwindow` is absent from our probe).
-2. Session registration: `SLSCreateLoginSession` → `sid=0` — the
-   temporary login-framework bridge creates a session locally but never
-   tells WS; determine the real owner-registration handshake.
+2. Session registration: `SLSCreateLoginSession` → `sid=0`.
+   THEORY (unproven): a login-framework temporary bridge creates the
+   session locally and WS is never notified; the cause of `sid=0` and
+   the real owner-registration handshake are unestablished — determine
+   them with exact RE/runtime evidence.
 3. If revival is impossible: fallback menubar design — process-local
    NSEvent + HIToolbox menu-tracking entry points
    (`-[NSApplication _menuTrackingStart]` family) bypassing WS dispatch.

@@ -1,5 +1,12 @@
 # Ventura 13.4.1 / 22F82 bring-up — working state (2026-10-06)
 
+> **Current entry point (2026-10-14):** this file is the long-lived
+> bring-up log; the authoritative *current* frontier is
+> `coordination/DEVIN_STATUS.md` plus the retractions summarized in
+> `AGENTS.md` ("Corrections ratified 2026-10-14"). Where this file's
+> older sections disagree, those entries are historical — the corrections
+> apply.
+>
 > Ground-truth file for the macOS 13 Ventura branch. Keep it updated at every
 > milestone before moving on. Evidence labels: `runtime-confirmed` /
 > `RE-confirmed` / `source-confirmed` / `THEORY`.
@@ -246,7 +253,7 @@ admits). After re-signing:
   launcher chdirs into a path absent in the fresh rootfs — identify and
   fix cosmetically later).
 - ~~`MSHookFunction`/`MSHookMessageEx` are currently no-ops~~ —
-  CORRECTED 2026-10-15 (R003): `misc/cydiasubstrate_macos.m` now
+  CORRECTED 2026-10-14 (R003): `misc/cydiasubstrate_macos.m` now
   implements a real 16-byte absolute-branch trampoline gated by the
   versioned `MACWSHookPermitV2` capability (expected-UUID + image-offset
   + exact prologue pin, callable-original refusal contract, fail-closed).

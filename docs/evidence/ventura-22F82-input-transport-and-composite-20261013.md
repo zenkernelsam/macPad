@@ -667,7 +667,7 @@ both = current tree + diagnostics, signed + trustcach'd. Trustcache
 restored to 5690-hash closure this session.
 
 
-## 9. 2026-10-15 corrections (R003/R004A) — read before trusting §4–§8 interpretations
+## 9. 2026-10-14 corrections (R003/R004A) — read before trusting §4–§8 interpretations
 
 The following statements in this document are **superseded**:
 

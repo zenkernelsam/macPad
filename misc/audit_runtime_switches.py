@@ -25,13 +25,12 @@ EXCLUDED_PARTS = {
     "evidence",
     "tmp",
     "__pycache__",
-    # analysis/ is the git-ignored read-only reference tree: extracted
-    # Apple binaries and vendored project snapshots (e.g. the nested
-    # MacWSBootingGuide copy). Its env names are not shipped contracts.
-    # Exclusion is by directory name only — real project sources outside
-    # that tree are still scanned whether tracked or not.
-    "analysis",
 }
+# Only the ROOT-LEVEL analysis/ tree is git-ignored read-only reference
+# material (extracted Apple binaries and vendored project snapshots).
+# A nested src/analysis or similar real project directory must still be
+# scanned — exclude it by position, not by bare name.
+ROOT_REFERENCE_DIR = "analysis"
 # These are functional Steam compatibility settings explicitly set to zero in
 # the shipped profile, not presence-gated diagnostics. Keep this allowlist
 # exact: other production=off switches must be absent, including NAME=0.
@@ -73,8 +72,11 @@ def load_manifest() -> dict[tuple[str, str], tuple[str, str, str]]:
 
 def source_files(root: pathlib.Path | None = None) -> dict[pathlib.Path, str]:
     texts: dict[pathlib.Path, str] = {}
-    for directory, children, files in os.walk(root or ROOT):
+    base = root or ROOT
+    for directory, children, files in os.walk(base):
         children[:] = [name for name in children if name not in EXCLUDED_PARTS]
+        if pathlib.Path(directory) == base:
+            children[:] = [n for n in children if n != ROOT_REFERENCE_DIR]
         for name in files:
             path = pathlib.Path(directory) / name
             if path.suffix in SOURCE_SUFFIXES:
