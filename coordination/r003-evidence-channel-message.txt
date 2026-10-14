@@ -1,0 +1,1 @@
+请交付时给出当前SkyLight RE输入文件的绝对路径、UUID、IDA MCP server_health/反汇编证据位置；本机ps未见IDA，analysis内未找到SkyLight，先确认你实际用的RE通道，别再做ad-hoc Python字节推断代替AGENTS要求的IDA。已有运行时指针/寄存器事实可继续记录。另：新SSH工具--record的远端命令仍含 '| grep -v'，exit就成grep的；请记录原始进程完整stdout/stderr和真实rc，再在本地筛选显示。工具保留最终shell状态，不能替你修复管道掩码。最后一次receiver拒绝返回指针/ABI版本建议若尚未落实请明确列未关闭，不要在READY中称全通过。接着继续实际dispatcher检查，避免自拟完成标准。

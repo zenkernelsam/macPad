@@ -1,0 +1,1 @@
+R003 最后一个具体契约验证（22:08 addendum）：negative probe当前传STRIP后的toyNP，只判res==toyNP，没有经res调用；这不证明arm64e的orig callable。请真实调用拒绝返回的orig（raw/signed输入，两种arch），并保持mmap/mprotect/vm_protect失败也返回有效原入口；不要再扩成通用引擎。permit API从3参改4参同名，请版本化capability避免已部署中间库混用。已添加新SSH工具和真实exit0/7验证；保持下一轮只做canonical post，尽快交稳定R003候选和证据再前进。
