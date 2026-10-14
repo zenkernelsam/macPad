@@ -6016,8 +6016,13 @@ void loadImageCallback(const struct mach_header* header, intptr_t vmaddr_slide) 
             });
         }
         
-        // grant all permissions
-        MSHookFunction(MSFindSymbol((MSImageRef)header, "_audit_token_check_tcc_access"), hooked_return_1, NULL);
+        // DIAGNOSTIC ONLY (gated 2026-10-15): constant-return on
+        // _audit_token_check_tcc_access would bypass every TCC check —
+        // forbidden as a fix by the task contract. Kept behind the
+        // runtime-diagnostics sentinel; inert otherwise. (Also a no-op
+        // today: MSFindSymbol cannot resolve local `t` symbols.)
+        if (macws_runtime_diagnostics_enabled())
+            MSHookFunction(MSFindSymbol((MSImageRef)header, "_audit_token_check_tcc_access"), hooked_return_1, NULL);
 
         // DIAGNOSTIC (see definition): observe gCurMsgAudit at the
         // CGXSenderCanSynthesizeEvents gate.  Runtime witness: MSFindSymbol

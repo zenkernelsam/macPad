@@ -1,0 +1,3 @@
+Devin working on R001 — started 2026-10-14.
+Phase: bounded package (device state, MSHookFunction provider resolution, probe ABI audit).
+No production fixes; diagnostics only. Will deliver DEVIN_STATUS.md.

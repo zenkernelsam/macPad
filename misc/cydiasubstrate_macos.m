@@ -14,17 +14,23 @@
 //   * MSFindSymbol: real implementation — LC_DYLD_INFO export-trie walk
 //     (dyld-4 shared-cache images carry no usable LC_SYMTAB), with LC_SYMTAB
 //     fallback and strict bounds checks.
-//   * MSHookFunction / MSHookMessageEx: NO-OP stubs. They do not install
-//     hooks. Any libmachook path that needs a hook actually installed
-//     still requires a real substrate (e.g. an ElleKit/substrate macOS
-//     build). This is a documented diagnostic seam for the echo milestone.
+//   * MSHookFunction: REAL minimal trampoline implementation
+//     (2026-10-15, R001→R002 repair). 16-byte absolute-branch patch
+//     (ldr x17,#8 / br x17 / .quad) over the first 4 instructions plus a
+//     thunk holding the stolen bytes and a branch back to symbol+16.
+//     FAILS CLOSED (*result=NULL, target untouched) if any stolen
+//     instruction is PC-relative — those need real relocation fixups.
+//   * MSHookMessageEx: NO-OP stub (method-swizzle not implemented).
 
 #include <dlfcn.h>
 #include <mach-o/dyld.h>
 #include <mach-o/nlist.h>
 #include <mach-o/loader.h>
+#include <mach/mach.h>
 #include <objc/message.h>
+#include <stdint.h>
 #include <string.h>
+#include <sys/mman.h>
 
 const struct mach_header *MSGetImageByName(const char *file) {
     if (!file) return NULL;
@@ -221,12 +227,96 @@ void *MSFindSymbol(const void *image, const char *name) {
     return NULL;
 }
 
-// Diagnostic stub: does NOT install a hook. Returns the original target
-// in *result so callers that immediately invoke the trampoline at least
-// call the real function rather than a broken rebind.
+// Real minimal trampoline hook (arm64/arm64e).
+//
+// Patch written over symbol[0..16):
+//     ldr  x17, #8          ; x17 = *(pc+8) = replace
+//     br   x17
+//     .quad replace
+// Orig-callable thunk (fresh RX page):
+//     <stolen 16 bytes verbatim>
+//     ldr  x17, #8
+//     br   x17
+//     .quad symbol+16
+//
+// Fails closed (target untouched, *result=NULL) when any of the four
+// stolen instructions is PC-relative — verbatim copies would compute the
+// wrong address from the thunk. Verified safe for
+// CGXSenderCanSynthesizeEvents whose window is
+// pacibsp/sub/stp/add (SkyLight 22F82 +0x318464).
+static int macws_insn_pc_relative(uint32_t i) {
+    if ((i & 0x7c000000) == 0x14000000) return 1;   // b / bl
+    if ((i & 0xff000010) == 0x54000000) return 1;   // b.cond
+    if ((i & 0x7e000000) == 0x34000000) return 1;   // cbz / cbnz
+    if ((i & 0x7e000000) == 0x36000000) return 1;   // tbz / tbnz
+    if ((i & 0x9f000000) == 0x90000000) return 1;   // adrp
+    if ((i & 0x9f000000) == 0x10000000) return 1;   // adr
+    if ((i & 0x3b000000) == 0x18000000) return 1;   // ldr/prfm literal
+    return 0;
+}
+
+extern void sys_icache_invalidate(void *addr, size_t len);
+
+// arm64e callers may hand us PAC-signed pointers; a signed address stored
+// in the .quad slot or dereferenced as code crashes. Strip both sides.
+#if __arm64e__
+#include <ptrauth.h>
+#define MACWS_PTRSTRIP(p) ptrauth_strip((p), ptrauth_key_asia)
+#else
+#define MACWS_PTRSTRIP(p) (p)
+#endif
+
 void MSHookFunction(void *symbol, void *replace, void **result) {
-    if (result) *result = symbol;
-    (void)replace;
+    if (result) *result = NULL;
+    if (!symbol || !replace) return;
+    symbol = MACWS_PTRSTRIP(symbol);
+    replace = MACWS_PTRSTRIP(replace);
+    const uint32_t *src = (const uint32_t *)symbol;
+    for (int i = 0; i < 4; i++)
+        if (macws_insn_pc_relative(src[i])) return;   // fail closed
+
+    // Thunk: stolen bytes + branch back to symbol+16.
+    uint8_t *thunk = mmap(NULL, 4096, PROT_READ | PROT_WRITE,
+                          MAP_PRIVATE | MAP_ANON, -1, 0);
+    if (thunk == MAP_FAILED) return;
+    uint32_t *tp = (uint32_t *)thunk;
+    memcpy(tp, src, 16);
+    tp[4] = 0x58000051;                              // ldr x17, #8
+    tp[5] = 0xd61f0220;                              // br x17
+    *(uint64_t *)(tp + 6) = (uint64_t)((char *)symbol + 16);
+    if (mprotect(thunk, 4096, PROT_READ | PROT_EXEC) != 0) {
+        munmap(thunk, 4096);
+        return;
+    }
+    sys_icache_invalidate(thunk, 32);
+
+    // Patch: absolute branch to replace over symbol[0..16).
+    vm_address_t page = (vm_address_t)symbol & ~0x3fffULL;
+    vm_size_t span = ((vm_address_t)symbol + 16 - page + 0x3fff) & ~0x3fffULL;
+    if (vm_protect(mach_task_self(), page, span, FALSE,
+                   VM_PROT_READ | VM_PROT_WRITE | VM_PROT_COPY)
+            != KERN_SUCCESS &&
+        vm_protect(mach_task_self(), page, span, FALSE,
+                   VM_PROT_READ | VM_PROT_WRITE) != KERN_SUCCESS) {
+        munmap(thunk, 4096);
+        return;
+    }
+    uint32_t *dp = (uint32_t *)symbol;
+    dp[0] = 0x58000051;                              // ldr x17, #8
+    dp[1] = 0xd61f0220;                              // br x17
+    *(uint64_t *)(dp + 2) = (uint64_t)replace;
+    vm_protect(mach_task_self(), page, span, FALSE,
+               VM_PROT_READ | VM_PROT_EXECUTE);
+    sys_icache_invalidate(symbol, 16);
+#if __arm64e__
+    // Callers invoke *result via blraaz — authenticate with key IA and
+    // zero discriminator. Sign the thunk the same way or the indirect
+    // call faults at authentication (verified: probe emits blraaz x8).
+    if (result)
+        *result = ptrauth_sign_unauthenticated(thunk, ptrauth_key_asia, 0);
+#else
+    if (result) *result = thunk;
+#endif
 }
 
 void MSHookMessageEx(Class _class, SEL sel, IMP imp, IMP *result) {

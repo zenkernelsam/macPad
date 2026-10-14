@@ -172,3 +172,81 @@ WS.err delta: grep id=29421 → 5 replies          —
   semantics — service exists, semantics unknown).
 - postTo direct-delivery path (0x7287) untested this round; same gate
   likely applies.
+
+---
+
+## R002 progress (2026-10-15) — provider repaired, gate telemetry live
+
+### Hook provider invariant repaired
+
+`misc/cydiasubstrate_macos.m` `MSHookFunction` replaced with a real
+minimal trampoline implementation:
+
+- 16-byte absolute-branch patch (`ldr x17,#8 / br x17 / .quad`) over the
+  first four instructions; thunk page holds stolen bytes + branch back.
+- **Fails closed** (`*result=NULL`, target untouched) when any stolen
+  instruction is PC-relative — verified live: a 16-byte toy window that
+  overlapped a neighboring `adrp` was correctly refused.
+- PAC handled three places: `ptrauth_strip` on `symbol`/`replace`
+  inputs, and `ptrauth_sign_unauthenticated(thunk, asia, 0)` for
+  `*result` — arm64e callers invoke it via `blraaz` (zero discriminator),
+  verified by probe disasm.
+
+Runtime witness (new repo tool `misc/macos_mshook_provider_probe.c`,
+run in chroot against the LIVE provider):
+
+```
+provider-image=/System/Library/Frameworks/CydiaSubstrate.framework/CydiaSubstrate
+target-before @0x100c2bd7c: ff 43 00 d1 08 05 80 52 e8 0f 00 b9 28 00 80 52
+target-after  @0x100c2bd7c: 51 00 00 58 20 02 1f d6 b0 bd c2 00 01 00 00 00
+orig=0xc951800100d4c000          (PAC-signed thunk)
+target()=43 replace_called=1     (replace ran)
+orig()=42                       (thunk re-executed stolen bytes)
+VERDICT=INSTALLED
+```
+
+### Gate telemetry — first real `#### CGXSYNTH` lines in WindowServer
+
+WindowServer 42072→42613 restarted with repaired provider; canonical
+probe posts produced (delta of WindowServer.err):
+
+```
+#### CGXSYNTH cred=0x16da6b220 size=52 euid=0 pid=42636 rc=0
+```
+
+Decoded (with full gate disasm @VA 0x1853fd464):
+
+- `gCurMsgAudit` **is populated** during event posts — the
+  "PKGTransactionDecodeCAPayload-only writer → early NULL bail"
+  hypothesis is **REFUTED** (cred!=NULL, size=52 ≥ 0x34 check passes).
+- Audit belongs to the sender: pid=42636 = probe pid, euid=0.
+- Gate body: copies audit token + rightDesc (0x1d3dcb6c8), paciza's
+  check-impl pointer 0x185425da0→x2, calls dispatcher `0x1854257ec`.
+- `rc=0` is the **genuine** return of the SkyLight check chain →
+  `_XPostEventRecord` writes 1002.
+- The constant-return `_audit_token_check_tcc_access → 1` diagnostic at
+  mac_hooks.m:6024 could NOT have influenced this: `MSFindSymbol` cannot
+  resolve the local `t` symbol, so the call is `MSHookFunction(NULL,…)`
+  → inert. It is now additionally gated behind the runtime-diagnostics
+  sentinel (it was an unconditional constant-return footgun under the
+  repaired provider).
+- 5× `id=29421` (0x72ed) replies again observed for 5 posts — dispatch
+  confirmed end-to-end.
+
+### What remains unresolved inside the check chain
+
+- `0x1854257ec` dispatcher / `0x185425da4` check-impl decide `rc=0`.
+  Early impl reads: descriptor flags bit31 + `+4==0x18` validate, then
+  `bl 0x185358538`. Next bounded step: LOGGING wrapper (not
+  constant-return) on `0x1854257ec` or the rightDesc dereference to
+  identify which sub-check denies — cache-table miss vs TCC evaluation.
+- Whether populating WS's process-right cache (the real fix) is via
+  `kTCCServicePostEvent` grant path or the session-owner pathway is still
+  open; the session registry remains empty (count=0) at this WS state.
+
+### Housekeeping
+
+- `WindowServer.err` diag canaries now stream (provider works) — log
+  volume up; sentinel `/tmp/macws_runtime_diagnostics` still present.
+- WS left STOPPED (bootout) pending review; CydiaSubstrate.old/.old2/
+  .old3 kept beside framework for rollback.
