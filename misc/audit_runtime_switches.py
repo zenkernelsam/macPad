@@ -25,6 +25,12 @@ EXCLUDED_PARTS = {
     "evidence",
     "tmp",
     "__pycache__",
+    # analysis/ is the git-ignored read-only reference tree: extracted
+    # Apple binaries and vendored project snapshots (e.g. the nested
+    # MacWSBootingGuide copy). Its env names are not shipped contracts.
+    # Exclusion is by directory name only — real project sources outside
+    # that tree are still scanned whether tracked or not.
+    "analysis",
 }
 # These are functional Steam compatibility settings explicitly set to zero in
 # the shipped profile, not presence-gated diagnostics. Keep this allowlist
@@ -65,9 +71,9 @@ def load_manifest() -> dict[tuple[str, str], tuple[str, str, str]]:
     return entries
 
 
-def source_files() -> dict[pathlib.Path, str]:
+def source_files(root: pathlib.Path | None = None) -> dict[pathlib.Path, str]:
     texts: dict[pathlib.Path, str] = {}
-    for directory, children, files in os.walk(ROOT):
+    for directory, children, files in os.walk(root or ROOT):
         children[:] = [name for name in children if name not in EXCLUDED_PARTS]
         for name in files:
             path = pathlib.Path(directory) / name

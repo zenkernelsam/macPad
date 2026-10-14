@@ -409,8 +409,8 @@ State at `macos_gui.sh stop` time: clean shutdown, no lingering daemons.
 
 The §4.7 hypothesis was tested end-to-end. Result: the gate is NOT the
 HIDEvents port — it is the **empty session registry** on the WS side.
-Every piece below was measured on-device (Cs-Pad-2.local, WS=59329,
-stack started via `macos_gui.sh start coexist`).
+Every piece below was measured on-device (`<MACWS_DEVICE>` jailbroken
+iPad, WS=59329, stack started via `macos_gui.sh start coexist`).
 
 ### 7.1 The event port is real (correcting §4.1's read)
 
@@ -666,3 +666,37 @@ MacWSHost killed, probes killed). Deployed artifacts on device:
 both = current tree + diagnostics, signed + trustcach'd. Trustcache
 restored to 5690-hash closure this session.
 
+
+## 9. 2026-10-15 corrections (R003/R004A) — read before trusting §4–§8 interpretations
+
+The following statements in this document are **superseded**:
+
+- §4.1's "event port invalid" — corrected already in §7.1; restated here
+  for emphasis: `SLSGetEventPort(cid, &port)` returns `rc=0` with a real
+  receive right.
+- The blanket reading "Mach `1000` = CGX-OK" — per-routine codes differ;
+  `_XSetLoginwindowConnection` returned `1000` on a *failed* connection
+  lookup, and `_XPostEventRecord` denies with `1002`.
+- "The `#### …-INSTALL` line proves a hook installed" — it only proves
+  the attempt ran; the pre-R003 provider was a no-op scaffold.
+- "The audit pointer is always NULL on the post path" — runtime telemetry
+  shows `gCurMsgAudit` populated with a 52-byte credential on every
+  canonical post (`#### CGXSYNTH cred=… size=52 … rc=0`).
+- Any probe-process read of SkyLight globals (`rightsCache`,
+  `lazyChecker`) describes only the probe's own image — it cannot be
+  cited as WindowServer state.
+
+Additional corrections and current facts:
+
+- The `MSHookFunction` provider is now real: permit-gated trampoline,
+  `MACWSHookPermitV2` capability, callable-original refusal contract;
+  verified `VERDICT=INSTALLED` on device.
+- The diagnostics sentinel lives in the **chroot** namespace:
+  `/var/mnt/rootfs/tmp/macws_runtime_diagnostics` — the iOS `/tmp` path
+  is a different file. Cleanup must check BOTH (an archived copy lives
+  at `…/tmp/diag-archive/macws_runtime_diagnostics.r003-20261014`).
+- Input is still unaccepted: `SLSPostEventRecord` → `1002`, zero
+  `WS-DISPATCH` witnesses. All static dispatcher interpretations that
+  predate an IDA session are provisional; the pinned RE input is
+  `analysis/SkyLight_22F82` (UUID 96676A53-B1E0-3D7E-B98B-B73873CD1880,
+  SHA256 13d7a0ca…906c61).

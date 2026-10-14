@@ -131,6 +131,24 @@ PAC-safe), verified live by `misc/macos_mshook_provider_probe.c`
 gCurMsgAudit populated (size=52, sender creds) and the genuine check
 chain (gate→dispatcher 0x1854257ec→impl) returns 0 → 1002. See
 coordination/DEVIN_STATUS.md R002 section.
+**Corrections ratified 2026-10-15 (R003/R004A):** retract these
+superseded claims wherever they appear in older docs — (a)
+"`SLSGetEventPort` is invalid" — it returns `rc=0` with a real receive
+right; (b) "Mach `1000` means success" — false, per-routine codes
+differ (`_XPostEventRecord`: 1002 = denied, and `1000` was *not* the
+OK marker at the loginwindow MIG); (c) "`#### …-INSTALL` log proves a
+hook" — it only proves the install *attempt* ran; under the old no-op
+provider nothing was patched; (d) "the audit pointer is always NULL on
+the post path" — runtime shows `gCurMsgAudit` populated (52-byte creds);
+(e) "globals read in a probe process describe WindowServer" — probe
+instances have their own globals; only WS-side reads count. Diagnostics
+live in the **chroot** namespace: the marker is
+`/var/mnt/rootfs/tmp/macws_runtime_diagnostics`, not the iOS `/tmp`
+path (both must be checked during cleanup). `SLSPostEventRecord` still
+returns 1002 — no accepted input path exists yet. All static
+interpreter results that predate a working IDA session are provisional;
+the RE input under review is `analysis/SkyLight_22F82` (UUID
+96676A53-B1E0-3D7E-B98B-B73873CD1880).
 Previous update (2026-10-13): desktop compositor is alive —
 `state=ready` plus continuous final-composite delivery via
 `macws_publish_scanout_after_swap` (EndUpdate never runs on this build);

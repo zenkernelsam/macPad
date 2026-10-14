@@ -31,6 +31,29 @@ environment[@"MACWS_CHILD_CONTRACT"] = @"1";
                                 '/tmp/macws_macro_gate',
                                 '/tmp/com.macwsguide.test'})
 
+    def test_reference_tree_excluded_but_real_sources_still_scanned(self):
+        # Fixture tree: an ignored analysis/ reference dir and a real
+        # project dir side by side.  The audit must drop the reference
+        # copies without hiding the genuine source — otherwise an
+        # untracked new diagnostic could evade the manifest.
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / 'analysis' / 'vendored').mkdir(parents=True)
+            (root / 'src').mkdir()
+            (root / 'analysis' / 'vendored' / 'ref.m').write_text(
+                'getenv("MACWS_REFERENCE_ONLY_SWITCH");')
+            (root / 'src' / 'real.m').write_text(
+                'getenv("MACWS_REAL_PROJECT_SWITCH");')
+            env, _ = audit.discovered_switches(audit.source_files(root))
+            self.assertEqual(env, {'MACWS_REAL_PROJECT_SWITCH'})
+        # The live tree must behave the same way: no scanned file lives
+        # under analysis/, and the real hook source is still present.
+        files = audit.source_files()
+        self.assertTrue(files)
+        for path in files:
+            self.assertNotIn('analysis', path.parts, path)
+        self.assertIn(ROOT / 'libmachook' / 'mac_hooks.m', files)
+
     def test_shell_config_and_presence_gate_are_included(self):
         source = '''
 GATE="$ROOTFS/private/tmp/macws_test_gate"

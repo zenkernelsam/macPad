@@ -1,6 +1,4 @@
-FROZEN R003 diagnostic checkpoint — 2026-10-14
-Delivered HEAD d0749e8 (+ artifact commits). NOT an acceptance claim.
-F01-F05 closed per evidence; open items listed in DEVIN_STATUS top.
-Git writes: handed back to Codex for review — Devin not staging.
-Device: WS/probe stopped; chroot diagnostics sentinel archived
-(both namespaces verified absent). Baseline echo HI = pass.
+REVISING R004A — 2026-10-14
+Runtime-switch audit fix + durable doc reconciliation (docs/audit only).
+No device mutation, no behavior change, no new probes.
+Git writes held by Codex — Devin edits but does not stage/commit.

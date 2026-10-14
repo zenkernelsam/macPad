@@ -1,9 +1,41 @@
 # DEVIN_STATUS — current delivery
 
-State: **R003 diagnostic checkpoint delivered — FROZEN for review**
-(HEAD `d0749e8`).  Diagnostic checkpoint, NOT an acceptance claim.
-Reviewer task: `coordination/DEVIN_TASK.md`; review inputs
-`reviews/R003-20261014.md` + `reviews/R003-addendum-20261014.md`.
+State: **R004A audit/docs package** (active).  R003 diagnostic
+checkpoint delivered at `0f5b8f4` (+ artifact commits) — reusable
+bounded evidence, NOT an acceptance claim; `reviews/R003-final-20261014.md`
+lists its remaining scope.  R004A work below is docs/audit debt only.
+
+## R004A in progress
+
+- `misc/audit_runtime_switches.py`: `analysis/` (git-ignored read-only
+  reference tree) excluded from scanning by directory name; real
+  project sources outside it are still scanned.  `source_files(root)`
+  now takes an injectable root for fixture tests.
+- `misc/test_runtime_gate_inventory.py`: new fixture test proves
+  reference-only switches are dropped while a real untracked source is
+  still detected; 19/19 pass.
+- `docs/runtime-switches.tsv`: 23 real-tree env names + the
+  `/tmp/macws_ws_dispatch_witness` flag classified from their actual
+  consumers (all `off` diagnostics/standalone-probe controls, except
+  `MACWS_SKYLIGHT_MANUAL_POP` which is production-default-on like the
+  other `getenv("X") && strcmp(X,"0")` opt-outs).  Cleanup helper
+  regenerated via `--write-cleanup` and shell-checked.
+- Audit: `runtime-switch audit OK: 309 source/plist env names, 86
+  source flag files, 467 total recorded entries` (exit 0).
+- Doc corrections in `AGENTS.md`, `PROJECT-ARCHAEOLOGY.md`,
+  `ventura-22F82-session-reproduction-20261013.md`,
+  `ventura-22F82-bringup-state.md` and the 10-13 evidence doc retract:
+  event-port-invalid, `1000=success`, INSTALL-proves-hook,
+  always-NULL-audit, probe-globals-imply-WS-state.  Chroot-vs-iOS
+  sentinel namespace recorded; private host refs replaced with
+  placeholders.
+- `deploy-probe-r003c.json`: embedded base64 payload replaced with an
+  omitted-payload descriptor preserving `command_sha256` and the real
+  `exit 127`.
+- Not done in this package: no device mutation, no new private-offset
+  reads, no behavior changes; IDA-dependent static RE stays pending.
+
+---
 
 ## Current R003 delivery summary
 

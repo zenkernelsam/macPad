@@ -245,9 +245,16 @@ admits). After re-signing:
 - `chdir: No such file or directory` from the launcher (harmless;
   launcher chdirs into a path absent in the fresh rootfs — identify and
   fix cosmetically later).
-- `MSHookFunction`/`MSHookMessageEx` are currently no-ops: exec_hooks /
-  Metal / HID hook installation is NOT active. os_variant and other
-  `DYLD_INTERPOSE` fixes ARE active (bind-time).
+- ~~`MSHookFunction`/`MSHookMessageEx` are currently no-ops~~ —
+  CORRECTED 2026-10-15 (R003): `misc/cydiasubstrate_macos.m` now
+  implements a real 16-byte absolute-branch trampoline gated by the
+  versioned `MACWSHookPermitV2` capability (expected-UUID + image-offset
+  + exact prologue pin, callable-original refusal contract, fail-closed).
+  Verified live by `misc/macos_mshook_provider_probe.c`
+  (`VERDICT=INSTALLED`, `orig()=42`, `res()=42` on refusal paths for both
+  stripped and PAC-signed inputs, wrong UUID → `-2`). Only the
+  registered CGXSYNTH diagnostic target is permitted — other targets
+  fail closed. `MSHookMessageEx` remains a no-op method-swizzle stub.
 - Rootfs still lacks most on-disk system libraries (cache-resident only)
   — fine for the CLI milestone; GUI closure will need the remaining
   closure verification.

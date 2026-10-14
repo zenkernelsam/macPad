@@ -117,8 +117,15 @@ Canonical docs: `ventura-22F82-desktop-chain-20261011.md`,
 
 Everything except **input dispatch** works end-to-end on 22F82: real chroot
 CLI (918 binaries), WindowServer compositing with `state=ready`, wallpaper,
-Dock launches, LS/XPC, trust pipeline, VNC observe. The single blocker:
-WindowServer never brings up its event server (`com.apple.WindowServer.HIDEvents`
-absent; `SLSGetEventPort` invalid; all post paths verified dead at the server
-side). Next action is RE of `SLXServer` init to find the registration gate —
-see the 10-13 evidence doc §4.8 and runbook §10.
+Dock launches, LS/XPC, trust pipeline, VNC observe. The blocker narrowed
+again on 10-14/15: `SLSGetEventPort` is actually valid (`rc=0` receive
+right), posts reach `_XPostEventRecord` and get `rc=1002` from the real
+permission-check chain — runtime telemetry shows `gCurMsgAudit` populated
+(52-byte sender creds) and the check returning 0. A repaired
+`MSHookFunction` provider (`misc/cydiasubstrate_macos.m`, permit-gated
+16-byte trampoline) is verified live. Remaining unknowns: the lazily-
+resolved checker identity and what populates WS's per-{pid,pidversion}
+rights cache — that work is gated on an IDA session against
+`analysis/SkyLight_22F82` (UUID 96676A53-B1E0-3D7E-B98B-B73873CD1880);
+all static interpretations before that are provisional. Input is still
+unaccepted: `SLSPostEventRecord` → 1002, no WS-DISPATCH witness.

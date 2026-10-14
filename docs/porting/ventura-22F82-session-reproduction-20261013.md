@@ -280,24 +280,36 @@ subsystem — not the transport — is the blocker (see the 10-13 doc §4).
 
 ## 10. Current frontier (where the next agent starts)
 
-Composite/graph/wallpaper/LS/trust are done. The single blocker between
-"a desktop you can see" and "a desktop you can use" is the WindowServer
-event-dispatch subsystem: `com.apple.WindowServer.HIDEvents` is never
-registered, `SLSGetEventPort` returns an invalid port, and every posted
-event dies before hit-test/dispatch. Best hypothesis: the CGX event
-subsystem is gated by login-session/display ownership that `-virtualonly`
-chroot doesn't satisfy.
+Composite/graph/wallpaper/LS/trust are done. The blocker between "a
+desktop you can see" and "a desktop you can use" narrowed further on
+10-14/15 (see `coordination/DEVIN_STATUS.md` for the bounded evidence):
 
-Ordered next steps (from the 10-13 evidence doc):
+- `SLSGetEventPort` is **valid** — `rc=0` with a real receive right;
+  the earlier "invalid port" read was an ABI artifact (fixed signature:
+  `(cid, mach_port_t *)`).
+- Canonical `SLSPostEventRecord` posts DO reach `_XPostEventRecord` and
+  receive real replies — the 1002 comes from
+  `CGXSenderCanSynthesizeEvents` returning 0, not a dead transport.
+- `gCurMsgAudit` is populated on the post path (52-byte sender creds) —
+  the "always-NULL audit" theory is disproven.
+- The dispatcher decodes audit → `{pid | pidversion<<32}` → CFDictionary
+  rights-cache → on miss, a lazily-resolved checker.  The checker name
+  and the cache producer are still unknown — that is the open question.
+- The hook provider was a no-op scaffold; it is now a real permit-gated
+  trampoline verified live (`VERDICT=INSTALLED`, callable originals).
 
-1. RE `SLXServer` init in SkyLight 22F82: find the
-   `com.apple.WindowServer.HIDEvents` registration (string xref on the
-   service name) and its gate condition (loginwindow presence? audit
-   session? real display?). That gate is the upstream fix point.
-2. Map the WS-side demux for the encoded event-record request (the
-   SLSPostEventRecord path): which check returns `0x3ea` for mouse types
-   while scroll-type records pass? Type-specific gating would point at
-   the missing subsystem precisely.
+Ordered next steps (replacing the older HIDEvents-registration plan,
+which was never confirmed as the gate):
+
+1. Finish an IDA session on `analysis/SkyLight_22F82` (UUID
+   96676A53-B1E0-3D7E-B98B-B73873CD1880) to name the lazily-resolved
+   checker and find who populates the WS rights cache — the
+   loginwindow/session-owner registration path is the leading suspect
+   (`SLSSetLoginwindowConnection` entitlement
+   `com.apple.private.SkyLight.loginwindow` is absent from our probe).
+2. Session registration: `SLSCreateLoginSession` → `sid=0` — the
+   temporary login-framework bridge creates a session locally but never
+   tells WS; determine the real owner-registration handshake.
 3. If revival is impossible: fallback menubar design — process-local
    NSEvent + HIToolbox menu-tracking entry points
    (`-[NSApplication _menuTrackingStart]` family) bypassing WS dispatch.
