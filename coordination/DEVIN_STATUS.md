@@ -1,13 +1,49 @@
-# DEVIN_STATUS — R001 bounded evidence package
+# DEVIN_STATUS — current delivery
 
-State: **REVISING** — R003 CHANGES_REQUESTED (F01–F05).
-See reviews/R003-20261014.md; R001/R002 telemetry stands as bounded
-evidence only (toy hook + nonempty audit, NOT provider acceptance and
-NOT input success).
+State: **R003 diagnostic checkpoint delivered — FROZEN for review**
+(HEAD `d0749e8`).  Diagnostic checkpoint, NOT an acceptance claim.
+Reviewer task: `coordination/DEVIN_TASK.md`; review inputs
+`reviews/R003-20261014.md` + `reviews/R003-addendum-20261014.md`.
 
-Reviewer task: `coordination/DEVIN_TASK.md` R001.
+## Current R003 delivery summary
 
-## 1. Changed files
+- Provider: `MSHookFunction` real trampoline + `MACWSHookPermitV2`
+  (4-arg, dlsym capability lookup — old providers fail closed).
+  Identity pin: caller-supplied expected UUID + image offset + exact
+  16-byte prologue.  All refusal/failure paths return the callable
+  original (proven: `res()=42` stripped AND raw-signed inputs).
+- Event probe: default = read-only inventory; `post` = one canonical
+  record only.  tapPost/tapCreate/postTo calls DISABLED.  Phase 1c
+  private-slot reads are gated behind a real `memcmp` UUID check
+  (`match=1` observed) — fail closed on unknown build.
+- Final no-pipe records (real remote exits, full streams):
+  `provider-probe-r003-final{,-orig}.json` (both exit 0,
+  `VERDICT=INSTALLED`), `probe-inventory-r003-final.json` (exit 0),
+  `probe-upload.json` + `probe-deploy-r003final.json` (upload hash ==
+  local pre-sign `b33d4e4a…`, `install -m755`, post-sign
+  `740ea29a…`).
+- Baseline gate: `chroot /var/mnt/rootfs /bin/echo HI` → `HI`,
+  exit 0 (raw output in `probe-deploy-r003final.json`).
+- Cleanup truth (corrected): the chroot sentinel
+  `/var/mnt/rootfs/tmp/macws_runtime_diagnostics` was still present —
+  my earlier removal hit the iOS-namespace path only.  Now archived
+  to `…/tmp/diag-archive/macws_runtime_diagnostics.r003-20261014`;
+  BOTH namespaces verified absent
+  (`cleanup-sentinel-r003.json`).  WS/probe processes: none.
+- Git: push unauthenticated — https `could not read Username`,
+  ssh `Permission denied (publickey)`, `gh` absent (recorded, not
+  fabricated; no PUSH_EXIT masking).
+
+Open/unaccepted: checker identity + rights-cache producer (needs IDA
+MCP or WS-side debug — none available); input still `rc=1002`; probe
+lacks `SkyLight.loginwindow` entitlement (R004 lead); probe-process
+global reads do NOT describe WindowServer state.
+
+---
+
+# History — R001 bounded evidence package (superseded sections below)
+
+## 1. Changed files (R001)
 
 - `misc/macos_ws_event_probe.c` — ABI audit fixes only, no new behavior:
   - `SecTaskCopyValueForEntitlement` typedef: 2-arg → 3-arg
@@ -345,8 +381,11 @@ read.
 
 **Device cleanup snapshot (post-experiment):**
 - WindowServer (46364) booted out — no WS/launchd orphans.
-- `/tmp/macws_runtime_diagnostics` sentinel removed (diag output and
-  the CGXSYNTH hook both go quiet next boot — fail-safe default).
+- CORRECTION: iOS-ns `/tmp/macws_runtime_diagnostics` was removed, but
+  the chroot marker `/var/mnt/rootfs/tmp/macws_runtime_diagnostics`
+  survived (separate namespace — reviewer-caught).  Archived to
+  `…/tmp/diag-archive/macws_runtime_diagnostics.r003-20261014`;
+  both namespaces verified absent (`cleanup-sentinel-r003.json`).
 - `thermalmonitord`/`watchdogd` in ps are stock iPadOS daemons, not
   ours. MacWSHost (15797, mobile) is the user's host app — left alone.
 - WS log tail shows only normal teardown noise (SENDFAIL on dying

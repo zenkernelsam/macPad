@@ -1,4 +1,6 @@
-REVISING R003 — 2026-10-14
-Candidate under review: 96d0149e / code 48411313.
-Closing F01-F05 before further diagnostic deployment.
-Git writes reserved for Codex — do not stage/commit/push.
+FROZEN R003 diagnostic checkpoint — 2026-10-14
+Delivered HEAD d0749e8 (+ artifact commits). NOT an acceptance claim.
+F01-F05 closed per evidence; open items listed in DEVIN_STATUS top.
+Git writes: handed back to Codex for review — Devin not staging.
+Device: WS/probe stopped; chroot diagnostics sentinel archived
+(both namespaces verified absent). Baseline echo HI = pass.
