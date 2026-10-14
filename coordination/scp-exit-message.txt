@@ -1,0 +1,1 @@
+当前SCP挂起的已知工具点：ssh/scp请加 -o PreferredAuthentications=password（新SSH runner已固定它，先前缺少时键盘交互认证超时）。用用户最新地址或临时MACWS_DEVICE。不要 '| tail ...; echo SCP_EXIT=$?'，那是tail的rc；单独scp保存rc，再本地显示日志。可以用Python subprocess.run(timeout=...)保存真实returncode避免再建无限等待。此条只是当前收尾工具修正，不新增实现范围。请完成现有UUID修订/最终部署证据后按freeze交付，勿继续新诊断读取。

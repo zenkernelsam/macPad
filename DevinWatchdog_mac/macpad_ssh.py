@@ -4,6 +4,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 from pathlib import Path
 import signal
 import subprocess
@@ -16,6 +17,8 @@ def main():
     source = parser.add_mutually_exclusive_group(required=True)
     source.add_argument('--command', help='Remote shell command (no credentials)')
     source.add_argument('--script', type=Path, help='UTF-8 shell script sent over stdin')
+    source.add_argument('--upload', type=Path, help='Upload one local file with bounded SCP')
+    parser.add_argument('--remote-path', help='Absolute staging path for --upload (use a new file)')
     parser.add_argument('--timeout', type=float, default=30)
     parser.add_argument('--record', type=Path, help='Write sanitized command/output/exit JSON')
     args = parser.parse_args()
@@ -28,14 +31,29 @@ def main():
         parser.error('MACWS_DEVICE_PORT must be a TCP port')
     if args.timeout <= 0:
         parser.error('--timeout must be positive')
-    payload = args.script.read_text() if args.script else args.command
-    if password and password in payload:
+    if args.upload:
+        if not args.upload.is_file():
+            parser.error('--upload must be an existing file')
+        if not args.remote_path or not re.fullmatch(r'/[A-Za-z0-9_./-]+', args.remote_path):
+            parser.error('--remote-path requires an absolute staging path without shell metacharacters')
+        payload = 'upload ' + str(args.upload) + ' -> ' + args.remote_path
+    else:
+        if args.remote_path:
+            parser.error('--remote-path is only for --upload')
+        payload = args.script.read_text() if args.script else args.command
+    if password and not args.upload and re.search(
+            r'(?<![A-Za-z0-9_])' + re.escape(password) + r'(?![A-Za-z0-9_])', payload):
         parser.error('Do not include the SSH password in the remote command')
     argv = ['ssh', '-T', '-o', 'ConnectTimeout=8', '-o', 'StrictHostKeyChecking=accept-new',
             '-o', 'PreferredAuthentications=password' if password else 'BatchMode=yes',
             '-o', 'NumberOfPasswordPrompts=1', '-p', port, device]
     stdin = None
-    if args.script:
+    if args.upload:
+        argv = ['scp', '-o', 'ConnectTimeout=8', '-o', 'StrictHostKeyChecking=accept-new',
+                '-o', 'PreferredAuthentications=password' if password else 'BatchMode=yes',
+                '-o', 'NumberOfPasswordPrompts=1', '-P', port,
+                str(args.upload.resolve()), device + ':' + args.remote_path]
+    elif args.script:
         argv += ['sh -s']
         stdin = payload
     else:
@@ -56,11 +74,17 @@ def main():
         code = proc.returncode
     except subprocess.TimeoutExpired:
         timed_out = True
-        os.killpg(proc.pid, signal.SIGTERM)
+        try:
+            os.killpg(proc.pid, signal.SIGTERM)
+        except ProcessLookupError:
+            pass
         try:
             stdout, stderr = proc.communicate(timeout=2)
         except subprocess.TimeoutExpired:
-            os.killpg(proc.pid, signal.SIGKILL)
+            try:
+                os.killpg(proc.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
             stdout, stderr = proc.communicate()
         code = 124
     def sanitize(value):
@@ -80,6 +104,7 @@ def main():
             'started': started, 'finished': datetime.now().astimezone().isoformat(),
             'command': sanitize(payload), 'command_sha256': hashlib.sha256(payload.encode()).hexdigest(),
             'exit': code, 'timeout': timed_out, 'stdout': stdout, 'stderr': stderr,
+            'upload_source_sha256': hashlib.sha256(args.upload.read_bytes()).hexdigest() if args.upload else None,
             'limit': 'A timeout kills the local SSH process group; remote work may need explicit cleanup.'
         }, ensure_ascii=False, indent=2) + '\n')
     return code if code >= 0 else 128 - code

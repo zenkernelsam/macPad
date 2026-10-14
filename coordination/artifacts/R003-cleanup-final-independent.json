@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-14T22:47:10.796992+08:00",
+  "finished": "2026-10-14T22:47:11.170960+08:00",
+  "command": "test ! -e /var/mnt/rootfs/tmp/macws_runtime_diagnostics && test ! -e /var/mnt/rootfs/private/tmp/macws_runtime_diagnostics && printf 'CHROOT_DIAGNOSTIC_MARKER_ABSENT\\n'",
+  "command_sha256": "3e0cdc670c4d39adb78b85604e8b3db78f166c3965a9bddf1dcb44efac092c48",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "CHROOT_DIAGNOSTIC_MARKER_ABSENT\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

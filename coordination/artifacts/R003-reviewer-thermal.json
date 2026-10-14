@@ -1,0 +1,11 @@
+{
+  "started": "2026-10-14T22:29:32.396032+08:00",
+  "finished": "2026-10-14T22:29:32.744054+08:00",
+  "command": "/var/jb/usr/macOS/bin/macwsthermal",
+  "command_sha256": "53f9ffcc2898d8d4f697a0e4c057eea79227b56605b50bbd650b8a9299ef23c3",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "thermal-state=nominal raw=0 low-power=no battery-temp-centic=3239 virtual-temp-centic=3239 effective-temp-centic=3239 uptime=320351.296\n",
+  "stderr": "",
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

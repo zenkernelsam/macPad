@@ -32,3 +32,11 @@ python3 DevinWatchdog_mac/macpad_ssh.py --script coordination/device-check.sh --
 `--script` 通过 stdin 交给远端 `sh -s`；脚本开头应设置 `set -eu`，预期失败用显式分支处理。工具保留远端 shell 的最终退出码，但不会改变 `false; true` 等 shell 组合的语义。构建、签名、部署各步骤分别记录退出码，或明确 fail-fast。输出 JSON 会替换当前连接地址/密码，但提交前仍需人工检查其他私人信息。
 
 已在设备验证：远端 `exit 0` → 工具0；远端 `exit 7` → 工具7，证据见 coordination/artifacts/ssh-exit-*.json。超时返回124并清理本地进程组；这不证明远端长任务已停止，仍须核验远端PID。工具不会启动常驻代理。
+
+单文件上传（先传新临时文件，后续签名/trust/原子替换仍由项目流程负责）：
+
+```sh
+python3 DevinWatchdog_mac/macpad_ssh.py --upload misc/macos_ws_event_probe --remote-path /tmp/macos_ws_event_probe.new --timeout 30 --record coordination/artifacts/probe-upload.json
+```
+
+SCP 同样固定 password authentication、保存真实传输退出码及源文件 SHA256，并在超时后清理本地进程组。上传后重新核对远端文件；传输成功不等于已部署。

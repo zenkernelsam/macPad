@@ -1,0 +1,1 @@
+22:22 provisional review：v2 JSON已看到raw/stripped res()=42、wrong UUID=-2和orig模式via_orig_returned=1，认可这些数值证据；但远端仍 '| grep/tail'，final build请一次无管道重跑保存真实退出和完整日志，不再拿旧artifact的0做验收。新Phase1c默认inventory直接读4个私有slot，只有名字match，Phase1b只是print expected UUID；必须在首次私有读之前真正比较known UUID，否则未知build不是fail-closed。可独立显式diag模式。请把这些同现有V2 capability收尾一起解决，然后交付稳定候选，不再添加别的诊断面。

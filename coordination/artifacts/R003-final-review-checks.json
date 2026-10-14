@@ -1,0 +1,167 @@
+{
+  "started": "2026-10-14T22:43:08.945621+08:00",
+  "head": "0f5b8f47e5c13eede56bd02b0fd57e311725b1fd",
+  "source_sha256_before": {
+    "misc/cydiasubstrate_macos.m": "7b58e1d177349b98a4891e2230a48d3152505e94999e44a1191c6997009fffad",
+    "misc/macos_mshook_provider_probe.c": "0e8d29a86e87f449655c3c8989cbba6e686c2825075e97f4e24ec08f505d9fe0",
+    "misc/macos_ws_event_probe.c": "392fd8057bae603a94fe40726ba9115888051a6e7e8b8dabf1aef81e7c1b9214",
+    "libmachook/mac_hooks.m": "c4e7be06fc2b9abc2075b0341d23ce8e5b18868e30a98391e3f833b9161b2f56"
+  },
+  "checks": [
+    {
+      "argv": [
+        "xcrun",
+        "clang",
+        "-arch",
+        "arm64",
+        "-dynamiclib",
+        "misc/cydiasubstrate_macos.m",
+        "-lobjc",
+        "-o",
+        "coordination/artifacts/R003-review-build/provider-arm64.dylib"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "xcrun",
+        "clang",
+        "-arch",
+        "arm64",
+        "misc/macos_mshook_provider_probe.c",
+        "-ldl",
+        "-o",
+        "coordination/artifacts/R003-review-build/provider-probe-arm64"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "xcrun",
+        "clang",
+        "-arch",
+        "arm64",
+        "misc/macos_ws_event_probe.c",
+        "-framework",
+        "CoreFoundation",
+        "-framework",
+        "CoreGraphics",
+        "-framework",
+        "IOKit",
+        "-o",
+        "coordination/artifacts/R003-review-build/event-probe-arm64"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "xcrun",
+        "clang",
+        "-arch",
+        "arm64e",
+        "-dynamiclib",
+        "misc/cydiasubstrate_macos.m",
+        "-lobjc",
+        "-o",
+        "coordination/artifacts/R003-review-build/provider-arm64e.dylib"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "xcrun",
+        "clang",
+        "-arch",
+        "arm64e",
+        "misc/macos_mshook_provider_probe.c",
+        "-ldl",
+        "-o",
+        "coordination/artifacts/R003-review-build/provider-probe-arm64e"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "xcrun",
+        "clang",
+        "-arch",
+        "arm64e",
+        "misc/macos_ws_event_probe.c",
+        "-framework",
+        "CoreFoundation",
+        "-framework",
+        "CoreGraphics",
+        "-framework",
+        "IOKit",
+        "-o",
+        "coordination/artifacts/R003-review-build/event-probe-arm64e"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "python3",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "DevinWatchdog_mac",
+        "-p",
+        "test_*.py"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": "...\n----------------------------------------------------------------------\nRan 3 tests in 0.005s\n\nOK\n"
+    },
+    {
+      "argv": [
+        "python3",
+        "-m",
+        "unittest",
+        "misc.test_runtime_success_logging"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": "...\n----------------------------------------------------------------------\nRan 3 tests in 0.006s\n\nOK\n"
+    },
+    {
+      "argv": [
+        "python3",
+        "misc/audit_runtime_switches.py"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "runtime-switch audit FAILED\nunrecorded environment switches:\n  CACHEADDR_ENV\n  DT_STAT_NTHREADS\n  LDT_SET_IN_SIGHANDLER\n  LTERDOS\n  MACWS_AUDIT_TRACE\n  MACWS_BOOTSTRAP_PROBE\n  MACWS_BOOTSTRAP_PROBE_NAME\n  MACWS_CONN_INSPECT\n  MACWS_EXC\n  MACWS_IOMFB_FORCE_REG\n  MACWS_LSXPC_TRACE\n  MACWS_LSXPC_TRACE_FILTER\n  MACWS_MACH_MSG_ALL\n  MACWS_RS_CTX_TRACE\n  MACWS_SKYLIGHT_MANUAL_POP\n  MACWS_SL_WCTX_TRACE\n  MEMSIZEMB\n  NTHREADS\n  QUIET\n  RUN_DBG_CSUNKILL\n  RUN_DBG_HOLD\n  RUN_DBG_KILLONSTOP\n  RUN_DBG_LIVEWALK\n  RUN_DBG_PREWALK\n  RUN_DBG_PTRACE\n  RUN_DBG_STOP_LIMIT\n  USE4K\n  VADIFF_FILE\n  VADIFF_LEN\n  VADIFF_OFF\n  VADIFF_VA\n  VARIANT\n  VPATH\nunrecorded flag files:\n  /tmp/macws_ws_dispatch_witness\n"
+    },
+    {
+      "argv": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    }
+  ],
+  "source_sha256_after": {
+    "misc/cydiasubstrate_macos.m": "7b58e1d177349b98a4891e2230a48d3152505e94999e44a1191c6997009fffad",
+    "misc/macos_mshook_provider_probe.c": "0e8d29a86e87f449655c3c8989cbba6e686c2825075e97f4e24ec08f505d9fe0",
+    "misc/macos_ws_event_probe.c": "392fd8057bae603a94fe40726ba9115888051a6e7e8b8dabf1aef81e7c1b9214",
+    "libmachook/mac_hooks.m": "c4e7be06fc2b9abc2075b0341d23ce8e5b18868e30a98391e3f833b9161b2f56"
+  },
+  "stable": true,
+  "finished": "2026-10-14T22:43:20.753062+08:00"
+}
