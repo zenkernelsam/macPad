@@ -139,6 +139,20 @@ main c2ef6966687b008ffbc29ee5f4899bc3df0b1e5afeb59fe122dd5b928ff0c5b3
 
 包内文件名含 `original` 不等于 Apple pristine：两份备份的签名标识都是项目阶段名。我们也未在本轮限定范围内找到最终冻结 `b8fdbc1b…381b91e` 的原样文件，因此目前得到的是**可见阶段间的完整段差异**，不是与 Apple 原版／最终冻结现场的完整因果对照。
 
+### 2.7 后续角色审计：成功案例还包含不能当作正确修复的 TCC override
+
+**RE-confirmed via packaged libmachook_arm64.dylib +0x7b74/+0x7b84/+0x607c：**分享包实际 arm64 产物保留了把 `_audit_token_check_tcc_access` 安装为恒返 1 的路径；它不仅存在于参考源码。当前我们已在 R003 移除这条 blanket 权限覆盖。24G90 cache 的目标局部符号和包内 ElleKit 的符号解析能力也已核对，但没有分享设备的落钩／命中 trace，不能假称运行生效。
+
+因此“对方桌面能用”与“我们恢复真实 tccd 协议”的验收不能简单等同。过去不该从局部失败推出整体不可行；**同样也不该因对方有画面，就把所有检查绕过都视为应该复制的正确补丁。** 原作者资料和分享包同时包含严谨的 ABI 转换及历史 scaffold，必须逐项区分。
+
+另外，实际 Dock 有专用 launcher、`libdockfix` 和多份附加库；Dock actions 针对原始 AppleEvent `-600` 的 reopen/quit endpoint，不能代表 WS 全局输入授权已修复。详见 [实际角色闭包证据](../evidence/sequoia-share-audit-20261015/roles/README.md)。
+
+### 2.8 反哺 Ventura 的另一项基础材料：macOS 13 provider 候选
+
+当前 scaffold 仅恢复部分函数 hook，`MSHookMessageEx` 仍为 no-op；本地行为探针还复现了其局部符号解析的 LINKEDIT 换算缺口。因此，“单个 gate hook 已安装”不能证明原作者整套 hooks 都在运行。
+
+分享包提供的 ElleKit/CydiaSubstrate 声明 macOS 13.0、包含 arm64/arm64e，可用于离线评估此前缺失的 provider。但依赖、PAC、线程安全、实际 hook 集合和设备运行仍需审计；不能以替换它为由重新激活 blanket TCC 或 assertion bypass。详见 [角色审计 §5](../evidence/sequoia-share-audit-20261015/roles/README.md)。
+
 ## 3. 过去哪里做对了，哪里判断过头
 
 ### 3.1 四种限制必须分开

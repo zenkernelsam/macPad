@@ -1,0 +1,7 @@
+{
+  "engine": "IDA Pro 9.3 batch/Hex-Rays",
+  "input": "/Users/ciscohe/Desktop/macPad/analysis/share-review-20261015/role-binaries/dock-actions-arm64e",
+  "sha256": "38f56a3db63cd3471c8bd57ddb3f3794ac6c175c90250c7a46fd004055c1fdb7",
+  "imagebase": "0x0",
+  "hexrays_ready": true
+}

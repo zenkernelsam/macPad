@@ -1,0 +1,232 @@
+[
+  {
+    "address": "0x100004000",
+    "name": "_main",
+    "size": 2384
+  },
+  {
+    "address": "0x100004950",
+    "name": "_macws_macho_arch_for_path",
+    "size": 1016
+  },
+  {
+    "address": "0x100004d48",
+    "name": "_macws_insert_dylib_for_arch",
+    "size": 92
+  },
+  {
+    "address": "0x100004da4",
+    "name": "_macws_arch_name",
+    "size": 100
+  },
+  {
+    "address": "0x100004e08",
+    "name": "_macpad_arm_native_exec",
+    "size": 188
+  },
+  {
+    "address": "0x100004ec4",
+    "name": "_macpad_native_rpc",
+    "size": 884
+  },
+  {
+    "address": "0x100005238",
+    "name": "_macws_classify_arm64",
+    "size": 92
+  },
+  {
+    "address": "0x100005294",
+    "name": "_macws_swap32_if",
+    "size": 92
+  },
+  {
+    "address": "0x1000052f0",
+    "name": "__OSSwapInt32",
+    "size": 32
+  },
+  {
+    "address": "0x100005310",
+    "name": "___error",
+    "size": 12
+  },
+  {
+    "address": "0x10000531c",
+    "name": "___snprintf_chk",
+    "size": 12
+  },
+  {
+    "address": "0x100005328",
+    "name": "___stack_chk_fail",
+    "size": 12
+  },
+  {
+    "address": "0x100005334",
+    "name": "___strcpy_chk",
+    "size": 12
+  },
+  {
+    "address": "0x100005340",
+    "name": "_atoi",
+    "size": 12
+  },
+  {
+    "address": "0x10000534c",
+    "name": "_chdir",
+    "size": 12
+  },
+  {
+    "address": "0x100005358",
+    "name": "_chroot",
+    "size": 12
+  },
+  {
+    "address": "0x100005364",
+    "name": "_close",
+    "size": 12
+  },
+  {
+    "address": "0x100005370",
+    "name": "_connect",
+    "size": 12
+  },
+  {
+    "address": "0x10000537c",
+    "name": "_csops",
+    "size": 12
+  },
+  {
+    "address": "0x100005388",
+    "name": "_fprintf",
+    "size": 12
+  },
+  {
+    "address": "0x100005394",
+    "name": "_getcwd",
+    "size": 12
+  },
+  {
+    "address": "0x1000053a0",
+    "name": "_getenv",
+    "size": 12
+  },
+  {
+    "address": "0x1000053ac",
+    "name": "_getpid",
+    "size": 12
+  },
+  {
+    "address": "0x1000053b8",
+    "name": "_getppid",
+    "size": 12
+  },
+  {
+    "address": "0x1000053c4",
+    "name": "_memcmp",
+    "size": 12
+  },
+  {
+    "address": "0x1000053d0",
+    "name": "_memset",
+    "size": 12
+  },
+  {
+    "address": "0x1000053dc",
+    "name": "_open",
+    "size": 12
+  },
+  {
+    "address": "0x1000053e8",
+    "name": "_perror",
+    "size": 12
+  },
+  {
+    "address": "0x1000053f4",
+    "name": "_posix_spawn",
+    "size": 12
+  },
+  {
+    "address": "0x100005400",
+    "name": "_posix_spawnattr_destroy",
+    "size": 12
+  },
+  {
+    "address": "0x10000540c",
+    "name": "_posix_spawnattr_init",
+    "size": 12
+  },
+  {
+    "address": "0x100005418",
+    "name": "_posix_spawnattr_set_launch_type_np",
+    "size": 12
+  },
+  {
+    "address": "0x100005424",
+    "name": "_posix_spawnattr_setflags",
+    "size": 12
+  },
+  {
+    "address": "0x100005430",
+    "name": "_pread",
+    "size": 12
+  },
+  {
+    "address": "0x10000543c",
+    "name": "_read",
+    "size": 12
+  },
+  {
+    "address": "0x100005448",
+    "name": "_realpath$DARWIN_EXTSN",
+    "size": 12
+  },
+  {
+    "address": "0x100005454",
+    "name": "_setenv",
+    "size": 12
+  },
+  {
+    "address": "0x100005460",
+    "name": "_setgid",
+    "size": 12
+  },
+  {
+    "address": "0x10000546c",
+    "name": "_setsockopt",
+    "size": 12
+  },
+  {
+    "address": "0x100005478",
+    "name": "_setuid",
+    "size": 12
+  },
+  {
+    "address": "0x100005484",
+    "name": "_socket",
+    "size": 12
+  },
+  {
+    "address": "0x100005490",
+    "name": "_strcmp",
+    "size": 12
+  },
+  {
+    "address": "0x10000549c",
+    "name": "_strdup",
+    "size": 12
+  },
+  {
+    "address": "0x1000054a8",
+    "name": "_strlen",
+    "size": 12
+  },
+  {
+    "address": "0x1000054b4",
+    "name": "_strrchr",
+    "size": 12
+  },
+  {
+    "address": "0x1000054c0",
+    "name": "_write",
+    "size": 12
+  }
+]

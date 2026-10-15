@@ -1,0 +1,26 @@
+{
+  "scope": "local macOS host only; original repository scaffold included unchanged; not a fresh iPad or WindowServer observation",
+  "provider_source": "misc/cydiasubstrate_macos.m",
+  "provider_source_sha256": "7b58e1d177349b98a4891e2230a48d3152505e94999e44a1191c6997009fffad",
+  "probe_binary_sha256": "c1c5ce376bf786f314abfceefb9fb4d317e96f2644032d4df840b9ab1f7a32ce",
+  "binary_format": "analysis/share-review-20261015/provider-contract-probe: Mach-O 64-bit executable x86_64",
+  "command": [
+    "analysis/share-review-20261015/provider-contract-probe"
+  ],
+  "exit": 0,
+  "stdout": "symbol hidden=0x0 reference=0x1017c7300 expected=0x1017c7300 exported=0x1017c7310\nmessage-hook before=3 after=3 replacement-expected=7 old-callable=3\nVERDICT=scaffold-contract-gaps-reproduced\n",
+  "stderr": "",
+  "invalid_initial_trials": [
+    {
+      "exit": 134,
+      "reason": "Initial disposable root class omitted NSObject/initialize; then the stale executable was invoked before the replacement compile completed. Both rejected as provider evidence.",
+      "example_stderr": "objc[52691]: +[MacPadProviderContractProbe initialize]: unrecognized selector sent to instance 0x7f91aef05ad0 (no message forward handler is installed)"
+    }
+  ],
+  "interpretation": [
+    "Exported-symbol control succeeded.",
+    "The same actual local symbol resolved via the proper LINKEDIT VA/fileoff conversion but not the scaffold resolver.",
+    "MSHookMessageEx preserved original callable but did not install replacement; this confirms its stated no-op scope.",
+    "These results do not independently attribute the historical on-device MSFindSymbol failure or authorize enabling unvetted hooks."
+  ]
+}

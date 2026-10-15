@@ -1,0 +1,4252 @@
+[
+  {
+    "address": "0x4000",
+    "name": "_sign_pointer",
+    "size": 4
+  },
+  {
+    "address": "0x4004",
+    "name": "_sign_pc",
+    "size": 4
+  },
+  {
+    "address": "0x4008",
+    "name": "_strip_pointer",
+    "size": 4
+  },
+  {
+    "address": "0x400c",
+    "name": "_hook_sandbox_check",
+    "size": 280
+  },
+  {
+    "address": "0x4124",
+    "name": "_custom_mach_vm_protect",
+    "size": 12
+  },
+  {
+    "address": "0x4130",
+    "name": "_manual_memcpy",
+    "size": 24
+  },
+  {
+    "address": "0x4148",
+    "name": "_EKHookMemoryRaw_impl",
+    "size": 280
+  },
+  {
+    "address": "0x4260",
+    "name": "_orig1",
+    "size": 20
+  },
+  {
+    "address": "0x4274",
+    "name": "_EKJITLessHook",
+    "size": 896
+  },
+  {
+    "address": "0x45f4",
+    "name": "_orig2",
+    "size": 20
+  },
+  {
+    "address": "0x4608",
+    "name": "_orig3",
+    "size": 20
+  },
+  {
+    "address": "0x461c",
+    "name": "_orig4",
+    "size": 20
+  },
+  {
+    "address": "0x4630",
+    "name": "_orig5",
+    "size": 20
+  },
+  {
+    "address": "0x4644",
+    "name": "_orig6",
+    "size": 20
+  },
+  {
+    "address": "0x4660",
+    "name": "_dmb_sy",
+    "size": 8
+  },
+  {
+    "address": "0x8670",
+    "name": "_test_weirdfunc",
+    "size": 16
+  },
+  {
+    "address": "0xc694",
+    "name": "_shared_region_check",
+    "size": 12
+  },
+  {
+    "address": "0xc6a0",
+    "name": "_$s7ellekit18FunctionHookErrorsOSQAASQ2eeoiySbx_xtFZTW",
+    "size": 20
+  },
+  {
+    "address": "0xc6b4",
+    "name": "_$s7ellekit18FunctionHookErrorsOSHAASH9hashValueSivgTW",
+    "size": 68
+  },
+  {
+    "address": "0xc6f8",
+    "name": "_$s7ellekit18FunctionHookErrorsOSHAASH4hash4intoys6HasherVz_tFTW",
+    "size": 40
+  },
+  {
+    "address": "0xc720",
+    "name": "_$s7ellekit18FunctionHookErrorsOSHAASH13_rawHashValue4seedS2i_tFTW",
+    "size": 64
+  },
+  {
+    "address": "0xc760",
+    "name": "_$s7ellekit18FunctionHookErrorsOs5ErrorAAsADP7_domainSSvgTW",
+    "size": 4
+  },
+  {
+    "address": "0xc764",
+    "name": "_$s7ellekit18FunctionHookErrorsOs5ErrorAAsADP5_codeSivgTW",
+    "size": 4
+  },
+  {
+    "address": "0xc768",
+    "name": "_$s7ellekit18FunctionHookErrorsOs5ErrorAAsADP9_userInfoyXlSgvgTW",
+    "size": 4
+  },
+  {
+    "address": "0xc76c",
+    "name": "_$s7ellekit18FunctionHookErrorsOs5ErrorAAsADP19_getEmbeddedNSErroryXlSgyFTW",
+    "size": 4
+  },
+  {
+    "address": "0xc770",
+    "name": "_$s7ellekit13hookFunctionsySbSaySv11destination_Sv11replacementSpySvSgGSg4origtG_SitKF",
+    "size": 808
+  },
+  {
+    "address": "0xca98",
+    "name": "_$s7ellekit18FunctionHookErrorsOACs5ErrorAAWl",
+    "size": 64
+  },
+  {
+    "address": "0xcad8",
+    "name": "___swift_destroy_boxed_opaque_existential_0",
+    "size": 32
+  },
+  {
+    "address": "0xcaf8",
+    "name": "_$s7ellekit3retCABSays5UInt8VGvpfi",
+    "size": 48
+  },
+  {
+    "address": "0xcb28",
+    "name": "___swift_instantiateConcreteTypeFromMangledNameV2",
+    "size": 80
+  },
+  {
+    "address": "0xcb78",
+    "name": "_$s7ellekit3nopC5valueSivpfi",
+    "size": 12
+  },
+  {
+    "address": "0xcb84",
+    "name": "_$s7ellekit8RegisterO2x0ACvgZ",
+    "size": 12
+  },
+  {
+    "address": "0xcb90",
+    "name": "_$s7ellekit10TrampolineV14trampolineCodeSays5UInt8VGvpfi",
+    "size": 12
+  },
+  {
+    "address": "0xcb9c",
+    "name": "_$s7ellekit10TrampolineV10trampolineSvvpfi",
+    "size": 8
+  },
+  {
+    "address": "0xcba4",
+    "name": "_$s7ellekit4CondV2EQACvgZ",
+    "size": 8
+  },
+  {
+    "address": "0xcbac",
+    "name": "___swift_memcpy1_1",
+    "size": 12
+  },
+  {
+    "address": "0xcbb8",
+    "name": "___swift_noop_void_return",
+    "size": 4
+  },
+  {
+    "address": "0xcbbc",
+    "name": "_$s7ellekit18FunctionHookErrorsOwet",
+    "size": 144
+  },
+  {
+    "address": "0xcc4c",
+    "name": "_$s7ellekit18FunctionHookErrorsOwst",
+    "size": 176
+  },
+  {
+    "address": "0xccfc",
+    "name": "_$s7ellekit18FunctionHookErrorsOwug",
+    "size": 8
+  },
+  {
+    "address": "0xcd04",
+    "name": "_$sSv7ellekitE13opaquePointers06OpaqueC0VyF",
+    "size": 4
+  },
+  {
+    "address": "0xcd08",
+    "name": "_$s7ellekit18FunctionHookErrorsOwui",
+    "size": 8
+  },
+  {
+    "address": "0xcd10",
+    "name": "_$s7ellekit18FunctionHookErrorsOMa",
+    "size": 16
+  },
+  {
+    "address": "0xcd20",
+    "name": "_$s7ellekit18FunctionHookErrorsOSHAASQWb",
+    "size": 4
+  },
+  {
+    "address": "0xcd24",
+    "name": "_$s7ellekit18FunctionHookErrorsOACSQAAWl",
+    "size": 64
+  },
+  {
+    "address": "0xcd64",
+    "name": "_$s7ellekit10TrampolineVwCP",
+    "size": 44
+  },
+  {
+    "address": "0xcd90",
+    "name": "___swift_memcpy32_8",
+    "size": 12
+  },
+  {
+    "address": "0xcd9c",
+    "name": "_$sSo14LHFunctionHookVwet_0",
+    "size": 32
+  },
+  {
+    "address": "0xcdbc",
+    "name": "_$sSo14LHFunctionHookVwst_0",
+    "size": 44
+  },
+  {
+    "address": "0xcde8",
+    "name": "_$sSo13LHMemoryPatchVMa",
+    "size": 20
+  },
+  {
+    "address": "0xcdfc",
+    "name": "_$sSo14LHFunctionHookVMa",
+    "size": 20
+  },
+  {
+    "address": "0xce10",
+    "name": "___swift_memcpy8_4",
+    "size": 12
+  },
+  {
+    "address": "0xce1c",
+    "name": "_$sSo21LHFunctionHookOptionsVwet",
+    "size": 32
+  },
+  {
+    "address": "0xce3c",
+    "name": "_$sSo21LHFunctionHookOptionsVwst",
+    "size": 40
+  },
+  {
+    "address": "0xce64",
+    "name": "_$sSo21LHFunctionHookOptionsVMa",
+    "size": 20
+  },
+  {
+    "address": "0xce78",
+    "name": "_$sSo9LHOptionsVMa",
+    "size": 20
+  },
+  {
+    "address": "0xce8c",
+    "name": "_$sSo13LHMemoryPatchVMaTm",
+    "size": 68
+  },
+  {
+    "address": "0xced0",
+    "name": "_$sSo14LHFunctionHookVwCP",
+    "size": 4
+  },
+  {
+    "address": "0xced4",
+    "name": "_$sSo14LHFunctionHookVwst",
+    "size": 4
+  },
+  {
+    "address": "0xced8",
+    "name": "_$sSo14LHFunctionHookVwet",
+    "size": 4
+  },
+  {
+    "address": "0xcedc",
+    "name": "_$s7ellekit7combineys6UInt32VSays5UInt8VGF",
+    "size": 28
+  },
+  {
+    "address": "0xcef8",
+    "name": "_$sSa7ellekitSays5UInt8VGRszlE6rebind8formerPC03newE0SayADGs6UInt64V_AJtF",
+    "size": 292
+  },
+  {
+    "address": "0xd01c",
+    "name": "_$sSa7ellekitSays5UInt8VGRszlE6rebind8formerPC03newE0SayADGs6UInt64V_AJtFADSgSi_ADtXEfU_",
+    "size": 5992
+  },
+  {
+    "address": "0xe784",
+    "name": "_$s7ellekit5hooks_WZ",
+    "size": 20
+  },
+  {
+    "address": "0xe798",
+    "name": "_$s7ellekit5hooksSDyS2vGvau",
+    "size": 64
+  },
+  {
+    "address": "0xe7d8",
+    "name": "_$s7ellekit16exceptionHandlerAA09ExceptionC0CSgvau",
+    "size": 12
+  },
+  {
+    "address": "0xe7e4",
+    "name": "_$s7ellekit19enforceThreadSafetySbvau",
+    "size": 12
+  },
+  {
+    "address": "0xe7f0",
+    "name": "_EKEnableThreadSafety",
+    "size": 72
+  },
+  {
+    "address": "0xe838",
+    "name": "_$s7ellekit20EKEnableThreadSafetyyySiF",
+    "size": 72
+  },
+  {
+    "address": "0xe880",
+    "name": "_MSGetImageByName",
+    "size": 100
+  },
+  {
+    "address": "0xe8e4",
+    "name": "_$s7ellekit16MSGetImageByNameySVSgSVF",
+    "size": 92
+  },
+  {
+    "address": "0xe940",
+    "name": "_MSCloseImage",
+    "size": 4
+  },
+  {
+    "address": "0xe944",
+    "name": "_MSFindSymbol",
+    "size": 4
+  },
+  {
+    "address": "0xe948",
+    "name": "_$s7ellekit12MSFindSymbolySVSgAC_ACtF",
+    "size": 1092
+  },
+  {
+    "address": "0xed8c",
+    "name": "_$sSlsE5first7ElementQzSgvgSS_Tg5",
+    "size": 64
+  },
+  {
+    "address": "0xedcc",
+    "name": "_MSHookFunction",
+    "size": 48
+  },
+  {
+    "address": "0xedfc",
+    "name": "_$s7ellekit14MSHookFunctionyySv_SvSpySvSgGSgtF",
+    "size": 48
+  },
+  {
+    "address": "0xee2c",
+    "name": "_MSHookClassPair",
+    "size": 80
+  },
+  {
+    "address": "0xee7c",
+    "name": "_$s7ellekit15MSHookClassPairyyyXlXp_yXlXpyXlXptF",
+    "size": 4
+  },
+  {
+    "address": "0xee80",
+    "name": "_MSHookMessageEx",
+    "size": 60
+  },
+  {
+    "address": "0xeebc",
+    "name": "_$s7ellekit15MSHookMessageExyyyXlXp_10ObjectiveC8SelectorVs13OpaquePointerVSpySvSgGSgtF",
+    "size": 4
+  },
+  {
+    "address": "0xeec0",
+    "name": "_MSHookMemory",
+    "size": 4
+  },
+  {
+    "address": "0xeec4",
+    "name": "_$s7ellekit12MSHookMemoryyySv_SPys5UInt8VGSgs6UInt64VtF",
+    "size": 148
+  },
+  {
+    "address": "0xef58",
+    "name": "_MSHookIvar",
+    "size": 84
+  },
+  {
+    "address": "0xefac",
+    "name": "_$s7ellekit8hookIvarySpyxGSgyXlXp_SStlF",
+    "size": 180
+  },
+  {
+    "address": "0xf060",
+    "name": "_$sSlsE9dropFirsty11SubSequenceQzSiFSS_Tg5Tf4ng_n",
+    "size": 160
+  },
+  {
+    "address": "0xf100",
+    "name": "_$s7ellekit20executeAssemblyBytes10returnType_xxm_Says5UInt8VGtlFxSRyAEGXEfU_",
+    "size": 144
+  },
+  {
+    "address": "0xf190",
+    "name": "_$s7ellekit19executeRawByteArrayyyXlSgSPys5UInt8VG_SitF",
+    "size": 208
+  },
+  {
+    "address": "0xf260",
+    "name": "_$sSa23withUnsafeBufferPointeryqd__qd__SRyxGqd_0_YKXEqd_0_YKs5ErrorRd_0_r0_lF",
+    "size": 108
+  },
+  {
+    "address": "0xf2cc",
+    "name": "_$s7ellekit3asmyxSays5UInt8VGyXElF",
+    "size": 128
+  },
+  {
+    "address": "0xf34c",
+    "name": "_$s7ellekit3asmyySays5UInt8VGyXEF",
+    "size": 80
+  },
+  {
+    "address": "0xf39c",
+    "name": "_$s7ellekit18InstructionBuilderV11buildEither5firstAA0B0_pAaF_p_tFZ",
+    "size": 8
+  },
+  {
+    "address": "0xf3a4",
+    "name": "_$s7ellekit11Instruction_pWOc",
+    "size": 68
+  },
+  {
+    "address": "0xf3e8",
+    "name": "_$s7ellekit18InstructionBuilderV10buildBlockySays5UInt8VGAA0B0_pd_tFZ",
+    "size": 4
+  },
+  {
+    "address": "0xf3ec",
+    "name": "_$ss12_ArrayBufferV010withUnsafeB7Pointeryqd__qd__SRyxGqd_0_YKXEqd_0_YKs5ErrorRd_0_r0_lF",
+    "size": 368
+  },
+  {
+    "address": "0xf55c",
+    "name": "_$ss12_ArrayBufferV010withUnsafeB17Pointer_nonNativeyqd__qd__SRyxGqd_0_YKXEqd_0_YKs5ErrorRd_0_r0_lF",
+    "size": 236
+  },
+  {
+    "address": "0xf648",
+    "name": "_$ss12_ArrayBufferV029getOrAllocateAssociatedObjectB0s011_ContiguousaB0VyxGyF",
+    "size": 224
+  },
+  {
+    "address": "0xf728",
+    "name": "_$ss12_ArrayBufferV013getAssociatedB0s011_ContiguousaB0VyxGSgyF",
+    "size": 68
+  },
+  {
+    "address": "0xf76c",
+    "name": "_$s7ellekit18InstructionBuilderV10buildBlockySays5UInt8VGAA0B0_pd_tFZTf4nd_n",
+    "size": 292
+  },
+  {
+    "address": "0xf890",
+    "name": "_$s7ellekit18InstructionBuilderVMa",
+    "size": 16
+  },
+  {
+    "address": "0xf8a0",
+    "name": "___swift_project_boxed_opaque_existential_1",
+    "size": 36
+  },
+  {
+    "address": "0xf8c4",
+    "name": "_$s7ellekit20executeAssemblyBytes10returnType_xxm_Says5UInt8VGtlFxSRyAEGXEfU_TA",
+    "size": 28
+  },
+  {
+    "address": "0xf8e0",
+    "name": "_$s7ellekit18InstructionBuilderV11buildEither6secondAA0B0_pAaF_p_tFZ",
+    "size": 4
+  },
+  {
+    "address": "0xf8e4",
+    "name": "_$s7ellekit16findSafeRegister_4isnsSiSv_SiSgtF",
+    "size": 380
+  },
+  {
+    "address": "0xfa60",
+    "name": "_$s7ellekit16findSafeRegister_4isnsSiSv_SiSgtFys6UInt32VXEfU0_",
+    "size": 1688
+  },
+  {
+    "address": "0x100f8",
+    "name": "_$ss22_ContiguousArrayBufferV19_uninitializedCount15minimumCapacityAByxGSi_SitcfCs5UInt8V_Tt1g5",
+    "size": 116
+  },
+  {
+    "address": "0x1016c",
+    "name": "_$ss22_ContiguousArrayBufferV19_uninitializedCount15minimumCapacityAByxGSi_SitcfCs6UInt32V_Tt1g5",
+    "size": 132
+  },
+  {
+    "address": "0x101f0",
+    "name": "_$ss22_ContiguousArrayBufferV19_uninitializedCount15minimumCapacityAByxGSi_SitcfCSo13LHMemoryPatchV_Tt1g5",
+    "size": 20
+  },
+  {
+    "address": "0x10204",
+    "name": "_$ss22_ContiguousArrayBufferV19_uninitializedCount15minimumCapacityAByxGSi_SitcfCSo14LHFunctionHookV_Tt1g5",
+    "size": 20
+  },
+  {
+    "address": "0x10218",
+    "name": "_$ss22_ContiguousArrayBufferV19_uninitializedCount15minimumCapacityAByxGSi_SitcfCSo13LHMemoryPatchV_Tt1g5Tm",
+    "size": 124
+  },
+  {
+    "address": "0x10294",
+    "name": "_$ss22_ContiguousArrayBufferV19_uninitializedCount15minimumCapacityAByxGSi_SitcfCSPys4Int8VG_Tt1g5",
+    "size": 132
+  },
+  {
+    "address": "0x10318",
+    "name": "_$sSr13_copyContents12initializingSR8IteratorVyx_G_SitSryxG_tFs6UInt32V_Tg5",
+    "size": 108
+  },
+  {
+    "address": "0x10384",
+    "name": "_$s7ellekit13getAllThreadsSays6UInt32VGyF",
+    "size": 216
+  },
+  {
+    "address": "0x1045c",
+    "name": "_$s7ellekit14stopAllThreadsyyF",
+    "size": 12
+  },
+  {
+    "address": "0x10468",
+    "name": "_$s7ellekit16resumeAllThreadsyyF",
+    "size": 12
+  },
+  {
+    "address": "0x10474",
+    "name": "_$s7ellekit14stopAllThreadsyyFTm",
+    "size": 488
+  },
+  {
+    "address": "0x1065c",
+    "name": "_$s7ellekit3adrC11destinationys6UInt64Vs6UInt32V_AFtFZ",
+    "size": 32
+  },
+  {
+    "address": "0x1067c",
+    "name": "_$ss17FixedWidthIntegerP7ellekitE4bitsyxSNyxGFs6UInt32V_Tg5",
+    "size": 80
+  },
+  {
+    "address": "0x106cc",
+    "name": "_$s7ellekit11InstructionPAAE17encodeRegisterIntyS2i_AA0D0OSitFZ",
+    "size": 96
+  },
+  {
+    "address": "0x1072c",
+    "name": "_$s7ellekit11InstructionPAAE09encodeRegdD4CondyS2i_AA8RegisterOA2FSitFZ",
+    "size": 136
+  },
+  {
+    "address": "0x107b4",
+    "name": "_$s7ellekit3retC7encodedACSi_tcfC",
+    "size": 72
+  },
+  {
+    "address": "0x107fc",
+    "name": "_$s7ellekit3retC7encodedACSi_tcfc",
+    "size": 112
+  },
+  {
+    "address": "0x1086c",
+    "name": "_$s7ellekit3retCACycfC",
+    "size": 88
+  },
+  {
+    "address": "0x108c4",
+    "name": "_$s7ellekit3retCACycfc",
+    "size": 60
+  },
+  {
+    "address": "0x10900",
+    "name": "_$s7ellekit3retC5bytesSays5UInt8VGyF",
+    "size": 8
+  },
+  {
+    "address": "0x10908",
+    "name": "_$s7ellekit3retCfd",
+    "size": 28
+  },
+  {
+    "address": "0x10924",
+    "name": "_$s7ellekit3retCfD",
+    "size": 36
+  },
+  {
+    "address": "0x10948",
+    "name": "_$s7ellekit5bytesCAA11InstructionA2aDPABSays5UInt8VGyFTW_0",
+    "size": 12
+  },
+  {
+    "address": "0x10954",
+    "name": "_$s7ellekit4movzCyAcA8RegisterO_SitcfC",
+    "size": 92
+  },
+  {
+    "address": "0x109b0",
+    "name": "_$s7ellekit4movzCyAcA8RegisterO_Sitcfc",
+    "size": 44
+  },
+  {
+    "address": "0x109dc",
+    "name": "_$s7ellekit6pacizaCfd",
+    "size": 8
+  },
+  {
+    "address": "0x109e4",
+    "name": "_$s7ellekit4movzCAA11InstructionA2aDP7encodedxSi_tcfCTW",
+    "size": 12
+  },
+  {
+    "address": "0x109f0",
+    "name": "_$s7ellekit4movkC__3lslAcA8RegisterO_S2itcfC",
+    "size": 100
+  },
+  {
+    "address": "0x10a54",
+    "name": "_$s7ellekit4movkC__3lslAcA8RegisterO_S2itcfc",
+    "size": 116
+  },
+  {
+    "address": "0x10ac8",
+    "name": "_$s7ellekit4movkC__3lslAcA8RegisterO_s6UInt64VSitcfC",
+    "size": 100
+  },
+  {
+    "address": "0x10b2c",
+    "name": "_$s7ellekit4movkC__3lslAcA8RegisterO_s6UInt64VSitcfc",
+    "size": 124
+  },
+  {
+    "address": "0x10ba8",
+    "name": "_$s7ellekit4movkCAA11InstructionA2aDP7encodedxSi_tcfCTW",
+    "size": 12
+  },
+  {
+    "address": "0x10bb4",
+    "name": "_$s7ellekit4movzCAA11InstructionA2aDP5bytesSays5UInt8VGyFTW_0",
+    "size": 12
+  },
+  {
+    "address": "0x10bc0",
+    "name": "_$s7ellekit4cselCyAcA8RegisterO_A2eA4CondVtcfC",
+    "size": 148
+  },
+  {
+    "address": "0x10c54",
+    "name": "_$s7ellekit4cselCyAcA8RegisterO_A2eA4CondVtcfc",
+    "size": 68
+  },
+  {
+    "address": "0x10c98",
+    "name": "_$s7ellekit4cselCAA11InstructionA2aDP7encodedxSi_tcfCTW",
+    "size": 12
+  },
+  {
+    "address": "0x10ca4",
+    "name": "_$s7ellekit5bytesC7encodedACSi_tcfC",
+    "size": 64
+  },
+  {
+    "address": "0x10ce4",
+    "name": "_$s7ellekit5bytesC7encodedACSi_tcfc",
+    "size": 28
+  },
+  {
+    "address": "0x10d00",
+    "name": "_$s7ellekit5bytesCAA11InstructionA2aDP7encodedxSi_tcfCTW",
+    "size": 76
+  },
+  {
+    "address": "0x10d4c",
+    "name": "_$s7ellekit3svcCyACSicfC",
+    "size": 60
+  },
+  {
+    "address": "0x10d88",
+    "name": "_$s7ellekit3svcCyACSicfc",
+    "size": 24
+  },
+  {
+    "address": "0x10da0",
+    "name": "_$s7ellekit3svcCAA11InstructionA2aDP7encodedxSi_tcfCTW",
+    "size": 12
+  },
+  {
+    "address": "0x10dac",
+    "name": "_$s7ellekit3strCyAcA8RegisterO_AESitcfC",
+    "size": 108
+  },
+  {
+    "address": "0x10e18",
+    "name": "_$s7ellekit3strCyAcA8RegisterO_AESitcfc",
+    "size": 160
+  },
+  {
+    "address": "0x10eb8",
+    "name": "_$s7ellekit3strCAA11InstructionA2aDP7encodedxSi_tcfCTW",
+    "size": 12
+  },
+  {
+    "address": "0x10ec4",
+    "name": "_$s7ellekit5paciaC7encodedACSi_tcfC",
+    "size": 48
+  },
+  {
+    "address": "0x10ef4",
+    "name": "_$s7ellekit5paciaC7encodedACSi_tcfc",
+    "size": 12
+  },
+  {
+    "address": "0x10f00",
+    "name": "_$s7ellekit5paciaC5bytesSays5UInt8VGyF",
+    "size": 8
+  },
+  {
+    "address": "0x10f08",
+    "name": "_$s7ellekit3ldrCyAcA8RegisterO_AESitcfC",
+    "size": 108
+  },
+  {
+    "address": "0x10f74",
+    "name": "_$s7ellekit3ldrCyAcA8RegisterO_AESitcfc",
+    "size": 116
+  },
+  {
+    "address": "0x10fe8",
+    "name": "_$s7ellekit5paciaCfD",
+    "size": 16
+  },
+  {
+    "address": "0x10ff8",
+    "name": "_$s7ellekit3ldrCAA11InstructionA2aDP7encodedxSi_tcfCTW",
+    "size": 12
+  },
+  {
+    "address": "0x11004",
+    "name": "_$s7ellekit3nopCACycfC",
+    "size": 44
+  },
+  {
+    "address": "0x11030",
+    "name": "_$s7ellekit3nopCACycfc",
+    "size": 20
+  },
+  {
+    "address": "0x11044",
+    "name": "_$s7ellekit3nopC5bytesSays5UInt8VGyF",
+    "size": 12
+  },
+  {
+    "address": "0x11050",
+    "name": "_$s7ellekit3nopCAA11InstructionA2aDP7encodedxSi_tcfCTW",
+    "size": 60
+  },
+  {
+    "address": "0x1108c",
+    "name": "_$s7ellekit4adrpCAA11InstructionA2aDP7encodedxSi_tcfCTW",
+    "size": 12
+  },
+  {
+    "address": "0x11098",
+    "name": "_$s7ellekit4movzCAA11InstructionA2aDP7encodedxSi_tcfCTWTm",
+    "size": 56
+  },
+  {
+    "address": "0x110d0",
+    "name": "_$s7ellekit3adrC7encodedACSi_tcfC",
+    "size": 60
+  },
+  {
+    "address": "0x1110c",
+    "name": "_$s7ellekit3adrC7encodedACSi_tcfc",
+    "size": 60
+  },
+  {
+    "address": "0x11148",
+    "name": "_$s7ellekit3adrC5bytesSays5UInt8VGyF",
+    "size": 8
+  },
+  {
+    "address": "0x11150",
+    "name": "_$s7ellekit3adrC14_cyanideTargetSiSgvg",
+    "size": 52
+  },
+  {
+    "address": "0x11184",
+    "name": "_$s7ellekit3adrC14_cyanideTargetSiSgvs",
+    "size": 76
+  },
+  {
+    "address": "0x111d0",
+    "name": "_$s7ellekit3adrC14_cyanideTargetSiSgvM",
+    "size": 48
+  },
+  {
+    "address": "0x11200",
+    "name": "_$s7ellekit3adrC14_cyanideTargetSiSgvM.resume.0",
+    "size": 4
+  },
+  {
+    "address": "0x11204",
+    "name": "_$s7ellekit3adrC_4dataAcA8RegisterO_SitcfC",
+    "size": 148
+  },
+  {
+    "address": "0x11298",
+    "name": "_$s7ellekit3adrC_4dataAcA8RegisterO_Sitcfc",
+    "size": 112
+  },
+  {
+    "address": "0x11308",
+    "name": "_$s7ellekit3adrC5valueSivg",
+    "size": 8
+  },
+  {
+    "address": "0x11310",
+    "name": "_$s7ellekit3adrC8registerAA8RegisterOvg",
+    "size": 12
+  },
+  {
+    "address": "0x1131c",
+    "name": "_$s7ellekit3adrC5labelSivg",
+    "size": 8
+  },
+  {
+    "address": "0x11324",
+    "name": "_$s7ellekit3adrCyAcA8RegisterO_SitcfC",
+    "size": 84
+  },
+  {
+    "address": "0x11378",
+    "name": "_$s7ellekit3adrCyAcA8RegisterO_Sitcfc",
+    "size": 100
+  },
+  {
+    "address": "0x113dc",
+    "name": "_$s7ellekit3adrC3isn8formerPC03newE0ACSgs6UInt32V_s6UInt64VAKtcfC",
+    "size": 164
+  },
+  {
+    "address": "0x11480",
+    "name": "_$s7ellekit3adrCMa",
+    "size": 32
+  },
+  {
+    "address": "0x114a0",
+    "name": "_$s7ellekit3adrCfD",
+    "size": 16
+  },
+  {
+    "address": "0x114b0",
+    "name": "_$s7ellekit3adrCAA11InstructionA2aDP7encodedxSi_tcfCTW",
+    "size": 72
+  },
+  {
+    "address": "0x114f8",
+    "name": "_$s7ellekit3adrCAA11InstructionA2aDP5bytesSays5UInt8VGyFTW",
+    "size": 12
+  },
+  {
+    "address": "0x11504",
+    "name": "_$s7ellekit3retCMa",
+    "size": 32
+  },
+  {
+    "address": "0x11524",
+    "name": "_$s7ellekit4movzCMa",
+    "size": 32
+  },
+  {
+    "address": "0x11544",
+    "name": "_$s7ellekit4movkCMa",
+    "size": 32
+  },
+  {
+    "address": "0x11564",
+    "name": "_$s7ellekit4cselCMa",
+    "size": 32
+  },
+  {
+    "address": "0x11584",
+    "name": "_$s7ellekit5bytesCMa",
+    "size": 32
+  },
+  {
+    "address": "0x115a4",
+    "name": "_$s7ellekit3svcCMa",
+    "size": 32
+  },
+  {
+    "address": "0x115c4",
+    "name": "_$s7ellekit3strCMa",
+    "size": 32
+  },
+  {
+    "address": "0x115e4",
+    "name": "_$s7ellekit3ldrCMa",
+    "size": 32
+  },
+  {
+    "address": "0x11604",
+    "name": "_$s7ellekit3nopCMa",
+    "size": 32
+  },
+  {
+    "address": "0x11624",
+    "name": "_$s7ellekit4adrpCMa",
+    "size": 32
+  },
+  {
+    "address": "0x11644",
+    "name": "_$s7ellekit5bytesCfD",
+    "size": 4
+  },
+  {
+    "address": "0x11648",
+    "name": "_$s7ellekit6pacizaC7encodedACSi_tcfc",
+    "size": 4
+  },
+  {
+    "address": "0x1164c",
+    "name": "_$s7ellekit6pacizaC5bytesSays5UInt8VGyF",
+    "size": 4
+  },
+  {
+    "address": "0x11650",
+    "name": "_$s7ellekit5bytesCABSays5UInt8VGyF",
+    "size": 4
+  },
+  {
+    "address": "0x11654",
+    "name": "_$s7ellekit5bytesCfd",
+    "size": 4
+  },
+  {
+    "address": "0x11658",
+    "name": "_$s7ellekit4movzCAA11InstructionA2aDP5bytesSays5UInt8VGyFTW",
+    "size": 4
+  },
+  {
+    "address": "0x1165c",
+    "name": "_$s7ellekit5bytesCAA11InstructionA2aDPABSays5UInt8VGyFTW",
+    "size": 4
+  },
+  {
+    "address": "0x11660",
+    "name": "_$s7ellekit6pacizaC7encodedACSi_tcfC",
+    "size": 4
+  },
+  {
+    "address": "0x11664",
+    "name": "_$s7ellekit6pacizaCfD",
+    "size": 4
+  },
+  {
+    "address": "0x11668",
+    "name": "_$s7ellekit4hookySvSgSv_SvSbtF",
+    "size": 3068
+  },
+  {
+    "address": "0x12264",
+    "name": "_$s7ellekit9byteArray4fromSays5UInt8VGx_ts17FixedWidthIntegerRzlFSi_Tg5",
+    "size": 176
+  },
+  {
+    "address": "0x12314",
+    "name": "_$s7ellekit13patchFunctionyySv_Says5UInt8VGyXEtF",
+    "size": 212
+  },
+  {
+    "address": "0x123e8",
+    "name": "_EKHookFunction",
+    "size": 4
+  },
+  {
+    "address": "0x123ec",
+    "name": "_$sSDyq_SgxcisSv_SvTg5",
+    "size": 176
+  },
+  {
+    "address": "0x1249c",
+    "name": "_$s7ellekit5split4fromSays5UInt8VGs6UInt64V_tF",
+    "size": 556
+  },
+  {
+    "address": "0x126c8",
+    "name": "_$s7ellekit4hookySvSgSv_SvSbtF11codeBuilderL_Says5UInt8VGvg",
+    "size": 192
+  },
+  {
+    "address": "0x12788",
+    "name": "_$ss22__RawDictionaryStorageC4findys10_HashTableV6BucketV6bucket_Sb5foundtxSHRzlFSv_Tg5",
+    "size": 48
+  },
+  {
+    "address": "0x127b8",
+    "name": "_$sSa6append10contentsOfyqd__n_t7ElementQyd__RszSTRd__lFs5UInt8V_SayAFGTg5",
+    "size": 240
+  },
+  {
+    "address": "0x128a8",
+    "name": "_$ss12_ArrayBufferV20_consumeAndCreateNew14bufferIsUnique15minimumCapacity13growForAppendAByxGSb_SiSbtFs5UInt8V_Tg5",
+    "size": 248
+  },
+  {
+    "address": "0x129a0",
+    "name": "_$ss12_ArrayBufferV20_consumeAndCreateNew14bufferIsUnique15minimumCapacity13growForAppendAByxGSb_SiSbtFSays5UInt8VG_Tg5",
+    "size": 312
+  },
+  {
+    "address": "0x12ad8",
+    "name": "_$ss12_ArrayBufferV20_consumeAndCreateNew14bufferIsUnique15minimumCapacity13growForAppendAByxGSb_SiSbtFs6UInt32V_Tg5",
+    "size": 264
+  },
+  {
+    "address": "0x12be0",
+    "name": "_$ss12_ArrayBufferV20_consumeAndCreateNew14bufferIsUnique15minimumCapacity13growForAppendAByxGSb_SiSbtFSS_Tg5",
+    "size": 272
+  },
+  {
+    "address": "0x12cf0",
+    "name": "_$ss12_ArrayBufferV20_consumeAndCreateNew14bufferIsUnique15minimumCapacity13growForAppendAByxGSb_SiSbtFSV_Tg5",
+    "size": 264
+  },
+  {
+    "address": "0x12df8",
+    "name": "_$ss17_NativeDictionaryV8setValue_6forKey8isUniqueyq_n_xSbtFSv_SvTg5",
+    "size": 280
+  },
+  {
+    "address": "0x12f10",
+    "name": "_$ss22__RawDictionaryStorageC4find_9hashValues10_HashTableV6BucketV6bucket_Sb5foundtx_SitSHRzlFSv_Tg5",
+    "size": 100
+  },
+  {
+    "address": "0x12f74",
+    "name": "_$ss17_NativeDictionaryV20_copyOrMoveAndResize8capacity12moveElementsySi_SbtFSv_SvTg5",
+    "size": 604
+  },
+  {
+    "address": "0x131d0",
+    "name": "_$ss32_copyCollectionToContiguousArrayys0dE0Vy7ElementQzGxSlRzlFs0E5SliceVys5UInt8VG_Tg5",
+    "size": 204
+  },
+  {
+    "address": "0x1329c",
+    "name": "_$ss30_copySequenceToContiguousArrayys0dE0Vy7ElementQzGxSTRzlFs07FlattenB0VySaySays5UInt8VGGG_Tg5",
+    "size": 508
+  },
+  {
+    "address": "0x13498",
+    "name": "_$ss12_ArrayBufferV20_consumeAndCreateNewAByxGyFs6UInt32V_Tg5",
+    "size": 20
+  },
+  {
+    "address": "0x134ac",
+    "name": "_$ss20_ArrayBufferProtocolPsE15replaceSubrange_4with10elementsOfySnySiG_Siqd__ntSlRd__7ElementQyd__AGRtzlFs01_aB0Vys5UInt8VG_s15EmptyCollectionVyAMGTg5Tf4nndn_n",
+    "size": 160
+  },
+  {
+    "address": "0x1354c",
+    "name": "_$ss20_ArrayBufferProtocolPsE15replaceSubrange_4with10elementsOfySnySiG_Siqd__ntSlRd__7ElementQyd__AGRtzlFs01_aB0Vys6UInt32VG_s15EmptyCollectionVyAMGTg5Tf4nndn_n",
+    "size": 164
+  },
+  {
+    "address": "0x135f0",
+    "name": "_$s7ellekit17findPrivateSymbol5image6symbol17overrideCachePathSVSgSV_S2SSgtKF",
+    "size": 1184
+  },
+  {
+    "address": "0x13a90",
+    "name": "_$s7ellekit15sharedCachePathSSyF",
+    "size": 304
+  },
+  {
+    "address": "0x13bc0",
+    "name": "_$s7ellekit13findDYLDSlide5images6UInt64VSV_tF",
+    "size": 252
+  },
+  {
+    "address": "0x13cbc",
+    "name": "_$s7ellekit9SymbolErrOACs5ErrorAAWl",
+    "size": 64
+  },
+  {
+    "address": "0x13cfc",
+    "name": "_$sSv7ellekitE12makeReadableSvyF",
+    "size": 12
+  },
+  {
+    "address": "0x13d08",
+    "name": "_$sSv7ellekitE12makeCallableSvyF",
+    "size": 12
+  },
+  {
+    "address": "0x13d14",
+    "name": "_$sSv7ellekitE12makeReadableSvyFTm",
+    "size": 28
+  },
+  {
+    "address": "0x13d30",
+    "name": "_$s7ellekit14getLinkedPaths4fileSaySSGSS_tKF",
+    "size": 1080
+  },
+  {
+    "address": "0x14168",
+    "name": "_$s7ellekit13LinkPathErrorOACs0D0AAWl",
+    "size": 64
+  },
+  {
+    "address": "0x141a8",
+    "name": "_$s7ellekit18getLinkedBundleIDs4fileSaySSGSS_tKF",
+    "size": 612
+  },
+  {
+    "address": "0x1440c",
+    "name": "_$sS2SSysWl",
+    "size": 64
+  },
+  {
+    "address": "0x1444c",
+    "name": "_$s7ellekit13LinkPathErrorOMa",
+    "size": 16
+  },
+  {
+    "address": "0x1445c",
+    "name": "_$s7ellekit13LinkPathErrorOSHAASQWb",
+    "size": 4
+  },
+  {
+    "address": "0x14460",
+    "name": "_$s7ellekit13LinkPathErrorOACSQAAWl",
+    "size": 64
+  },
+  {
+    "address": "0x144a0",
+    "name": "_$s7ellekit10isDebuggedSbyF",
+    "size": 140
+  },
+  {
+    "address": "0x1452c",
+    "name": "_$s7ellekit11getOriginal__17desiredRebindSize17shouldBranchAfter6jmpRegSvSg_SitSv_SiSgSiSbAA8RegisterOtF",
+    "size": 2748
+  },
+  {
+    "address": "0x14fe8",
+    "name": "_$s7ellekit11getOriginal__17desiredRebindSize17shouldBranchAfter6jmpRegSvSg_SitSv_SiSgSiSbAA8RegisterOtF11codeBuilderL_Says5UInt8VGvgTf0snnn_n",
+    "size": 900
+  },
+  {
+    "address": "0x1536c",
+    "name": "_$sSTsE8dropLastySay7ElementQzGSiFSays5UInt8VG_Tg5",
+    "size": 512
+  },
+  {
+    "address": "0x1556c",
+    "name": "_$ss22_ContiguousArrayBufferV20_consumeAndCreateNewAByxGyFs5UInt8V_Tg5",
+    "size": 20
+  },
+  {
+    "address": "0x15580",
+    "name": "_$sSays5UInt8VGWOh",
+    "size": 72
+  },
+  {
+    "address": "0x155c8",
+    "name": "_$sypWOb",
+    "size": 16
+  },
+  {
+    "address": "0x155d8",
+    "name": "_$s7ellekit5print_4file4lineyyp_SSSitF",
+    "size": 416
+  },
+  {
+    "address": "0x15778",
+    "name": "_$sypWOc",
+    "size": 60
+  },
+  {
+    "address": "0x157b4",
+    "name": "_$s7ellekit5print_4file_4line9separatoryypd_SSypdSiSStF",
+    "size": 16
+  },
+  {
+    "address": "0x157c4",
+    "name": "_$s7ellekit6logger_WZ",
+    "size": 108
+  },
+  {
+    "address": "0x15830",
+    "name": "_$s7ellekit6logger2os6LoggerVvau",
+    "size": 72
+  },
+  {
+    "address": "0x15878",
+    "name": "_$s7ellekit6dprint_4file_4line9separatoryypd_SSypdSiSStF",
+    "size": 360
+  },
+  {
+    "address": "0x159e0",
+    "name": "_$s7ellekit7TextLogV6shared_WZ",
+    "size": 128
+  },
+  {
+    "address": "0x15a60",
+    "name": "_$s7ellekit7TextLogV5writeyySSF",
+    "size": 764
+  },
+  {
+    "address": "0x15d5c",
+    "name": "_$s7ellekit7TextLogV5writeyySSF3logL_10Foundation3URLVvg",
+    "size": 256
+  },
+  {
+    "address": "0x15e5c",
+    "name": "_$sSo12NSFileHandleC12forWritingToAB10Foundation3URLV_tKcfCTO",
+    "size": 284
+  },
+  {
+    "address": "0x15f78",
+    "name": "_$s7ellekit6tprint_4file_4line9separatoryypd_SSypdSiSStF",
+    "size": 900
+  },
+  {
+    "address": "0x162fc",
+    "name": "_$s7ellekit3log33_628B02918AE8D3FEC8CC952735F74EBCLL5items4file4line9separatorySayxG_S2SSgSStlFyp_Tg5Tf4nddn_n",
+    "size": 408
+  },
+  {
+    "address": "0x16494",
+    "name": "_$s7ellekit5print_4file_4line9separatoryypd_SSypdSiSStFTf4nndnn_n",
+    "size": 360
+  },
+  {
+    "address": "0x165fc",
+    "name": "___swift_project_value_buffer",
+    "size": 24
+  },
+  {
+    "address": "0x16614",
+    "name": "_$s10Foundation4DataV15_RepresentationOWOe",
+    "size": 64
+  },
+  {
+    "address": "0x16654",
+    "name": "_$s10Foundation4DataVSgWOe",
+    "size": 20
+  },
+  {
+    "address": "0x16668",
+    "name": "_$sSo12NSFileHandleCMaTm",
+    "size": 64
+  },
+  {
+    "address": "0x166a8",
+    "name": "___swift_allocate_value_buffer",
+    "size": 64
+  },
+  {
+    "address": "0x166e8",
+    "name": "_$s7ellekit9openImage5imageSPySo11mach_headerVGSgSS_tKF",
+    "size": 376
+  },
+  {
+    "address": "0x16860",
+    "name": "_$ss15ContiguousArrayV16_createNewBuffer14bufferIsUnique15minimumCapacity13growForAppendySb_SiSbtFSays5UInt8VG_Tg5",
+    "size": 28
+  },
+  {
+    "address": "0x1687c",
+    "name": "_$ss15ContiguousArrayV16_createNewBuffer14bufferIsUnique15minimumCapacity13growForAppendySb_SiSbtFs5UInt8V_Tg5",
+    "size": 28
+  },
+  {
+    "address": "0x16898",
+    "name": "_$ss15ContiguousArrayV16_createNewBuffer14bufferIsUnique15minimumCapacity13growForAppendySb_SiSbtFs6UInt32V_Tg5",
+    "size": 28
+  },
+  {
+    "address": "0x168b4",
+    "name": "_$ss15ContiguousArrayV16_createNewBuffer14bufferIsUnique15minimumCapacity13growForAppendySb_SiSbtFSVSg_Tg5",
+    "size": 28
+  },
+  {
+    "address": "0x168d0",
+    "name": "_$ss15ContiguousArrayV16_createNewBuffer14bufferIsUnique15minimumCapacity13growForAppendySb_SiSbtFSS_Tg5",
+    "size": 28
+  },
+  {
+    "address": "0x168ec",
+    "name": "_$ss22_ContiguousArrayBufferV20_consumeAndCreateNew14bufferIsUnique15minimumCapacity13growForAppendAByxGSb_SiSbtFSays5UInt8VG_Tg5",
+    "size": 312
+  },
+  {
+    "address": "0x16a24",
+    "name": "_$ss22_ContiguousArrayBufferV20_consumeAndCreateNew14bufferIsUnique15minimumCapacity13growForAppendAByxGSb_SiSbtFs5UInt8V_Tg5",
+    "size": 248
+  },
+  {
+    "address": "0x16b1c",
+    "name": "_$ss22_ContiguousArrayBufferV20_consumeAndCreateNew14bufferIsUnique15minimumCapacity13growForAppendAByxGSb_SiSbtFs6UInt32V_Tg5",
+    "size": 264
+  },
+  {
+    "address": "0x16c24",
+    "name": "_$ss22_ContiguousArrayBufferV20_consumeAndCreateNew14bufferIsUnique15minimumCapacity13growForAppendAByxGSb_SiSbtFSVSg_Tg5",
+    "size": 264
+  },
+  {
+    "address": "0x16d2c",
+    "name": "_$ss22_ContiguousArrayBufferV20_consumeAndCreateNew14bufferIsUnique15minimumCapacity13growForAppendAByxGSb_SiSbtFSS_Tg5",
+    "size": 272
+  },
+  {
+    "address": "0x16e3c",
+    "name": "_$s7ellekit17assembleReference6target8registerSays5UInt8VGs6UInt64V_SitF",
+    "size": 376
+  },
+  {
+    "address": "0x16fb4",
+    "name": "_$s7ellekit1bC8condBaseSivau",
+    "size": 12
+  },
+  {
+    "address": "0x16fc0",
+    "name": "_$s7ellekit1bC_4condACSi_AA4CondVtcfC",
+    "size": 116
+  },
+  {
+    "address": "0x17034",
+    "name": "_$s7ellekit1bCyACSicfC",
+    "size": 60
+  },
+  {
+    "address": "0x17070",
+    "name": "_$s7ellekit3cbzCyAcA8RegisterO_SitcfC",
+    "size": 84
+  },
+  {
+    "address": "0x170c4",
+    "name": "_$s7ellekit4cbnzCyAcA8RegisterO_SitcfC",
+    "size": 84
+  },
+  {
+    "address": "0x17118",
+    "name": "_$s7ellekit2brCyAcA8RegisterOcfC",
+    "size": 108
+  },
+  {
+    "address": "0x17184",
+    "name": "_$s7ellekit20disassembleBranchImmySis6UInt64VF",
+    "size": 8
+  },
+  {
+    "address": "0x1718c",
+    "name": "_$s7ellekit1bC5valueSivg",
+    "size": 8
+  },
+  {
+    "address": "0x17194",
+    "name": "_$s7ellekit1bCyACSicfc",
+    "size": 24
+  },
+  {
+    "address": "0x171ac",
+    "name": "_$s7ellekit1bC_4condACSi_AA4CondVtcfc",
+    "size": 68
+  },
+  {
+    "address": "0x171f0",
+    "name": "_$s7ellekit1bC8condBaseSivgZ",
+    "size": 8
+  },
+  {
+    "address": "0x171f8",
+    "name": "_$s7ellekit1bCAA11InstructionA2aDP7encodedxSi_tcfCTW",
+    "size": 12
+  },
+  {
+    "address": "0x17204",
+    "name": "_$s7ellekit2blCyACSicfC",
+    "size": 60
+  },
+  {
+    "address": "0x17240",
+    "name": "_$s7ellekit2blCyACSicfc",
+    "size": 24
+  },
+  {
+    "address": "0x17258",
+    "name": "_$s7ellekit2blCAA11InstructionA2aDP7encodedxSi_tcfCTW",
+    "size": 12
+  },
+  {
+    "address": "0x17264",
+    "name": "_$s7ellekit3blrCyAcA8RegisterOcfC",
+    "size": 108
+  },
+  {
+    "address": "0x172d0",
+    "name": "_$s7ellekit3blrCyAcA8RegisterOcfc",
+    "size": 60
+  },
+  {
+    "address": "0x1730c",
+    "name": "_$s7ellekit3blrCAA11InstructionA2aDP7encodedxSi_tcfCTW",
+    "size": 12
+  },
+  {
+    "address": "0x17318",
+    "name": "_$s7ellekit2brCyAcA8RegisterOcfc",
+    "size": 60
+  },
+  {
+    "address": "0x17354",
+    "name": "_$s7ellekit2brCAA11InstructionA2aDP7encodedxSi_tcfCTW",
+    "size": 12
+  },
+  {
+    "address": "0x17360",
+    "name": "_$s7ellekit3cbzCyAcA8RegisterO_Sitcfc",
+    "size": 92
+  },
+  {
+    "address": "0x173bc",
+    "name": "_$s7ellekit3cbzCAA11InstructionA2aDP7encodedxSi_tcfCTW",
+    "size": 12
+  },
+  {
+    "address": "0x173c8",
+    "name": "_$s7ellekit4cbnzCyAcA8RegisterO_Sitcfc",
+    "size": 92
+  },
+  {
+    "address": "0x17424",
+    "name": "_$s7ellekit4cbnzC11destination_2pcs6UInt64Vs6UInt32V_AGtFZ",
+    "size": 44
+  },
+  {
+    "address": "0x17450",
+    "name": "_$s7ellekit4cbnzCAA11InstructionA2aDP7encodedxSi_tcfCTW",
+    "size": 12
+  },
+  {
+    "address": "0x1745c",
+    "name": "_$s7ellekit1bCMa",
+    "size": 32
+  },
+  {
+    "address": "0x1747c",
+    "name": "_$s7ellekit2blCMa",
+    "size": 32
+  },
+  {
+    "address": "0x1749c",
+    "name": "_$s7ellekit3blrCMa",
+    "size": 32
+  },
+  {
+    "address": "0x174bc",
+    "name": "_$s7ellekit2brCMa",
+    "size": 32
+  },
+  {
+    "address": "0x174dc",
+    "name": "_$s7ellekit3cbzCMa",
+    "size": 32
+  },
+  {
+    "address": "0x174fc",
+    "name": "_$s7ellekit4cbnzCMa",
+    "size": 32
+  },
+  {
+    "address": "0x1751c",
+    "name": "_$s7ellekit14redirectBranchySays5UInt8VGSv_s6UInt64VSvtFTf4nnd_n",
+    "size": 460
+  },
+  {
+    "address": "0x176e8",
+    "name": "_$s7ellekit4hook__2inSvSgSv_SvSStF",
+    "size": 68
+  },
+  {
+    "address": "0x1772c",
+    "name": "_$s7ellekit5slide3forSiSgSS_tF",
+    "size": 196
+  },
+  {
+    "address": "0x177f0",
+    "name": "_EKPrecisionHook",
+    "size": 4
+  },
+  {
+    "address": "0x177f4",
+    "name": "_$s7ellekit13precisionHookySvSgSv_SvtF",
+    "size": 1188
+  },
+  {
+    "address": "0x17c98",
+    "name": "_$s7ellekit10TrampolineV12findLocationSvSgyF",
+    "size": 596
+  },
+  {
+    "address": "0x17eec",
+    "name": "_LBHookMessage",
+    "size": 60
+  },
+  {
+    "address": "0x17f28",
+    "name": "_LHStrError",
+    "size": 4
+  },
+  {
+    "address": "0x17f2c",
+    "name": "_$s7ellekit10LHStrErrorySVSgSo13LIBHOOKER_ERRVF",
+    "size": 316
+  },
+  {
+    "address": "0x18068",
+    "name": "_LHPatchMemory",
+    "size": 4
+  },
+  {
+    "address": "0x1806c",
+    "name": "_$s7ellekit13LHPatchMemoryySiSPySo13LHMemoryPatchVG_SitF",
+    "size": 352
+  },
+  {
+    "address": "0x181cc",
+    "name": "_LHExecMemory",
+    "size": 4
+  },
+  {
+    "address": "0x181d0",
+    "name": "_$s7ellekit12LHExecMemoryySiSpySvSgG_SvSitF",
+    "size": 972
+  },
+  {
+    "address": "0x1859c",
+    "name": "_LHHookFunctions",
+    "size": 4
+  },
+  {
+    "address": "0x185a0",
+    "name": "_$s7ellekit15LHHookFunctionsySiSPySo14LHFunctionHookVG_SitF",
+    "size": 680
+  },
+  {
+    "address": "0x18848",
+    "name": "_LHOpenImage",
+    "size": 100
+  },
+  {
+    "address": "0x188ac",
+    "name": "_LHCloseImage",
+    "size": 4
+  },
+  {
+    "address": "0x188b0",
+    "name": "_LHFindSymbols",
+    "size": 24
+  },
+  {
+    "address": "0x188c8",
+    "name": "_$s7ellekit13LHFindSymbolsySbSPySo14mach_header_64VG_SPySPys4Int8VGGSpySVSgGSitF",
+    "size": 1528
+  },
+  {
+    "address": "0x18ec0",
+    "name": "_$s7ellekit10TrampolineV4base6targetACSgSv_SvtcfC",
+    "size": 16
+  },
+  {
+    "address": "0x18ed0",
+    "name": "_$s7ellekit10TrampolineV10trampolineSvvg",
+    "size": 8
+  },
+  {
+    "address": "0x18ed8",
+    "name": "_$s7ellekit10TrampolineV10trampolineSvvs",
+    "size": 8
+  },
+  {
+    "address": "0x18ee0",
+    "name": "_$s7ellekit10TrampolineV10trampolineSvvM",
+    "size": 16
+  },
+  {
+    "address": "0x18ef0",
+    "name": "_$s7ellekit10TrampolineV4origSvSgvs",
+    "size": 8
+  },
+  {
+    "address": "0x18ef8",
+    "name": "_$s7ellekit10TrampolineV4origSvSgvM",
+    "size": 16
+  },
+  {
+    "address": "0x18f08",
+    "name": "_$s7ellekit10TrampolineV8findOrigSvSgyF",
+    "size": 84
+  },
+  {
+    "address": "0x18f5c",
+    "name": "_$s7ellekit10TrampolineV05buildB0Says5UInt8VGSgyF",
+    "size": 516
+  },
+  {
+    "address": "0x19160",
+    "name": "_$s7ellekit10TrampolineV05writeB0yyF",
+    "size": 192
+  },
+  {
+    "address": "0x19220",
+    "name": "_$s7ellekit10TrampolineV9buildHookyyF",
+    "size": 152
+  },
+  {
+    "address": "0x192b8",
+    "name": "_$sSD8_VariantV11removeValue6forKeyq_Sgx_tFSv_SvTg5",
+    "size": 132
+  },
+  {
+    "address": "0x1933c",
+    "name": "_$s7ellekit10TrampolineVwxx",
+    "size": 8
+  },
+  {
+    "address": "0x19344",
+    "name": "_$s7ellekit10TrampolineVwcp",
+    "size": 60
+  },
+  {
+    "address": "0x19380",
+    "name": "_$s7ellekit10TrampolineVwca",
+    "size": 100
+  },
+  {
+    "address": "0x193e4",
+    "name": "___swift_memcpy40_8",
+    "size": 20
+  },
+  {
+    "address": "0x193f8",
+    "name": "_$s7ellekit10TrampolineVwta",
+    "size": 68
+  },
+  {
+    "address": "0x1943c",
+    "name": "_$s7ellekit10TrampolineVwet",
+    "size": 72
+  },
+  {
+    "address": "0x19484",
+    "name": "_$s7ellekit10TrampolineVwst",
+    "size": 72
+  },
+  {
+    "address": "0x194cc",
+    "name": "_$s7ellekit10TrampolineVMa",
+    "size": 16
+  },
+  {
+    "address": "0x194dc",
+    "name": "_$ss17_NativeDictionaryV4copyyyFSv_SvTg5",
+    "size": 332
+  },
+  {
+    "address": "0x19628",
+    "name": "_$ss17_NativeDictionaryV7_delete2atys10_HashTableV6BucketV_tFSv_SvTg5",
+    "size": 364
+  },
+  {
+    "address": "0x19794",
+    "name": "_$s7ellekit10findSymbol5image6symbolSVSgSV_SStKF",
+    "size": 1064
+  },
+  {
+    "address": "0x19bbc",
+    "name": "_$s7ellekit9SymbolErrOwet",
+    "size": 144
+  },
+  {
+    "address": "0x19c4c",
+    "name": "_$s7ellekit9SymbolErrOwst",
+    "size": 176
+  },
+  {
+    "address": "0x19cfc",
+    "name": "_$s7ellekit9SymbolErrOMa",
+    "size": 16
+  },
+  {
+    "address": "0x19d0c",
+    "name": "_$s7ellekit9SymbolErrOSHAASQWb",
+    "size": 4
+  },
+  {
+    "address": "0x19d10",
+    "name": "_$s7ellekit9SymbolErrOACSQAAWl",
+    "size": 64
+  },
+  {
+    "address": "0x19d50",
+    "name": "_$s7ellekit3addCyAcA8RegisterO_AESitcfC",
+    "size": 108
+  },
+  {
+    "address": "0x19dbc",
+    "name": "_$s7ellekit3subCyAcA8RegisterO_AESitcfC",
+    "size": 108
+  },
+  {
+    "address": "0x19e28",
+    "name": "_$s7ellekit3subCyAcA8RegisterO_AESitcfc",
+    "size": 116
+  },
+  {
+    "address": "0x19e9c",
+    "name": "_$s7ellekit3subCAA11InstructionA2aDP7encodedxSi_tcfCTW",
+    "size": 12
+  },
+  {
+    "address": "0x19ea8",
+    "name": "_$s7ellekit3addCyAcA8RegisterO_AESitcfc",
+    "size": 112
+  },
+  {
+    "address": "0x19f18",
+    "name": "_$s7ellekit3addCAA11InstructionA2aDP7encodedxSi_tcfCTW",
+    "size": 12
+  },
+  {
+    "address": "0x19f24",
+    "name": "_$s7ellekit3subCMa",
+    "size": 32
+  },
+  {
+    "address": "0x19f44",
+    "name": "_$s7ellekit3addCMa",
+    "size": 32
+  },
+  {
+    "address": "0x19f64",
+    "name": "_EKLaunchExceptionHandler",
+    "size": 4
+  },
+  {
+    "address": "0x19f68",
+    "name": "_$s7ellekit22launchExceptionHandlers6UInt32VyF",
+    "size": 132
+  },
+  {
+    "address": "0x19fec",
+    "name": "_EKAddHookToRegistry",
+    "size": 176
+  },
+  {
+    "address": "0x1a09c",
+    "name": "_$s7ellekit17addHookToRegistryyySv_SvtF",
+    "size": 176
+  },
+  {
+    "address": "0x1a14c",
+    "name": "_$s7ellekit8RegisterO3x17ACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a158",
+    "name": "_$s7ellekit8RegisterO3x16ACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a164",
+    "name": "_$s7ellekit8RegisterO2x0ACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a170",
+    "name": "_$s7ellekit8RegisterO2x1ACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a17c",
+    "name": "_$s7ellekit8RegisterO2x1ACvgZ",
+    "size": 12
+  },
+  {
+    "address": "0x1a188",
+    "name": "_$s7ellekit8RegisterO2x2ACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a194",
+    "name": "_$s7ellekit8RegisterO2x2ACvgZ",
+    "size": 12
+  },
+  {
+    "address": "0x1a1a0",
+    "name": "_$s7ellekit8RegisterO2x3ACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a1ac",
+    "name": "_$s7ellekit8RegisterO2x3ACvgZ",
+    "size": 12
+  },
+  {
+    "address": "0x1a1b8",
+    "name": "_$s7ellekit8RegisterO2x4ACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a1c4",
+    "name": "_$s7ellekit8RegisterO2x4ACvgZ",
+    "size": 12
+  },
+  {
+    "address": "0x1a1d0",
+    "name": "_$s7ellekit8RegisterO2x5ACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a1dc",
+    "name": "_$s7ellekit8RegisterO2x5ACvgZ",
+    "size": 12
+  },
+  {
+    "address": "0x1a1e8",
+    "name": "_$s7ellekit8RegisterO2x6ACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a1f4",
+    "name": "_$s7ellekit8RegisterO2x6ACvgZ",
+    "size": 12
+  },
+  {
+    "address": "0x1a200",
+    "name": "_$s7ellekit8RegisterO2x7ACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a20c",
+    "name": "_$s7ellekit8RegisterO2x7ACvgZ",
+    "size": 12
+  },
+  {
+    "address": "0x1a218",
+    "name": "_$s7ellekit8RegisterO2x8ACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a224",
+    "name": "_$s7ellekit8RegisterO2x8ACvgZ",
+    "size": 12
+  },
+  {
+    "address": "0x1a230",
+    "name": "_$s7ellekit8RegisterO2x9ACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a23c",
+    "name": "_$s7ellekit8RegisterO2x9ACvgZ",
+    "size": 12
+  },
+  {
+    "address": "0x1a248",
+    "name": "_$s7ellekit8RegisterO3x10ACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a254",
+    "name": "_$s7ellekit8RegisterO3x10ACvgZ",
+    "size": 12
+  },
+  {
+    "address": "0x1a260",
+    "name": "_$s7ellekit8RegisterO3x11ACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a26c",
+    "name": "_$s7ellekit8RegisterO3x11ACvgZ",
+    "size": 12
+  },
+  {
+    "address": "0x1a278",
+    "name": "_$s7ellekit8RegisterO3x12ACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a284",
+    "name": "_$s7ellekit8RegisterO3x12ACvgZ",
+    "size": 12
+  },
+  {
+    "address": "0x1a290",
+    "name": "_$s7ellekit8RegisterO3x13ACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a29c",
+    "name": "_$s7ellekit8RegisterO3x13ACvgZ",
+    "size": 12
+  },
+  {
+    "address": "0x1a2a8",
+    "name": "_$s7ellekit8RegisterO3x14ACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a2b4",
+    "name": "_$s7ellekit8RegisterO3x14ACvgZ",
+    "size": 12
+  },
+  {
+    "address": "0x1a2c0",
+    "name": "_$s7ellekit8RegisterO3x15ACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a2cc",
+    "name": "_$s7ellekit8RegisterO3x15ACvgZ",
+    "size": 12
+  },
+  {
+    "address": "0x1a2d8",
+    "name": "_$s7ellekit8RegisterO3x16ACvgZ",
+    "size": 12
+  },
+  {
+    "address": "0x1a2e4",
+    "name": "_$s7ellekit8RegisterO3x17ACvgZ",
+    "size": 12
+  },
+  {
+    "address": "0x1a2f0",
+    "name": "_$s7ellekit8RegisterO3x18ACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a2fc",
+    "name": "_$s7ellekit8RegisterO3x18ACvgZ",
+    "size": 12
+  },
+  {
+    "address": "0x1a308",
+    "name": "_$s7ellekit8RegisterO3x19ACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a314",
+    "name": "_$s7ellekit8RegisterO3x19ACvgZ",
+    "size": 12
+  },
+  {
+    "address": "0x1a320",
+    "name": "_$s7ellekit8RegisterO3x20ACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a32c",
+    "name": "_$s7ellekit8RegisterO3x20ACvgZ",
+    "size": 12
+  },
+  {
+    "address": "0x1a338",
+    "name": "_$s7ellekit8RegisterO3x21ACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a344",
+    "name": "_$s7ellekit8RegisterO3x21ACvgZ",
+    "size": 12
+  },
+  {
+    "address": "0x1a350",
+    "name": "_$s7ellekit8RegisterO3x22ACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a35c",
+    "name": "_$s7ellekit8RegisterO3x22ACvgZ",
+    "size": 12
+  },
+  {
+    "address": "0x1a368",
+    "name": "_$s7ellekit8RegisterO3x23ACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a374",
+    "name": "_$s7ellekit8RegisterO3x23ACvgZ",
+    "size": 12
+  },
+  {
+    "address": "0x1a380",
+    "name": "_$s7ellekit8RegisterO3x24ACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a38c",
+    "name": "_$s7ellekit8RegisterO3x24ACvgZ",
+    "size": 12
+  },
+  {
+    "address": "0x1a398",
+    "name": "_$s7ellekit8RegisterO3x25ACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a3a4",
+    "name": "_$s7ellekit8RegisterO3x25ACvgZ",
+    "size": 12
+  },
+  {
+    "address": "0x1a3b0",
+    "name": "_$s7ellekit8RegisterO3x26ACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a3bc",
+    "name": "_$s7ellekit8RegisterO3x26ACvgZ",
+    "size": 12
+  },
+  {
+    "address": "0x1a3c8",
+    "name": "_$s7ellekit8RegisterO3x27ACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a3d4",
+    "name": "_$s7ellekit8RegisterO3x27ACvgZ",
+    "size": 12
+  },
+  {
+    "address": "0x1a3e0",
+    "name": "_$s7ellekit8RegisterO3x28ACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a3ec",
+    "name": "_$s7ellekit8RegisterO3x28ACvgZ",
+    "size": 12
+  },
+  {
+    "address": "0x1a3f8",
+    "name": "_$s7ellekit8RegisterO3x29ACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a404",
+    "name": "_$s7ellekit8RegisterO3x29ACvgZ",
+    "size": 12
+  },
+  {
+    "address": "0x1a410",
+    "name": "_$s7ellekit8RegisterO3x30ACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a41c",
+    "name": "_$s7ellekit8RegisterO3x30ACvgZ",
+    "size": 12
+  },
+  {
+    "address": "0x1a428",
+    "name": "_$s7ellekit8RegisterO2w0ACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a434",
+    "name": "_$s7ellekit8RegisterO2w0ACvgZ",
+    "size": 12
+  },
+  {
+    "address": "0x1a440",
+    "name": "_$s7ellekit8RegisterO2w1ACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a44c",
+    "name": "_$s7ellekit8RegisterO2w1ACvgZ",
+    "size": 12
+  },
+  {
+    "address": "0x1a458",
+    "name": "_$s7ellekit8RegisterO2w2ACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a464",
+    "name": "_$s7ellekit8RegisterO2w2ACvgZ",
+    "size": 12
+  },
+  {
+    "address": "0x1a470",
+    "name": "_$s7ellekit8RegisterO2w3ACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a47c",
+    "name": "_$s7ellekit8RegisterO2w3ACvgZ",
+    "size": 12
+  },
+  {
+    "address": "0x1a488",
+    "name": "_$s7ellekit8RegisterO2w4ACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a494",
+    "name": "_$s7ellekit8RegisterO2w4ACvgZ",
+    "size": 12
+  },
+  {
+    "address": "0x1a4a0",
+    "name": "_$s7ellekit8RegisterO2w5ACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a4ac",
+    "name": "_$s7ellekit8RegisterO2w5ACvgZ",
+    "size": 12
+  },
+  {
+    "address": "0x1a4b8",
+    "name": "_$s7ellekit8RegisterO2w6ACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a4c4",
+    "name": "_$s7ellekit8RegisterO2w6ACvgZ",
+    "size": 12
+  },
+  {
+    "address": "0x1a4d0",
+    "name": "_$s7ellekit8RegisterO2w7ACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a4dc",
+    "name": "_$s7ellekit8RegisterO2w7ACvgZ",
+    "size": 12
+  },
+  {
+    "address": "0x1a4e8",
+    "name": "_$s7ellekit8RegisterO2w8ACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a4f4",
+    "name": "_$s7ellekit8RegisterO2w8ACvgZ",
+    "size": 12
+  },
+  {
+    "address": "0x1a500",
+    "name": "_$s7ellekit8RegisterO2w9ACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a50c",
+    "name": "_$s7ellekit8RegisterO2w9ACvgZ",
+    "size": 12
+  },
+  {
+    "address": "0x1a518",
+    "name": "_$s7ellekit8RegisterO3w10ACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a524",
+    "name": "_$s7ellekit8RegisterO3w10ACvgZ",
+    "size": 12
+  },
+  {
+    "address": "0x1a530",
+    "name": "_$s7ellekit8RegisterO3w11ACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a53c",
+    "name": "_$s7ellekit8RegisterO3w11ACvgZ",
+    "size": 12
+  },
+  {
+    "address": "0x1a548",
+    "name": "_$s7ellekit8RegisterO3w12ACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a554",
+    "name": "_$s7ellekit8RegisterO3w12ACvgZ",
+    "size": 12
+  },
+  {
+    "address": "0x1a560",
+    "name": "_$s7ellekit8RegisterO3w13ACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a56c",
+    "name": "_$s7ellekit8RegisterO3w13ACvgZ",
+    "size": 12
+  },
+  {
+    "address": "0x1a578",
+    "name": "_$s7ellekit8RegisterO3w14ACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a584",
+    "name": "_$s7ellekit8RegisterO3w14ACvgZ",
+    "size": 12
+  },
+  {
+    "address": "0x1a590",
+    "name": "_$s7ellekit8RegisterO3w15ACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a59c",
+    "name": "_$s7ellekit8RegisterO3w15ACvgZ",
+    "size": 12
+  },
+  {
+    "address": "0x1a5a8",
+    "name": "_$s7ellekit8RegisterO3w16ACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a5b4",
+    "name": "_$s7ellekit8RegisterO3w16ACvgZ",
+    "size": 12
+  },
+  {
+    "address": "0x1a5c0",
+    "name": "_$s7ellekit8RegisterO3w17ACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a5cc",
+    "name": "_$s7ellekit8RegisterO3w17ACvgZ",
+    "size": 12
+  },
+  {
+    "address": "0x1a5d8",
+    "name": "_$s7ellekit8RegisterO3w18ACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a5e4",
+    "name": "_$s7ellekit8RegisterO3w18ACvgZ",
+    "size": 12
+  },
+  {
+    "address": "0x1a5f0",
+    "name": "_$s7ellekit8RegisterO3w19ACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a5fc",
+    "name": "_$s7ellekit8RegisterO3w19ACvgZ",
+    "size": 12
+  },
+  {
+    "address": "0x1a608",
+    "name": "_$s7ellekit8RegisterO3w20ACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a614",
+    "name": "_$s7ellekit8RegisterO3w20ACvgZ",
+    "size": 12
+  },
+  {
+    "address": "0x1a620",
+    "name": "_$s7ellekit8RegisterO3w21ACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a62c",
+    "name": "_$s7ellekit8RegisterO3w21ACvgZ",
+    "size": 12
+  },
+  {
+    "address": "0x1a638",
+    "name": "_$s7ellekit8RegisterO3w22ACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a644",
+    "name": "_$s7ellekit8RegisterO3w22ACvgZ",
+    "size": 12
+  },
+  {
+    "address": "0x1a650",
+    "name": "_$s7ellekit8RegisterO3w23ACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a65c",
+    "name": "_$s7ellekit8RegisterO3w23ACvgZ",
+    "size": 12
+  },
+  {
+    "address": "0x1a668",
+    "name": "_$s7ellekit8RegisterO3w24ACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a674",
+    "name": "_$s7ellekit8RegisterO3w24ACvgZ",
+    "size": 12
+  },
+  {
+    "address": "0x1a680",
+    "name": "_$s7ellekit8RegisterO3w25ACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a68c",
+    "name": "_$s7ellekit8RegisterO3w25ACvgZ",
+    "size": 12
+  },
+  {
+    "address": "0x1a698",
+    "name": "_$s7ellekit8RegisterO3w26ACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a6a4",
+    "name": "_$s7ellekit8RegisterO3w26ACvgZ",
+    "size": 12
+  },
+  {
+    "address": "0x1a6b0",
+    "name": "_$s7ellekit8RegisterO3w27ACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a6bc",
+    "name": "_$s7ellekit8RegisterO3w27ACvgZ",
+    "size": 12
+  },
+  {
+    "address": "0x1a6c8",
+    "name": "_$s7ellekit8RegisterO3w28ACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a6d4",
+    "name": "_$s7ellekit8RegisterO3w28ACvgZ",
+    "size": 12
+  },
+  {
+    "address": "0x1a6e0",
+    "name": "_$s7ellekit8RegisterO3w29ACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a6ec",
+    "name": "_$s7ellekit8RegisterO3w29ACvgZ",
+    "size": 12
+  },
+  {
+    "address": "0x1a6f8",
+    "name": "_$s7ellekit8RegisterO3w30ACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a704",
+    "name": "_$s7ellekit8RegisterO3w30ACvgZ",
+    "size": 12
+  },
+  {
+    "address": "0x1a710",
+    "name": "_$s7ellekit4CondV2EQACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a71c",
+    "name": "_$s7ellekit4CondV2NEACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a728",
+    "name": "_$s7ellekit4CondV2NEACvgZ",
+    "size": 8
+  },
+  {
+    "address": "0x1a730",
+    "name": "_$s7ellekit4CondV2CSACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a73c",
+    "name": "_$s7ellekit4CondV2HSACvgZ",
+    "size": 8
+  },
+  {
+    "address": "0x1a744",
+    "name": "_$s7ellekit4CondV2HSACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a750",
+    "name": "_$s7ellekit4CondV2CCACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a75c",
+    "name": "_$s7ellekit4CondV2LOACvgZ",
+    "size": 8
+  },
+  {
+    "address": "0x1a764",
+    "name": "_$s7ellekit4CondV2LOACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a770",
+    "name": "_$s7ellekit4CondV2MIACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a77c",
+    "name": "_$s7ellekit4CondV2MIACvgZ",
+    "size": 8
+  },
+  {
+    "address": "0x1a784",
+    "name": "_$s7ellekit4CondV2PLACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a790",
+    "name": "_$s7ellekit4CondV2PLACvgZ",
+    "size": 8
+  },
+  {
+    "address": "0x1a798",
+    "name": "_$s7ellekit4CondV2VSACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a7a4",
+    "name": "_$s7ellekit4CondV2VSACvgZ",
+    "size": 8
+  },
+  {
+    "address": "0x1a7ac",
+    "name": "_$s7ellekit4CondV2VCACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a7b8",
+    "name": "_$s7ellekit4CondV2VCACvgZ",
+    "size": 8
+  },
+  {
+    "address": "0x1a7c0",
+    "name": "_$s7ellekit4CondV2HIACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a7cc",
+    "name": "_$s7ellekit4CondV2HIACvgZ",
+    "size": 8
+  },
+  {
+    "address": "0x1a7d4",
+    "name": "_$s7ellekit4CondV2LSACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a7e0",
+    "name": "_$s7ellekit4CondV2LSACvgZ",
+    "size": 8
+  },
+  {
+    "address": "0x1a7e8",
+    "name": "_$s7ellekit4CondV2GEACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a7f4",
+    "name": "_$s7ellekit4CondV2GEACvgZ",
+    "size": 8
+  },
+  {
+    "address": "0x1a7fc",
+    "name": "_$s7ellekit4CondV2LTACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a808",
+    "name": "_$s7ellekit4CondV2LTACvgZ",
+    "size": 8
+  },
+  {
+    "address": "0x1a810",
+    "name": "_$s7ellekit4CondV2GTACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a81c",
+    "name": "_$s7ellekit4CondV2GTACvgZ",
+    "size": 8
+  },
+  {
+    "address": "0x1a824",
+    "name": "_$s7ellekit4CondV2LEACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a830",
+    "name": "_$s7ellekit4CondV2LEACvgZ",
+    "size": 8
+  },
+  {
+    "address": "0x1a838",
+    "name": "_$s7ellekit4CondV2ALACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a844",
+    "name": "_$s7ellekit4CondV2ALACvgZ",
+    "size": 8
+  },
+  {
+    "address": "0x1a84c",
+    "name": "_$s7ellekit4CondV3NVbACvau",
+    "size": 12
+  },
+  {
+    "address": "0x1a858",
+    "name": "_$s7ellekit4CondV3NVbACvgZ",
+    "size": 8
+  },
+  {
+    "address": "0x1a860",
+    "name": "___swift_memcpy9_8",
+    "size": 20
+  },
+  {
+    "address": "0x1a874",
+    "name": "_$s7ellekit8RegisterOwet",
+    "size": 72
+  },
+  {
+    "address": "0x1a8bc",
+    "name": "_$s7ellekit8RegisterOwst",
+    "size": 68
+  },
+  {
+    "address": "0x1a900",
+    "name": "_$s7ellekit8RegisterOwug",
+    "size": 24
+  },
+  {
+    "address": "0x1a918",
+    "name": "_$s7ellekit8RegisterOwui",
+    "size": 24
+  },
+  {
+    "address": "0x1a930",
+    "name": "_$s7ellekit8RegisterOMa",
+    "size": 16
+  },
+  {
+    "address": "0x1a940",
+    "name": "_$s7ellekit4CondVMa",
+    "size": 16
+  },
+  {
+    "address": "0x1a950",
+    "name": "_$s7ellekit16ExceptionHandlerCACycfC",
+    "size": 52
+  },
+  {
+    "address": "0x1a984",
+    "name": "_$s7ellekit16ExceptionHandlerCACycfc",
+    "size": 412
+  },
+  {
+    "address": "0x1ab20",
+    "name": "_$s7ellekit16ExceptionHandlerC13startPortLoopyyF",
+    "size": 840
+  },
+  {
+    "address": "0x1ae68",
+    "name": "_$sSo17OS_dispatch_queueCMa",
+    "size": 68
+  },
+  {
+    "address": "0x1aeac",
+    "name": "sub_1AEAC",
+    "size": 36
+  },
+  {
+    "address": "0x1aed0",
+    "name": "_$s7ellekit16ExceptionHandlerC13startPortLoopyyFyyYbcfU_",
+    "size": 84
+  },
+  {
+    "address": "0x1af24",
+    "name": "sub_1AF24",
+    "size": 36
+  },
+  {
+    "address": "0x1af48",
+    "name": "_$s7ellekit16ExceptionHandlerC13startPortLoopyyFyyYbcfU_TA",
+    "size": 8
+  },
+  {
+    "address": "0x1af50",
+    "name": "_$s7ellekit16ExceptionHandlerC8portLoopyyACSgFZ",
+    "size": 1068
+  },
+  {
+    "address": "0x1b37c",
+    "name": "_$sIegh_IeyBh_TR",
+    "size": 44
+  },
+  {
+    "address": "0x1b3a8",
+    "name": "_block_copy_helper",
+    "size": 20
+  },
+  {
+    "address": "0x1b3bc",
+    "name": "_block_destroy_helper",
+    "size": 8
+  },
+  {
+    "address": "0x1b3c4",
+    "name": "_$s8Dispatch0A13WorkItemFlagsVACs10SetAlgebraAAWlTm",
+    "size": 64
+  },
+  {
+    "address": "0x1b404",
+    "name": "_$sSay8Dispatch0A13WorkItemFlagsVGMa",
+    "size": 84
+  },
+  {
+    "address": "0x1b458",
+    "name": "_$s7ellekit16ExceptionHandlerC8portLoopyyACSgFZ6$deferL0_yyF",
+    "size": 188
+  },
+  {
+    "address": "0x1b514",
+    "name": "_$s7ellekit16ExceptionHandlerCfd",
+    "size": 28
+  },
+  {
+    "address": "0x1b530",
+    "name": "_$s7ellekit16ExceptionHandlerCfD",
+    "size": 36
+  },
+  {
+    "address": "0x1b554",
+    "name": "_$s7ellekit16ExceptionHandlerCMa",
+    "size": 32
+  },
+  {
+    "address": "0x1b574",
+    "name": "_$s7ellekit6pacizaCyAcA8RegisterOcfC",
+    "size": 92
+  },
+  {
+    "address": "0x1b5d0",
+    "name": "_$s7ellekit6pacizaCyAcA8RegisterOcfc",
+    "size": 44
+  },
+  {
+    "address": "0x1b5fc",
+    "name": "_$s7ellekit6pacizaCAA11InstructionA2aDP7encodedxSi_tcfCTW",
+    "size": 12
+  },
+  {
+    "address": "0x1b608",
+    "name": "_$s7ellekit5paciaCyAcA8RegisterO_AEtcfC",
+    "size": 144
+  },
+  {
+    "address": "0x1b698",
+    "name": "_$s7ellekit5paciaCyAcA8RegisterO_AEtcfc",
+    "size": 80
+  },
+  {
+    "address": "0x1b6e8",
+    "name": "_$s7ellekit5paciaCAA11InstructionA2aDP7encodedxSi_tcfCTW",
+    "size": 12
+  },
+  {
+    "address": "0x1b6f4",
+    "name": "_$s7ellekit6pacizaCMa",
+    "size": 32
+  },
+  {
+    "address": "0x1b714",
+    "name": "_$s7ellekit5paciaCMa",
+    "size": 32
+  },
+  {
+    "address": "0x1b734",
+    "name": "_$s7ellekit15checkBranchLinkySbSays5UInt8VGF",
+    "size": 40
+  },
+  {
+    "address": "0x1b75c",
+    "name": "_$s7ellekit16findFunctionSize_3maxSiSgSv_SitF",
+    "size": 648
+  },
+  {
+    "address": "0x1b9e4",
+    "name": "_$s7ellekit11checkBranchySbSays5UInt8VGF",
+    "size": 112
+  },
+  {
+    "address": "0x1ba54",
+    "name": "_$s7ellekit13hookClassPairyyyXlXp_yXlXpyXlXptF",
+    "size": 792
+  },
+  {
+    "address": "0x1bd6c",
+    "name": "_$s7ellekit11messageHookyyyXlXp_10ObjectiveC8SelectorVs13OpaquePointerVSpySvSgGSgtF",
+    "size": 360
+  },
+  {
+    "address": "0x1bed4",
+    "name": "_$ss17FixedWidthIntegerP7ellekitE7reversexyF",
+    "size": 1120
+  },
+  {
+    "address": "0x1c334",
+    "name": "_$sS2iSzsWl",
+    "size": 64
+  },
+  {
+    "address": "0x1c374",
+    "name": "_compatibilityInitializeAvailabilityCheck",
+    "size": 8
+  },
+  {
+    "address": "0x1c37c",
+    "name": "___isPlatformVersionAtLeast",
+    "size": 392
+  },
+  {
+    "address": "0x1c504",
+    "name": "_initializeAvailabilityCheck",
+    "size": 8
+  },
+  {
+    "address": "0x1c50c",
+    "name": "__initializeAvailabilityCheck",
+    "size": 792
+  },
+  {
+    "address": "0x1c824",
+    "name": "_OUTLINED_FUNCTION_0",
+    "size": 24
+  },
+  {
+    "address": "0x1c83c",
+    "name": "__ZN5swift34swift50override_conformsToProtocolEPKNS_14TargetMetadataINS_9InProcessEEEPKNS_24TargetProtocolDescriptorIS1_EEPFPKNS_18TargetWitnessTableIS1_EES4_S8_E",
+    "size": 108
+  },
+  {
+    "address": "0x1c8a8",
+    "name": "__ZL24registerAddImageCallbackPv",
+    "size": 12
+  },
+  {
+    "address": "0x1c8b4",
+    "name": "__ZL16addImageCallbackPK11mach_headerl",
+    "size": 152
+  },
+  {
+    "address": "0x1c94c",
+    "name": "__ZN5swift34swift50override_conformsToProtocolEPKNS_14TargetMetadataINS_9InProcessEEEPKNS_24TargetProtocolDescriptorIS1_EEPFPKNS_18TargetWitnessTableIS1_EES4_S8_E.cold.1",
+    "size": 24
+  },
+  {
+    "address": "0x1c964",
+    "name": "__ZL29installGetClassHook_untrustedv",
+    "size": 68
+  },
+  {
+    "address": "0x1c9a8",
+    "name": "__ZL35getObjCClassByMangledName_untrustedPKcPP10objc_class",
+    "size": 56
+  },
+  {
+    "address": "0x1c9e0",
+    "name": "__Z34_swiftoverride_class_getSuperclassPKN5swift14TargetMetadataINS_9InProcessEEE",
+    "size": 180
+  },
+  {
+    "address": "0x1ca94",
+    "name": "__ZN5swift17getRootSuperclassEv",
+    "size": 48
+  },
+  {
+    "address": "0x1cac4",
+    "name": "__ZN5swift39swift51override_conformsToSwiftProtocolEPKNS_14TargetMetadataINS_9InProcessEEEPKNS_24TargetProtocolDescriptorIS1_EEN7__swift9__runtime4llvm9StringRefEPFPKNS_35TargetProtocolConformanceDescriptorIS1_EES4_S8_SC_E",
+    "size": 1272
+  },
+  {
+    "address": "0x1cfbc",
+    "name": "__ZN5swift4LazyIN12_GLOBAL__N_116ConformanceStateEE19defaultInitCallbackEPv",
+    "size": 96
+  },
+  {
+    "address": "0x1d01c",
+    "name": "__ZN12_GLOBAL__N_124searchInConformanceCacheEPKN5swift14TargetMetadataINS0_9InProcessEEEPKNS0_24TargetProtocolDescriptorIS2_EE",
+    "size": 680
+  },
+  {
+    "address": "0x1d2c4",
+    "name": "__ZN12_GLOBAL__N_116ConformanceState12cacheFailureEPKvPKN5swift24TargetProtocolDescriptorINS3_9InProcessEEEm",
+    "size": 284
+  },
+  {
+    "address": "0x1d3e0",
+    "name": "__ZZZL20getObjCClassMetadataPKN5swift19TargetClassMetadataINS_9InProcessENS_33TargetAnyClassMetadataObjCInteropIS1_EEEEENK3$_0clEvENUlPvE_8__invokeES8_",
+    "size": 48
+  },
+  {
+    "address": "0x1d410",
+    "name": "__ZZZN5swift17getRootSuperclassEvENK3$_0clEvENUlPvE_8__invokeES1_",
+    "size": 44
+  },
+  {
+    "address": "0x1d43c",
+    "name": "__ZZZL24getTypeContextDescriptorPKN5swift14TargetMetadataINS_9InProcessEEEENK3$_0clEvENUlPvE_8__invokeES6_",
+    "size": 48
+  },
+  {
+    "address": "0x1d46c",
+    "name": "__ZN12_GLOBAL__N_122override_equalContextsEPKN5swift23TargetContextDescriptorINS0_9InProcessEEES5_",
+    "size": 324
+  },
+  {
+    "address": "0x1d5b0",
+    "name": "__ZN12_GLOBAL__N_122getTypeContextIdentityEPKN5swift27TargetTypeContextDescriptorINS0_9InProcessEEE",
+    "size": 204
+  },
+  {
+    "address": "0x1d67c",
+    "name": "__ZN12_GLOBAL__N_116addImageCallbackEPK11mach_header",
+    "size": 452
+  },
+  {
+    "address": "0x1d840",
+    "name": "__ZN12_GLOBAL__N_116addImageCallbackEPK11mach_headerl",
+    "size": 4
+  },
+  {
+    "address": "0x1d844",
+    "name": "_OUTLINED_FUNCTION_0_0",
+    "size": 24
+  },
+  {
+    "address": "0x1d85c",
+    "name": "_OUTLINED_FUNCTION_1",
+    "size": 24
+  },
+  {
+    "address": "0x1d874",
+    "name": "__Z34_swiftoverride_class_getSuperclassPKN5swift14TargetMetadataINS_9InProcessEEE.cold.1",
+    "size": 4
+  },
+  {
+    "address": "0x1d878",
+    "name": "__ZN5swift17getRootSuperclassEv.cold.1",
+    "size": 24
+  },
+  {
+    "address": "0x1d890",
+    "name": "__ZN5swift39swift51override_conformsToSwiftProtocolEPKNS_14TargetMetadataINS_9InProcessEEEPKNS_24TargetProtocolDescriptorIS1_EEN7__swift9__runtime4llvm9StringRefEPFPKNS_35TargetProtocolConformanceDescriptorIS1_EES4_S8_SC_E.cold.1",
+    "size": 4
+  },
+  {
+    "address": "0x1d894",
+    "name": "__ZN5swift39swift51override_conformsToSwiftProtocolEPKNS_14TargetMetadataINS_9InProcessEEEPKNS_24TargetProtocolDescriptorIS1_EEN7__swift9__runtime4llvm9StringRefEPFPKNS_35TargetProtocolConformanceDescriptorIS1_EES4_S8_SC_E.cold.2",
+    "size": 20
+  },
+  {
+    "address": "0x1d8a8",
+    "name": "__ZN5swift39swift51override_conformsToSwiftProtocolEPKNS_14TargetMetadataINS_9InProcessEEEPKNS_24TargetProtocolDescriptorIS1_EEN7__swift9__runtime4llvm9StringRefEPFPKNS_35TargetProtocolConformanceDescriptorIS1_EES4_S8_SC_E.cold.4",
+    "size": 40
+  },
+  {
+    "address": "0x1d8d0",
+    "name": "__ZN12_GLOBAL__N_124searchInConformanceCacheEPKN5swift14TargetMetadataINS0_9InProcessEEEPKNS0_24TargetProtocolDescriptorIS2_EE.cold.2",
+    "size": 24
+  },
+  {
+    "address": "0x1d8e8",
+    "name": "__ZN5swift9AsyncTask10waitFutureEPS0_PNS_12AsyncContextEPU14swiftasynccallFvU19swift_async_contextS3_ES3_PNS_11OpaqueValueE",
+    "size": 580
+  },
+  {
+    "address": "0x1db2c",
+    "name": "__ZN5swift38swift56override_swift_task_future_waitEPNS_11OpaqueValueEPNS_12AsyncContextEPNS_9AsyncTaskEPU14swiftasynccallFvU19swift_async_contextS3_ES3_PU14swiftasynccallFvS1_U19swift_async_contextS3_S5_S7_S3_E",
+    "size": 232
+  },
+  {
+    "address": "0x1dc14",
+    "name": "__ZL31task_future_wait_resume_adapterPN5swift12AsyncContextE",
+    "size": 8
+  },
+  {
+    "address": "0x1dc1c",
+    "name": "__ZN5swift47swift56override_swift_task_future_wait_throwingEPNS_11OpaqueValueEPNS_12AsyncContextEPNS_9AsyncTaskEPU14swiftasynccallFvU19swift_async_contextS3_U13swift_contextPvES3_PU14swiftasynccallFvS1_U19swift_async_contextS3_S5_S8_S3_E",
+    "size": 272
+  },
+  {
+    "address": "0x1dd2c",
+    "name": "__ZL33task_wait_throwing_resume_adapterPN5swift12AsyncContextE",
+    "size": 16
+  },
+  {
+    "address": "0x1dd3c",
+    "name": "__ZN5swift40swift56override_swift_task_create_commonEmPNS_16TaskOptionRecordEPKNS_14TargetMetadataINS_9InProcessEEEPU14swiftasynccallFvU19swift_async_contextPNS_12AsyncContextEEPvmPU9swiftcallFNS_19AsyncTaskAndContextEmS1_S6_SA_SB_mE",
+    "size": 16
+  },
+  {
+    "address": "0x1dd4c",
+    "name": "__ZN5swift9AsyncTask18flagAsRunning_slowEv",
+    "size": 352
+  },
+  {
+    "address": "0x1deac",
+    "name": "__ZN5swift9AsyncTask20flagAsSuspended_slowEv",
+    "size": 352
+  },
+  {
+    "address": "0x1e00c",
+    "name": "__ZN5swift31swift_task_escalateBackdeploy56EPNS_9AsyncTaskENS_11JobPriorityE",
+    "size": 80
+  },
+  {
+    "address": "0x1e05c",
+    "name": "__ZZZN5swift31swift_task_escalateBackdeploy56EPNS_9AsyncTaskENS_11JobPriorityEENK3$_0clEvENUlPvE_8__invokeES4_",
+    "size": 48
+  },
+  {
+    "address": "0x1e08c",
+    "name": "__ZN5swiftL25waitForStatusRecordUnlockEPNS_9AsyncTaskERNS_16ActiveTaskStatusE",
+    "size": 212
+  },
+  {
+    "address": "0x1e160",
+    "name": "__ZN5swift31swift_task_escalateBackdeploy56EPNS_9AsyncTaskENS_11JobPriorityE.cold.1",
+    "size": 24
+  },
+  {
+    "address": "0x1e178",
+    "name": "__ZN5swift21swift_task_getCurrentEv",
+    "size": 8
+  },
+  {
+    "address": "0x1e180",
+    "name": "__ZN5swift24_swift_task_clearCurrentEv",
+    "size": 52
+  },
+  {
+    "address": "0x1e1b4",
+    "name": "__ZN5swift16adoptTaskVoucherEPNS_9AsyncTaskE",
+    "size": 44
+  },
+  {
+    "address": "0x1e1e0",
+    "name": "__ZN5swift18restoreTaskVoucherEPNS_9AsyncTaskE",
+    "size": 176
+  },
+  {
+    "address": "0x1e290",
+    "name": "__ZL27_initializeVouchersDisabledPv",
+    "size": 56
+  },
+  {
+    "address": "0x1e2c8",
+    "name": "__ZN5swift14VoucherManager9swapToJobEPNS_3JobE",
+    "size": 196
+  },
+  {
+    "address": "0x1e38c",
+    "name": "__ZZZL25swift_voucher_needs_adoptP9voucher_sENKUlvE_clEvENUlPvE_8__invokeES2_",
+    "size": 48
+  },
+  {
+    "address": "0x1e3bc",
+    "name": "_OUTLINED_FUNCTION_0_1",
+    "size": 24
+  },
+  {
+    "address": "0x1e3d4",
+    "name": "__ZN5swift18restoreTaskVoucherEPNS_9AsyncTaskE.cold.1",
+    "size": 4
+  },
+  {
+    "address": "0x1e3d8",
+    "name": "__ZN5swift19_swift_tsan_acquireEPv",
+    "size": 72
+  },
+  {
+    "address": "0x1e420",
+    "name": "__ZN5swift19_swift_tsan_releaseEPv",
+    "size": 72
+  },
+  {
+    "address": "0x1e468",
+    "name": "__ZZZN5swift19_swift_tsan_acquireEPvENK3$_0clEvENUlS0_E_8__invokeES0_",
+    "size": 48
+  },
+  {
+    "address": "0x1e498",
+    "name": "__ZZZN5swift19_swift_tsan_releaseEPvENK3$_0clEvENUlS0_E_8__invokeES0_",
+    "size": 48
+  },
+  {
+    "address": "0x1e4c8",
+    "name": "__ZN5swift19_swift_tsan_acquireEPv.cold.1",
+    "size": 24
+  },
+  {
+    "address": "0x1e4e0",
+    "name": "__ZN5swift19_swift_tsan_releaseEPv.cold.1",
+    "size": 24
+  },
+  {
+    "address": "0x1e4f8",
+    "name": "__ZN5swift19MutexPlatformHelper4initER16os_unfair_lock_sb",
+    "size": 8
+  },
+  {
+    "address": "0x1e500",
+    "name": "__ZN5swift19MutexPlatformHelper4lockER16os_unfair_lock_s",
+    "size": 20
+  },
+  {
+    "address": "0x1e514",
+    "name": "__ZN5swift19MutexPlatformHelper6unlockER16os_unfair_lock_s",
+    "size": 20
+  },
+  {
+    "address": "0x1e528",
+    "name": "__ZN5swift46swift_task_enterThreadLocalContextBackdeploy56EPc",
+    "size": 72
+  },
+  {
+    "address": "0x1e570",
+    "name": "__ZN5swift45swift_task_exitThreadLocalContextBackdeploy56EPc",
+    "size": 72
+  },
+  {
+    "address": "0x1e5b8",
+    "name": "__ZZZN5swift46swift_task_enterThreadLocalContextBackdeploy56EPcENK3$_0clEvENUlPvE_8__invokeES2_",
+    "size": 48
+  },
+  {
+    "address": "0x1e5e8",
+    "name": "__ZZZN5swift45swift_task_exitThreadLocalContextBackdeploy56EPcENK3$_0clEvENUlPvE_8__invokeES2_",
+    "size": 48
+  },
+  {
+    "address": "0x1e618",
+    "name": "__ZN5swift46swift_task_enterThreadLocalContextBackdeploy56EPc.cold.1",
+    "size": 24
+  },
+  {
+    "address": "0x1e630",
+    "name": "__ZN5swift45swift_task_exitThreadLocalContextBackdeploy56EPc.cold.1",
+    "size": 24
+  },
+  {
+    "address": "0x1e648",
+    "name": "___isPlatformVersionAtLeast.cold.1",
+    "size": 24
+  },
+  {
+    "address": "0x1e660",
+    "name": "___isPlatformVersionAtLeast.cold.2",
+    "size": 4
+  },
+  {
+    "address": "0x1e664",
+    "name": "__ZN5swift28swift_Concurrency_fatalErrorEjPKcz",
+    "size": 12
+  },
+  {
+    "address": "0x1e670",
+    "name": "_$s10Foundation22_convertNSErrorToErrorys0E0_pSo0C0CSgF",
+    "size": 12
+  },
+  {
+    "address": "0x1e67c",
+    "name": "_$s10Foundation3URLV19_bridgeToObjectiveCSo5NSURLCyF",
+    "size": 12
+  },
+  {
+    "address": "0x1e688",
+    "name": "_$s10Foundation3URLV36_unconditionallyBridgeFromObjectiveCyACSo5NSURLCSgFZ",
+    "size": 12
+  },
+  {
+    "address": "0x1e694",
+    "name": "_$s10Foundation3URLVMa",
+    "size": 12
+  },
+  {
+    "address": "0x1e6a0",
+    "name": "_$s10Foundation4DataV19_bridgeToObjectiveCSo6NSDataCyF",
+    "size": 12
+  },
+  {
+    "address": "0x1e6ac",
+    "name": "_$s10Foundation4DataV5write2to7optionsyAA3URLV_So20NSDataWritingOptionsVtKF",
+    "size": 12
+  },
+  {
+    "address": "0x1e6b8",
+    "name": "_$s2os6LoggerV9subsystem8categoryACSS_SStcfC",
+    "size": 12
+  },
+  {
+    "address": "0x1e6c4",
+    "name": "_$s2os6LoggerVMa",
+    "size": 12
+  },
+  {
+    "address": "0x1e6d0",
+    "name": "_$s8Dispatch0A13WorkItemFlagsVMa",
+    "size": 12
+  },
+  {
+    "address": "0x1e6dc",
+    "name": "_$s8Dispatch0A3QoSV11unspecifiedACvgZ",
+    "size": 12
+  },
+  {
+    "address": "0x1e6e8",
+    "name": "_$s8Dispatch0A3QoSVMa",
+    "size": 12
+  },
+  {
+    "address": "0x1e6f4",
+    "name": "_$sSR5start5countSRyxGSPyxGSg_SitcfC",
+    "size": 12
+  },
+  {
+    "address": "0x1e700",
+    "name": "_$sSS10FoundationE19_bridgeToObjectiveCSo8NSStringCyF",
+    "size": 12
+  },
+  {
+    "address": "0x1e70c",
+    "name": "_$sSS10FoundationE36_unconditionallyBridgeFromObjectiveCySSSo8NSStringCSgFZ",
+    "size": 12
+  },
+  {
+    "address": "0x1e718",
+    "name": "_$sSS10FoundationE4data8encodingSSSgAA4DataVh_SSAAE8EncodingVtcfC",
+    "size": 12
+  },
+  {
+    "address": "0x1e724",
+    "name": "_$sSS10FoundationE6format_S2Sh_s7CVarArg_pdtcfC",
+    "size": 12
+  },
+  {
+    "address": "0x1e730",
+    "name": "_$sSS10FoundationE8EncodingV4utf8ACvgZ",
+    "size": 12
+  },
+  {
+    "address": "0x1e73c",
+    "name": "_$sSS10FoundationE8EncodingVMa",
+    "size": 12
+  },
+  {
+    "address": "0x1e748",
+    "name": "_$sSS10describingSSx_tclufC",
+    "size": 12
+  },
+  {
+    "address": "0x1e754",
+    "name": "_$sSS10reflectingSSx_tclufC",
+    "size": 12
+  },
+  {
+    "address": "0x1e760",
+    "name": "_$sSS11utf8CStrings15ContiguousArrayVys4Int8VGvg",
+    "size": 12
+  },
+  {
+    "address": "0x1e76c",
+    "name": "_$sSS14_fromSubstringySSSshFZ",
+    "size": 12
+  },
+  {
+    "address": "0x1e778",
+    "name": "_$sSS5countSivg",
+    "size": 12
+  },
+  {
+    "address": "0x1e784",
+    "name": "_$sSS5index_8offsetBy07limitedC0SS5IndexVSgAE_SiAEtF",
+    "size": 12
+  },
+  {
+    "address": "0x1e790",
+    "name": "_$sSS6appendyySSF",
+    "size": 12
+  },
+  {
+    "address": "0x1e79c",
+    "name": "_$sSS7cStringSSSPys4Int8VG_tcfC",
+    "size": 12
+  },
+  {
+    "address": "0x1e7a8",
+    "name": "_$sSS7cStringSSSPys5UInt8VG_tcfC",
+    "size": 12
+  },
+  {
+    "address": "0x1e7b4",
+    "name": "_$sSSySJSS5IndexVcig",
+    "size": 12
+  },
+  {
+    "address": "0x1e7c0",
+    "name": "_$sSSySsSnySS5IndexVGcig",
+    "size": 12
+  },
+  {
+    "address": "0x1e7cc",
+    "name": "_$sSaMa",
+    "size": 12
+  },
+  {
+    "address": "0x1e7d8",
+    "name": "_$sSo17OS_dispatch_queueC8DispatchE10AttributesV10concurrentAEvgZ",
+    "size": 12
+  },
+  {
+    "address": "0x1e7e4",
+    "name": "_$sSo17OS_dispatch_queueC8DispatchE10AttributesVMa",
+    "size": 12
+  },
+  {
+    "address": "0x1e7f0",
+    "name": "_$sSo17OS_dispatch_queueC8DispatchE20AutoreleaseFrequencyOMa",
+    "size": 12
+  },
+  {
+    "address": "0x1e7fc",
+    "name": "_$sSo17OS_dispatch_queueC8DispatchE5async5group3qos5flags7executeySo0a1_b1_F0CSg_AC0D3QoSVAC0D13WorkItemFlagsVyyXBtF",
+    "size": 12
+  },
+  {
+    "address": "0x1e808",
+    "name": "_$sSo17OS_dispatch_queueC8DispatchE5label3qos10attributes20autoreleaseFrequency6targetABSS_AC0D3QoSVAbCE10AttributesVAbCE011AutoreleaseI0OABSgtcfC",
+    "size": 12
+  },
+  {
+    "address": "0x1e814",
+    "name": "_$sSo8NSStringC10FoundationE13stringLiteralABs12StaticStringV_tcfC",
+    "size": 12
+  },
+  {
+    "address": "0x1e820",
+    "name": "_$sSy10FoundationE10components11separatedBySaySSGqd___tSyRd__lF",
+    "size": 12
+  },
+  {
+    "address": "0x1e82c",
+    "name": "_$sSy10FoundationE4data5using20allowLossyConversionAA4DataVSgSSAAE8EncodingV_SbtF",
+    "size": 12
+  },
+  {
+    "address": "0x1e838",
+    "name": "_$sSy10FoundationE8containsySbqd__SyRd__lF",
+    "size": 12
+  },
+  {
+    "address": "0x1e844",
+    "name": "_$sSz1aoiyxx_xtFZTj",
+    "size": 12
+  },
+  {
+    "address": "0x1e850",
+    "name": "_$sSz1ooiyxx_xtFZTj",
+    "size": 12
+  },
+  {
+    "address": "0x1e85c",
+    "name": "_$sSz2ggoiyxx_qd__tSzRd__lFZTj",
+    "size": 12
+  },
+  {
+    "address": "0x1e868",
+    "name": "_$sSz2lloiyxx_qd__tSzRd__lFZTj",
+    "size": 12
+  },
+  {
+    "address": "0x1e874",
+    "name": "_$ss10SetAlgebraPyxqd__ncSTRd__7ElementQyd__ACRtzlufCTj",
+    "size": 12
+  },
+  {
+    "address": "0x1e880",
+    "name": "_$ss10_HashTableV12previousHole6beforeAB6BucketVAF_tF",
+    "size": 12
+  },
+  {
+    "address": "0x1e88c",
+    "name": "_$ss11_StringGutsV4growyySiF",
+    "size": 12
+  },
+  {
+    "address": "0x1e898",
+    "name": "_$ss12_ArrayBufferV19firstElementAddressSpyxGvg",
+    "size": 12
+  },
+  {
+    "address": "0x1e8a4",
+    "name": "_$ss12_ArrayBufferV7_natives011_ContiguousaB0VyxGvg",
+    "size": 12
+  },
+  {
+    "address": "0x1e8b0",
+    "name": "_$ss12_ArrayBufferV9_isNativeSbvg",
+    "size": 12
+  },
+  {
+    "address": "0x1e8bc",
+    "name": "_$ss12_ArrayBufferVMa",
+    "size": 12
+  },
+  {
+    "address": "0x1e8c8",
+    "name": "_$ss15ContiguousArrayVyAByxGqd__c7ElementQyd__RszSTRd__lufC",
+    "size": 12
+  },
+  {
+    "address": "0x1e8d4",
+    "name": "_$ss17_assertionFailure__4file4line5flagss5NeverOs12StaticStringV_SSAHSus6UInt32VtF",
+    "size": 12
+  },
+  {
+    "address": "0x1e8e0",
+    "name": "_$ss18_CocoaArrayWrapperV8endIndexSivg",
+    "size": 12
+  },
+  {
+    "address": "0x1e8ec",
+    "name": "_$ss18_DictionaryStorageC4copy8originalAByxq_Gs05__RawaB0C_tFZ",
+    "size": 12
+  },
+  {
+    "address": "0x1e8f8",
+    "name": "_$ss18_DictionaryStorageC6resize8original8capacity4moveAByxq_Gs05__RawaB0C_SiSbtFZ",
+    "size": 12
+  },
+  {
+    "address": "0x1e904",
+    "name": "_$ss22_ContiguousArrayBufferV19firstElementAddressSpyxGvg",
+    "size": 12
+  },
+  {
+    "address": "0x1e910",
+    "name": "_$ss22_ContiguousArrayBufferV5countSivg",
+    "size": 12
+  },
+  {
+    "address": "0x1e91c",
+    "name": "_$ss22_ContiguousArrayBufferVyAByxGs02__aB11StorageBaseCcfC",
+    "size": 12
+  },
+  {
+    "address": "0x1e928",
+    "name": "_$ss23CustomStringConvertibleP11descriptionSSvgTj",
+    "size": 12
+  },
+  {
+    "address": "0x1e934",
+    "name": "_$ss27ExpressibleByIntegerLiteralP07integerD0x0cD4TypeQz_tcfCTj",
+    "size": 12
+  },
+  {
+    "address": "0x1e940",
+    "name": "_$ss27_stringCompareWithSmolCheck__9expectingSbs11_StringGutsV_ADs01_G16ComparisonResultOtF",
+    "size": 12
+  },
+  {
+    "address": "0x1e94c",
+    "name": "_$ss35_ExpressibleByBuiltinIntegerLiteralP08_builtindE0xBI_tcfCTj",
+    "size": 12
+  },
+  {
+    "address": "0x1e958",
+    "name": "_$ss38_bridgeAnythingNonVerbatimToObjectiveCyyXlxnlF",
+    "size": 12
+  },
+  {
+    "address": "0x1e964",
+    "name": "_$ss53KEY_TYPE_OF_DICTIONARY_VIOLATES_HASHABLE_REQUIREMENTSys5NeverOypXpF",
+    "size": 12
+  },
+  {
+    "address": "0x1e970",
+    "name": "_$ss5ErrorPsE19_getEmbeddedNSErroryXlSgyF",
+    "size": 12
+  },
+  {
+    "address": "0x1e97c",
+    "name": "_$ss5ErrorPsE5_codeSivg",
+    "size": 12
+  },
+  {
+    "address": "0x1e988",
+    "name": "_$ss5ErrorPsE7_domainSSvg",
+    "size": 12
+  },
+  {
+    "address": "0x1e994",
+    "name": "_$ss5ErrorPsE9_userInfoyXlSgvg",
+    "size": 12
+  },
+  {
+    "address": "0x1e9a0",
+    "name": "_$ss6HasherV5_hash4seed_S2i_SutFZ",
+    "size": 12
+  },
+  {
+    "address": "0x1e9ac",
+    "name": "_$ss6HasherV5_seedABSi_tcfC",
+    "size": 12
+  },
+  {
+    "address": "0x1e9b8",
+    "name": "_$ss6HasherV8_combineyySuF",
+    "size": 12
+  },
+  {
+    "address": "0x1e9c4",
+    "name": "_$ss6HasherV9_finalizeSiyF",
+    "size": 12
+  },
+  {
+    "address": "0x1e9d0",
+    "name": "__Block_copy",
+    "size": 12
+  },
+  {
+    "address": "0x1e9dc",
+    "name": "__Block_release",
+    "size": 12
+  },
+  {
+    "address": "0x1e9e8",
+    "name": "__ZdlPv",
+    "size": 12
+  },
+  {
+    "address": "0x1e9f4",
+    "name": "__Znwm",
+    "size": 12
+  },
+  {
+    "address": "0x1ea00",
+    "name": "___stack_chk_fail",
+    "size": 12
+  },
+  {
+    "address": "0x1ea0c",
+    "name": "__availability_version_check",
+    "size": 12
+  },
+  {
+    "address": "0x1ea18",
+    "name": "__dyld_get_image_header",
+    "size": 12
+  },
+  {
+    "address": "0x1ea24",
+    "name": "__dyld_get_image_name",
+    "size": 12
+  },
+  {
+    "address": "0x1ea30",
+    "name": "__dyld_get_image_vmaddr_slide",
+    "size": 12
+  },
+  {
+    "address": "0x1ea3c",
+    "name": "__dyld_image_count",
+    "size": 12
+  },
+  {
+    "address": "0x1ea48",
+    "name": "__dyld_register_func_for_add_image",
+    "size": 12
+  },
+  {
+    "address": "0x1ea54",
+    "name": "__dyld_shared_cache_contains_path",
+    "size": 12
+  },
+  {
+    "address": "0x1ea60",
+    "name": "__swift_stdlib_operatingSystemVersion",
+    "size": 12
+  },
+  {
+    "address": "0x1ea6c",
+    "name": "_abort",
+    "size": 12
+  },
+  {
+    "address": "0x1ea78",
+    "name": "_bzero",
+    "size": 12
+  },
+  {
+    "address": "0x1ea84",
+    "name": "_class_addMethod",
+    "size": 12
+  },
+  {
+    "address": "0x1ea90",
+    "name": "_class_copyMethodList",
+    "size": 12
+  },
+  {
+    "address": "0x1ea9c",
+    "name": "_class_getClassMethod",
+    "size": 12
+  },
+  {
+    "address": "0x1eaa8",
+    "name": "_class_getInstanceMethod",
+    "size": 12
+  },
+  {
+    "address": "0x1eab4",
+    "name": "_class_getInstanceVariable",
+    "size": 12
+  },
+  {
+    "address": "0x1eac0",
+    "name": "_class_getMethodImplementation",
+    "size": 12
+  },
+  {
+    "address": "0x1eacc",
+    "name": "_class_getSuperclass",
+    "size": 12
+  },
+  {
+    "address": "0x1ead8",
+    "name": "_class_replaceMethod",
+    "size": 12
+  },
+  {
+    "address": "0x1eae4",
+    "name": "_csops",
+    "size": 12
+  },
+  {
+    "address": "0x1eaf0",
+    "name": "_dispatch_once_f",
+    "size": 12
+  },
+  {
+    "address": "0x1eafc",
+    "name": "_dladdr",
+    "size": 12
+  },
+  {
+    "address": "0x1eb08",
+    "name": "_dlsym",
+    "size": 12
+  },
+  {
+    "address": "0x1eb14",
+    "name": "_exit",
+    "size": 12
+  },
+  {
+    "address": "0x1eb20",
+    "name": "_fclose",
+    "size": 12
+  },
+  {
+    "address": "0x1eb2c",
+    "name": "_fopen",
+    "size": 12
+  },
+  {
+    "address": "0x1eb38",
+    "name": "_fread",
+    "size": 12
+  },
+  {
+    "address": "0x1eb44",
+    "name": "_free",
+    "size": 12
+  },
+  {
+    "address": "0x1eb50",
+    "name": "_fseek",
+    "size": 12
+  },
+  {
+    "address": "0x1eb5c",
+    "name": "_fsetpos",
+    "size": 12
+  },
+  {
+    "address": "0x1eb68",
+    "name": "_ftell",
+    "size": 12
+  },
+  {
+    "address": "0x1eb74",
+    "name": "_getpid",
+    "size": 12
+  },
+  {
+    "address": "0x1eb80",
+    "name": "_getsectiondata",
+    "size": 12
+  },
+  {
+    "address": "0x1eb8c",
+    "name": "_ivar_getOffset",
+    "size": 12
+  },
+  {
+    "address": "0x1eb98",
+    "name": "_mach_error_string",
+    "size": 12
+  },
+  {
+    "address": "0x1eba4",
+    "name": "_mach_msg",
+    "size": 12
+  },
+  {
+    "address": "0x1ebb0",
+    "name": "_mach_port_allocate",
+    "size": 12
+  },
+  {
+    "address": "0x1ebbc",
+    "name": "_mach_port_deallocate",
+    "size": 12
+  },
+  {
+    "address": "0x1ebc8",
+    "name": "_mach_port_insert_right",
+    "size": 12
+  },
+  {
+    "address": "0x1ebd4",
+    "name": "_mach_thread_self",
+    "size": 12
+  },
+  {
+    "address": "0x1ebe0",
+    "name": "_mach_vm_allocate",
+    "size": 12
+  },
+  {
+    "address": "0x1ebec",
+    "name": "_mach_vm_deallocate",
+    "size": 12
+  },
+  {
+    "address": "0x1ebf8",
+    "name": "_mach_vm_protect",
+    "size": 12
+  },
+  {
+    "address": "0x1ec04",
+    "name": "_malloc",
+    "size": 12
+  },
+  {
+    "address": "0x1ec10",
+    "name": "_malloc_size",
+    "size": 12
+  },
+  {
+    "address": "0x1ec1c",
+    "name": "_memcmp",
+    "size": 12
+  },
+  {
+    "address": "0x1ec28",
+    "name": "_memcpy",
+    "size": 12
+  },
+  {
+    "address": "0x1ec34",
+    "name": "_memmove",
+    "size": 12
+  },
+  {
+    "address": "0x1ec40",
+    "name": "_method_exchangeImplementations",
+    "size": 12
+  },
+  {
+    "address": "0x1ec4c",
+    "name": "_method_getImplementation",
+    "size": 12
+  },
+  {
+    "address": "0x1ec58",
+    "name": "_method_getName",
+    "size": 12
+  },
+  {
+    "address": "0x1ec64",
+    "name": "_method_getTypeEncoding",
+    "size": 12
+  },
+  {
+    "address": "0x1ec70",
+    "name": "_objc_allocWithZone",
+    "size": 12
+  },
+  {
+    "address": "0x1ec7c",
+    "name": "_objc_autorelease",
+    "size": 12
+  },
+  {
+    "address": "0x1ec88",
+    "name": "_objc_getAssociatedObject",
+    "size": 12
+  },
+  {
+    "address": "0x1ec94",
+    "name": "_objc_getClass",
+    "size": 12
+  },
+  {
+    "address": "0x1eca0",
+    "name": "_objc_lookUpClass",
+    "size": 12
+  },
+  {
+    "address": "0x1ecac",
+    "name": "_objc_release",
+    "size": 12
+  },
+  {
+    "address": "0x1ecb8",
+    "name": "_objc_retain",
+    "size": 12
+  },
+  {
+    "address": "0x1ecc4",
+    "name": "_objc_retainAutoreleasedReturnValue",
+    "size": 12
+  },
+  {
+    "address": "0x1ecd0",
+    "name": "_objc_setAssociatedObject",
+    "size": 12
+  },
+  {
+    "address": "0x1ecdc",
+    "name": "_objc_setHook_getClass",
+    "size": 12
+  },
+  {
+    "address": "0x1ece8",
+    "name": "_objc_sync_enter",
+    "size": 12
+  },
+  {
+    "address": "0x1ecf4",
+    "name": "_objc_sync_exit",
+    "size": 12
+  },
+  {
+    "address": "0x1ed00",
+    "name": "_object_getClass",
+    "size": 12
+  },
+  {
+    "address": "0x1ed0c",
+    "name": "_os_release",
+    "size": 12
+  },
+  {
+    "address": "0x1ed18",
+    "name": "_os_unfair_lock_lock",
+    "size": 12
+  },
+  {
+    "address": "0x1ed24",
+    "name": "_os_unfair_lock_unlock",
+    "size": 12
+  },
+  {
+    "address": "0x1ed30",
+    "name": "_posix_memalign",
+    "size": 12
+  },
+  {
+    "address": "0x1ed3c",
+    "name": "_printf",
+    "size": 12
+  },
+  {
+    "address": "0x1ed48",
+    "name": "_pthread_getspecific",
+    "size": 12
+  },
+  {
+    "address": "0x1ed54",
+    "name": "_pthread_mutex_init",
+    "size": 12
+  },
+  {
+    "address": "0x1ed60",
+    "name": "_pthread_mutex_lock",
+    "size": 12
+  },
+  {
+    "address": "0x1ed6c",
+    "name": "_pthread_mutex_unlock",
+    "size": 12
+  },
+  {
+    "address": "0x1ed78",
+    "name": "_pthread_setspecific",
+    "size": 12
+  },
+  {
+    "address": "0x1ed84",
+    "name": "_puts",
+    "size": 12
+  },
+  {
+    "address": "0x1ed90",
+    "name": "_realloc",
+    "size": 12
+  },
+  {
+    "address": "0x1ed9c",
+    "name": "_rewind",
+    "size": 12
+  },
+  {
+    "address": "0x1eda8",
+    "name": "_sandbox_check_by_audit_token",
+    "size": 12
+  },
+  {
+    "address": "0x1edb4",
+    "name": "_sel_getName",
+    "size": 12
+  },
+  {
+    "address": "0x1edc0",
+    "name": "_sscanf",
+    "size": 12
+  },
+  {
+    "address": "0x1edcc",
+    "name": "_strcmp",
+    "size": 12
+  },
+  {
+    "address": "0x1edd8",
+    "name": "_strdup",
+    "size": 12
+  },
+  {
+    "address": "0x1ede4",
+    "name": "_strlen",
+    "size": 12
+  },
+  {
+    "address": "0x1edf0",
+    "name": "_swift_allocError",
+    "size": 12
+  },
+  {
+    "address": "0x1edfc",
+    "name": "_swift_allocObject",
+    "size": 12
+  },
+  {
+    "address": "0x1ee08",
+    "name": "_swift_arrayDestroy",
+    "size": 12
+  },
+  {
+    "address": "0x1ee14",
+    "name": "_swift_arrayInitWithCopy",
+    "size": 12
+  },
+  {
+    "address": "0x1ee20",
+    "name": "_swift_beginAccess",
+    "size": 12
+  },
+  {
+    "address": "0x1ee2c",
+    "name": "_swift_bridgeObjectRelease",
+    "size": 12
+  },
+  {
+    "address": "0x1ee38",
+    "name": "_swift_bridgeObjectRetain",
+    "size": 12
+  },
+  {
+    "address": "0x1ee44",
+    "name": "_swift_deallocClassInstance",
+    "size": 12
+  },
+  {
+    "address": "0x1ee50",
+    "name": "_swift_deallocObject",
+    "size": 12
+  },
+  {
+    "address": "0x1ee5c",
+    "name": "_swift_dynamicCast",
+    "size": 12
+  },
+  {
+    "address": "0x1ee68",
+    "name": "_swift_endAccess",
+    "size": 12
+  },
+  {
+    "address": "0x1ee74",
+    "name": "_swift_errorRelease",
+    "size": 12
+  },
+  {
+    "address": "0x1ee80",
+    "name": "_swift_errorRetain",
+    "size": 12
+  },
+  {
+    "address": "0x1ee8c",
+    "name": "_swift_getAssociatedConformanceWitness",
+    "size": 12
+  },
+  {
+    "address": "0x1ee98",
+    "name": "_swift_getAssociatedTypeWitness",
+    "size": 12
+  },
+  {
+    "address": "0x1eea4",
+    "name": "_swift_getDynamicType",
+    "size": 12
+  },
+  {
+    "address": "0x1eeb0",
+    "name": "_swift_getForeignTypeMetadata",
+    "size": 12
+  },
+  {
+    "address": "0x1eebc",
+    "name": "_swift_getInitializedObjCClass",
+    "size": 12
+  },
+  {
+    "address": "0x1eec8",
+    "name": "_swift_getObjCClassFromMetadata",
+    "size": 12
+  },
+  {
+    "address": "0x1eed4",
+    "name": "_swift_getObjCClassMetadata",
+    "size": 12
+  },
+  {
+    "address": "0x1eee0",
+    "name": "_swift_getTypeByMangledNameInContext",
+    "size": 12
+  },
+  {
+    "address": "0x1eeec",
+    "name": "_swift_getWitnessTable",
+    "size": 12
+  },
+  {
+    "address": "0x1eef8",
+    "name": "_swift_initStackObject",
+    "size": 12
+  },
+  {
+    "address": "0x1ef04",
+    "name": "_swift_initStaticObject",
+    "size": 12
+  },
+  {
+    "address": "0x1ef10",
+    "name": "_swift_isClassType",
+    "size": 12
+  },
+  {
+    "address": "0x1ef1c",
+    "name": "_swift_isUniquelyReferenced_nonNull_native",
+    "size": 12
+  },
+  {
+    "address": "0x1ef28",
+    "name": "_swift_once",
+    "size": 12
+  },
+  {
+    "address": "0x1ef34",
+    "name": "_swift_release",
+    "size": 12
+  },
+  {
+    "address": "0x1ef40",
+    "name": "_swift_retain",
+    "size": 12
+  },
+  {
+    "address": "0x1ef4c",
+    "name": "_swift_retain_n",
+    "size": 12
+  },
+  {
+    "address": "0x1ef58",
+    "name": "_swift_setDeallocating",
+    "size": 12
+  },
+  {
+    "address": "0x1ef64",
+    "name": "_swift_slowAlloc",
+    "size": 12
+  },
+  {
+    "address": "0x1ef70",
+    "name": "_swift_slowDealloc",
+    "size": 12
+  },
+  {
+    "address": "0x1ef7c",
+    "name": "_swift_unknownObjectRelease",
+    "size": 12
+  },
+  {
+    "address": "0x1ef88",
+    "name": "_swift_weakDestroy",
+    "size": 12
+  },
+  {
+    "address": "0x1ef94",
+    "name": "_swift_weakInit",
+    "size": 12
+  },
+  {
+    "address": "0x1efa0",
+    "name": "_swift_weakLoadStrong",
+    "size": 12
+  },
+  {
+    "address": "0x1efac",
+    "name": "_swift_willThrow",
+    "size": 12
+  },
+  {
+    "address": "0x1efb8",
+    "name": "_sys_icache_invalidate",
+    "size": 12
+  },
+  {
+    "address": "0x1efc4",
+    "name": "_task_set_exception_ports",
+    "size": 12
+  },
+  {
+    "address": "0x1efd0",
+    "name": "_task_set_state",
+    "size": 12
+  },
+  {
+    "address": "0x1efdc",
+    "name": "_task_threads",
+    "size": 12
+  },
+  {
+    "address": "0x1efe8",
+    "name": "_thread_get_state",
+    "size": 12
+  },
+  {
+    "address": "0x1eff4",
+    "name": "_thread_resume",
+    "size": 12
+  },
+  {
+    "address": "0x1f000",
+    "name": "_thread_set_state",
+    "size": 12
+  },
+  {
+    "address": "0x1f00c",
+    "name": "_thread_suspend",
+    "size": 12
+  },
+  {
+    "address": "0x1f018",
+    "name": "_vm_region_recurse_64",
+    "size": 12
+  },
+  {
+    "address": "0x1f024",
+    "name": "_voucher_adopt",
+    "size": 12
+  },
+  {
+    "address": "0x1fa00",
+    "name": "_objc_msgSend$UTF8String",
+    "size": 20
+  },
+  {
+    "address": "0x1fa20",
+    "name": "_objc_msgSend$bundleIdentifier",
+    "size": 20
+  },
+  {
+    "address": "0x1fa40",
+    "name": "_objc_msgSend$closeFile",
+    "size": 20
+  },
+  {
+    "address": "0x1fa60",
+    "name": "_objc_msgSend$defaultManager",
+    "size": 20
+  },
+  {
+    "address": "0x1fa80",
+    "name": "_objc_msgSend$fileExistsAtPath:",
+    "size": 20
+  },
+  {
+    "address": "0x1faa0",
+    "name": "_objc_msgSend$fileHandleForWritingToURL:error:",
+    "size": 20
+  },
+  {
+    "address": "0x1fac0",
+    "name": "_objc_msgSend$fileURLWithPath:",
+    "size": 20
+  },
+  {
+    "address": "0x1fae0",
+    "name": "_objc_msgSend$initWithPath:",
+    "size": 20
+  },
+  {
+    "address": "0x1fb00",
+    "name": "_objc_msgSend$seekToEndOfFile",
+    "size": 20
+  },
+  {
+    "address": "0x1fb20",
+    "name": "_objc_msgSend$stringByDeletingLastPathComponent",
+    "size": 20
+  },
+  {
+    "address": "0x1fb40",
+    "name": "_objc_msgSend$stringByResolvingSymlinksInPath",
+    "size": 20
+  },
+  {
+    "address": "0x1fb60",
+    "name": "_objc_msgSend$writeData:",
+    "size": 20
+  }
+]

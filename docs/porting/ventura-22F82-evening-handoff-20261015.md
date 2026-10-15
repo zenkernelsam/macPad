@@ -21,6 +21,14 @@
 
 ## 2. 分享包真正给了哪些帮助
 
+### 先看新增的关键差异：分享包仍有 TCC 恒真 override
+
+**实际二进制 RE 已确认：**分享包的 WindowServer 用 arm64 `libmachook` 会尝试把 `_audit_token_check_tcc_access` hook 到 `MOV W0,#1; RET`。24G90 SkyLight 的局部符号表里有该函数，包内 ElleKit provider 也支持这种符号查找。我们在 R003 中明确移除了这条 blanket override。详见 [角色闭包与 TCC 证据](../evidence/sequoia-share-audit-20261015/roles/README.md)。
+
+尚无分享设备的落钩／调用原始 trace，所以不能说已 runtime-confirmed 生效；但“相关 entitlement 一样”已经不足以证明两边的权限策略一样。**不要恢复此 override 来使 1002 消失。** 当前修复真正的 tccd transport/reply 仍然有必要，不能把更严格的验收工作误认为走错方向。
+
+分享包还有独立 Dock launcher、`libdockfix` 及多份附加 action 库。其中 Dock actions 是在原始 AppleEvent 返回 `-600` 后使用真实目标进程的现有 Reopen/Quit 协议，与 WS 全局事件投递不同。只看通用参考源码会漏掉这些实际角色差异。
+
 ### A. `-virtualonly` 不是单独成立的终局解释
 
 **文件核验：**分享包的 `host-overlay/var/jb/usr/macOS/LaunchDaemons/com.apple.WindowServer.plist` 也使用 `-virtualonly -daemon`。结合其来源方报告的桌面使用经验，这足以要求我们重新检验“这个 flag 必然使所有交互不可能”的说法。
@@ -62,6 +70,12 @@ com.apple.private.tcc.manager.check-by-audit-token:
 `check-by-audit-token` 中出现 PostEvent，不能从名称推断被检查的 sender 自动被授予 PostEvent。参考源码的总 key 数虽不同，但上述相关列表没有差异；安装后二进制的实际 entitlement 还必须另查。
 
 今晚最有信息量的是在 **WS 的真实 sender/audit 上下文**内捕捉完整 request/reply、字段是否存在及类型、responsible process 和实际 peer identity。独立 `macwstccdprobe preflight` 可以验证传输和打印自身身份，但它不是 WS 原始请求的等价替身。
+
+### C2. 当前 provider 仍不是作者完整 runtime 的等价替代
+
+后续审计及本地探针确认，当前 scaffold 的 `MSHookMessageEx` 不安装 replacement；`MSFindSymbol` 还存在 LINKEDIT 地址换算缺口，本地同一局部符号可被正确参考实现找到，却被 scaffold 返回 NULL。`MSHookFunction` 仍只允许预登记目标。这些是基础能力边界，不等于已经证明某个新的设备故障由它们引起。
+
+分享包提供了一份声明 macOS 13.0 的 arm64/arm64e ElleKit/CydiaSubstrate，可以作为**离线兼容审计候选**；不是可以直接覆盖安装的成品。替换 provider 可能激活旧的未审查 hook，必须先排除 TCC 恒真等 override。R008 的真实回复排查继续推进；在再添加生产 hooks 之前，另立 provider 能力、符号解析和类方法 hook 的有限时验证工单。见 [本地行为证据](../evidence/sequoia-share-audit-20261015/roles/README.md)。
 
 ### D. 生命周期与身份比继续加“通过检查”的 patch 更重要
 
@@ -124,4 +138,4 @@ Cryptex 资源路径、WebKit 多实例 XPC proxies、RunningBoard 身份、Netw
 
 ## 4. 可直接交给隔壁 Agent 的提示
 
-> 继续当前 22F82 Ventura 复现，不恢复或部署 15.6.1。先读 docs/README.md、当前 coordination/PAUSE_REQUEST.md 和 REVIEWER_STATE.md；本文不解除暂停，只有用户明确返回后才能做设备操作。源码 candidate 是 529c412，停机记录是 6d1b7f6。先处理 coordination/artifacts/R008-review-edge-repro.py/json 中的六项未通过边界，不以已有 55 项通过替代它们。随后按项目 pipeline 做部署身份和有限时 cold/recovery 验证，在真正 WS sender/audit 上下文捕捉 TCC 完整 request/reply；get_bool(result)=0 不等于显式 false。分享包同样使用 -virtualonly，其相关 TCC entitlement 列表与我们相同，不能直接据此诊断缺 flag 或缺权限。复用现有 exact PID/window AppInput 与唯一系统指针 owner，分别验收 Terminal 内容输入、Dock/菜单、drag/cancel；不能把局部 AppKit 成功算全局输入已修复。不要复制 24G90/M2 的 dyld、sidecar、G14 ABI 或检查绕过。每个结论附同一 generation 的原始证据，最后确认新帧、实际界面变化、原生 iOS 健康及清理。详细研究见 docs/porting/sequoia-24G90-share-review-20261015.md。
+> 继续当前 22F82 Ventura 复现，不恢复或部署 15.6.1。先读 docs/README.md、当前 coordination/PAUSE_REQUEST.md 和 REVIEWER_STATE.md；本文不解除暂停，只有用户明确返回后才能做设备操作。源码 candidate 是 529c412，停机记录是 6d1b7f6。先处理 coordination/artifacts/R008-review-edge-repro.py/json 中的六项未通过边界，不以已有 55 项通过替代它们。随后按项目 pipeline 做部署身份和有限时 cold/recovery 验证，在真正 WS sender/audit 上下文捕捉 TCC 完整 request/reply；get_bool(result)=0 不等于显式 false。分享包同样使用 -virtualonly，其相关 TCC entitlement 列表与我们相同，但实际 libmachook 仍有试图将 audit_token_check_tcc_access 恒返1的 override；其运行落钩未证明，不能恢复这种绕过，也不能把双方权限策略当作一致。复用现有 exact PID/window AppInput 与唯一系统指针 owner，分别验收 Terminal 内容输入、Dock/菜单、drag/cancel；不能把局部 AppKit 成功算全局输入已修复。不要复制 24G90/M2 的 dyld、sidecar、G14 ABI 或检查绕过。每个结论附同一 generation 的原始证据，最后确认新帧、实际界面变化、原生 iOS 健康及清理。详细研究见 docs/porting/sequoia-24G90-share-review-20261015.md。

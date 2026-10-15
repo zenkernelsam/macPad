@@ -1,0 +1,270 @@
+[
+  {
+    "address": "0x100000028",
+    "text": "__PAGEZERO"
+  },
+  {
+    "address": "0x100000070",
+    "text": "__TEXT"
+  },
+  {
+    "address": "0x1000000b0",
+    "text": "__text"
+  },
+  {
+    "address": "0x1000000c0",
+    "text": "__TEXT"
+  },
+  {
+    "address": "0x100000100",
+    "text": "__stubs"
+  },
+  {
+    "address": "0x100000110",
+    "text": "__TEXT"
+  },
+  {
+    "address": "0x100000150",
+    "text": "__cstring"
+  },
+  {
+    "address": "0x100000160",
+    "text": "__TEXT"
+  },
+  {
+    "address": "0x1000001a0",
+    "text": "__const"
+  },
+  {
+    "address": "0x1000001b0",
+    "text": "__TEXT"
+  },
+  {
+    "address": "0x1000001f0",
+    "text": "__unwind_info"
+  },
+  {
+    "address": "0x100000200",
+    "text": "__TEXT"
+  },
+  {
+    "address": "0x100000248",
+    "text": "__DATA_CONST"
+  },
+  {
+    "address": "0x100000288",
+    "text": "__got"
+  },
+  {
+    "address": "0x100000298",
+    "text": "__DATA_CONST"
+  },
+  {
+    "address": "0x1000002d8",
+    "text": "__objc_imageinfo"
+  },
+  {
+    "address": "0x1000002e8",
+    "text": "__DATA_CONST"
+  },
+  {
+    "address": "0x100000330",
+    "text": "__LINKEDIT"
+  },
+  {
+    "address": "0x100000404",
+    "text": "/usr/lib/dyld"
+  },
+  {
+    "address": "0x1000004a8",
+    "text": "/System/Library/Frameworks/Foundation.framework/Foundation"
+  },
+  {
+    "address": "0x100000500",
+    "text": "/usr/lib/libobjc.A.dylib"
+  },
+  {
+    "address": "0x100000538",
+    "text": "/usr/lib/libSystem.B.dylib"
+  },
+  {
+    "address": "0x1000054cc",
+    "text": "Usage: %s uid gid /path/to/root /path/to/exec args\n"
+  },
+  {
+    "address": "0x100005500",
+    "text": "MACWS_CHROOT_HOST_ROOT"
+  },
+  {
+    "address": "0x100005517",
+    "text": "getcwd"
+  },
+  {
+    "address": "0x10000551e",
+    "text": "chroot"
+  },
+  {
+    "address": "0x100005527",
+    "text": "setgid"
+  },
+  {
+    "address": "0x10000552e",
+    "text": "setuid"
+  },
+  {
+    "address": "0x100005535",
+    "text": "[launchdchrootexec] unknown target Mach-O subtype: %s; fallback arm64\n"
+  },
+  {
+    "address": "0x10000557c",
+    "text": "MACWS_PRIVATE_CACHE_LIFECYCLE"
+  },
+  {
+    "address": "0x10000559c",
+    "text": "MACWS_PRIVATE_CACHE_DIR"
+  },
+  {
+    "address": "0x1000055b4",
+    "text": "/System/Library/dyld"
+  },
+  {
+    "address": "0x1000055c9",
+    "text": "[launchdchrootexec] private cache directory must be absolute\n"
+  },
+  {
+    "address": "0x100005607",
+    "text": "DYLD_SHARED_CACHE_DIR"
+  },
+  {
+    "address": "0x10000561d",
+    "text": "DYLD_SHARED_REGION"
+  },
+  {
+    "address": "0x100005630",
+    "text": "private"
+  },
+  {
+    "address": "0x100005638",
+    "text": "MACWS_EXTRA_INSERT_LIBRARIES"
+  },
+  {
+    "address": "0x100005655",
+    "text": "/System/Library/PrivateFrameworks/SkyLight.framework/Resources/WindowServer"
+  },
+  {
+    "address": "0x1000056a1",
+    "text": "/usr/local/lib/rbs15-anonymous_arm64.dylib"
+  },
+  {
+    "address": "0x1000056cc",
+    "text": "%s:%s"
+  },
+  {
+    "address": "0x1000056d2",
+    "text": "DYLD_INSERT_LIBRARIES"
+  },
+  {
+    "address": "0x1000056e8",
+    "text": "[launchdchrootexec] target=%s arch=%s insert=%s\n"
+  },
+  {
+    "address": "0x10000571e",
+    "text": "/Users/root"
+  },
+  {
+    "address": "0x10000572a",
+    "text": "TMPDIR"
+  },
+  {
+    "address": "0x100005736",
+    "text": "MallocNanoZone"
+  },
+  {
+    "address": "0x100005747",
+    "text": "posix_spawnattr_init"
+  },
+  {
+    "address": "0x10000575c",
+    "text": "XPC_SERVICE_NAME"
+  },
+  {
+    "address": "0x10000576d",
+    "text": "launchd service = %s\n"
+  },
+  {
+    "address": "0x100005783",
+    "text": "posix_spawnattr_set_launch_type_np"
+  },
+  {
+    "address": "0x1000057a6",
+    "text": "orphaned manual launch; preserving ordinary launch type\n"
+  },
+  {
+    "address": "0x1000057df",
+    "text": "MACWS_SUSPEND_TARGET"
+  },
+  {
+    "address": "0x1000057f4",
+    "text": "MACWS_SUSPEND_AT_EXEC"
+  },
+  {
+    "address": "0x10000580a",
+    "text": "[launchdchrootexec] MACWS_SUSPEND_AT_EXEC target=%s \u2014 %s will start STOPPED\n"
+  },
+  {
+    "address": "0x10000585b",
+    "text": "posix_spawnattr_set_flags"
+  },
+  {
+    "address": "0x100005875",
+    "text": "[launchdchrootexec] private-cache admission failed pid=%d\n"
+  },
+  {
+    "address": "0x1000058b0",
+    "text": "[launchdchrootexec] armed exact exec pid=%d caller_hold=%d\n"
+  },
+  {
+    "address": "0x1000058ec",
+    "text": "/tmp/exec-jitd.sock"
+  },
+  {
+    "address": "0x100005900",
+    "text": "CANCEL\n"
+  },
+  {
+    "address": "0x100005908",
+    "text": "posix_spawn"
+  },
+  {
+    "address": "0x100005914",
+    "text": "/usr/local/lib/libmachook.dylib"
+  },
+  {
+    "address": "0x100005934",
+    "text": "/usr/local/lib/libmachook_arm64.dylib"
+  },
+  {
+    "address": "0x10000595a",
+    "text": "arm64e"
+  },
+  {
+    "address": "0x100005961",
+    "text": "arm64"
+  },
+  {
+    "address": "0x100005967",
+    "text": "unknown"
+  },
+  {
+    "address": "0x10000596f",
+    "text": "/tmp/autosignd.sock"
+  },
+  {
+    "address": "0x100005983",
+    "text": "DEBUG\n"
+  },
+  {
+    "address": "0x10000598a",
+    "text": "ARM HOLD\n"
+  }
+]

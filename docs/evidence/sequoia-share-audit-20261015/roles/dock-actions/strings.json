@@ -1,0 +1,218 @@
+[
+  {
+    "address": "0x28",
+    "text": "__TEXT"
+  },
+  {
+    "address": "0x68",
+    "text": "__text"
+  },
+  {
+    "address": "0x78",
+    "text": "__TEXT"
+  },
+  {
+    "address": "0xb8",
+    "text": "__auth_stubs"
+  },
+  {
+    "address": "0xc8",
+    "text": "__TEXT"
+  },
+  {
+    "address": "0x108",
+    "text": "__init_offsets"
+  },
+  {
+    "address": "0x118",
+    "text": "__TEXT"
+  },
+  {
+    "address": "0x158",
+    "text": "__cstring"
+  },
+  {
+    "address": "0x168",
+    "text": "__TEXT"
+  },
+  {
+    "address": "0x1a8",
+    "text": "__const"
+  },
+  {
+    "address": "0x1b8",
+    "text": "__TEXT"
+  },
+  {
+    "address": "0x1f8",
+    "text": "__objc_classname"
+  },
+  {
+    "address": "0x208",
+    "text": "__TEXT"
+  },
+  {
+    "address": "0x248",
+    "text": "__unwind_info"
+  },
+  {
+    "address": "0x258",
+    "text": "__TEXT"
+  },
+  {
+    "address": "0x2a0",
+    "text": "__DATA_CONST"
+  },
+  {
+    "address": "0x2e0",
+    "text": "__auth_got"
+  },
+  {
+    "address": "0x2f0",
+    "text": "__DATA_CONST"
+  },
+  {
+    "address": "0x330",
+    "text": "__got"
+  },
+  {
+    "address": "0x340",
+    "text": "__DATA_CONST"
+  },
+  {
+    "address": "0x380",
+    "text": "__const"
+  },
+  {
+    "address": "0x390",
+    "text": "__DATA_CONST"
+  },
+  {
+    "address": "0x3d0",
+    "text": "__objc_imageinfo"
+  },
+  {
+    "address": "0x3e0",
+    "text": "__DATA_CONST"
+  },
+  {
+    "address": "0x428",
+    "text": "__DATA"
+  },
+  {
+    "address": "0x468",
+    "text": "__bss"
+  },
+  {
+    "address": "0x478",
+    "text": "__DATA"
+  },
+  {
+    "address": "0x4c0",
+    "text": "__LINKEDIT"
+  },
+  {
+    "address": "0x518",
+    "text": "dock-actions-repair-20261012/libmacpad-dock-actions-20261012.dylib"
+  },
+  {
+    "address": "0x648",
+    "text": "/System/Library/Frameworks/Foundation.framework/Versions/C/Foundation"
+  },
+  {
+    "address": "0x6a8",
+    "text": "/System/Library/Frameworks/CoreServices.framework/Versions/A/CoreServices"
+  },
+  {
+    "address": "0x710",
+    "text": "/usr/lib/libobjc.A.dylib"
+  },
+  {
+    "address": "0x748",
+    "text": "/usr/lib/libSystem.B.dylib"
+  },
+  {
+    "address": "0x780",
+    "text": "/System/Library/Frameworks/CoreFoundation.framework/Versions/A/CoreFoundation"
+  },
+  {
+    "address": "0x2444",
+    "text": "MACPAD_TARGET_MACOS_VERSION"
+  },
+  {
+    "address": "0x2461",
+    "text": "15.6.1"
+  },
+  {
+    "address": "0x2468",
+    "text": "MACWS_PRIVATE_CACHE_LIFECYCLE"
+  },
+  {
+    "address": "0x2488",
+    "text": "Finder"
+  },
+  {
+    "address": "0x2494",
+    "text": "/System/Library/CoreServices/Dock.app/Contents/MacOS/Dock"
+  },
+  {
+    "address": "0x24ce",
+    "text": "_AESendMessage"
+  },
+  {
+    "address": "0x24dd",
+    "text": "DOCK_ACTION15_IMAGE idx=%u path=%s header=%p slide=%lx commands=%u stub=%p\n"
+  },
+  {
+    "address": "0x2529",
+    "text": "AESendMessage"
+  },
+  {
+    "address": "0x2537",
+    "text": "MSHookFunction"
+  },
+  {
+    "address": "0x2546",
+    "text": "DOCK_ACTION15_READY stub=%p native=%p hook=%p\n"
+  },
+  {
+    "address": "0x2575",
+    "text": "/private/tmp/macpad_dock_ae.%d.sock"
+  },
+  {
+    "address": "0x2599",
+    "text": "DOCK_ACTION15_FINDER_ENDPOINT pid=%d\n"
+  },
+  {
+    "address": "0x25bf",
+    "text": "DOCK_ACTION15_FINDER_HANDLER status=%d imp=%p image=%s offset=%lx\n"
+  },
+  {
+    "address": "0x2604",
+    "text": "DOCK_ACTION15_FINDER_DISPATCH status=%d\n"
+  },
+  {
+    "address": "0x262d",
+    "text": "v8@?0"
+  },
+  {
+    "address": "0x2633",
+    "text": "__LINKEDIT"
+  },
+  {
+    "address": "0x263e",
+    "text": "DOCK_ACTION15_AE class=%08x id=%08x psn=%u:%u lookup=%d pid=%d status=%d mode=%d\n"
+  },
+  {
+    "address": "0x2690",
+    "text": "DOCK_ACTION15_NATIVE_DISPATCH pid=%d status=%d\n"
+  },
+  {
+    "address": "0x26c0",
+    "text": "DOCK_ACTION15_DELIVER kind=%u pid=%d sent=%d\n"
+  },
+  {
+    "address": "0x26ee",
+    "text": "/private/tmp/macws_app_input.%d.sock"
+  }
+]

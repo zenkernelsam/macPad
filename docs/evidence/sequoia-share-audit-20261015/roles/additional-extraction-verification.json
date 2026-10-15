@@ -1,0 +1,716 @@
+[
+  {
+    "path": "rootfs/System/Library/CoreServices/Dock.app/Contents/MacOS/Dock",
+    "sha256": "2adb98ffbcd104505fad5abcfd271fd052ff00e4fb6fb7c2cc0f480c8d4cd6a4",
+    "size": 10053328,
+    "matches": true
+  },
+  {
+    "path": "rootfs/System/Library/CoreServices/Finder.app/Contents/MacOS/Finder",
+    "sha256": "359668787ed3cd383bf35186895b2b3b99e14e6ccd69a5c88b7c6fd2d9080aa9",
+    "size": 24844208,
+    "matches": true
+  },
+  {
+    "path": "rootfs/System/Library/PrivateFrameworks/SkyLight.framework/Versions/A/Resources/WindowServer",
+    "sha256": "55ddde25d42dcb1369f9edb3119c3399b09aa779a1754aabc48adda7c6e56b03",
+    "size": 85360,
+    "matches": true
+  },
+  {
+    "path": "rootfs/System/Library/PrivateFrameworks/TCC.framework/Support/tccd",
+    "sha256": "1d2066aa972ef3318608c209e0b88807059e7af0aab886d84638bdc9be8d1ef6",
+    "size": 1610688,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/bin/OSXvnc-server",
+    "sha256": "5044b84e273dd79ff3490536cc5b1a96e313580399fe656bbd30191aa1c2dcf1",
+    "size": 622800,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/BOMCopyTrace.dylib",
+    "sha256": "f2247d5fce596e66476aa9165c2621d68fcf3ac639434a03a97dfaf61bb1016e",
+    "size": 51216,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/CTK15HelpersNamespace.dylib",
+    "sha256": "f30767182f8971726d2735b29628c7495757e43a7071d53b8d60bd6a84b0f87c",
+    "size": 133888,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/CTK15Namespace.dylib",
+    "sha256": "4b348988118c25bc7a8819e04be9925b48a34f1ce36753781e569f14c212c220",
+    "size": 133888,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/ChromeAllocationTrace.dylib",
+    "sha256": "a643306bcb7e4d779e6d9cfed92fc96d40bdb196933ef2b3cd81b8b14b1c0e07",
+    "size": 34528,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/ChromeAllocationTrace2.dylib",
+    "sha256": "8f32a9c94acf8f9d499a84815370de737bd58cc67ccb5b6e2e8f946ca4524c64",
+    "size": 51152,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/ChromeAllocationTrace3.dylib",
+    "sha256": "7f8731751dd4684409d325e0062375c984bac997eef0cc10eb382fee8ee96803",
+    "size": 34608,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/ChromeResponsibilityCompat.dylib",
+    "sha256": "c28d30283a383c71b8a8a0e3159ffca93503fad48b874539157ff1683f2a02f1",
+    "size": 51024,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/ChromeSandboxTrace.dylib",
+    "sha256": "fd504683af7105ef328b051b00b666d59d96e059422cd3edb115a50db9da945b",
+    "size": 51040,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/ChromeSandboxTrace2.dylib",
+    "sha256": "9189ea28b7d572f780dd6a079a7f5c8f089fa37141b0db31072c39ec4c2035c9",
+    "size": 51632,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/DiskImagesPrivateTest.dylib",
+    "sha256": "4951e10d181bdd6878986ae6a75feb3eacc5ca8280b341a3b2d76e08e4d3a8c7",
+    "size": 68080,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/DockMenuTrace-task2.dylib",
+    "sha256": "976a8bfc5df3db34e41c3475e284e651d97fa7478516474250a480eec80574d8",
+    "size": 54192,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/DockTrashBridge-diag-20261012.dylib",
+    "sha256": "49f351e2426ffc5d9aa4e549956245d095c2280481a8c9eaa8af6259202beb45",
+    "size": 34832,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/G14ConfigTest.dylib",
+    "sha256": "98703668aed9ece9ed8556cff62f39a2d46b3631ffa53ae179c475d63deaa796",
+    "size": 52128,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/G14ConfigTrace.dylib",
+    "sha256": "a0ebf19faa2406a27b964f461fc7133f24f7d9aa7ee973d91e229a029dc01b07",
+    "size": 52304,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/G14PacketTrace.dylib",
+    "sha256": "b6ee752603e5345ea7c513b7d5092039284e836c0c71cd2f13f8fd472179a7fd",
+    "size": 52704,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/G14RuntimeCandidate.dylib",
+    "sha256": "0512e98eeeb8d415c9a4f94391e0b3de4df2e1c1c5ef6a4a41dce5f7d3c1d8ab",
+    "size": 70480,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/InstUI15.dylib",
+    "sha256": "6f718d3a74eaffab6b6c81042bdcee7cbcc7369f8ca3e642e79a8819bea85ec9",
+    "size": 52704,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/Install15.dylib",
+    "sha256": "9ab6dd4c486226224d33a3edf906b7128de4859897b740bda121488689345c92",
+    "size": 53984,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/InstallCompat1.dylib",
+    "sha256": "03386d989ef5402dfc6781243ba6ec16ad69fa256aa2aa5506145c0b2bba53e1",
+    "size": 53376,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/InstallCompat2.dylib",
+    "sha256": "9bc5f2c7bb68e65fee600a091f718fa0cc194123f35183a526db37710fabd6eb",
+    "size": 53664,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/InstallCompat3.dylib",
+    "sha256": "b7fa06968fe4a54a45e41749de53ae3bee8ebcdd30352feaf4bb949a99385958",
+    "size": 53824,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/InstallCompat4.dylib",
+    "sha256": "0d17095fac4080bd996e0dba9267c6761a5177449fe14b69a3d1792124871c16",
+    "size": 53824,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/InstallCompat5.dylib",
+    "sha256": "843f034db31e904356f95424b2f279677f8f4ce88099db084dc7e03f3a481807",
+    "size": 53952,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/InstallCompat6.dylib",
+    "sha256": "81442f96a28ea1ff1051ba7433ad8255736f3d6ff7123f99b2f2da2a44c4a528",
+    "size": 54416,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/InstallCompat7.dylib",
+    "sha256": "3805012118e570fceed1149911e4dd01735a4b87680dfdc3b90e5e1fb8523ad9",
+    "size": 54704,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/InstallQuarantineCompat.dylib",
+    "sha256": "d513c6b8802ab230e8e05089f2c37bca0b11af81995b6ae8ee03bbe5c77145b7",
+    "size": 51040,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/InstalledAppRBSCompat.dylib",
+    "sha256": "9eff2c166f80f5a1a0632db78af6bf1cf938297203d91d5ec744ebd455eb5d4b",
+    "size": 134592,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/MacPadDiskImagesBridge.dylib",
+    "sha256": "d85aa23da140cf9c68e75a541daef79b7fc3124563c8198c82bc3c378a060729",
+    "size": 133312,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/PackageMountCompat.dylib",
+    "sha256": "be0e0164f6be39d1e9527deacb26e230a6e70d89ebf1b44d3c111150c91ad64a",
+    "size": 51120,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/PackagePolicyDiagnostics.dylib",
+    "sha256": "00f1f36a6d675817c9ce7a14e3ceabcb79a4137940f9ef02157cbbbf9320e4cf",
+    "size": 52816,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/PackagePolicyHost.dylib",
+    "sha256": "6fe2a28128ad233acd39249312dd747f017161dfd5ec80dcd2bcab0549dbe3af",
+    "size": 52176,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/ScriptInterpreterCompat.dylib",
+    "sha256": "d5945ed63b7ad80e04bb20eda9194bfeaf6c9e4fdff5120e5ca2c4e55099b0cd",
+    "size": 53648,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/ScriptTaskTrace.dylib",
+    "sha256": "da71a52a30780cd9d2b3c0a0dc93b7c2aa6ea55c34f87437874cb20db187ffda",
+    "size": 53600,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/SecureTransportKeyCompat.dylib",
+    "sha256": "26f01acd89ad2bf00842d1dc64fe5d05a0d98ffa1924d68f090ed563a4f96adc",
+    "size": 50688,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/backup-before-injected-qtn-20261007",
+    "sha256": "bb4ecbf6cc65fbeca37d1e83e482e7cbf6abd38cbca6772e3e41196a412451a3",
+    "size": 1144320,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/backup-before-injected-qtn-arm64-20261007",
+    "sha256": "c5d24f09f868582cd411bf9906714470c1d1387fbd5d3a45af00df3f74dbd6bc",
+    "size": 1134544,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/chrome-startup-trace.dylib",
+    "sha256": "237787da2868294a25111526f1fcdec2f67e1c84bd4418ae0ffc4f264c663e27",
+    "size": 51968,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/extensionkit-rbs15-20261009.dylib",
+    "sha256": "91c34ee57c991f92c1889ef91ed5057286135a6a7305c80b29d48402d22fa581",
+    "size": 53648,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/filecoord-bootstrap-observer-20261008.dylib",
+    "sha256": "e29a540f7b67418cb0576fccec1be03a87f39e025cd12ba81deb988fef6c2826",
+    "size": 34416,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/finder-menu-diagnostic.dylib",
+    "sha256": "5278dc9143c7cdcd2a4de97b24216ba9f364c1d5e00f1dc73bef017d792041b6",
+    "size": 53680,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/finder-redraw-diagnostic.dylib",
+    "sha256": "09d1e2c93175ecf071bd52b340adb3ed242a2fe3d06181c4fab5df90eccaf66b",
+    "size": 54016,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/finder-text-diagnostic.dylib",
+    "sha256": "bc503d43f571d4031d7be7bd7f9d07a3360fed78ffe3264e74a829661ec239aa",
+    "size": 52992,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/finder-view-diagnostic-20261009.dylib",
+    "sha256": "caf62b7f9c9be430b3c61b4730ca4b356be646a97f8dbfd504af8ea6a92982d8",
+    "size": 53056,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/fork-handshake-diagnostic.dylib",
+    "sha256": "b14e90c8d29af38b85c6e8fa0f5cf141246e494cfd390435d8af6f14ee1a0bf9",
+    "size": 51952,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/fork-handshake-selftest.dylib",
+    "sha256": "a5c9508498ae5dafe0c041e5490e3dc4778e5d9164e54ae7c97c4c8773571591",
+    "size": 68960,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/fork-official-20261009.dylib",
+    "sha256": "ddd7bd1c0546c6c0499fff4ed70184357ee6bff3e6cae5227597ebe1cd8deceb",
+    "size": 51888,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/fork-rx-diagnostic-20261009.dylib",
+    "sha256": "3d7384b09160d8c6f70ccfedb46800975642cad9ebf896f9c923dd584812cf1a",
+    "size": 51744,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/fork-shell-selftest.dylib",
+    "sha256": "3a322816f4cb020e69e98ed9f95e3f4c0f55a30dc1faa79e59dbfc4fceeafbc3",
+    "size": 69040,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/iogpu-finalize-observer-20261009.dylib",
+    "sha256": "923c475e7b51de5a1f3defb8fb7a81cb2129c6392a471bad868424af275ee099",
+    "size": 50736,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/libdockfix.dylib",
+    "sha256": "81e7dd8825e915339d54e35e59811d999d63697ae3667873294234ff3bc3f308",
+    "size": 1491536,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/libmachook-webkit-experiment-arm64.dylib",
+    "sha256": "5619ba1b013dd09adb06642ca5975da80548374f87762603c59ae502d5b44096",
+    "size": 1100080,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/libmachook-webkit-experiment-arm64e.dylib",
+    "sha256": "2e25fb268011bcef354e55cf96b1902d3a07bc576194cb07bc49e2605338999b",
+    "size": 1093392,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/libmachook.dylib.current-20261007",
+    "sha256": "c1078f4c725676ebd50a293dd84d41ed4f7bf7692e1797cadd5b4cebf6f111f0",
+    "size": 1127360,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/libmachook.safari-window-20261007.dylib",
+    "sha256": "fcdaefe90d0849465b8a45205f4addd550733d295234c2afa5094bc2dca3cbc2",
+    "size": 1076768,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/libmachook.safari-window-arm64-20261007.dylib",
+    "sha256": "c1b3cea67229dc5dfb0d8f13a1d1916f9e6a16bbd018fc219d47818537742078",
+    "size": 1083568,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/libmacpad-audio-capability.dylib",
+    "sha256": "51e8c60c983ea501d3e168855498b2930efd9df0a4545ebcbaa7b2d9b1e07d03",
+    "size": 52016,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/libmacpad-audio-queue-bridge.dylib",
+    "sha256": "3f19dad33d8fda0c61a83ef39857a623daf37aefc804e7863d1bcd592f41cab9",
+    "size": 69024,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/libmacpad-dock-actions-20261012.dylib",
+    "sha256": "a723ea1e7eff2acb4db1a12f2b3ac5cdb56e7c0a8e7bfef3c71919e0433b083d",
+    "size": 119328,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/libmacpad-finder-trash-20261013.dylib",
+    "sha256": "c8921cd1e678bc99b3ee8f8012ec7ff738e31d4a353125a7b669beb1a78204b4",
+    "size": 52832,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/libmacpad-launchpad-backdrop-20261012.dylib",
+    "sha256": "0cc9d74f79b8f40143569459d1124ab1d8f453ba1bf4c0b4c1c536d94dc18a5d",
+    "size": 137840,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/libmacpad-launchpad-layers.dylib",
+    "sha256": "a7f2abd282c0527a370451f52f303d55acb2c87a78f79f872e6293c25b1e89c8",
+    "size": 137632,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/libmacpad-launchpad-trash-20261012.dylib",
+    "sha256": "1d0ce70977f8427fddc570599f54479cb4241a8ca0d965ee5def0bffae746e22",
+    "size": 134736,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/libmacpad-native-vt-v4.dylib",
+    "sha256": "44634c02934f88ee0581d77b8f555c8f2ab3fc0b246c36d8a9440b2e5669577e",
+    "size": 74448,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/libmacpad-native-vt.dylib",
+    "sha256": "2e27b427f8b27170d4667ba88a5a9e26f0e780653e32b47e264ff9b46e7c0288",
+    "size": 58416,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/libmacpad-surface-owner.dylib",
+    "sha256": "9981b5146c31bc2705a67c999838be383776d1bddf624de882954406e01d7fc4",
+    "size": 51056,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/libmacpad-trash-event-20261012.dylib",
+    "sha256": "cdb3a5c7d8c698a5fc315b9f8339fbc537b6a1e9fe55e3368d5bb3ebf1d9d533",
+    "size": 136064,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/libmacpad-trash-event-v2-20261012.dylib",
+    "sha256": "11715b75ed7f4d378da94ad27690632696f38ad74b79afe5727c785193842e53",
+    "size": 119328,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/libmacpad-trash-volume-20261012.dylib",
+    "sha256": "a97c6475832e260cc8be77e8dda64474d7a5684f2646c6aefd740960fbe16882",
+    "size": 116544,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/libmacpad-usb-directory-20261012.dylib",
+    "sha256": "3b8d6cd8996b79a07601784867bb39dd27364b8298a99cc22d6124223f000fa5",
+    "size": 70016,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/libmacpad-usb-sfl-projection-20261012.dylib",
+    "sha256": "ad8dec4f2209149e574780797ff4b7c9473019ea0a725e01a00e5e1b67d8cf36",
+    "size": 70704,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/libmacpad-usb-volume-namespace-20261012.dylib",
+    "sha256": "b8d8877f6396ccbb490ae24eb924930e044b5e7acbf826cbc6f6461c06f43e70",
+    "size": 52208,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/libmacpad-video-trace.dylib",
+    "sha256": "dafc92d8dd96196a0a6279af947c6d0c5b5928cfcd8d3dfcd2b620259aef7ea6",
+    "size": 56928,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/libmacws-sequoia-malloc.dylib",
+    "sha256": "aa51a59402733b0cd8bba315717564c3dfdf76b8e13d1cba64dcff4007a5642a",
+    "size": 67728,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/libmacws-sequoia-malloc_arm64.dylib",
+    "sha256": "2a4c3b7f92d80a536c62e7df1424b2710f1231cfa1dd44421c3ae32ef28a37a1",
+    "size": 67744,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/macpad-init-offsets.dylib",
+    "sha256": "ebe302def060b91caca46ea988d7125a157dd0be3c5507dab1c4f51d795f3904",
+    "size": 50576,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/macpad-init-pointers.dylib",
+    "sha256": "212ce2a650fa66cf12698cd9623a0871b0202bc705bfe07621f8b6e6cd665c6d",
+    "size": 67200,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/macpad-metal-witness.dylib",
+    "sha256": "2803f22ff13fb76f47425084c54e720fcf121ea79c4261ee435669f7853b0d6e",
+    "size": 51376,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/macpad-registry-witness.dylib",
+    "sha256": "e4c111405cc9ff9ae1b2b3b037c25a0f68800c22538d0ee630f8eb961c3bdffd",
+    "size": 51328,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/macpad-workspace-observer.dylib",
+    "sha256": "8c00cff8ea07109d3c4b88fe3b803921404ea0723a85317a7284e6e792a3676a",
+    "size": 34592,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/macws-safari-guard_arm64.dylib",
+    "sha256": "c24eabdfcc6a60ae549caa087b1cecce83752a540bdfeea8073835a93da2e46a",
+    "size": 51312,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/macws-safari-guard_arm64e.dylib",
+    "sha256": "ba27e0a3f1688703fb4235e4cd5510ebc221996c743ae11fe74b1a30aab19594",
+    "size": 51296,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/network15-syscall-trace-20261007.dylib",
+    "sha256": "e922e745b22c6c34c0a63b38f2366fdb88c152959d014f92bee0a53806be457f",
+    "size": 68432,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/network15-syscall-trace-v2-20261007.dylib",
+    "sha256": "9023ec929969c8ef57674676ba9349e8d40dd17c1993405ec1742953442a32ce",
+    "size": 68720,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/network15-syscall-trace-v3-20261007.dylib",
+    "sha256": "9e3ec30916bc0c1edfe90c4291f53cb67b343d7e0db7e8c1623a149953b4296b",
+    "size": 68720,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/network15-syscall-trace-v4-20261007.dylib",
+    "sha256": "d1d47a8f8e0c6b979b15b2baac8fd21266337a67019d488b6dab1cae0fe74476",
+    "size": 69056,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/network15-webkit-observer-20261008.dylib",
+    "sha256": "8a3d2d242acd67d303010f23b5e4e58164d0a60c40877e0a41055fa4eec224c6",
+    "size": 51920,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/production-shell-selftest.dylib",
+    "sha256": "cb782910b48b78452f49e7f438f0ba1123e1f9a12468b91aeeacfb4843fc9e29",
+    "size": 34352,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/rbs15-anonymous_arm64.dylib",
+    "sha256": "398e42a760d0bd53a0bbeb6701fea41bd55ed6c6d2c345876d85afba99896902",
+    "size": 69232,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/rbs15-webcontent-20261008.dylib",
+    "sha256": "91e9e0de8c110651e6e50e6ceef585e183e3e083270ce8d5167930d96efa1a12",
+    "size": 69216,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/rbs15-webgpu-20261009.dylib",
+    "sha256": "8f2a11b61111d35275f9837071aabebc7ec48392d6610214aa2789f80abc6ed2",
+    "size": 52576,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/safari-rbs15-adapter-20261008.dylib",
+    "sha256": "ef69e24b72689c10fb65fc96e86a1775f80bc676dadcee4be59477c9954ec50e",
+    "size": 69200,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/settings-rbs15-adapter-20261009.dylib",
+    "sha256": "e1a13b80f167a05fae8e8aef7f3bab4634061a3b004dfe861a9886e6e1b165be",
+    "size": 53952,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/terminal-rbs15-adapter.dylib",
+    "sha256": "457e3af24c1ba9ddcd65426d4dd0e786fb545494729cfc322ee7112f96e0ec26",
+    "size": 70064,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/terminal-reopen-trace.dylib",
+    "sha256": "30838c11d59de9e03ddbb2b8ccf46a289e781bd0511c511d8d2d2d8ed77bf130",
+    "size": 51952,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/texture-contract-diagnostic.dylib",
+    "sha256": "e1c41a5488cec74d099de407b5472a4bb6064f2a5e3226d4734cca45fd63836e",
+    "size": 52112,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/tls-diagnostic.dylib",
+    "sha256": "60215741690f4a38404a39c51eefc6b432589d52059370c25793bc1203a462fc",
+    "size": 51824,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/wallpaper-agent-route-bootstrap.dylib",
+    "sha256": "e92f408d2f5823615d609156168190ac0efdc1fed9e64e9d1f617143d7f4dea2",
+    "size": 76720,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/wallpaper-agent-route-deferred.dylib",
+    "sha256": "092421cc92b5fcc55013265bba2339105685b000ff2af009e889436746caf9b8",
+    "size": 76544,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/wallpaper-agent-route-origin-inline.dylib",
+    "sha256": "0b1402b6d9d9d0d8b94da9c6a1de331981c5d62fee71225afe6e22b25ae6e697",
+    "size": 76992,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/wallpaper-agent-route-origin.dylib",
+    "sha256": "e3d687856db38837850857955549c5dc06519e3ac01c718cfb78db03e9f96e9a",
+    "size": 94048,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/wallpaper-agent-route-trial.dylib",
+    "sha256": "85d59197a90a8a57c4ba11e483c05b222a0bae07c56bbb82c7325dd8a32e0125",
+    "size": 76112,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/wallpaper-image-crash-probe.dylib",
+    "sha256": "9a3b2a94b753522909fde741f886b4019d51233aeb38cbe900601eedcf539132",
+    "size": 34528,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/wallpaper-image-runtime.dylib",
+    "sha256": "e0aa72985f3ef71c3d6356a123658d7970ea67a60d8021e5670a8a7e6755425c",
+    "size": 55728,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/wallpaper-origin-preload.dylib",
+    "sha256": "bee62c69695fc65beb09c1227a430334d56a62214ac6048b648fd3e7d069a493",
+    "size": 51264,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/wallpaper-xpc-trace-v2.dylib",
+    "sha256": "7d0fcee1b052760d6895a5f3b1607cd6d7fa2f54dd318dd562bf91a79e198e2f",
+    "size": 37024,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/wallpaper-xpc-trace-v3.dylib",
+    "sha256": "1b7368279045508cb6008284f98f846d99ae0c0e04c53e000d2ebce815b0c5e0",
+    "size": 38160,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/wallpaper-xpc-trace-v4.dylib",
+    "sha256": "b507389bcf8760d8f4820e35555a4a64d2f33a5e700e43fa36a35c4d3dc6c380",
+    "size": 38320,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/wallpaper-xpc-trace-v5.dylib",
+    "sha256": "c88c371fcf6d8d410ac67a26566696e8b43dd25051d96b36749882bb4b855b2f",
+    "size": 56608,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/wallpaper-xpc-trace-v6.dylib",
+    "sha256": "88bb2e2397625057e7ba02ee556cd5bf7117b30d6e2db25ed0743eef0fcf87ed",
+    "size": 57424,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/wallpaper-xpc-trace-v7.dylib",
+    "sha256": "c631b557f3f9df5582b5e1089dfeccbc91fb783fc5848c875164957a827b1197",
+    "size": 57504,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/wallpaper-xpc-trace.dylib",
+    "sha256": "b8f2efb7d0fa4191dd7c174c4932e61e1cfb432c7f60dcb9bfebde362809acda",
+    "size": 36544,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/webcontent-ipc-observer-20261008.dylib",
+    "sha256": "2f5350da297cb47f19a4ac720d445c78907bf97254707908367b5dd754d812e0",
+    "size": 35296,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/webcontent-video-crash.dylib",
+    "sha256": "006810954c1e0229866ffa0129524f02c8794079b946f6fe7b5d17b76b409904",
+    "size": 34400,
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/webkit-ipc-observer-20261008.dylib",
+    "sha256": "ff3bd37f875c1858a850fc71269f4c6a8c55cbc690314b30a09480e262403e36",
+    "size": 51936,
+    "matches": true
+  }
+]

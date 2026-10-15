@@ -1,0 +1,7 @@
+{
+  "engine": "IDA Pro 9.3 batch/Hex-Rays",
+  "input": "/Users/ciscohe/Desktop/macPad/analysis/share-review-20261015/extracted/host-overlay/var/jb/usr/macOS/bin/launchdchrootexec-sequoia-main-20261005",
+  "sha256": "b06e5200c7f3e47d3356ece204dc3a153ff4525e194d273dab285d03124dbd29",
+  "imagebase": "0x100000000",
+  "hexrays_ready": true
+}

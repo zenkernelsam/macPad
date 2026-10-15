@@ -1,0 +1,7 @@
+{
+  "engine": "IDA Pro 9.3 batch/Hex-Rays",
+  "input": "/Users/ciscohe/Desktop/macPad/analysis/share-review-20261015/extracted/rootfs/usr/local/lib/libmachook_arm64.dylib",
+  "sha256": "432ebe93d6004152be66f1eafc08c94dedc113e1ef87b32268c1fd08b58c6523",
+  "imagebase": "0x0",
+  "hexrays_ready": true
+}

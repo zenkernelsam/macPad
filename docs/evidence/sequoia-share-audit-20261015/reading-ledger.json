@@ -1,0 +1,455 @@
+{
+  "method": "Explicit full-text reading; only acknowledged complete deliveries count. Large documents can span batches. Supporting raw sample dumps are separately inventoried.",
+  "documents": {
+    "AGENTS.md": {
+      "sha256": "8a61abbed9bb4c83f20f78740c270a3243721c30b08a6dff2613fa67f6ad9812",
+      "coverage": "full",
+      "note": "Read repository operating memory in sequential sections during initial audit; local dated additions reviewed as written."
+    },
+    "README.md": {
+      "sha256": "9903c3484a4c1e1321d1e90c216f6c545150f384421e6e906a463df5fc5325fd",
+      "coverage": "full",
+      "note": "Read product scope, validated matrix, delivery and author references."
+    },
+    "analysis/MacWSBootingGuide/README.md": {
+      "sha256": "5789dd1d7617b5c123d616f0fa0ba62230f9cb36ab8be838130a67840d68bf5d",
+      "coverage": "full",
+      "note": "Read author guide including prerequisites, runtime ownership and acceptance boundaries."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/desktop-session-invariants-20260822.md": {
+      "sha256": "c87d8a08b7ddd2c000186a8ab2e637cf56033260160bfa8b5977821041171083",
+      "coverage": "full",
+      "note": "Full read: generation and content readiness; replay freshness; exact orphan ownership; reply before lifecycle transitions; memory pressure can affect probes."
+    },
+    "analysis/MacWSBootingGuide/docs/input-front-owner-viewbridge-20260811.md": {
+      "sha256": "0a6163531754f7a04ada610d82db8b037b9d260b917d708881bfde68b582e53a",
+      "coverage": "full",
+      "note": "Full read: proxy and target CDHashes separate; front-owner readiness flags must be populated; real SLS route and AppKit endpoint witnesses."
+    },
+    "analysis/MacWSBootingGuide/docs/ipados-host-menu-tabs-input-20260731.md": {
+      "sha256": "c1b190ef3c84a4403c360fa64112f86436804b74a459f354203eefefa7fdd3f5",
+      "coverage": "full",
+      "note": "Full read: atomic input through modal tracker; popup level; tab logical identity; acknowledge Quit before dispatch; Terminal child environment repair."
+    },
+    "docs/evidence/r005-live-tcc-branch-20261015.md": {
+      "sha256": "9bbe01e82a78237fe2e179588b8519f6a2ac56edcb090a54b3ee921c704f2e78",
+      "coverage": "full",
+      "note": "Full read in initial audit; raw checker 1 is not a proven tccd policy response."
+    },
+    "docs/evidence/r006-tcc-producer-20261015.md": {
+      "sha256": "45a9ca251e1fe962f8e9b46133d1200c50b1339b36fc85daa6d92d3ebbc85205",
+      "coverage": "full",
+      "note": "Full read: connection_invalid preserves initialized default 1; exact WS context."
+    },
+    "docs/evidence/r007-system-tccd-20261015.md": {
+      "sha256": "bcbbe210919156854c51a9d8a26cc7b3f834517d6c56e212453e4a748a7ccfee",
+      "coverage": "full",
+      "note": "Full read including corrections: genuine dictionary/accessor-zero; key presence/type not established."
+    },
+    "docs/evidence/r008-tccd-transport-repro-20261015.md": {
+      "sha256": "c839e9e0f242e36dbabacac32c92d1b886b8bf799b78e61287b3408b6774b632",
+      "coverage": "full",
+      "note": "Full read: source lifecycle candidate, cold/package admission, probe boundary, pending runtime acceptance."
+    },
+    "docs/porting/archive/macos15-roots/HANDOVER-MACOS15-FROZEN-2026-10-04.md": {
+      "sha256": "09c5518303aa4a2220166eb5318ce4143b1aab6bf38c002f0fb29b84194b9f26",
+      "coverage": "full",
+      "note": "Full read: exact historical failure and kernel-text/IMG4 limits, bounded to that configuration."
+    },
+    "analysis/macPad-15.6 2.1-分享包-20261013/README.md": {
+      "sha256": "3a047f53bb26f7fbaeb93e80f7040b0afe2e66cbed33e48815291146821e6db1",
+      "coverage": "full",
+      "note": "Full read in initial package audit: claims distinguished from independent runtime validation; source package unmodified."
+    },
+    "analysis/macPad-15.6 2.1-分享包-20261013/UPDATE-20261013.md": {
+      "sha256": "7d9224f3ecc0e53b2378a0111c51b866bfef1529b436d88fc5c86c8f6718cbf5",
+      "coverage": "full",
+      "note": "Full read in initial package audit: claims distinguished from independent runtime validation; source package unmodified."
+    },
+    "analysis/macPad-15.6 2.1-分享包-20261013/AGENTS.md": {
+      "sha256": "0fab9a8cafe4ca0a335e96797509bd41d886040e79fa23a75424e851ed2c8943",
+      "coverage": "full",
+      "note": "Full read in initial package audit: claims distinguished from independent runtime validation; source package unmodified."
+    },
+    "analysis/macPad-15.6 2.1-分享包-20261013/docs/PRIVACY.md": {
+      "sha256": "6dc0f69995b61a7ce2c6f389840131d0bbd83e84334669feb0f22f3eb237e6e5",
+      "coverage": "full",
+      "note": "Full read in initial package audit: claims distinguished from independent runtime validation; source package unmodified."
+    },
+    "analysis/macPad-15.6 2.1-分享包-20261013/docs/ADAPTATION.md": {
+      "sha256": "dee5677f369fd37e217ab43288d0e1f3477ce125c9e9deafbcf4d3d921871954",
+      "coverage": "full",
+      "note": "Full read in initial package audit: claims distinguished from independent runtime validation; source package unmodified."
+    },
+    "analysis/macPad-15.6 2.1-分享包-20261013/docs/ai安装适配提示.md": {
+      "sha256": "fc1fffad36a1072a909cf638c60267c7d7f04a48dfd36d85df2e5b2a86f608c0",
+      "coverage": "full",
+      "note": "Full read in initial package audit: claims distinguished from independent runtime validation; source package unmodified."
+    },
+    "analysis/MacWSBootingGuide/docs/code-architecture-20260812.md": {
+      "sha256": "93210f6548aa902aa1abd7a47e82e08be42d1fb8320e61f4cf26377e716e3b6c",
+      "coverage": "full",
+      "note": "Full read: protocol-owned modules, exact route-class policies, immutable completed composite, proper fallback and accepted endpoint differences; not every event has an AppKit mouseDown witness."
+    },
+    "analysis/MacWSBootingGuide/docs/ipados-host-window-lifecycle-input-20260731.md": {
+      "sha256": "408cd259e3220c86a9fc121080aa1dff09177cefdd4e5adb3a30b63f96cc7a7f",
+      "coverage": "full",
+      "note": "Full read: exact process input, logical tab groups, scene close, viewport transform, renderer readiness beyond NSWindow existence; hardware interaction caveats."
+    },
+    "analysis/MacWSBootingGuide/docs/fullscreen-mission-control-input-20260808.md": {
+      "sha256": "cd57f8b2982398c779e37f894bd497dd929ef94d959a39fb629553fb55e8a6e4",
+      "coverage": "full",
+      "note": "Full read: system zero-window route through real Dock CGS owner, transformed card geometry, bounded gesture coalescing, explicit native visible outcome."
+    },
+    "analysis/MacWSBootingGuide/docs/finder-iconservices-root-volume-20260804.md": {
+      "sha256": "5631e34dcdfa691ed939151bab2fbc153e17e468b16d608b659665459fe3ac68",
+      "coverage": "full",
+      "note": "Full read: volume namespace and boot-drive producer mismatch, no fake node repair; process-scope kernel-page dirtying affects fork; fresh-vnode signing independent of original issue."
+    },
+    "analysis/MacWSBootingGuide/docs/metal2metal.md": {
+      "sha256": "16cbcc182b9890fbd42f43e19cd812e98c40b8cdad0fdf583650f3b4f184b433",
+      "coverage": "full",
+      "note": "Full read: whole-library source/output identity and function set, known AIR lowering only; runtime compiler/pixel acceptance independent."
+    },
+    "analysis/MacWSBootingGuide/docs/safari-mtlcompiler-isolation-20260801.md": {
+      "sha256": "7bd71151763d5874ea00f200e039d38f06c08d14fb14a342abaf7b38c691c11b",
+      "coverage": "full",
+      "note": "Full read: global compiler NOP/cache-hook pollution of native Safari fixed by request identity, actual native compiler exclusion witness; do not import global bypass."
+    },
+    "analysis/MacWSBootingGuide/docs/catalyst-keychain-bridge-20260812.md": {
+      "sha256": "fb3538d71bdbec3505f6262f6221028cfdcc7cddd4ef3163bb3b6faa6682fe37",
+      "coverage": "full",
+      "note": "Full read: native-first narrow error fallback and exact uid/group identity; local build was not runtime game acceptance."
+    },
+    "analysis/MacWSBootingGuide/docs/production-readiness-20260912.md": {
+      "sha256": "2d2aee498487bf31346450c2131089e681d7b9e5a1144b2715e0d2e05dc38209",
+      "coverage": "full",
+      "note": "Full read: cold trust cost, deterministic production defaults, event/logging budgets, release acceptance; current vs historical proof explicitly separated."
+    },
+    "analysis/MacWSBootingGuide/WebKitChrootProxy/README.md": {
+      "sha256": "c17f370ec5361f555ea29e296620b0027862ebcadceadf88f321c981c836e5d1",
+      "coverage": "full",
+      "note": "Full read: experiment versus shipped-path boundaries, release gates, native compiler identity, and unspecified GPU padding versus true protocol fields."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/control-center-input-performance-20260811/README.md": {
+      "sha256": "febfb1a9f4434d6eb8aa68ca73dfaa31b0dbafaa1dd9cc66b1fba9833d302432",
+      "coverage": "full",
+      "note": "Full read: experiment versus shipped-path boundaries, release gates, native compiler identity, and unspecified GPU padding versus true protocol fields."
+    },
+    "analysis/MacWSBootingGuide/MacWSHost/Testing/README.md": {
+      "sha256": "3513e9bce73fff3d2b19d4b1dcb781513d8280842954fbfe796d92401cb16d0c",
+      "coverage": "full",
+      "note": "Full read: experiment versus shipped-path boundaries, release gates, native compiler identity, and unspecified GPU padding versus true protocol fields."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/cold-start-signing-20260801/README.md": {
+      "sha256": "f7206bd823552107ad4393845544b4074b5ca07323e4b653acf5f0d33ffd7044",
+      "coverage": "full",
+      "note": "Full read: experiment versus shipped-path boundaries, release gates, native compiler identity, and unspecified GPU padding versus true protocol fields."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/ios16-2-mps-native-llvm-identities-20260929.md": {
+      "sha256": "b65666060666fdbcb39333ba5fed5292003350f5ff6f886dfdc04144a2bc9bc0",
+      "coverage": "full",
+      "note": "Full read: experiment versus shipped-path boundaries, release gates, native compiler identity, and unspecified GPU padding versus true protocol fields."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/launchd-performance-class-20260730/first-error-diag/analysis.md": {
+      "sha256": "d3cba6860d5da2e09a98f570b0c351f3cc7fdd1365fc07a049956a6d08faaec5",
+      "coverage": "full",
+      "note": "Full read: experiment versus shipped-path boundaries, release gates, native compiler identity, and unspecified GPU padding versus true protocol fields."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/memory-reset-20260801/README.md": {
+      "sha256": "081b6d1ac8de22b1703432299bf4e65e18944bb0f93235cda7845b280a2e0c3a",
+      "coverage": "full",
+      "note": "Full read: memory-percent guard retired; dependency signatures differ from executables; stage/package-only acceptance; pixel and lifecycle boundaries; native one-process tools reduce spawn overhead."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/autosignd-dependency-closure-20260906.md": {
+      "sha256": "9f98749b693ddd6e8117b8021c7a8a350bd4e6e20ffcacbc603d3ddd7df83abb",
+      "coverage": "full",
+      "note": "Full read: memory-percent guard retired; dependency signatures differ from executables; stage/package-only acceptance; pixel and lifecycle boundaries; native one-process tools reduce spawn overhead."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/coreui-ondevice-build-20260920.md": {
+      "sha256": "25eebee8570fc14354c1bc888b027aed3b22b391b5c894a4c5901f4f6199f1da",
+      "coverage": "full",
+      "note": "Full read: memory-percent guard retired; dependency signatures differ from executables; stage/package-only acceptance; pixel and lifecycle boundaries; native one-process tools reduce spawn overhead."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/native-three-finger-mps-20260808/README.md": {
+      "sha256": "d27963388abad940e875d3918d2da59532c10e818730a63cce9ae0fa6dd72e08",
+      "coverage": "full",
+      "note": "Full read: memory-percent guard retired; dependency signatures differ from executables; stage/package-only acceptance; pixel and lifecycle boundaries; native one-process tools reduce spawn overhead."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/preview-image-pan-20260908.md": {
+      "sha256": "20e3a337bffdebefcdffc06121bca9faba015a31907f68c013238fca80cc3477",
+      "coverage": "full",
+      "note": "Full read: memory-percent guard retired; dependency signatures differ from executables; stage/package-only acceptance; pixel and lifecycle boundaries; native one-process tools reduce spawn overhead."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/neofetch-latency-20260915.md": {
+      "sha256": "19efe73eabccdbb4dd4e8f05e5b8e95bc7ea17faddca6b01787ce7bcd40ce11c",
+      "coverage": "full",
+      "note": "Full read: memory-percent guard retired; dependency signatures differ from executables; stage/package-only acceptance; pixel and lifecycle boundaries; native one-process tools reduce spawn overhead."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/ios-ime-exact-appkit-focus-20261001.md": {
+      "sha256": "f55ab7bf2d7ec97ac8ae0ee7e43e30a599fdbd0ce7734beb6cb6a5f62ef74ee1",
+      "coverage": "full",
+      "note": "Full read: exact IME routing, bounded drawable receive, W^X lock order, space creation, performance-class attribution and measurement limits."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/catalyst-drawable-receive-budget-20260930.md": {
+      "sha256": "712fef8b9b5925939181cd2816e6414aa5b95de83f9370f86490d04037c631f5",
+      "coverage": "full",
+      "note": "Full read: exact IME routing, bounded drawable receive, W^X lock order, space creation, performance-class attribution and measurement limits."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/vscode-webgl-restoration-20260908.md": {
+      "sha256": "f358199de39a39271ccf265b86c877fa9aa7f728ee451adba3bbc3e5a4286380",
+      "coverage": "full",
+      "note": "Full read: exact IME routing, bounded drawable receive, W^X lock order, space creation, performance-class attribution and measurement limits."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/space-create-20260809/README.md": {
+      "sha256": "fb4625ba3db38084ac4e15439baf4f1bd725b71c1cead5d321b29c2033345e76",
+      "coverage": "full",
+      "note": "Full read: exact IME routing, bounded drawable receive, W^X lock order, space creation, performance-class attribution and measurement limits."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/webgl-aquarium-native-agx-20260728/README.md": {
+      "sha256": "20195e879dc08e72f4edc6ab41825d530ca818c020e0e792c902de7f9507c5bc",
+      "coverage": "full",
+      "note": "Full read: exact IME routing, bounded drawable receive, W^X lock order, space creation, performance-class attribution and measurement limits."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/launchd-performance-class-20260730/README.md": {
+      "sha256": "42a5a0ca90be4d085639ce7bc1aea959159d6ae8ab15b2adc082529592cd623b",
+      "coverage": "full",
+      "note": "Full read: exact IME routing, bounded drawable receive, W^X lock order, space creation, performance-class attribution and measurement limits."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/vnc-usability-stability-20260729/owned-lease-pool/README.md": {
+      "sha256": "16b268f9df5dfa5affdcd1cd4c050504f5ccad38305dd36cf47d7a32fff9532c",
+      "coverage": "full",
+      "note": "Full read: lifetime-aware surface leases, qualified energy comparisons, correct density direction, independent IOSurface path, rootless dependency identity, and process-group-safe installation."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/focused-window-pacing-lease-20260930.md": {
+      "sha256": "da50337b10d4600660a73fff4b04736ac532879a1fd11efc268929b959538690",
+      "coverage": "full",
+      "note": "Full read: lifetime-aware surface leases, qualified energy comparisons, correct density direction, independent IOSurface path, rootless dependency identity, and process-group-safe installation."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/window-retina-density-20261001.md": {
+      "sha256": "47ac60f2ff3ed52b1d0aabbd2c8d59748261bf49c7b458526d8d9846e8c7dd96",
+      "coverage": "full",
+      "note": "Full read: lifetime-aware surface leases, qualified energy comparisons, correct density direction, independent IOSurface path, rootless dependency identity, and process-group-safe installation."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/input-unification-20260731/host-native/iosurface-direct-runtime.md": {
+      "sha256": "eabeec4a6d3cc9ff52e271c2c840111a029c8af08341bbe708c961a2c7eced2b",
+      "coverage": "full",
+      "note": "Full read: lifetime-aware surface leases, qualified energy comparisons, correct density direction, independent IOSurface path, rootless dependency identity, and process-group-safe installation."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/windowing-rootless-load-command-20261002.md": {
+      "sha256": "a3d5cb3c795ae6b8f31371d604d1c44e7dfc05f2848f22bdbbe9da9bd1e85640",
+      "coverage": "full",
+      "note": "Full read: lifetime-aware surface leases, qualified energy comparisons, correct density direction, independent IOSurface path, rootless dependency identity, and process-group-safe installation."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/installer-process-lifetime-20260919.md": {
+      "sha256": "c26a1bcc142097516627bb29ee470ef665befa5549a8540471d55a36390f004c",
+      "coverage": "full",
+      "note": "Full read: lifetime-aware surface leases, qualified energy comparisons, correct density direction, independent IOSurface path, rootless dependency identity, and process-group-safe installation."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/geekbench-gui-coalition-20260922.md": {
+      "sha256": "eb379aa8c3da489eace610e65069e8c96e501ed77066bde3f90b472960f2b958",
+      "coverage": "full",
+      "note": "Full read: application launch coalition witnesses, exact compiler UUID gate, correlated resize ACK, authenticated CFString linker payload, drawable ownership on scene disconnect, and Mojo/profile mismatch."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/ipad14-5-ios16-mtlcompiler-adapter-20260925.md": {
+      "sha256": "a695aea47df2ca00af986ff8cd75e52df289d4e99eb794feb84b1a592fff5d2d",
+      "coverage": "full",
+      "note": "Full read: application launch coalition witnesses, exact compiler UUID gate, correlated resize ACK, authenticated CFString linker payload, drawable ownership on scene disconnect, and Mojo/profile mismatch."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/window-configuration-ack-correlation-20260912.md": {
+      "sha256": "4768835fd4bb2be5654e71ad7e73b12b8083c06b0d68c909f3b5d73bfa1051ed",
+      "coverage": "full",
+      "note": "Full read: application launch coalition witnesses, exact compiler UUID gate, correlated resize ACK, authenticated CFString linker payload, drawable ownership on scene disconnect, and Mojo/profile mismatch."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/macwswindowing-arm64e-linker-20260828.md": {
+      "sha256": "d068053c6b4137417c967ac0b2e431a5129da9cbe8b1a315f620f14681272313",
+      "coverage": "full",
+      "note": "Full read: application launch coalition witnesses, exact compiler UUID gate, correlated resize ACK, authenticated CFString linker payload, drawable ownership on scene disconnect, and Mojo/profile mismatch."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/vscode-window-scene-drawable-ownership-20261001.md": {
+      "sha256": "fb6abe794eaa4df99881d2cb35351872e0af5f602ccb4f4f8d0f6549d5fa2933",
+      "coverage": "full",
+      "note": "Full read: application launch coalition witnesses, exact compiler UUID gate, correlated resize ACK, authenticated CFString linker payload, drawable ownership on scene disconnect, and Mojo/profile mismatch."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/vscode-mojo-spin-20260904.md": {
+      "sha256": "0b2c46579cca02be7d03bb67b7db98f47dd850ce87b2a6146289dfbf1198d4f2",
+      "coverage": "full",
+      "note": "Full read: application launch coalition witnesses, exact compiler UUID gate, correlated resize ACK, authenticated CFString linker payload, drawable ownership on scene disconnect, and Mojo/profile mismatch."
+    },
+    "analysis/MacWSBootingGuide/misc/vscode-aquarium-runner/README.md": {
+      "sha256": "072c213e72e0d3551023c89e887146ae12b51a4c2a56f9cb9954c41215e460fe",
+      "coverage": "full",
+      "note": "Full read: production benchmark ownership and cleanup, verified profile switches, hot-path diagnostics versus root cause, exact software toolbar route, and superseded Steam semaphore/GPU experiments."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/vscode-test-webview-lifecycle-20260930.md": {
+      "sha256": "96d18e75c2a44700af531d9c1456fba2e73d0d16f3ce4d5a5ee9fc48a5f640a8",
+      "coverage": "full",
+      "note": "Full read: production benchmark ownership and cleanup, verified profile switches, hot-path diagnostics versus root cause, exact software toolbar route, and superseded Steam semaphore/GPU experiments."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/production-profile-20260730/README.md": {
+      "sha256": "179697e25d9e23032f2c274a5a1337222251e904ecc26a50f2342d9f42aa5510",
+      "coverage": "full",
+      "note": "Full read: production benchmark ownership and cleanup, verified profile switches, hot-path diagnostics versus root cause, exact software toolbar route, and superseded Steam semaphore/GPU experiments."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/webgl2-performance-optimization-20260728/production-hotpath-cache-20260730/README.md": {
+      "sha256": "ec9a96a65bbd3131636e5415c5d9452c094209b5fabf0317b1883b41f2a4c505",
+      "coverage": "full",
+      "note": "Full read: production benchmark ownership and cleanup, verified profile switches, hot-path diagnostics versus root cause, exact software toolbar route, and superseded Steam semaphore/GPU experiments."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/software-toolbar-exact-key-routing-20261001.md": {
+      "sha256": "30ddd75763e6eb482afd22b15593c573b80d1c441cf65690eb7d9567518ff063",
+      "coverage": "full",
+      "note": "Full read: production benchmark ownership and cleanup, verified profile switches, hot-path diagnostics versus root cause, exact software toolbar route, and superseded Steam semaphore/GPU experiments."
+    },
+    "analysis/MacWSBootingGuide/docs/steam-cef-runtime-20260814.md": {
+      "sha256": "73353c2259ee34c1732163d729d0c31fc954e8fbbd8cce971d9afdcdde1c6856",
+      "coverage": "full",
+      "note": "Full read: production benchmark ownership and cleanup, verified profile switches, hot-path diagnostics versus root cause, exact software toolbar route, and superseded Steam semaphore/GPU experiments."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/magic-keyboard-during-ios-ime-20261001.md": {
+      "sha256": "ea7c244865d5327b973dceb1d84d3183f7d6f41c1324ff403a52f0979a2c3354",
+      "coverage": "full",
+      "note": "Full read: iOS IME hardware-key ownership, feature-domain compatibility, per-client FileCoordination namespaces, production logging limits, native modal gesture pacing, and exact shell-environment adaptation."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/fullscreen-settings-maps-production-20260807/README.md": {
+      "sha256": "79274680621854c4562b8bf03d0cec1ba40783342ebf8d102cf060e1782cd958",
+      "coverage": "full",
+      "note": "Full read: iOS IME hardware-key ownership, feature-domain compatibility, per-client FileCoordination namespaces, production logging limits, native modal gesture pacing, and exact shell-environment adaptation."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/drag-clipboard-interop-20260906.md": {
+      "sha256": "872cdc4e85a7eef88051bc0d6f56e5bfb63047d20add62af56e46fe8c522b7a4",
+      "coverage": "full",
+      "note": "Full read: iOS IME hardware-key ownership, feature-domain compatibility, per-client FileCoordination namespaces, production logging limits, native modal gesture pacing, and exact shell-environment adaptation."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/debug-overhead-removal-20260729/README.md": {
+      "sha256": "b024c1c59ee150816dd027679e5e90a74915c6e60e0f9c4549e71cae83528d49",
+      "coverage": "full",
+      "note": "Full read: iOS IME hardware-key ownership, feature-domain compatibility, per-client FileCoordination namespaces, production logging limits, native modal gesture pacing, and exact shell-environment adaptation."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/mission-control-dock-production-20260809/README.md": {
+      "sha256": "3b269a3e769dda0486b71c3c54c06e9e47a395b5322823d75e368ac59245cf24",
+      "coverage": "full",
+      "note": "Full read: iOS IME hardware-key ownership, feature-domain compatibility, per-client FileCoordination namespaces, production logging limits, native modal gesture pacing, and exact shell-environment adaptation."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/webgl2-performance-optimization-20260728/vscode-shell-env-adapter-20260730/README.md": {
+      "sha256": "5e63f6417cf6a82e1656799d8aa0e55300081761e297ba0b012ee51c9d3d32be",
+      "coverage": "full",
+      "note": "Full read: iOS IME hardware-key ownership, feature-domain compatibility, per-client FileCoordination namespaces, production logging limits, native modal gesture pacing, and exact shell-environment adaptation."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/metal-cache-process-scope-20260920.md": {
+      "sha256": "39a450d4bd6198c48d09a040e69057cbd21a3cc3c0d9e3067d3362d3c9363e9f",
+      "coverage": "full",
+      "note": "Full read: scoped Metal-cache isolation, historically superseded pointer geometry, evolving density policies, installer generation preservation, and exact V8 JIT execution witnesses."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/game-pointer-lock-and-click-geometry-20261006.md": {
+      "sha256": "78005743c8d1a5d8504b4832f2888ea413510cbf1bab1fd0e53d3c6757fa72e1",
+      "coverage": "full",
+      "note": "Full read: scoped Metal-cache isolation, historically superseded pointer geometry, evolving density policies, installer generation preservation, and exact V8 JIT execution witnesses."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/displaystream-host-ux-20260801/README.md": {
+      "sha256": "68ec6273d9cd5e91d59031f4d683ce5a8b114388d204318379dc88cda85f5efe",
+      "coverage": "full",
+      "note": "Full read: scoped Metal-cache isolation, historically superseded pointer geometry, evolving density policies, installer generation preservation, and exact V8 JIT execution witnesses."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/package-lifecycle-20260919.md": {
+      "sha256": "c34ffb909ad1f5029c3ebabe1c9d34ebd120638ce3006c6864a16af4c4dda2f3",
+      "coverage": "full",
+      "note": "Full read: scoped Metal-cache isolation, historically superseded pointer geometry, evolving density policies, installer generation preservation, and exact V8 JIT execution witnesses."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/codex-code-mode-v8-code-range-20261001.md": {
+      "sha256": "8c485a3a3914bd42d67053186270239308f02cfd6896a926e78fb96d200d32f1",
+      "coverage": "full",
+      "note": "Full read: scoped Metal-cache isolation, historically superseded pointer geometry, evolving density policies, installer generation preservation, and exact V8 JIT execution witnesses."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/app-smoke-20260810/README.md": {
+      "sha256": "8a749a636f508b7c68d8a0166650fea41ff3a1bc8a5ae32dc008bfbd754c3e45",
+      "coverage": "full",
+      "note": "Full read: Mach-O identification independent of mode bits, project-local command-size bounds, no-CDP route acceptance distinct from clean quit, generation-0 command validation, and rolling input protocol compatibility."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/webgl2-performance-optimization-20260728/vscode-production-error-20260730/README.md": {
+      "sha256": "2bb003742d471d0c0118213b4113319d88bce45d7f0fa4780d7bcce908f9e6a3",
+      "coverage": "full",
+      "note": "Full read: Mach-O identification independent of mode bits, project-local command-size bounds, no-CDP route acceptance distinct from clean quit, generation-0 command validation, and rolling input protocol compatibility."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/production-command-line-policy-20260919.md": {
+      "sha256": "1a6f9a1b6665b43560189f484ae225bf8d2bb24770610b0d203537077b5c3e6c",
+      "coverage": "full",
+      "note": "Full read: Mach-O identification independent of mode bits, project-local command-size bounds, no-CDP route acceptance distinct from clean quit, generation-0 command validation, and rolling input protocol compatibility."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/webgl2-performance-optimization-20260728/cold-start-stability-20260730/README.md": {
+      "sha256": "fb0655db02ff793028d01ea9331654408c7bb1adbd992d46523a229a312f38e4",
+      "coverage": "full",
+      "note": "Full read: Mach-O identification independent of mode bits, project-local command-size bounds, no-CDP route acceptance distinct from clean quit, generation-0 command validation, and rolling input protocol compatibility."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/fullscreen-input-scene-foreground-20260907.md": {
+      "sha256": "5be16fcbcdbaec30284aafbf1c58d5188f0fc609ec8e932fbbffd5a412c3e4fc",
+      "coverage": "full",
+      "note": "Full read: Mach-O identification independent of mode bits, project-local command-size bounds, no-CDP route acceptance distinct from clean quit, generation-0 command validation, and rolling input protocol compatibility."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/cold-start-workspacectl-skew-20260807/README.md": {
+      "sha256": "3c668de55d7bed0b97a6bd0d2b74341b1733766f7d540ec906b54598eb064b61",
+      "coverage": "full",
+      "note": "Full read: workspace-controller package skew; route-first scroll optimization; observer coverage and allocator RE boundaries; thermal-policy history; generation-cutoff display protocol."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/vscode-scroll-global-hit-regression-20261001.md": {
+      "sha256": "8b56e5e310a60a8cf7e9a079280cf23b20ac3f57789021cec12e8f5250efe31a",
+      "coverage": "full",
+      "note": "Full read: workspace-controller package skew; route-first scroll optimization; observer coverage and allocator RE boundaries; thermal-policy history; generation-cutoff display protocol."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/office-shader-observer-20260919.md": {
+      "sha256": "0d36f3257c9f4d70166bc4ec2ff0317cd47bf23181d572f917853d8970bf3cf3",
+      "coverage": "full",
+      "note": "Full read: workspace-controller package skew; route-first scroll optimization; observer coverage and allocator RE boundaries; thermal-policy history; generation-cutoff display protocol."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/thermal-watchdogs-20260730/README.md": {
+      "sha256": "e5e8f909f7967b4816ec564cde3eb4252eecdc8f4abf4f0bed50faa85ecb0087",
+      "coverage": "full",
+      "note": "Full read: workspace-controller package skew; route-first scroll optimization; observer coverage and allocator RE boundaries; thermal-policy history; generation-cutoff display protocol."
+    },
+    "analysis/MacWSBootingGuide/docs/fullscreen-mission-control-window-retention-20260810.md": {
+      "sha256": "b6b1a4d3bffe4116ee0350d696ea48ed92d91337e7e3a0c75467db505882f496",
+      "coverage": "full",
+      "note": "Full read: workspace-controller package skew; route-first scroll optimization; observer coverage and allocator RE boundaries; thermal-policy history; generation-cutoff display protocol."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/input-unification-20260731/terminal-tab-window-identity.md": {
+      "sha256": "137339279383c302cd284bd08c19bd5df792786bd5f3afa09fd10869515c7048",
+      "coverage": "full",
+      "note": "Full read: tab-group identity versus frozen-frame misdiagnosis, game-key event-pump delays, generation-aware Maps recovery, and QuickLook dependent refresh with actual mapped-image proof."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/m2-keyboard-windowing-20261002.md": {
+      "sha256": "e0a64b833990fed6dea202407a57bd4c51d1cd163cd28d1f84a1f17aee1b6dc0",
+      "coverage": "full",
+      "note": "Full read: tab-group identity versus frozen-frame misdiagnosis, game-key event-pump delays, generation-aware Maps recovery, and QuickLook dependent refresh with actual mapped-image proof."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/maps-wallpaper-dock-edge-20260809/README.md": {
+      "sha256": "aea37eaae5a48eb6951b6e25f0fc027d08589eda674c97f653531644fbfa9bc0",
+      "coverage": "full",
+      "note": "Full read: tab-group identity versus frozen-frame misdiagnosis, game-key event-pump delays, generation-aware Maps recovery, and QuickLook dependent refresh with actual mapped-image proof."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/finder-quicklook-generation-refresh-20260920.md": {
+      "sha256": "f7095f1d629edf30d6eec5fac48aa1698da2a24c953a24b2d8e9455cf05d823b",
+      "coverage": "full",
+      "note": "Full read: tab-group identity versus frozen-frame misdiagnosis, game-key event-pump delays, generation-aware Maps recovery, and QuickLook dependent refresh with actual mapped-image proof."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/production-diagnostic-hot-path-20260919.md": {
+      "sha256": "4a78260be011b43c0460c30424bb67194f14ebf0d0cc612932bf5f0835dbf07d",
+      "coverage": "full",
+      "note": "Full read: diagnostic gate lifetimes, exact owner scene retirement, synchronized Mission Control frame/lease delivery, and disconfirmed visual A/B assumptions in Office/Weather."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/window-orphan-scene-retirement-20260912.md": {
+      "sha256": "e30d7567cd1022c31e8d53259a4981ba72e1bae787ee0af8355a79849378c34f",
+      "coverage": "full",
+      "note": "Full read: diagnostic gate lifetimes, exact owner scene retirement, synchronized Mission Control frame/lease delivery, and disconfirmed visual A/B assumptions in Office/Weather."
+    },
+    "analysis/MacWSBootingGuide/docs/mission-control-presentation-lifecycle-20260808.md": {
+      "sha256": "247dcc9e3c041ba45ce68f6f9df24f589d3b51dbcfba7b3f127b258ffee235f2",
+      "coverage": "full",
+      "note": "Full read: diagnostic gate lifetimes, exact owner scene retirement, synchronized Mission Control frame/lease delivery, and disconfirmed visual A/B assumptions in Office/Weather."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/office-weather-rendering-20260919.md": {
+      "sha256": "282377f7f8020a04afc7e76c65de0c3ee3aa1abceb89e2c3f77baef527b28e9f",
+      "coverage": "full",
+      "note": "Full read: diagnostic gate lifetimes, exact owner scene retirement, synchronized Mission Control frame/lease delivery, and disconfirmed visual A/B assumptions in Office/Weather."
+    }
+  }
+}

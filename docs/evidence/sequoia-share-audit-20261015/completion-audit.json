@@ -1,0 +1,47 @@
+{
+  "objective_scope": "Full original research/documentation task for both frozen macOS15 and current macOS13; no device porting is performed by this research goal.",
+  "requirements": [
+    {
+      "id": "all_project_docs",
+      "requirement": "Read and reconcile project documentation including original-author material",
+      "status": "in_progress",
+      "evidence": "document-index.json inventories 460 initial text artifacts; reading-ledger.json explicitly tracks reading, with pending work not counted as complete"
+    },
+    {
+      "id": "historical_macos15",
+      "requirement": "Explain previous failure and misjudgments with exact evidence",
+      "status": "substantial_progress",
+      "evidence": "main report and IDA evidence; remaining corpus reconciliation and final synthesis"
+    },
+    {
+      "id": "share_success_mechanisms",
+      "requirement": "Analyze delivered success case, active closure and limits",
+      "status": "in_progress",
+      "evidence": "Loader/sidecar/exec closed static analysis; installed-role TCC override and provider/AppleEvent differences now confirmed; remaining role/corpus synthesis continues."
+    },
+    {
+      "id": "macos13_feedforward",
+      "requirement": "Produce concrete transferable improvements for current Ventura work",
+      "status": "in_progress",
+      "evidence": "New immediate takeaways: policy-bypass distinction, actual macOS13 provider candidate, local resolver/method-hook counterexamples, Dock AppleEvent fallback; final transfer matrix still in progress."
+    },
+    {
+      "id": "macos15_resume",
+      "requirement": "Produce future resumption roadmap after Ventura acceptance",
+      "status": "substantial_progress",
+      "evidence": "roadmap/rebuild contract present; reconcile with complete source/role findings"
+    },
+    {
+      "id": "preservation",
+      "requirement": "Keep author/share/coordination/_RELAY SYNC engineering material in place; archive obsolete summaries",
+      "status": "verified_so_far",
+      "evidence": "three hash-preserved summary snapshots; 364 protected document hash checks unchanged"
+    },
+    {
+      "id": "delivery_validation",
+      "requirement": "Consolidated reports, working links, evidence provenance and requirement-by-requirement final audit",
+      "status": "pending_final",
+      "evidence": "prior partial packets committed; full-goal completion not yet asserted"
+    }
+  ]
+}

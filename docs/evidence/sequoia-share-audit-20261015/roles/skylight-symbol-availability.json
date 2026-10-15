@@ -1,0 +1,54 @@
+{
+  "source_main_uuid": "4c1223e5cace3982a0036110a7a8a25c",
+  "source_subcache_uuid": "2b390646b4b5302b841aefaa5283640d",
+  "image_path": "/System/Library/PrivateFrameworks/SkyLight.framework/Versions/A/SkyLight",
+  "image_address": "0x1864af000",
+  "uuid": "4e05284680c238af85bf1482e070a32b",
+  "symtab_entries": 26680,
+  "strings_size": 445138028,
+  "matches": [
+    {
+      "name": "__ZL28audit_token_check_tcc_access13audit_token_tPK10__CFString",
+      "type": "0xe",
+      "address": "0x1866bbbf4",
+      "first64": "7f2303d5ff8301d1f65703a9f44f04a9fd7b05a9fd430191f30301aaf40300aa08c930b0083940f9080140f9e81700f916c532f0c85643f9280200b515c532f0",
+      "raw_path": "analysis/share-review-20261015/ZL28audit_token_check_tcc_access13audit_token_tPK10__CFString-24G90.raw",
+      "raw_size": 360
+    },
+    {
+      "name": "_CGXSenderCanSynthesizeEvents",
+      "type": "0xe",
+      "address": "0x18688d2c8",
+      "first64": "7f2303d5ff0301d1fd7b03a9fdc3009168ba30f0083940f9080140f9a8831ff888b632d0084d47f9880000b4090540b93fd1007162000054000080520c000014",
+      "raw_path": "analysis/share-review-20261015/CGXSenderCanSynthesizeEvents-24G90.raw",
+      "raw_size": 148
+    },
+    {
+      "name": "_audit_token_check_tcc_access",
+      "type": "0xe",
+      "address": "0x1868b97f8",
+      "first64": "7f2303d5ff8301d1f65703a9f44f04a9fd7b05a9fd430191f30301aaf40300aa08b930f0083940f9080140f9e81700f935b532f0a85e43f9e80000b500060090",
+      "raw_path": "analysis/share-review-20261015/audit_token_check_tcc_access-24G90.raw",
+      "raw_size": 164
+    },
+    {
+      "name": "__ZZL28audit_token_check_tcc_access13audit_token_tPK10__CFStringE32TCCAccessPreflightWithAuditToken",
+      "type": "0xe",
+      "address": "0x1ebf5e6a8",
+      "first64": "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+      "raw_path": "analysis/share-review-20261015/ZZL28audit_token_check_tcc_access13audit_token_tPK10__CFStringE32TCCAccessPreflightWithAuditToken-24G90.raw",
+      "raw_size": 8
+    },
+    {
+      "name": "_audit_token_check_tcc_access.TCCAccessPreflightWithAuditToken",
+      "type": "0xe",
+      "address": "0x1ebf606b8",
+      "first64": "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+      "raw_path": "analysis/share-review-20261015/audit_token_check_tcc_access.TCCAccessPreflightWithAuditToken-24G90.raw",
+      "raw_size": 8
+    }
+  ],
+  "metadata_layout_source": "dyld1286.10 C header offsetof compiled: imagesOffset=448 imagesCount=452",
+  "provider_comparison": "ElleKit findSymbol accepts ordinary local N_SECT and does not require N_EXT; compare its exported decompilation",
+  "not_runtime_hook_installation": true
+}

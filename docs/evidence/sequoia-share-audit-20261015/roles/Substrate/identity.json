@@ -1,0 +1,8 @@
+{
+  "engine": "IDA Pro 9.3 batch/Hex-Rays",
+  "input": "/Users/ciscohe/Desktop/macPad/analysis/share-review-20261015/extracted/rootfs/Library/Frameworks/CydiaSubstrate.framework/CydiaSubstrate",
+  "sha256": "8ce36ca94336bee0f50cde5d93147710709d467a2c62a13ab44e7eede960bc7b",
+  "imagebase": "0x0",
+  "hexrays_ready": true,
+  "cpu_subtype_in_loaded_header": "0x0"
+}

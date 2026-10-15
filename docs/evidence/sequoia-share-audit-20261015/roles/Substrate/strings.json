@@ -1,0 +1,1138 @@
+[
+  {
+    "address": "0x28",
+    "text": "__TEXT"
+  },
+  {
+    "address": "0x68",
+    "text": "__text"
+  },
+  {
+    "address": "0x78",
+    "text": "__TEXT"
+  },
+  {
+    "address": "0xb8",
+    "text": "__stubs"
+  },
+  {
+    "address": "0xc8",
+    "text": "__TEXT"
+  },
+  {
+    "address": "0x108",
+    "text": "__stub_helper"
+  },
+  {
+    "address": "0x118",
+    "text": "__TEXT"
+  },
+  {
+    "address": "0x158",
+    "text": "__objc_stubs"
+  },
+  {
+    "address": "0x168",
+    "text": "__TEXT"
+  },
+  {
+    "address": "0x1a8",
+    "text": "__cstring"
+  },
+  {
+    "address": "0x1b8",
+    "text": "__TEXT"
+  },
+  {
+    "address": "0x1f8",
+    "text": "__swift5_typeref"
+  },
+  {
+    "address": "0x208",
+    "text": "__TEXT"
+  },
+  {
+    "address": "0x248",
+    "text": "__const"
+  },
+  {
+    "address": "0x258",
+    "text": "__TEXT"
+  },
+  {
+    "address": "0x298",
+    "text": "__constg_swiftt"
+  },
+  {
+    "address": "0x2a8",
+    "text": "__TEXT"
+  },
+  {
+    "address": "0x2e8",
+    "text": "__swift5_reflstr"
+  },
+  {
+    "address": "0x2f8",
+    "text": "__TEXT"
+  },
+  {
+    "address": "0x338",
+    "text": "__swift5_fieldmd"
+  },
+  {
+    "address": "0x348",
+    "text": "__TEXT"
+  },
+  {
+    "address": "0x388",
+    "text": "__swift5_builtin"
+  },
+  {
+    "address": "0x398",
+    "text": "__TEXT"
+  },
+  {
+    "address": "0x3d8",
+    "text": "__swift5_proto"
+  },
+  {
+    "address": "0x3e8",
+    "text": "__TEXT"
+  },
+  {
+    "address": "0x428",
+    "text": "__swift5_types"
+  },
+  {
+    "address": "0x438",
+    "text": "__TEXT"
+  },
+  {
+    "address": "0x478",
+    "text": "__objc_classname"
+  },
+  {
+    "address": "0x488",
+    "text": "__TEXT"
+  },
+  {
+    "address": "0x4c8",
+    "text": "__objc_methname"
+  },
+  {
+    "address": "0x4d8",
+    "text": "__TEXT"
+  },
+  {
+    "address": "0x518",
+    "text": "__objc_methtype"
+  },
+  {
+    "address": "0x528",
+    "text": "__TEXT"
+  },
+  {
+    "address": "0x568",
+    "text": "__swift5_protos"
+  },
+  {
+    "address": "0x578",
+    "text": "__TEXT"
+  },
+  {
+    "address": "0x5b8",
+    "text": "__swift5_mpenum"
+  },
+  {
+    "address": "0x5c8",
+    "text": "__TEXT"
+  },
+  {
+    "address": "0x608",
+    "text": "__swift5_capture"
+  },
+  {
+    "address": "0x618",
+    "text": "__TEXT"
+  },
+  {
+    "address": "0x658",
+    "text": "__unwind_info"
+  },
+  {
+    "address": "0x668",
+    "text": "__TEXT"
+  },
+  {
+    "address": "0x6a8",
+    "text": "__eh_frame"
+  },
+  {
+    "address": "0x6b8",
+    "text": "__TEXT"
+  },
+  {
+    "address": "0x700",
+    "text": "__DATA"
+  },
+  {
+    "address": "0x740",
+    "text": "__got"
+  },
+  {
+    "address": "0x750",
+    "text": "__DATA"
+  },
+  {
+    "address": "0x790",
+    "text": "__la_symbol_ptr"
+  },
+  {
+    "address": "0x7a0",
+    "text": "__DATA"
+  },
+  {
+    "address": "0x7e0",
+    "text": "__mod_init_func"
+  },
+  {
+    "address": "0x7f0",
+    "text": "__DATA"
+  },
+  {
+    "address": "0x830",
+    "text": "__const"
+  },
+  {
+    "address": "0x840",
+    "text": "__DATA"
+  },
+  {
+    "address": "0x880",
+    "text": "__objc_classlist"
+  },
+  {
+    "address": "0x890",
+    "text": "__DATA"
+  },
+  {
+    "address": "0x8d0",
+    "text": "__objc_imageinfo"
+  },
+  {
+    "address": "0x8e0",
+    "text": "__DATA"
+  },
+  {
+    "address": "0x920",
+    "text": "__objc_const"
+  },
+  {
+    "address": "0x930",
+    "text": "__DATA"
+  },
+  {
+    "address": "0x970",
+    "text": "__objc_selrefs"
+  },
+  {
+    "address": "0x980",
+    "text": "__DATA"
+  },
+  {
+    "address": "0x9c0",
+    "text": "__objc_classrefs"
+  },
+  {
+    "address": "0x9d0",
+    "text": "__DATA"
+  },
+  {
+    "address": "0xa10",
+    "text": "__data"
+  },
+  {
+    "address": "0xa20",
+    "text": "__DATA"
+  },
+  {
+    "address": "0xa60",
+    "text": "__swift_hooks"
+  },
+  {
+    "address": "0xa70",
+    "text": "__DATA"
+  },
+  {
+    "address": "0xab0",
+    "text": "__swift51_hooks"
+  },
+  {
+    "address": "0xac0",
+    "text": "__DATA"
+  },
+  {
+    "address": "0xb00",
+    "text": "__s_async_hook"
+  },
+  {
+    "address": "0xb10",
+    "text": "__DATA"
+  },
+  {
+    "address": "0xb50",
+    "text": "__swift56_hooks"
+  },
+  {
+    "address": "0xb60",
+    "text": "__DATA"
+  },
+  {
+    "address": "0xba0",
+    "text": "__common"
+  },
+  {
+    "address": "0xbb0",
+    "text": "__DATA"
+  },
+  {
+    "address": "0xbf0",
+    "text": "__bss"
+  },
+  {
+    "address": "0xc00",
+    "text": "__DATA"
+  },
+  {
+    "address": "0xc48",
+    "text": "__LINKEDIT"
+  },
+  {
+    "address": "0xca0",
+    "text": "/usr/local/lib/libellekit.dylib"
+  },
+  {
+    "address": "0xdc0",
+    "text": "/System/Library/Frameworks/Foundation.framework/Foundation"
+  },
+  {
+    "address": "0xe18",
+    "text": "/usr/lib/libobjc.A.dylib"
+  },
+  {
+    "address": "0xe50",
+    "text": "/usr/lib/libSystem.B.dylib"
+  },
+  {
+    "address": "0xe88",
+    "text": "/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation"
+  },
+  {
+    "address": "0xee8",
+    "text": "/usr/lib/libc++.1.dylib"
+  },
+  {
+    "address": "0xf18",
+    "text": "@rpath/libswiftCore.dylib"
+  },
+  {
+    "address": "0xf50",
+    "text": "@rpath/libswiftCoreFoundation.dylib"
+  },
+  {
+    "address": "0xf90",
+    "text": "@rpath/libswiftDarwin.dylib"
+  },
+  {
+    "address": "0xfc8",
+    "text": "@rpath/libswiftDispatch.dylib"
+  },
+  {
+    "address": "0x1000",
+    "text": "@rpath/libswiftObjectiveC.dylib"
+  },
+  {
+    "address": "0x1038",
+    "text": "@rpath/libswiftXPC.dylib"
+  },
+  {
+    "address": "0x1070",
+    "text": "@rpath/libswiftos.dylib"
+  },
+  {
+    "address": "0x10a0",
+    "text": "@rpath/libswiftFoundation.dylib"
+  },
+  {
+    "address": "0x10cc",
+    "text": "/usr/lib/swift"
+  },
+  {
+    "address": "0x1fb80",
+    "text": "mach-lookup"
+  },
+  {
+    "address": "0x1fb8c",
+    "text": "pacibsp? : %02X\n"
+  },
+  {
+    "address": "0x1fb9d",
+    "text": "[-] ellekit: JIT hook did not work, task_set_state failed with err: %s\n"
+  },
+  {
+    "address": "0x1fbe5",
+    "text": "[-] ellekit: JIT hook did not work, task_threads failed with err: %s\n"
+  },
+  {
+    "address": "0x1fc2b",
+    "text": "[+] ellekit: hook #6 set"
+  },
+  {
+    "address": "0x1fc44",
+    "text": "[+] ellekit: hook #5 set"
+  },
+  {
+    "address": "0x1fc5d",
+    "text": "[+] ellekit: hook #4 set"
+  },
+  {
+    "address": "0x1fc76",
+    "text": "[+] ellekit: hook #3 set"
+  },
+  {
+    "address": "0x1fc8f",
+    "text": "[+] ellekit: hook #2 set"
+  },
+  {
+    "address": "0x1fca8",
+    "text": "[+] ellekit: hook #1 set"
+  },
+  {
+    "address": "0x1fcd0",
+    "text": "[+] ellekit: Performed one hook in LHHookFunctions from "
+  },
+  {
+    "address": "0x1fd10",
+    "text": "ellekit/Batch.swift"
+  },
+  {
+    "address": "0x1fd30",
+    "text": "Rebinding branch"
+  },
+  {
+    "address": "0x1fd50",
+    "text": "ellekit/Rebind.swift"
+  },
+  {
+    "address": "0x1fd70",
+    "text": "it's jumping now to : "
+  },
+  {
+    "address": "0x1fd90",
+    "text": "rebinded 32-bit cbnz"
+  },
+  {
+    "address": "0x1fdb0",
+    "text": "rebinded 32-bit cbz"
+  },
+  {
+    "address": "0x1fdd0",
+    "text": "ellekit/Clobber.swift"
+  },
+  {
+    "address": "0x1fdf0",
+    "text": "ellekit/General.swift"
+  },
+  {
+    "address": "0x1fe06",
+    "text": "Fatal error"
+  },
+  {
+    "address": "0x1fe20",
+    "text": "ellekit/Hook.swift"
+  },
+  {
+    "address": "0x1fe40",
+    "text": "[*] ellekit: Size of target:"
+  },
+  {
+    "address": "0x1fe60",
+    "text": "[*] ellekit: Small branch"
+  },
+  {
+    "address": "0x1fe80",
+    "text": "ellekit: Hook failure for "
+  },
+  {
+    "address": "0x1fea0",
+    "text": "[*] ellekit: using exception handler method"
+  },
+  {
+    "address": "0x1fee0",
+    "text": "[-] ellekit: failed to open shared cache"
+  },
+  {
+    "address": "0x1ff10",
+    "text": "ellekit/Dyld.swift"
+  },
+  {
+    "address": "0x1ff30",
+    "text": "/System/Library/Caches/com.apple.dyld/dyld_shared_cache_arm64e"
+  },
+  {
+    "address": "0x1ff70",
+    "text": "/System/Library/Caches/com.apple.dyld/dyld_shared_cache_arm64"
+  },
+  {
+    "address": "0x1ffb0",
+    "text": "/System/Cryptexes/OS/System/Library/Caches/com.apple.dyld/dyld_shared_cache_arm64e"
+  },
+  {
+    "address": "0x20010",
+    "text": "/System/Cryptexes/OS/System/Library/Caches/com.apple.dyld/dyld_shared_cache_arm64"
+  },
+  {
+    "address": "0x20062",
+    "text": "swh_is_debugged"
+  },
+  {
+    "address": "0x20080",
+    "text": "[+] ellekit: Orig written to:"
+  },
+  {
+    "address": "0x200a0",
+    "text": "ellekit/Orig.swift"
+  },
+  {
+    "address": "0x200c0",
+    "text": "[*] ellekit: Small function"
+  },
+  {
+    "address": "0x200e0",
+    "text": "[-] couldn't vm_protect small function orig page:"
+  },
+  {
+    "address": "0x20120",
+    "text": "[*] ellekit: Redirecting branch"
+  },
+  {
+    "address": "0x20140",
+    "text": "/private/var/mobile/.ekenablelogging"
+  },
+  {
+    "address": "0x20170",
+    "text": "/private/var/mobile/log.txt"
+  },
+  {
+    "address": "0x20190",
+    "text": "/var/jb/var/mobile/log.txt"
+  },
+  {
+    "address": "0x201b0",
+    "text": "red.charlotte.ellekit"
+  },
+  {
+    "address": "0x201d0",
+    "text": "ellekit/SVC.swift"
+  },
+  {
+    "address": "0x201f0",
+    "text": "[+] trampoline: found pacibsp"
+  },
+  {
+    "address": "0x20210",
+    "text": "ellekit/Trampoline+Location.swift"
+  },
+  {
+    "address": "0x20240",
+    "text": "[+] trampoline: found trampoline victim"
+  },
+  {
+    "address": "0x20270",
+    "text": "No symbol was specified for hooking"
+  },
+  {
+    "address": "0x202a0",
+    "text": "An error took place while handling memory pages"
+  },
+  {
+    "address": "0x202d0",
+    "text": "A problematic instruction was found at the start. We can't preserve the original function due to this instruction getting clobbered."
+  },
+  {
+    "address": "0x20360",
+    "text": "A function was too short to hook"
+  },
+  {
+    "address": "0x20390",
+    "text": "An Objective-C selector was not found. (This error is from libblackjack)"
+  },
+  {
+    "address": "0x203e0",
+    "text": "No errors took place"
+  },
+  {
+    "address": "0x20400",
+    "text": "[-] couldn't allocate base memory:"
+  },
+  {
+    "address": "0x20430",
+    "text": "ellekit/Libhooker.swift"
+  },
+  {
+    "address": "0x20450",
+    "text": "[-] couldn't set memory to rw*:"
+  },
+  {
+    "address": "0x20470",
+    "text": "[-] couldn't set memory to r*x:"
+  },
+  {
+    "address": "0x20490",
+    "text": "[-] trampoline: couldn't get orig for victim function"
+  },
+  {
+    "address": "0x204d0",
+    "text": "ellekit/Trampoline.swift"
+  },
+  {
+    "address": "0x204f0",
+    "text": "[-] ellekit: can't set exception ports"
+  },
+  {
+    "address": "0x20520",
+    "text": "ellekit/Exception.swift"
+  },
+  {
+    "address": "0x20540",
+    "text": "[-] ellekit: process can't insert right"
+  },
+  {
+    "address": "0x20570",
+    "text": "[-] ellekit: process can't allocate port"
+  },
+  {
+    "address": "0x205a0",
+    "text": "[+] ellekit: starting exception handler"
+  },
+  {
+    "address": "0x205d0",
+    "text": "ellekit_exc_port"
+  },
+  {
+    "address": "0x205f0",
+    "text": "ellekit: exception handler deallocated."
+  },
+  {
+    "address": "0x20620",
+    "text": "[-] couldn't get state for thread"
+  },
+  {
+    "address": "0x20650",
+    "text": "[-] couldn't set state for thread"
+  },
+  {
+    "address": "0x20680",
+    "text": "[-] couldn't get ptr from pc reg"
+  },
+  {
+    "address": "0x206b0",
+    "text": "Exception handler stack overflow blocked"
+  },
+  {
+    "address": "0x206e0",
+    "text": " methods found in hooked class"
+  },
+  {
+    "address": "0x20700",
+    "text": "ellekit/Objective-C.swift"
+  },
+  {
+    "address": "0x20720",
+    "text": "[*] ellekit: hooked method is"
+  },
+  {
+    "address": "0x20740",
+    "text": "[+] ellekit: Successfully got orig pointer from superclass for an objc message hook"
+  },
+  {
+    "address": "0x207a0",
+    "text": "[+] ellekit: Successfully got orig pointer for an objc message hook"
+  },
+  {
+    "address": "0x207e4",
+    "text": "kCFAllocatorNull"
+  },
+  {
+    "address": "0x207f5",
+    "text": "CFDataCreateWithBytesNoCopy"
+  },
+  {
+    "address": "0x20811",
+    "text": "CFPropertyListCreateWithData"
+  },
+  {
+    "address": "0x2082e",
+    "text": "CFPropertyListCreateFromXMLData"
+  },
+  {
+    "address": "0x2084e",
+    "text": "CFStringCreateWithCStringNoCopy"
+  },
+  {
+    "address": "0x2086e",
+    "text": "CFDictionaryGetValue"
+  },
+  {
+    "address": "0x20883",
+    "text": "CFGetTypeID"
+  },
+  {
+    "address": "0x2088f",
+    "text": "CFStringGetTypeID"
+  },
+  {
+    "address": "0x208a1",
+    "text": "CFStringGetCString"
+  },
+  {
+    "address": "0x208b4",
+    "text": "CFRelease"
+  },
+  {
+    "address": "0x208be",
+    "text": "/System/Library/CoreServices/SystemVersion.plist"
+  },
+  {
+    "address": "0x208ef",
+    "text": "ProductVersion"
+  },
+  {
+    "address": "0x208fe",
+    "text": "%d.%d.%d"
+  },
+  {
+    "address": "0x20907",
+    "text": "__TEXT"
+  },
+  {
+    "address": "0x2090e",
+    "text": "swift_getObjCClassMetadata"
+  },
+  {
+    "address": "0x20929",
+    "text": "_TtCs12_SwiftObject"
+  },
+  {
+    "address": "0x2093d",
+    "text": "swift_getTypeContextDescriptor"
+  },
+  {
+    "address": "0x2095c",
+    "text": "objc_addLoadImageFunc"
+  },
+  {
+    "address": "0x20972",
+    "text": "__swift5_proto"
+  },
+  {
+    "address": "0x20981",
+    "text": "future reported an error, but wait cannot throw"
+  },
+  {
+    "address": "0x209b1",
+    "text": "swift_task_escalate"
+  },
+  {
+    "address": "0x209c5",
+    "text": "_Z19voucher_needs_adoptP9voucher_s"
+  },
+  {
+    "address": "0x209e8",
+    "text": "__tsan_acquire"
+  },
+  {
+    "address": "0x209f7",
+    "text": "__tsan_release"
+  },
+  {
+    "address": "0x20a06",
+    "text": "swift_task_enterThreadLocalContext"
+  },
+  {
+    "address": "0x20a29",
+    "text": "swift_task_exitThreadLocalContext"
+  },
+  {
+    "address": "0x20ade",
+    "text": "yXlXp"
+  },
+  {
+    "address": "0x20b26",
+    "text": "$s7ellekit11InstructionP"
+  },
+  {
+    "address": "0x20bb7",
+    "text": "yS2vG"
+  },
+  {
+    "address": "0x20be3",
+    "text": "ySVSgG"
+  },
+  {
+    "address": "0x20c51",
+    "text": "SgXwz_Xx"
+  },
+  {
+    "address": "0x20c5f",
+    "text": "XDXMT"
+  },
+  {
+    "address": "0x20c76",
+    "text": "So17OS_dispatch_queueCSg"
+  },
+  {
+    "address": "0x20cb8",
+    "text": "ellekit"
+  },
+  {
+    "address": "0x20cc0",
+    "text": "FunctionHookErrors"
+  },
+  {
+    "address": "0x20d80",
+    "text": "LHMemoryPatch"
+  },
+  {
+    "address": "0x20d8e",
+    "text": "LHFunctionHook"
+  },
+  {
+    "address": "0x20da0",
+    "text": "LHFunctionHookOptions"
+  },
+  {
+    "address": "0x20db6",
+    "text": "LHOptions"
+  },
+  {
+    "address": "0x20e60",
+    "text": "InstructionBuilder"
+  },
+  {
+    "address": "0x20f3c",
+    "text": "Instruction"
+  },
+  {
+    "address": "0x20f90",
+    "text": "bytes"
+  },
+  {
+    "address": "0x21050",
+    "text": "LinkPathError"
+  },
+  {
+    "address": "0x21214",
+    "text": "Trampoline"
+  },
+  {
+    "address": "0x21220",
+    "text": "SymbolErr"
+  },
+  {
+    "address": "0x2178c",
+    "text": "Register"
+  },
+  {
+    "address": "0x217d0",
+    "text": "ExceptionHandler"
+  },
+  {
+    "address": "0x21810",
+    "text": "paciza"
+  },
+  {
+    "address": "0x21820",
+    "text": "pacia"
+  },
+  {
+    "address": "0x21850",
+    "text": "__swift5_proto"
+  },
+  {
+    "address": "0x220a0",
+    "text": "allocationFailure"
+  },
+  {
+    "address": "0x220c0",
+    "text": "protectionFailure"
+  },
+  {
+    "address": "0x220d2",
+    "text": "function"
+  },
+  {
+    "address": "0x220db",
+    "text": "replacement"
+  },
+  {
+    "address": "0x220e7",
+    "text": "oldptr"
+  },
+  {
+    "address": "0x220ee",
+    "text": "options"
+  },
+  {
+    "address": "0x220f6",
+    "text": "destination"
+  },
+  {
+    "address": "0x2210c",
+    "text": "jmp_reg"
+  },
+  {
+    "address": "0x22114",
+    "text": "rawValue"
+  },
+  {
+    "address": "0x22121",
+    "text": "value"
+  },
+  {
+    "address": "0x22127",
+    "text": "byteValues"
+  },
+  {
+    "address": "0x22132",
+    "text": "_cyanideTarget"
+  },
+  {
+    "address": "0x22141",
+    "text": "register"
+  },
+  {
+    "address": "0x2214a",
+    "text": "label"
+  },
+  {
+    "address": "0x22150",
+    "text": "badMachO"
+  },
+  {
+    "address": "0x22159",
+    "text": "badPath"
+  },
+  {
+    "address": "0x22161",
+    "text": "value"
+  },
+  {
+    "address": "0x2216c",
+    "text": "target"
+  },
+  {
+    "address": "0x22173",
+    "text": "trampolineCode"
+  },
+  {
+    "address": "0x22182",
+    "text": "trampoline"
+  },
+  {
+    "address": "0x22192",
+    "text": "noSymbol"
+  },
+  {
+    "address": "0x2219b",
+    "text": "noAddress"
+  },
+  {
+    "address": "0x221a5",
+    "text": "badCachePath"
+  },
+  {
+    "address": "0x221b2",
+    "text": "value"
+  },
+  {
+    "address": "0x221c7",
+    "text": "rawValue"
+  },
+  {
+    "address": "0x221d5",
+    "text": "thread"
+  },
+  {
+    "address": "0x221dc",
+    "text": "value"
+  },
+  {
+    "address": "0x22800",
+    "text": "_TtC7ellekit3ret"
+  },
+  {
+    "address": "0x22820",
+    "text": "_TtC7ellekit4movz"
+  },
+  {
+    "address": "0x22840",
+    "text": "_TtC7ellekit4movk"
+  },
+  {
+    "address": "0x22860",
+    "text": "_TtC7ellekit4csel"
+  },
+  {
+    "address": "0x22880",
+    "text": "_TtC7ellekit5bytes"
+  },
+  {
+    "address": "0x228a0",
+    "text": "_TtC7ellekit3svc"
+  },
+  {
+    "address": "0x228c0",
+    "text": "_TtC7ellekit3str"
+  },
+  {
+    "address": "0x228e0",
+    "text": "_TtC7ellekit3ldr"
+  },
+  {
+    "address": "0x22900",
+    "text": "_TtC7ellekit3nop"
+  },
+  {
+    "address": "0x22920",
+    "text": "_TtC7ellekit4adrp"
+  },
+  {
+    "address": "0x22940",
+    "text": "_TtC7ellekit3adr"
+  },
+  {
+    "address": "0x22960",
+    "text": "_TtC7ellekit1b"
+  },
+  {
+    "address": "0x2296f",
+    "text": "_TtC7ellekit2bl"
+  },
+  {
+    "address": "0x22980",
+    "text": "_TtC7ellekit3blr"
+  },
+  {
+    "address": "0x22991",
+    "text": "_TtC7ellekit2br"
+  },
+  {
+    "address": "0x229b0",
+    "text": "_TtC7ellekit3cbz"
+  },
+  {
+    "address": "0x229d0",
+    "text": "_TtC7ellekit4cbnz"
+  },
+  {
+    "address": "0x229f0",
+    "text": "_TtC7ellekit3sub"
+  },
+  {
+    "address": "0x22a10",
+    "text": "_TtC7ellekit3add"
+  },
+  {
+    "address": "0x22a30",
+    "text": "_TtC7ellekit16ExceptionHandler"
+  },
+  {
+    "address": "0x22a50",
+    "text": "_TtC7ellekit6paciza"
+  },
+  {
+    "address": "0x22a70",
+    "text": "_TtC7ellekit5pacia"
+  },
+  {
+    "address": "0x22a87",
+    "text": "_cyanideTarget"
+  },
+  {
+    "address": "0x22a96",
+    "text": "stringByResolvingSymlinksInPath"
+  },
+  {
+    "address": "0x22ab6",
+    "text": "UTF8String"
+  },
+  {
+    "address": "0x22ac1",
+    "text": "seekToEndOfFile"
+  },
+  {
+    "address": "0x22ad1",
+    "text": "bundleIdentifier"
+  },
+  {
+    "address": "0x22ae2",
+    "text": "byteValues"
+  },
+  {
+    "address": "0x22aed",
+    "text": "closeFile"
+  },
+  {
+    "address": "0x22af7",
+    "text": "defaultManager"
+  },
+  {
+    "address": "0x22b06",
+    "text": "fileExistsAtPath:"
+  },
+  {
+    "address": "0x22b18",
+    "text": "fileHandleForWritingToURL:error:"
+  },
+  {
+    "address": "0x22b39",
+    "text": "fileURLWithPath:"
+  },
+  {
+    "address": "0x22b4a",
+    "text": "initWithPath:"
+  },
+  {
+    "address": "0x22b58",
+    "text": "label"
+  },
+  {
+    "address": "0x22b63",
+    "text": "register"
+  },
+  {
+    "address": "0x22b6c",
+    "text": "stringByDeletingLastPathComponent"
+  },
+  {
+    "address": "0x22b8e",
+    "text": "thread"
+  },
+  {
+    "address": "0x22b95",
+    "text": "value"
+  },
+  {
+    "address": "0x22b9b",
+    "text": "writeData:"
+  },
+  {
+    "address": "0x22ba7",
+    "text": "v8@?0"
+  },
+  {
+    "address": "0x26278",
+    "text": "Hello, World!"
+  }
+]
