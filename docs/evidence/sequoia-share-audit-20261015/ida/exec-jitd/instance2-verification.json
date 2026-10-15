@@ -1,0 +1,27 @@
+{
+  "date": "2026-10-15",
+  "transport": "MCP HTTP /mcp on configured Instance2 port 13338",
+  "server_health": {
+    "status": "ok",
+    "uptime_sec": 113.276,
+    "idb_path": "/Users/ciscohe/Desktop/macPad/analysis/share-review-20261015/extracted/host-overlay/var/jb/usr/local/libexec/main15-exec-jitd-dock-reopen-20261010.i64",
+    "module": "main15-exec-jitd-dock-reopen-20261010",
+    "input_path": "/Users/ciscohe/Desktop/macPad/analysis/share-review-20261015/extracted/host-overlay/var/jb/usr/local/libexec/main15-exec-jitd-dock-reopen-20261010",
+    "imagebase": "0x100000000",
+    "auto_analysis_ready": true,
+    "hexrays_ready": true,
+    "strings_cache_ready": false,
+    "strings_cache_size": 0
+  },
+  "identity_and_comparison": {
+    "input": "/Users/ciscohe/Desktop/macPad/analysis/share-review-20261015/extracted/host-overlay/var/jb/usr/local/libexec/main15-exec-jitd-dock-reopen-20261010",
+    "imagebase": "0x100000000",
+    "loaded_sha256": "17d5f21a109b3df408640857dc06d8bbd63d85b41b3601f92f8297a52855d09e",
+    "disk_sha256": "17d5f21a109b3df408640857dc06d8bbd63d85b41b3601f92f8297a52855d09e",
+    "uuids": [
+      "9af6f3e1-9ddb-3b99-935a-e844a58523d8"
+    ],
+    "prior_batch_instruction_records_compared": 970,
+    "byte_mismatches": []
+  }
+}

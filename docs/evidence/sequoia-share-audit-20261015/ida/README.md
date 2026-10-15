@@ -16,6 +16,8 @@
 
 证据：[ServerHealth](server-health.json)、[survey](survey.json)、[UUID](identity.json)、[helper 身份](exec-jitd/identity.json)。所有 dyld 地址都是此文件 imagebase=0 的地址；不能当作运行地址直接使用。
 
+同日随后用户开启 Instance2／13338：ServerHealth 与 Hex-Rays 正常，输入文件、加载时／磁盘 SHA 和 UUID 都与上述 helper 匹配。对原批处理导出的五个函数共 **970 条指令记录**逐段比较 IDB 字节，零差异。见 [Instance2 核验](exec-jitd/instance2-verification.json)；无需因切换到交互 MCP 重做已完成的分析。
+
 ## 1. 4-GiB 限制：先建立真实地址保留，再做 private 映射
 
 **RE-confirmed via share-dyld-arm64e +0x344ec → +0x9b580。**
