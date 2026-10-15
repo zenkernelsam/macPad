@@ -1,5 +1,10 @@
 # Reproducing the 2026-10-13 Ventura 22F82 desktop state
 
+> **2026-10-15 update:** retain this dated reproduction recipe, but use the
+> [current handoff](ventura-22F82-evening-handoff-20261015.md) for R008 readiness,
+> TCC reply semantics and remaining input work. The actual user-requested pause
+> is recorded in `coordination/PAUSE_REQUEST.md`; this document does not end it.
+
 This is the "new agent starts cold" guide: everything needed to rebuild,
 deploy, launch and verify the current state — `chroot CLI works`,
 `WindowServer compositing`, `state=ready`, `wallpaper rendered`, `input

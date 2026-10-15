@@ -1,0 +1,131 @@
+Metadata inventory only. No behavioral disassembly or runtime inference.
+Command: otool -l <hash-verified artifact>
+
+dyld
+     cmd LC_UUID
+ cmdsize 24
+    uuid 3247E185-CED2-36FF-9E29-47A77C23E004
+Load command 12
+      cmd LC_BUILD_VERSION
+  cmdsize 32
+      cmd LC_BUILD_VERSION
+  cmdsize 32
+ platform 1
+    minos 15.6
+      sdk 15.6
+   ntools 1
+
+exec-jitd
+     cmd LC_UUID
+ cmdsize 24
+    uuid 9AF6F3E1-9DDB-3B99-935A-E844A58523D8
+Load command 11
+      cmd LC_BUILD_VERSION
+  cmdsize 32
+      cmd LC_BUILD_VERSION
+  cmdsize 32
+ platform 2
+    minos 16.0
+      sdk 16.4
+   ntools 1
+
+sidecar0
+Load command 0
+      cmd LC_SEGMENT_64
+  cmdsize 72
+  segname __TEXT
+   vmaddr 0x0000000000000000
+   vmsize 0x0000000000004000
+  fileoff 0
+ filesize 16384
+  maxprot 0x00000005
+ initprot 0x00000005
+   nsects 0
+    flags 0x0
+Load command 1
+      cmd LC_SEGMENT_64
+  cmdsize 72
+  segname __DATA
+   vmaddr 0x0000000000004000
+   vmsize 0x000000000d11c000
+  fileoff 16384
+ filesize 219267072
+  maxprot 0x00000003
+ initprot 0x00000003
+   nsects 0
+    flags 0x0
+Load command 2
+      cmd LC_SEGMENT_64
+  cmdsize 72
+  segname __LINKEDIT
+   vmaddr 0x000000000d120000
+   vmsize 0x00000000002a8000
+  fileoff 219283456
+ filesize 2784384
+  maxprot 0x00000001
+ initprot 0x00000001
+   nsects 0
+    flags 0x0
+Load command 3
+          cmd LC_ID_DYLIB
+      cmdsize 48
+         name cache-pager-sidecar (offset 24)
+   time stamp 0 Thu Jan  1 08:00:00 1970
+      current version 1.0.0
+compatibility version 1.0.0
+Load command 4
+      cmd LC_CODE_SIGNATURE
+  cmdsize 16
+  dataoff 219283456
+ datasize 2784384
+
+
+sidecar1
+Load command 0
+      cmd LC_SEGMENT_64
+  cmdsize 72
+  segname __TEXT
+   vmaddr 0x0000000000000000
+   vmsize 0x0000000000004000
+  fileoff 0
+ filesize 16384
+  maxprot 0x00000005
+ initprot 0x00000005
+   nsects 0
+    flags 0x0
+Load command 1
+      cmd LC_SEGMENT_64
+  cmdsize 72
+  segname __DATA
+   vmaddr 0x0000000000004000
+   vmsize 0x000000000b00c000
+  fileoff 16384
+ filesize 184598528
+  maxprot 0x00000003
+ initprot 0x00000003
+   nsects 0
+    flags 0x0
+Load command 2
+      cmd LC_SEGMENT_64
+  cmdsize 72
+  segname __LINKEDIT
+   vmaddr 0x000000000b010000
+   vmsize 0x0000000000240000
+  fileoff 184614912
+ filesize 2344256
+  maxprot 0x00000001
+ initprot 0x00000001
+   nsects 0
+    flags 0x0
+Load command 3
+          cmd LC_ID_DYLIB
+      cmdsize 48
+         name cache-pager-sidecar (offset 24)
+   time stamp 0 Thu Jan  1 08:00:00 1970
+      current version 1.0.0
+compatibility version 1.0.0
+Load command 4
+      cmd LC_CODE_SIGNATURE
+  cmdsize 16
+  dataoff 184614912
+ datasize 2344256

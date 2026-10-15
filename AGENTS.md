@@ -105,6 +105,16 @@ it is available to every agent without an external memory store.
 
 ## Current Project Memory and Operating Baseline (2026-10-07)
 
+**Local review update (2026-10-15):** current Ventura work is paused at the
+user's request (`coordination/PAUSE_REQUEST.md`, commit `6d1b7f6`). R007 reached
+real system-tccd dictionary replies, but accessor-zero does not prove an
+explicit policy-denial field. R008 (`529c412`) still has reviewer edge cases
+and pending device acceptance. Start at `docs/README.md` for the corrected
+timeline and evening handoff. The Sequoia share-package review in
+`docs/porting/sequoia-24G90-share-review-20261015.md` retracts the universal
+“15.6.1 is impossible” inference and the recycled “131 macOS images” claim;
+it does not claim a working M1 port or authorize resuming device work.
+
 This section is the current summary. Later sections retain detailed and
 historical bring-up knowledge. If an older section conflicts with this one,
 the current source, focused tests, dated evidence under `docs/evidence/`, and

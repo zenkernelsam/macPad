@@ -1,0 +1,300 @@
+{
+  "date": "2026-10-15",
+  "repository_baseline": "6d1b7f6",
+  "review_kind": "local documentation, file-integrity, metadata and reference-source audit; no new behavioral disassembly or device execution",
+  "package": "analysis/macPad-15.6 2.1-分享包-20261013",
+  "package_checksum_results": [
+    {
+      "path": "AGENTS.md",
+      "sha256": "0fab9a8cafe4ca0a335e96797509bd41d886040e79fa23a75424e851ed2c8943",
+      "expected": "0fab9a8cafe4ca0a335e96797509bd41d886040e79fa23a75424e851ed2c8943",
+      "matches": true
+    },
+    {
+      "path": "ARCHIVE-VERIFICATION.json",
+      "sha256": "e448dc4bf51c40523ffe00ae62383b1680faca48fe5b1221a2c1854cb979a144",
+      "expected": "e448dc4bf51c40523ffe00ae62383b1680faca48fe5b1221a2c1854cb979a144",
+      "matches": true
+    },
+    {
+      "path": "PACKAGE-INFO.json",
+      "sha256": "2c8e720ac6de03a48d66f3f2d3035be76eb829f858c25fec27f5fb1600b56a2f",
+      "expected": "2c8e720ac6de03a48d66f3f2d3035be76eb829f858c25fec27f5fb1600b56a2f",
+      "matches": true
+    },
+    {
+      "path": "PRIVACY-REPORT.json",
+      "sha256": "1f5d2b3cc10f5963ea002c2b6a4aa441a666fdcd678e84b5e5d5316e98418cf0",
+      "expected": "1f5d2b3cc10f5963ea002c2b6a4aa441a666fdcd678e84b5e5d5316e98418cf0",
+      "matches": true
+    },
+    {
+      "path": "README.md",
+      "sha256": "3a047f53bb26f7fbaeb93e80f7040b0afe2e66cbed33e48815291146821e6db1",
+      "expected": "3a047f53bb26f7fbaeb93e80f7040b0afe2e66cbed33e48815291146821e6db1",
+      "matches": true
+    },
+    {
+      "path": "UPDATE-20261013.md",
+      "sha256": "7d9224f3ecc0e53b2378a0111c51b866bfef1529b436d88fc5c86c8f6718cbf5",
+      "expected": "7d9224f3ecc0e53b2378a0111c51b866bfef1529b436d88fc5c86c8f6718cbf5",
+      "matches": true
+    },
+    {
+      "path": "docs/ADAPTATION.md",
+      "sha256": "dee5677f369fd37e217ab43288d0e1f3477ce125c9e9deafbcf4d3d921871954",
+      "expected": "dee5677f369fd37e217ab43288d0e1f3477ce125c9e9deafbcf4d3d921871954",
+      "matches": true
+    },
+    {
+      "path": "docs/DEPENDENCY-VERSIONS.tsv",
+      "sha256": "dd64da297489b463620246f68aecbefd3312e9567682127efbf20234d9cf9e02",
+      "expected": "dd64da297489b463620246f68aecbefd3312e9567682127efbf20234d9cf9e02",
+      "matches": true
+    },
+    {
+      "path": "docs/FACTORY-RESOURCE-REVIEW.json",
+      "sha256": "01d5e9ac1b09898c6ce414696f035f907bb3a1cb0541f2c7962c4346e28f2827",
+      "expected": "01d5e9ac1b09898c6ce414696f035f907bb3a1cb0541f2c7962c4346e28f2827",
+      "matches": true
+    },
+    {
+      "path": "docs/PRIVACY.md",
+      "sha256": "6dc0f69995b61a7ce2c6f389840131d0bbd83e84334669feb0f22f3eb237e6e5",
+      "expected": "6dc0f69995b61a7ce2c6f389840131d0bbd83e84334669feb0f22f3eb237e6e5",
+      "matches": true
+    },
+    {
+      "path": "docs/RUNTIME-FILES.json",
+      "sha256": "c8c49ee351d825d773870baa61bd8687d9ea5faacb9039563c5132e979e3079e",
+      "expected": "c8c49ee351d825d773870baa61bd8687d9ea5faacb9039563c5132e979e3079e",
+      "matches": true
+    },
+    {
+      "path": "docs/SOURCE-CONSISTENCY.json",
+      "sha256": "579ee59b99b33765e92f7848249b363e5ee9b13d4172e40e4f5d44cf9f1817de",
+      "expected": "579ee59b99b33765e92f7848249b363e5ee9b13d4172e40e4f5d44cf9f1817de",
+      "matches": true
+    },
+    {
+      "path": "docs/ai安装适配提示.md",
+      "sha256": "fc1fffad36a1072a909cf638c60267c7d7f04a48dfd36d85df2e5b2a86f608c0",
+      "expected": "fc1fffad36a1072a909cf638c60267c7d7f04a48dfd36d85df2e5b2a86f608c0",
+      "matches": true
+    },
+    {
+      "path": "inventory.jsonl",
+      "sha256": "da3ce96d9fe8e0a996e231227c9c5b13193f36cb2776f93c3ef9bc0c2568d56a",
+      "expected": "da3ce96d9fe8e0a996e231227c9c5b13193f36cb2776f93c3ef9bc0c2568d56a",
+      "matches": true
+    },
+    {
+      "path": "payload.tar.zst",
+      "sha256": "29ed58178ad4ac1da5cb2b803657ebb9dc6707ddb400ddc9bf26c5c27d50de73",
+      "expected": "29ed58178ad4ac1da5cb2b803657ebb9dc6707ddb400ddc9bf26c5c27d50de73",
+      "matches": true
+    },
+    {
+      "path": "privacy-binary-changes.json",
+      "sha256": "4568f58589aba0afd78f85a55aa78f5fd881dc145c44b737cc247e5f09c1def2",
+      "expected": "4568f58589aba0afd78f85a55aa78f5fd881dc145c44b737cc247e5f09c1def2",
+      "matches": true
+    },
+    {
+      "path": "tools/restore-metadata.py",
+      "sha256": "ce926c0d64d393cc7c956ceb908fe00b0a569d5fb58d1a7f5b62274de7f90f37",
+      "expected": "ce926c0d64d393cc7c956ceb908fe00b0a569d5fb58d1a7f5b62274de7f90f37",
+      "matches": true
+    },
+    {
+      "path": "tools/verify-payload.py",
+      "sha256": "b48769e1dc6a9ff5100d309ff34efc6ff9f4f3fc983fbe297b3de276831d9ca8",
+      "expected": "b48769e1dc6a9ff5100d309ff34efc6ff9f4f3fc983fbe297b3de276831d9ca8",
+      "matches": true
+    }
+  ],
+  "archive_members_scanned": 475270,
+  "regular_files_extracted_and_hash_verified": 708,
+  "hash_mismatches": 0,
+  "extraction_policy": "selected regular files only, reject absolute/traversal paths; no payload symlink restoration, execution, metadata installation or deployment",
+  "selected_artifacts": [
+    {
+      "path": "rootfs/usr/lib/dyld",
+      "size": 2294432,
+      "sha256": "c224a96532e354cf4397569ee83272d81492ad8a08943e2d467a5e4e2dc0e170",
+      "expected_sha256": "c224a96532e354cf4397569ee83272d81492ad8a08943e2d467a5e4e2dc0e170",
+      "matches": true
+    },
+    {
+      "path": "rootfs/usr/local/lib/libmachook.dylib",
+      "size": 1144432,
+      "sha256": "da97285c53a796889c2a392f5dd46b12ec318ef80dbe4d7e8c4c1c7bd3dd251c",
+      "expected_sha256": "da97285c53a796889c2a392f5dd46b12ec318ef80dbe4d7e8c4c1c7bd3dd251c",
+      "matches": true
+    },
+    {
+      "path": "rootfs/usr/local/lib/libmachook_arm64.dylib",
+      "size": 1151408,
+      "sha256": "432ebe93d6004152be66f1eafc08c94dedc113e1ef87b32268c1fd08b58c6523",
+      "expected_sha256": "432ebe93d6004152be66f1eafc08c94dedc113e1ef87b32268c1fd08b58c6523",
+      "matches": true
+    },
+    {
+      "path": "rootfs/Library/Frameworks/CydiaSubstrate.framework/CydiaSubstrate",
+      "size": 762640,
+      "sha256": "8ce36ca94336bee0f50cde5d93147710709d467a2c62a13ab44e7eede960bc7b",
+      "expected_sha256": "8ce36ca94336bee0f50cde5d93147710709d467a2c62a13ab44e7eede960bc7b",
+      "matches": true
+    },
+    {
+      "path": "rootfs/System/Library/dyld/dyld_shared_cache_arm64e",
+      "size": 2712764416,
+      "sha256": "c2ef6966687b008ffbc29ee5f4899bc3df0b1e5afeb59fe122dd5b928ff0c5b3",
+      "expected_sha256": "c2ef6966687b008ffbc29ee5f4899bc3df0b1e5afeb59fe122dd5b928ff0c5b3",
+      "matches": true
+    },
+    {
+      "path": "rootfs/System/Library/dyld/dyld_shared_cache_arm64e.01",
+      "size": 2203500544,
+      "sha256": "e6a7e6c0697560a0afee3865d1f85c8b0c30fb79f8ec0743fb62250926a1b040",
+      "expected_sha256": "e6a7e6c0697560a0afee3865d1f85c8b0c30fb79f8ec0743fb62250926a1b040",
+      "matches": true
+    },
+    {
+      "path": "rootfs/private/var/db/macws/native15-installed-20261005.json",
+      "size": 7106,
+      "sha256": "946f0d75e9dfb0f3c6e2e60f4ba19e3f9956d8c79de4bda09778badf0c1378ea",
+      "expected_sha256": "946f0d75e9dfb0f3c6e2e60f4ba19e3f9956d8c79de4bda09778badf0c1378ea",
+      "matches": true
+    },
+    {
+      "path": "host-overlay/var/jb/usr/macOS/bin/macos_gui.sh",
+      "size": 311238,
+      "sha256": "301d9c1b11146fc5a9f4aff73ab470adc6dbb180c56f487be3ffca5f9b3ba289",
+      "expected_sha256": "301d9c1b11146fc5a9f4aff73ab470adc6dbb180c56f487be3ffca5f9b3ba289",
+      "matches": true
+    },
+    {
+      "path": "host-overlay/var/jb/usr/macOS/bin/ensure_macos15_compat_baseline.sh",
+      "size": 20192,
+      "sha256": "14fa0508e5002855c2470a674c0fde5d6c467a041c59a53f3b0fbed6f182ae98",
+      "expected_sha256": "14fa0508e5002855c2470a674c0fde5d6c467a041c59a53f3b0fbed6f182ae98",
+      "matches": true
+    },
+    {
+      "path": "host-overlay/var/jb/usr/macOS/bin/launchdchrootexec-sequoia-main-20261005",
+      "size": 69952,
+      "sha256": "b06e5200c7f3e47d3356ece204dc3a153ff4525e194d273dab285d03124dbd29",
+      "expected_sha256": "b06e5200c7f3e47d3356ece204dc3a153ff4525e194d273dab285d03124dbd29",
+      "matches": true
+    },
+    {
+      "path": "host-overlay/var/jb/usr/local/libexec/main15-exec-jitd-dock-reopen-20261010",
+      "size": 86848,
+      "sha256": "17d5f21a109b3df408640857dc06d8bbd63d85b41b3601f92f8297a52855d09e",
+      "expected_sha256": "17d5f21a109b3df408640857dc06d8bbd63d85b41b3601f92f8297a52855d09e",
+      "matches": true
+    },
+    {
+      "path": "reference-source/sequoia-hook-source/launchdchrootexec/main.m",
+      "size": 8777,
+      "sha256": "1acf93d6996a1399c958cd414f9fb0a19b0f8536fee5d57ddc8528cd9d82b0fb",
+      "expected_sha256": "1acf93d6996a1399c958cd414f9fb0a19b0f8536fee5d57ddc8528cd9d82b0fb",
+      "matches": true
+    },
+    {
+      "path": "reference-source/sequoia-hook-source/libmachook/SequoiaProcess.c",
+      "size": 10226,
+      "sha256": "f2d6f0e8078f937a7d1e59452704472d95aa4bb1dc49a7100b7416810c05decc",
+      "expected_sha256": "f2d6f0e8078f937a7d1e59452704472d95aa4bb1dc49a7100b7416810c05decc",
+      "matches": true
+    },
+    {
+      "path": "reference-source/sequoia-hook-source/libmachook/AppInputBridge.m",
+      "size": 569595,
+      "sha256": "12c77a4f88db186436f1cfe7f286a1b92d90934c99f88caa6bc06eabf34e9a18",
+      "expected_sha256": "12c77a4f88db186436f1cfe7f286a1b92d90934c99f88caa6bc06eabf34e9a18",
+      "matches": true
+    },
+    {
+      "path": "reference-source/sequoia-hook-source/libmachook/mac_hooks.m",
+      "size": 1294315,
+      "sha256": "d65872402d4dd31b54732c3b45666c4fbc6d99e9b79a9085c7615feb84aa6e84",
+      "expected_sha256": "d65872402d4dd31b54732c3b45666c4fbc6d99e9b79a9085c7615feb84aa6e84",
+      "matches": true
+    },
+    {
+      "path": "reference-source/sequoia-hook-source/libmachook/agx15-device-config.h",
+      "size": 1914,
+      "sha256": "c6287e87321b96f89b889efc2b2c0f618f79fdf7f3e0438549cb24344c59d714",
+      "expected_sha256": "c6287e87321b96f89b889efc2b2c0f618f79fdf7f3e0438549cb24344c59d714",
+      "matches": true
+    },
+    {
+      "path": "rootfs/usr/local/share/macpad-pager15/cache_guard.py",
+      "sha256": "16e52df68cf7ffbf81b623c2722992175d90527a46127c441ef47b8017e02349",
+      "matches": true
+    },
+    {
+      "path": "rootfs/usr/local/share/macpad-pager15/enable",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "matches": true
+    },
+    {
+      "path": "rootfs/usr/local/share/macpad-pager15/sidecar0.dylib",
+      "sha256": "d8ebc418afdb17ba1328204773777d37e9597b686f779eaa9f1b9370ba74e3c3",
+      "matches": true
+    },
+    {
+      "path": "rootfs/usr/local/share/macpad-pager15/sidecar1.dylib",
+      "sha256": "41a822550bcd0b1b6ac79c752c200f16c9e24ebc08b095a035c0219e20bcf386",
+      "matches": true
+    },
+    {
+      "path": "rootfs/usr/local/share/macpad-pager15/sources.json",
+      "sha256": "ee7fdeb4c803568f46c9a7c28de8a2a6ba5712663f94b39c56005f528b71e857",
+      "matches": true
+    }
+  ],
+  "derived_dyld_thin": {
+    "path": "analysis/share-review-20261015/share-dyld-arm64e",
+    "sha256": "def1d5e2ccde2ee7930a30f38d540981aab2ccda9a7f0d6212bd2f9339dd3a00",
+    "uuid": "3247E185-CED2-36FF-9E29-47A77C23E004",
+    "source": "lipo -thin arm64e of hash-verified packaged dyld; UUID from otool -l"
+  },
+  "exec_jitd_uuid": "9AF6F3E1-9DDB-3B99-935A-E844A58523D8",
+  "reference_source_missing_inputs": [
+    "config/production.mk",
+    "libmachook/Diagnostics/MacWSInputLatency.m",
+    "libmachook/Diagnostics/MacWSRandomDiagnostics.m",
+    "libmachook/Diagnostics/MacWSIdentityDiagnostics.m",
+    "libmachook/Diagnostics/MacWSSteamPipeDiagnostics.m",
+    "MacWSInputLatency.h",
+    "macws_diagnostics_policy.h",
+    "skylight-resource-trace.h",
+    "MacWSIdentityDiagnostics.h"
+  ],
+  "not_found_in_reference_source": [
+    "current exec-jitd complete implementation",
+    "pager sidecar generator",
+    "complete current dyld patch recipe"
+  ],
+  "limits": [
+    "Package historical runtime claims are source-reported, not independently reproduced.",
+    "All package checklist hashes matched; this does not validate all unextracted payload file contents against inventory.",
+    "The source-consistency list compares deployed/copy files and is not reproducible-build proof.",
+    "Behavior of helper internal admission and pager consumers remains THEORY until exact-binary RE and runtime evidence.",
+    "IDA MCP endpoints 13337-13339 refused connection at the bounded availability check.",
+    "No device connection, startup, build, install, kernel write, TCC policy change or Agent dispatch was performed."
+  ],
+  "documentation_validation": {
+    "new_navigation_file_links_checked": 73,
+    "broken_file_links": 0,
+    "archived_summary_snapshots": 3,
+    "archive_original_hashes_match": true,
+    "initial_author_share_coordination_archive_document_hashes_compared": 364,
+    "protected_document_hash_changes": 0,
+    "staged_whitespace_check": "git diff --cached --check",
+    "runtime_tests": "not run; this is a documentation-only change"
+  }
+}

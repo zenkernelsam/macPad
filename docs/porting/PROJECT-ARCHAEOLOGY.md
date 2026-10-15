@@ -1,131 +1,49 @@
-# macPad project archaeology — the full arc, 2026-09-26 → 2026-10-13
+# macPad 项目时间线与当前结论
 
-Reading this doc first gives a new agent the whole story in one pass. Each
-era names its canonical docs; those docs carry the verbatim evidence. The
-rule: **trust the dated doc's own evidence labels over any summary here**.
+更新：2026-10-15。本页合并项目历程入口；详细 Sequoia 复盘见 [分享包研究](sequoia-24G90-share-review-20261015.md)，当前设备动作以 [coordination](../../coordination/REVIEWER_STATE.md) 为准。原 10-13 版本已[存档](../Archive/20261015-pre-consolidation/PROJECT-ARCHAEOLOGY.md)。
 
-The project began as a fork of the author's `MacWSBootingGuide` — a working
-Ventura-13.4 (22F66) stack on iPad13,6/iPadOS 16.3.1: native AGX desktop,
-windowing, input/IME, VNC observer, apps running. Everything in this repo is
-either (a) that upstream stack, (b) the 15.6.1 research branch (frozen), or
-(c) the 22F82 bring-up (current).
+## 三条资料线
 
----
+| 资料线 | 对象 | 不可混用的边界 |
+| --- | --- | --- |
+| 原作者 | 主要为 Ventura 13.4／22F66，作者验证设备 | 作者的 Host／输入／应用成功不等于本机已通过 |
+| 我们的复现 | iPad13,11，M1/T8103，iPadOS 16.3／20D47；当前 Ventura 13.4.1／22F82 | 当前 input 尚未验收，R008 candidate 未完成部署／review 闭环 |
+| 群友分享 | 来源方报告 iPad14,4，M2，iPadOS 16.2／20C65，15.6.1／24G90 | 交付文件已本地核验；脱敏全新安装及本机 M1 适配未验收 |
 
-## Era 0 — upstream foundation (before this repo's sessions)
+## 2026-09-26 至 10-04：Sequoia 研究，随后冻结
 
-`MacWSBootingGuide` upstream. Validated matrix and architecture live in
-`AGENTS.md` (authoritative). Key fact that still drives decisions: the
-author's runtime witnesses (menus opening in 0.3 s, sendEvent: delivery,
-nested submenu tracking) were produced on a **non-`-virtualonly`** WS
-generation on iPad13,6 — that difference mattered on 10-13.
+目标是 macOS 15.6.1 真正的 dyld／cache／libSystem 执行原版 echo。先遇到 exec/trust、iOS cache 复用、syscall 536／slide-info、地址窗口、private pager format 13，最后记录了 T8103 PMAP-CS owner 问题。
 
-Canonical refs: `AGENTS.md`, `analysis/MacWSBootingGuide/` subtree,
-`docs/evidence/vnc-usability-stability-20260729/` (22F66 witnesses).
+- 09-28 的 `echo HELLO` 使用 disk libSystem shim，是探路结果，不是原定真实 cache 里程碑。
+- “131 镜像已加载、原版 cache 成功、卡 ElleKit initializer”已被 [10-01 最终回复 §11](archive/macos15-roots/HANDOVER-REPLY-2026-10-01-FINAL.md) 撤回：那些镜像来自 iOS 辅助进程。旧汇总错误地复活了这一结果；不能继续引用。
+- 10-03 详细 [state](archive/macos15-roots/dyld-15.6.1-state.md) 记录恢复基线 `b8fdbc1b…381b91e` 已有 `emptysr/highreserve` scaffold；“original dyld”在后续摘要中只是当时的恢复基线，不能解释成 Apple pristine。
+- [10-04 冻结交接](archive/macos15-roots/HANDOVER-MACOS15-FROZEN-2026-10-04.md) 的具体 fault／内核写失败仍保留；没有真实 cache 的 `HI` 验收。
+- **修正总判断：**失败限定于试过的设备与组合。“只能改签名内核才有出路”并未穷尽其他加载／准入／pager 契约，不能作为整个 15.6.1 路线不可行的证明。
 
-## Era 1 — macOS 15.6.1 / 24G90 CLI research (09-26 → 10-04, FROZEN)
+## 10-04 至 10-07：转向 Ventura，CLI 成功
 
-Goal: real `chroot /var/mnt/rootfs /bin/echo HI` on a macOS **15.6.1**
-userspace + dyld + shared cache. The detailed era narrative is
-`ARCHAEOLOGY-15.6.1.md`; **all docs cited in this era's table live in
-`docs/porting/archive/macos15-roots/`**.
+选择 13.4.1／22F82，使用该版本真实 dyld 和 cache，补齐签名、trust、os_variant interposition 及注入闭包。10-06 经 launcher 输出 `HI`，10-07 推进 literal chroot 与 CLI sweep。
 
-| date | milestone | doc |
-|---|---|---|
-| 09-26 | first handover; chroot gets iOS shared region attached at exec (syscall 294); macOS dyld adopts iOS cache and loads ~90 iOS dylibs | `HANDOVER-15.6.1-2026-09-26.md`, `dyld-15.6.1-state.md` |
-| 09-27 | exec gate cracked (`dyld` admit); `echo HELLO` post-cache SIGSEGV hunt; syscall 536 EINVAL root cause = **cache slide-info version 5 > kernel max 4** (`vm_shared_region.c:2934`) | `HANDOVER-HELLO-2026-09-27.md`, `HANDOVER-DYLD-ADMIT-2026-09-27.md`, `HANDOVER-REPLY-2026-09-27.md` |
-| 09-28 | **syscall 536 works** — masking `VM_PROT_SLIDE` maps the cache, plus `files[].sf_slide` 16K-alignment fix; CLI milestone via **disk libSystem shim**: `echo HELLO`, `cat`, `sh -c` all pass (shim witnesses, NOT cache) | `HANDOVER-REPLY-2026-09-28-536.md`, `CLI-MILESTONE-2026-09-28.md`, `HANDOVER-DYLD-536-POPULATE-2026-09-28.md` |
-| 09-29 | consolidated state; pointer-format-13 pager vs iPadOS 16.3 pager mismatch found via real IDB; 4-GB shared-region gap crossed by `emptysr+highreserve` dyld diagnostic | `CONSOLIDATED-2026-09-29.md`, `STATIC-*` docs |
-| 09-30 | upstream merge; M3 dyld-pager task handed off | `HANDOVER-REPLY-2026-09-30-*`, `HANDOVER-M3-DYLD-PAGER-2026-09-30.md` |
-| 10-01 | M3 pager final report; KB-E shared-region limit documented | `HANDOVER-REPLY-2026-10-01-FINAL.md`, `HANDOVER-15.6.1-COMPLETE-BRIEF-2026-10-01.md`, `KB-E-shared-region-limit.md` |
-| 10-02 | Devin→external-GPT super handover — **15.6.1 echo HI still unreached** at that point | `HANDOVER-DEVIN-TO-EXTERNAL-GPT-2026-10-02.md` |
-| 10-04 | **branch FROZEN** at kernel boundary | `HANDOVER-MACOS15-FROZEN-2026-10-04.md` |
+[bringup-state](ventura-22F82-bringup-state.md) 的后续纠正明确：当前 Dopamine 动态 trustcache 在冷启动后需要恢复。旧“重启后持久”的说法不能继续引用。22F66 和 22F82 的 cache 身份也不可混为同一对；参见 `1656f07` 的更正。
 
-**Why 15.6.1 froze** (RE-confirmed via T8103 kernel IDA + runtime): after
-real dyld + real 24G90 cache mappings were achieved, the first cache text
-page faults died `KERN_CODESIGN_ERROR`. T8103's `sub_FFFFFE00086A0924`
-selects a PMAP owner for shared-region VAs by `nested_region_addr/size`
-only — it never consults `nested_region_asid_bitmap` — so the fault routes
-to an empty nested pmap and PPL returns failure below every userspace
-fixable layer (trustcache, file hashes, page content all verified correct).
-That is a kernel/PPL boundary, not a userspace problem; the branch was
-frozen rather than patched around.
+## 10-08 至 10-13：桌面链与连续合成
 
-**Load-bearing lessons this era bequeathed:**
+[10-11 桌面证据](../evidence/ventura-22F82-desktop-chain-20261011.md)记录 XPC 路由、LaunchServices ASN 与依赖恢复；[10-13 证据](../evidence/ventura-22F82-input-transport-and-composite-20261013.md)记录 final-composite sequence、壁纸和输入故障。
 
-- `rm` before `cp` on deployed binaries (vnode CS cache) — first written
-  down here; confirmed again catastrophically on 10-13
-- "process survival/rc=0 ≠ milestone" — only stdout `HI` counts
-- `error 40`/`EINVAL`/`SIGILL(132)`/`137` distinguish kernel-admission vs
-  userspace-vs-codesign failures; `| head` masks real rcs
-- LC_MAIN args arrive in x0-x3 registers, not the stack
-- Darwin arm64 `fork` returns child-marker in **x1**, not x0==0
-- static arm64e Mach-O can never exec (kernel veto)
-- upstream methodology: README admits only GradedArchs patch — upstream
-  never remaps the shared cache; adopt-iOS-cache was the designed path
+连续合成与可见内容是显示证据。早期“某 hook 没调用”的结论须结合后来 provider 的实际修复重新审查；进程运行时间和 INSTALL 日志都不等于 hook 生效。
 
-## Era 2 — Ventura 13.4.1 / 22F82 pivot and `echo HI` (10-04 → 10-07)
+## 10-14 至 10-15：输入故障推进到真实 TCC 回复
 
-`archive/handover-chain/HANDOVER-MACOS13-VENTURA-2026-10-04.md` records the
-decision: 22F82 is the
-newest build inside the author-validated Ventura family (13.4/22F66 and
-13.4.1/22F82 share one cache CDHash pair in postinst/macos_gui); 13.7.x is
-outside the validated family and was rejected as a target. 13.2.1 assets
-were retired.
+- R002 修复原 no-op Substrate provider，得到实际 hook 执行见证。
+- R003/R004 纠正 `SLSGetEventPort`、MIG 1000、audit pointer 和 probe 私有 globals 等误判。
+- [R005](../evidence/r005-live-tcc-branch-20261015.md)：实际 WS fresh-miss 的 TCC callsite 返回 1，随后 1002；不证明 daemon 明确拒绝。
+- [R006](../evidence/r006-tcc-producer-20261015.md)：原始 trace 确认 system-tccd transport 无效，1 是默认结果。
+- [R007](../evidence/r007-system-tccd-20261015.md)：真实 Ventura system-tccd 的 dictionary reply 到达；bool accessor 为 0，但尚未区分缺字段／类型错误／显式 false。
+- [R008](../evidence/r008-tccd-transport-repro-20261015.md)：候选生命周期／准入／探针进入源码和 fixture；reviewer 另外保存六项边界问题，设备验收未完成。
+- `6d1b7f6`：用户要求停机并暂停。本文和资料整理不改变该状态。
 
-Canonical doc: `ventura-22F82-bringup-state.md` (the running state file).
+## 10-15：分享包带来的新研究对象
 
-| date | milestone |
-|---|---|
-| 10-06 | device inventory (`ventura-handover-device-inventory-20261006.md`); 22F82 rootfs installed |
-| 10-06 ~22:02 | **`echo HI` achieved** via `launchdchrootexec` — real 22F82 dyld arm64e + real split shared cache + cache-resident libSystem (`.ips` usedImages `source:"P"` = cache). Blockers cleared: `ldid -Hsha256 -S<proj-ent>` ×2 + `jbctl trustcache add` (the 15.6-era recipe); `os_variant_has_internal_diagnostics` brk#1 bypassed by libmachook `DYLD_INTERPOSE`; macOS-platform `CydiaSubstrate` scaffold (`misc/cydiasubstrate_macos.m`, no-op MSHook stubs — labeled diagnostic seam) |
-| 10-07 | cold-reboot verified — `jbctl trustcache` entries **survive reboot** on this Dopamine build (earlier "volatile" assumption corrected); `os_variant` trap root-caused to `kern.osvariant_status=0x7000000100000028` sysctl success path skipping file/override fallback — **no file/env/sysctl lever reaches it, interposition is required by design**; **literal bare `chroot` achieved** via `LC_LOAD_DYLIB`/`DYLD_INSERT_LIBRARIES` interpose carrier (commit `82403bd`); full CLI sweep: **918 binaries** on literal chroot (`73fe7af`, `cli-manifest-20261007.json`); plugin-closure trust registration 3566 hashes (`8882b3b`); cold-boot restore automated (`a2197f1`) |
+本地核验分享包全部校验项，提取关键文件并与 inventory 比对。确认材料包含 native15 loader 选择、private-cache exec/fork 配套、绑定 cache 哈希的 pager sidecars，以及 G14G 版本转换。其 WindowServer 配置同样有 `-virtualonly`；其相关 TCC entitlement 列表也不是简单多了 PostEvent grant。
 
-Three different "echo" milestones — do not conflate:
-
-1. `echo HELLO` on 15.6.1 via **disk libSystem shim** (09-28) — shim witness
-2. `echo HI` on 22F82 via launchdchrootexec, **real cache** (10-06)
-3. `/var/jb/usr/bin/chroot` **literal binary**, env-inserted interpose (10-07)
-
-## Era 3 — desktop chain: LS/XPC + compositor (10-08 → 10-13)
-
-Canonical docs: `ventura-22F82-desktop-chain-20261011.md`,
-`ventura-22F82-input-transport-and-composite-20261013.md`, runbook
-`ventura-22F82-session-reproduction-20261013.md`.
-
-| date | milestone |
-|---|---|
-| 10-08 | WindowServer + virtual display up; display-hazard lesson recorded (rebooting a crashing WS leaves the panel owned by a dead process → looks like a frozen iPad; it was a button restart, not a panic) |
-| 10-08..10 | XPC `Connection invalid` root cause: Dock passes `XPC_CONNECTION_MACH_SERVICE_PRIVILEGED` on mapped names → strip flag on mapped names only; Dock gets real ASN; `launchservicesd`, lsd pair, cfprefsd, `diskarbitrationd` (datavault entitlement stripped — that was the OS_REASON_EXEC 137 cause) all live |
-| 10-11 | x86 dev-host handover; `final-composite` replay unanswered = documented blocker |
-| 10-12 | fullscreen input routing → SLS-resolved owner (`c48a81d`); foreign-surface records forward to OSXvnc pointer proxy |
-| 10-13 | **compositor resurrected**: EndUpdate never runs → `macws_publish_scanout_after_swap` publishes owned scanout per delivered swap (`0614a5b`); `state=ready` + continuous composite; wallpaper fixed (dynamic HEIC→static payload); **input transport fully mapped — dead at WS event subsystem**: `com.apple.WindowServer.HIDEvents` never registered, `SLSGetEventPort` returns an invalid port, all `CGEventPost` taps die, `SLSPostEventRecord` returns WS's own 1002 rejection, zero `WS-DISPATCH` witnesses all session |
-
-## Where each era's lesson lives
-
-| lesson | where written down |
-|---|---|
-| symptom-suppressing patch ≠ fix (the patch-discipline table) | `AGENTS.md` top |
-| every claim needs disasm or runtime log (evidence discipline) | `AGENTS.md` top |
-| fresh-inode deployment | `build_on_ios.sh` comment + 10-13 evidence §1 |
-| trustcache restore on cold boot | `bringup-state` §10-07 + 10-11 evidence |
-| dynamic HEIC → static payload | 10-13 evidence §3 (+ TODO: bake into build-rootfs) |
-| nominal rc ≠ delivery; WS-DISPATCH is the acceptance test | 10-13 evidence §4.6 + runbook §9 |
-| 15.6.1 kernel boundary (why we left) | `archive/macos15-roots/HANDOVER-MACOS15-FROZEN-2026-10-04.md` |
-
-## Current frontier — one paragraph
-
-Everything except **input dispatch** works end-to-end on 22F82: real chroot
-CLI (918 binaries), WindowServer compositing with `state=ready`, wallpaper,
-Dock launches, LS/XPC, trust pipeline, VNC observe. The blocker narrowed
-again on 10-14/15: `SLSGetEventPort` is actually valid (`rc=0` receive
-right), posts reach `_XPostEventRecord` and get `rc=1002` from the real
-permission-check chain — runtime telemetry shows `gCurMsgAudit` populated
-(52-byte sender creds) and the check returning 0. A repaired
-`MSHookFunction` provider (`misc/cydiasubstrate_macos.m`, permit-gated
-16-byte trampoline) is verified live. Remaining unknowns: the lazily-
-resolved checker identity and what populates WS's per-{pid,pidversion}
-rights cache — that work is gated on an IDA session against
-`analysis/SkyLight_22F82` (UUID 96676A53-B1E0-3D7E-B98B-B73873CD1880);
-all static interpretations before that are provisional. Input is still
-unaccepted: `SLSPostEventRecord` → 1002, no WS-DISPATCH witness.
+这些是具体的下一轮对照对象；helper 内部、pager 机制与 M1 适用性仍待实际 RE／运行证据。完整说明与恢复阶梯见 [15.6.1 复盘](sequoia-24G90-share-review-20261015.md)，今晚可用建议见 [Ventura 清单](ventura-22F82-evening-handoff-20261015.md)。

@@ -1,0 +1,33 @@
+{
+  "date": "2026-10-15",
+  "preserved_in_place": [
+    "README.md",
+    "AGENTS.md",
+    "analysis/MacWSBootingGuide",
+    "analysis/macPad-15.6 2.1-分享包-20261013",
+    "coordination",
+    "docs/porting/archive/handover-chain",
+    "docs/porting/archive/macos15-roots",
+    "all existing evidence and runtime sources"
+  ],
+  "snapshots": [
+    {
+      "original_path": "docs/porting/PROJECT-ARCHAEOLOGY.md",
+      "archived_snapshot": "docs/Archive/20261015-pre-consolidation/PROJECT-ARCHAEOLOGY.md",
+      "sha256": "cc4375f10f77019e3f5611328903ad3fd63e7d02eedc6d693eaadbd6673b5ec0",
+      "action": "preserve old summary verbatim; replace original with corrected entry point"
+    },
+    {
+      "original_path": "docs/porting/ARCHAEOLOGY-15.6.1.md",
+      "archived_snapshot": "docs/Archive/20261015-pre-consolidation/ARCHAEOLOGY-15.6.1.md",
+      "sha256": "4d315c1d58af47658c8d65ee2f6e37db0038d568b3b00d0dfa01c45a073149da",
+      "action": "preserve old summary verbatim; replace original with corrected entry point"
+    },
+    {
+      "original_path": "docs/porting/TOOLS-AND-PORTING.md",
+      "archived_snapshot": "docs/Archive/20261015-pre-consolidation/TOOLS-AND-PORTING.md",
+      "sha256": "a67643700b7e56aa9d699849078bf64354d9d8bcb3ac8d8258544ff6826e24ee",
+      "action": "preserve old summary verbatim; replace original with corrected entry point"
+    }
+  ]
+}

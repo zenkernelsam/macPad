@@ -1,5 +1,10 @@
 # Ventura 13.4.1 / 22F82 bring-up — working state (2026-10-06)
 
+> **2026-10-15 navigation:** R006–R008 and the user-requested pause supersede
+> the older input diagnosis below. Read [the current document index](../README.md)
+> and [evening handoff](ventura-22F82-evening-handoff-20261015.md), then the
+> unchanged `coordination/` state. This note does not resume device work.
+
 > **Current entry point (2026-10-14):** this file is the long-lived
 > bring-up log; the authoritative *current* frontier is
 > `coordination/DEVIN_STATUS.md` plus the retractions summarized in
