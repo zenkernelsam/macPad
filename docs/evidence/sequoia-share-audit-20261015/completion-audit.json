@@ -5,13 +5,13 @@
       "id": "all_project_docs",
       "requirement": "Read and reconcile project documentation including original-author material",
       "status": "in_progress",
-      "evidence": "document-index.json inventories 460 initial text artifacts; reading-ledger.json explicitly tracks reading, with pending work not counted as complete"
+      "evidence": "460 initial artifacts inventoried; explicit full-text reading ledger continues, with exact-byte duplicate paragraphs referenced to already read files; incomplete deliveries not counted."
     },
     {
       "id": "historical_macos15",
       "requirement": "Explain previous failure and misjudgments with exact evidence",
       "status": "substantial_progress",
-      "evidence": "main report and IDA evidence; remaining corpus reconciliation and final synthesis"
+      "evidence": "Main report covers bounded failure versus impossibility, invalid131-image witness, wrong-baseline/trust/provider assumptions, uncalibrated hit-rate decisions, arithmetic/ABI errors, and PMAP negativeAB causality limits; long-form state reading still in progress."
     },
     {
       "id": "share_success_mechanisms",
@@ -23,7 +23,7 @@
       "id": "macos13_feedforward",
       "requirement": "Produce concrete transferable improvements for current Ventura work",
       "status": "in_progress",
-      "evidence": "New immediate takeaways: policy-bypass distinction, actual macOS13 provider candidate, local resolver/method-hook counterexamples, Dock AppleEvent fallback; final transfer matrix still in progress."
+      "evidence": "Evening handoff now contains12-row transfer matrix: existing source versus new provider audit versus15-specific work, with exact historical sources and bounded acceptance; full-corpus reconciliation still in progress."
     },
     {
       "id": "macos15_resume",

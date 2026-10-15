@@ -1,0 +1,39 @@
+{
+  "scope": "Offline arithmetic and source-declaration consistency audit; no new kernel/device behavior inferred.",
+  "historical_document": {
+    "path": "docs/porting/archive/macos15-roots/HANDOVER-REPLY-2026-09-28-536.md",
+    "sha256": "355dae5e8a4e32a35a21c9eac7ed50e5b91b51472d00ed9bb7da9ca60e5512b8"
+  },
+  "checks": [
+    {
+      "claim": "sf_slide = 0x539b0000 非16K对齐",
+      "value": "0x539b0000",
+      "alignment": "0x4000",
+      "remainder": 0,
+      "verdict": "Claim false for the literal value; does not establish the true cause of the old EINVAL."
+    },
+    {
+      "claim": "12-byte shared_file_np with uint64_t sf_slide at +8",
+      "reference_path": "analysis/xnu-xnu-8792.81.2/osfmk/mach/shared_region.h",
+      "reference_sha256": "a58be0a57bfc9935491748f2473a718a800c8a02afa8b2c6a2e0d3cce7d71129",
+      "reference_lines": [
+        "struct shared_file_np {",
+        "\tint                     sf_fd;             /* file to be mapped into shared region */",
+        "\tuint32_t                sf_mappings_count; /* number of mappings */",
+        "\tuint32_t                sf_slide;          /* distance in bytes of the slide */",
+        "};"
+      ],
+      "verdict": "Referenced source declares uint32_t sf_slide, not uint64_t. This is source confirmation, not a new running-kernel ABI witness."
+    },
+    {
+      "claim": "X in [0,0x20000000) exceeds0x5aa34000 with about55percent probability",
+      "document": "docs/porting/archive/macos15-roots/HANDOVER-DYLD-536-POPULATE-2026-09-28.md",
+      "sha256": "aca04df9f69863214b22373927e7cc82fb0a6ea533cb95e09b61ae9f40120ff6",
+      "max_inclusive": "0x1fffffff",
+      "threshold": "0x5aa34000",
+      "upper_bound_below_threshold": true,
+      "probability_for_stated_range": 0,
+      "verdict": "Arithmetically impossible under the stated bounds; this does not establish actual runtime inputs or the old EINVAL cause."
+    }
+  ]
+}

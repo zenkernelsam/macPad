@@ -178,6 +178,8 @@ main c2ef6966687b008ffbc29ee5f4899bc3df0b1e5afeb59fe122dd5b928ff0c5b3
 
 同一历史记录给出页已验证、外层 association 存在、nested tree 为空；RE 记录指向实际 T8103 `sub_FFFFFE00086A0924` 的 owner 选择。这些是有价值的限定证据，不应因为别人成功就抹掉。
 
+还必须保留提案自己的反证边界：[PMAP 提案](archive/macos15-roots/T8103-PMAP-NESTED-OWNER-FIX-PROPOSAL.md) 的三项 child 数据 A/B（type、nested pointer、nested size）写入并恢复成功后，fault 仍为50；原文承认可能是另一份 pmap／参数或更后面的拒绝点。**静态存在这个 selector、现场看到空 tree，不足以证明它就是此次故障的唯一原因，也不足以证明提议的内核补丁一旦能启动就会成功。** 这条因果链仍需真正调用现场来闭合。
+
 但从“这次 fault 在内核/PPL 层返回失败”，跳到“所有用户态方案都不可行”，中间缺了证明。producer 还包括进入内核前的映射布局、exec generation、签名准入和 pager 数据。本次分享包展示了此前冻结结论没有覆盖的具体实现组合；**是否足以解决本机问题仍是 THEORY，值得比较而不是预先否决。**
 
 同时，M2／20C65 与 M1／20D47 是不同内核／GPU 目标。不能反过来断言“我们只少了一行配置”或“M1 必然能原样运行”。
@@ -190,6 +192,10 @@ main c2ef6966687b008ffbc29ee5f4899bc3df0b1e5afeb59fe122dd5b928ff0c5b3
 4. **恢复成功的哨兵检查曾验证了错误版本。** 2026-10-02 超级交接中的逐字输出为 `TRUST_RESTORE_RC 0`，但 24G90 两个 hash 均 `PRESENT False`，Ventura 对均 `True`。这是恢复闭包不对题，不是系统版本天生跑不了。
 5. **没有始终隔离探针、部署和被测目标。** 旧 E2 的 `137→90`、缺失真正 chroot、捕获器回复端口错误、不同 PID 的日志拼接，都可能改变“失败在哪里”的解释。完整退出码、目标主镜像、库 UUID、同一 generation 的证据必须同时成立。
 6. **总结没有携带撤回关系。** 强语气标题、过时工具建议、“安装尝试已打印”等内容被重新喂给 Agent，使已撤回结论复活。新的入口必须优先链接纠正条目和最新状态，旧叙事存档。
+7. **把旧补丁命中率当作可行性裁决。** 原 [AGENT-START-PROMPT](archive/handover-chain/AGENT-START-PROMPT.md) 以 `>70%`、`30–70%`、`<30%` 分别决定全量 port、MVB 或放弃15。这些阈值没有可行性校准证据；字节签名／UUID 的复用率只能帮助估算旧补丁的复核成本。命中也不证明语义正确，不命中更不证明不能重建兼容契约。应先验证真实 loader/CLI 的最小闭环，再分服务、图形、应用判断成本。
+8. **基础数值／ABI 错误也被写成“唯一真因”。** [09-28 回复](archive/macos15-roots/HANDOVER-REPLY-2026-09-28-536.md) 称 `0x539b0000` 非16KiB对齐，但其 `% 0x4000 == 0`；同文把12字节 `shared_file_np` 的最后字段写成 `uint64_t`，所引用 XNU 头文件实际声明为 `uint32_t`。这是可直接复核的文档错误，**不能因此推断旧 EINVAL 的真实原因已经解决**。[计算与源码摘录](../evidence/sequoia-share-audit-20261015/historical-claim-checks.json)保留了证据。另一条偏离目标的工作是不断扩充 libSystem/msh 桩；[CLI 里程碑](archive/macos15-roots/CLI-MILESTONE-2026-09-28.md) 自己已记录 `date` 退出0却输出 `%+`、无管道及真实 bash 仍不可用。符号不再缺失不等于协议语义完整。
+
+第7项不能误读成“当时因为命中率低而冻结”：实际 [hit-rate 报告](archive/macos15-roots/hit-rate-table.md)把口径切换为函数存活率约90%，据此推荐全量 port、估计3–7天，同时另列 rootfs 风险。问题是这类统计不能支撑整体工期／可行性结论；后来的冻结另有上述真实故障记录。
 
 这些失误不等于整个研究浪费了：format-13、签名页、PMAP、fresh-inode、fork ABI 等定位仍然是恢复研究的重要资产。优先完成 Ventura 作为可观察基线也是合理的项目安排；应修正的是当时对可行性的绝对判断和后续记忆传播。
 
@@ -198,6 +204,14 @@ main c2ef6966687b008ffbc29ee5f4899bc3df0b1e5afeb59fe122dd5b928ff0c5b3
 早期 macPad README `d4160fc` 只明确测试 M1／iPadOS 16.3／macOS 13.4，并承认存在大量硬编码；它没有承诺新版本自然兼容。今天继承的作者资料又包含多个阶段的方案和已废弃的实验。不能只靠 README 没写某补丁，就推断作者必然“只 adopt iOS cache”。本地作者 postinst 明确注册 Ventura 双 cache 的 CDHash，源码与运行身份需要一起核对。
 
 原作者关于“应用事件投递成功”和“完整系统菜单／拖拽成功”的区分也应继承；它已经记录过重复投递导致 modal mouseDown 嵌套的问题。不能把补齐 TCC 全局输入，或实现 AppKit 精确输入，任意一项当作另一项自然成立。
+
+### 3.5 原作者历史记录给出的更一般教训
+
+原作者自己的项目也不是“拷 rootfs、打一个 patch 就全通”。其 [冷启动记录](../../analysis/MacWSBootingGuide/docs/cold-start-stability-20260807.md) 区分数据库已 seed 与真实 mounted 状态；[HIServices 记录](../../analysis/MacWSBootingGuide/docs/maps-cold-location-and-space-create-20260809.md) 保存同步输入调用卡住、补足正确 helper 信任后释放的证据；[CoreImage 记录](../../analysis/MacWSBootingGuide/docs/evidence/coreimage-dag-target-20260919.md) 则证明满足 macOS archive loader 还可能不满足 iOS AGX compiler。成功来自补齐生产者、消费者及其生命周期契约。
+
+反过来，作者的 [v53](../../analysis/MacWSBootingGuide/docs/evidence/window-v53-acceptance-20260912.md) 和 [v54](../../analysis/MacWSBootingGuide/docs/evidence/window-workspace-menu-maps-v54-20260912.md) 仍明确保留 TCC 选择性捕获拒绝。v54 文档标注的 SkyLight UUID 与我们 22F82 RE 输入相同；这属于历史报告，不能替代本机 PostEvent 请求的运行证据。不要把某个可用桌面推广成所有权限、服务和应用都兼容。
+
+因此，对过去“走错路”的评价应落在具体决策上：把地址空间／pager 的一条失败路线判成系统整体不可能，是过度外推；为当前 Ventura 恢复真实 TCC transport/reply 而坚持不使用恒真钩子，是合理的工程目标。真正可以加速的是先审查工具和 provider 能力、实际角色闭包、映射身份及服务依赖，复用源码中已有的兼容能力，而非继续按症状堆 NOP。按当前13状态划分的[复用矩阵](ventura-22F82-evening-handoff-20261015.md#h-复用矩阵优先找现有能力为何没有在实际进程中生效)列出了验收方法。
 
 ## 4. 分享包还不能证明什么
 
@@ -223,7 +237,7 @@ main c2ef6966687b008ffbc29ee5f4899bc3df0b1e5afeb59fe122dd5b928ff0c5b3
 
 原冻结记录中“kernel text 写失败、IMG4 摘要不匹配、没有可用自定义启动链”的证据继续保留；它们支持不重复这条高代价实验，不支持禁止研究其他加载契约。
 
-IDA 状态已更新：用户重启后 Instance1 的 ServerHealth／SHA／UUID 核对通过；dyld 行为分析用该 MCP 完成。13338 未监听时，exec helper 用同一 IDA Pro 9.3 的批处理＋Hex-Rays 分析并核对 SHA。旧“未做新反编译”只适用于初版。当前未决的是本机运行结果、jbctl 后端差异、生成器及完整构建复现；不能把已经核实的文件转换与尚未取得的运行验收混在一起。
+IDA 状态已更新：用户重启后 Instance1 的 ServerHealth／SHA／UUID 核对通过；dyld 行为分析用该 MCP 完成。exec helper 先用同一 IDA Pro 9.3 批处理＋Hex-Rays 分析；用户随后在13338载入它，交互式身份及970条指令记录复核通过，见[Instance2记录](../evidence/sequoia-share-audit-20261015/ida/exec-jitd/instance2-verification.json)。旧“未做新反编译”只适用于初版。当前未决的是本机运行结果、jbctl 后端差异、生成器及完整构建复现；不能把已经核实的文件转换与尚未取得的运行验收混在一起。
 
 ## 6. 主要复核入口
 

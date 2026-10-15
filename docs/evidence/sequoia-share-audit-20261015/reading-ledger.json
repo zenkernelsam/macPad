@@ -450,6 +450,946 @@
       "sha256": "282377f7f8020a04afc7e76c65de0c3ee3aa1abceb89e2c3f77baef527b28e9f",
       "coverage": "full",
       "note": "Full read: diagnostic gate lifetimes, exact owner scene retirement, synchronized Mission Control frame/lease delivery, and disconfirmed visual A/B assumptions in Office/Weather."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/stray-native-agx-gameplay-20260818.md": {
+      "sha256": "4bedf4292fe1b2eb84f89125c9a8632b71b3783cae2a7a9f84198803e3ae2c55",
+      "coverage": "full",
+      "note": "Full read: semantic depth and structured command parsing; route-specific AppKit scroll; real texture coherency repair; single system input owner and compression versus event-delivery distinction."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/macpad-window-interaction-20260908.md": {
+      "sha256": "a0140b11e8777e8955f9f672c4392b007cd8744c52effef366bbdb5e4f6c8e47",
+      "coverage": "full",
+      "note": "Full read: semantic depth and structured command parsing; route-specific AppKit scroll; real texture coherency repair; single system input owner and compression versus event-delivery distinction."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/terminal-render-coherency-20260906.md": {
+      "sha256": "cb7dfff19ce1811932a774a7d2b66511504e02f9d600364fc12ab2430959de30",
+      "coverage": "full",
+      "note": "Full read: semantic depth and structured command parsing; route-specific AppKit scroll; real texture coherency repair; single system input owner and compression versus event-delivery distinction."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/vnc-usability-stability-20260729/system-wide-input-current/results.md": {
+      "sha256": "4ad5b343e076587090d29389fffe4c3a9397847ed9ed169f9927dd225ec3eed6",
+      "coverage": "full",
+      "note": "Full read: semantic depth and structured command parsing; route-specific AppKit scroll; real texture coherency repair; single system input owner and compression versus event-delivery distinction."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/window-shadow-drag-stray-20260829.md": {
+      "sha256": "8aa33f9e7bb40ca14666af74e8ec83c510c6d660de7c01f48c494fcd6ec216aa",
+      "coverage": "full",
+      "note": "Full read: authoritative final composite and candidate lifetime; input-safe pacing versus rejected static FPS wins; persistent window constraints; page-granular W^X versus JIT performance; gesture cancellation and stream sequence ownership."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/retina-standard-unbounded-window-resize-20261001.md": {
+      "sha256": "6d6dbc9fcb13b56f108861415173091173ee418b49751713a7d62bd1add4ca56",
+      "coverage": "full",
+      "note": "Full read: authoritative final composite and candidate lifetime; input-safe pacing versus rejected static FPS wins; persistent window constraints; page-granular W^X versus JIT performance; gesture cancellation and stream sequence ownership."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/webgl2-performance-optimization-20260728/jit-page-wx-20260730/README.md": {
+      "sha256": "ef7053e2da6a6f6acc76efd0b519c663ad7ea430ac1059df7c11539a30304bf3",
+      "coverage": "full",
+      "note": "Full read: authoritative final composite and candidate lifetime; input-safe pacing versus rejected static FPS wins; persistent window constraints; page-granular W^X versus JIT performance; gesture cancellation and stream sequence ownership."
+    },
+    "analysis/MacWSBootingGuide/docs/fullscreen-three-finger-state-recovery-20260809.md": {
+      "sha256": "3c86e525e429a6fd2389305038e719f7aa44494a4c5bd1b01fd187b365c435d6",
+      "coverage": "full",
+      "note": "Full read: authoritative final composite and candidate lifetime; input-safe pacing versus rejected static FPS wins; persistent window constraints; page-granular W^X versus JIT performance; gesture cancellation and stream sequence ownership."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/window-focus-and-native-materials-20260912.md": {
+      "sha256": "d1acbe8bbb8ce6a0f3548de0b5bda92e1c81a82e16c3dda9528031949fd03aa9",
+      "coverage": "full",
+      "note": "Full read: focus authority distinct from scene-local key status; superseded Word failure versus final default-cache acceptance; real ElleKit suspension bug in historical Steam build; protocol-based readiness; executable patching quiescence and namespace collision evidence."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/word-default-cache-acceptance-20260920.md": {
+      "sha256": "7d43f38de583067a96d02e6508711860ff1134adcbc834539d3970e55dc57003",
+      "coverage": "full",
+      "note": "Full read: focus authority distinct from scene-local key status; superseded Word failure versus final default-cache acceptance; real ElleKit suspension bug in historical Steam build; protocol-based readiness; executable patching quiescence and namespace collision evidence."
+    },
+    "analysis/MacWSBootingGuide/docs/steam-cef-bringup-20260815.md": {
+      "sha256": "67cab3d8e0616314bc6725d38d5f6e5a120ea43b8a34d1635ed063b7dfb3851c",
+      "coverage": "full",
+      "note": "Full read: focus authority distinct from scene-local key status; superseded Word failure versus final default-cache acceptance; real ElleKit suspension bug in historical Steam build; protocol-based readiness; executable patching quiescence and namespace collision evidence."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/coldboot-windowing-readiness-20260912.md": {
+      "sha256": "ca1290144309af6f0ece2728c271d807f1467b58750681ef050f493f30b8ec95",
+      "coverage": "full",
+      "note": "Full read: focus authority distinct from scene-local key status; superseded Word failure versus final default-cache acceptance; real ElleKit suspension bug in historical Steam build; protocol-based readiness; executable patching quiescence and namespace collision evidence."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/windowserver-production-cpu-20260730/README.md": {
+      "sha256": "571a33fe6e6a0894661e5a4ce3916021ed60f96c7c0e15a0a4014b59b90430c3",
+      "coverage": "full",
+      "note": "Full read: focus authority distinct from scene-local key status; superseded Word failure versus final default-cache acceptance; real ElleKit suspension bug in historical Steam build; protocol-based readiness; executable patching quiescence and namespace collision evidence."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/finder-document-open-20260907.md": {
+      "sha256": "dbc0ac05b69dce8c8f4dac587845fc41528e3085ae78b45087f28c81120bd9e5",
+      "coverage": "full",
+      "note": "Full documents read: Finder AE delegate and ACK, Carbon nested-loop queue routing, native NoCopy ownership, physical gesture-end truth, and branch coverage versus uptime."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/input-unification-20260731/host-native/multilayer-carbon-runtime.md": {
+      "sha256": "34f2a923e4196fcd02b01ea9056407d9563891ecc96d54f24cab5521c9a4b3e2",
+      "coverage": "full",
+      "note": "Full documents read: Finder AE delegate and ACK, Carbon nested-loop queue routing, native NoCopy ownership, physical gesture-end truth, and branch coverage versus uptime."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/native-nocopy-contract-20260919.md": {
+      "sha256": "d07a0efb4fdc17c1af218f2a36121d8144628078778381b1f29bc95d1836d104",
+      "coverage": "full",
+      "note": "Full documents read: Finder AE delegate and ACK, Carbon nested-loop queue routing, native NoCopy ownership, physical gesture-end truth, and branch coverage versus uptime."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/window-sizing-native-gesture-v50-20260912.md": {
+      "sha256": "0d12ae6f201625a5000809bbbe7e870188c74b68969797bcaa4759bce8a8d151",
+      "coverage": "full",
+      "note": "Full documents read: Finder AE delegate and ACK, Carbon nested-loop queue routing, native NoCopy ownership, physical gesture-end truth, and branch coverage versus uptime."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/switcher-selection-safe-mode-20260912.md": {
+      "sha256": "c9114a9587b856f930761ae9c67eafc67c03715a6097efc1d32965396fee68dc",
+      "coverage": "full",
+      "note": "Full documents read: Finder AE delegate and ACK, Carbon nested-loop queue routing, native NoCopy ownership, physical gesture-end truth, and branch coverage versus uptime."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/window-sizing-v48-integration-20260912.md": {
+      "sha256": "051f83d4274ea34f5e2efc8d4b6432b917e421030347edcc3b0f68fda9b44faf",
+      "coverage": "full",
+      "note": "Exact Scene ownership, whole-stage policy leak, completed IOSurface transfer versus ID lookup, and input routes verified through native actions; v51 remains partial with premature settle defects."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/windowing-stage-wide-limit-policy-leak-20260912.md": {
+      "sha256": "1c25d0cd35e14ed24e96cd9cd83cccad99df28c18d1ce5e9106663e88b764868",
+      "coverage": "full",
+      "note": "Exact Scene ownership, whole-stage policy leak, completed IOSurface transfer versus ID lookup, and input routes verified through native actions; v51 remains partial with premature settle defects."
+    },
+    "analysis/MacWSBootingGuide/docs/third-party-apps-amadine-office-asphalt-3dmark-20260811.md": {
+      "sha256": "69e0f6b4a435d003e6f4baf260eb5a69992ec84d289589760484c572a19c23ec",
+      "coverage": "full",
+      "note": "Exact Scene ownership, whole-stage policy leak, completed IOSurface transfer versus ID lookup, and input routes verified through native actions; v51 remains partial with premature settle defects."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/displaystream-input-multitouch-20260806/README.md": {
+      "sha256": "3f89be0d43d1637bed4082b4e578462ab423ff968825d9cf6d3cbf6894fcb2da",
+      "coverage": "full",
+      "note": "Exact Scene ownership, whole-stage policy leak, completed IOSurface transfer versus ID lookup, and input routes verified through native actions; v51 remains partial with premature settle defects."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/window-resize-native-lifecycle-v51-20260912.md": {
+      "sha256": "52c54a77eede085409b021fd0e0336f46bc2a3b6aea67d2e80c4cd54120491a0",
+      "coverage": "full",
+      "note": "Read cold-start mounted-state LS evidence, bounded Office observers, zero-depth semantics and reverse-control limitation, native input route capability, and ABI stale-object failure."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/weather-zero-depth-20260919.md": {
+      "sha256": "2524eb44ebea0b760e523e66895efcaf2ed2f5216174dbeffae6eca2aa95c283",
+      "coverage": "full",
+      "note": "Read cold-start mounted-state LS evidence, bounded Office observers, zero-depth semantics and reverse-control limitation, native input route capability, and ABI stale-object failure."
+    },
+    "analysis/MacWSBootingGuide/docs/cold-start-stability-20260807.md": {
+      "sha256": "8aac45c5f47cf449f257420125a6a35b3dc3d492e64e240beec9137c844d6a82",
+      "coverage": "full",
+      "note": "Read cold-start mounted-state LS evidence, bounded Office observers, zero-depth semantics and reverse-control limitation, native input route capability, and ABI stale-object failure."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/office-upload-observer-20260919.md": {
+      "sha256": "a85ce9b33ecfe0ef249a8eebfb0a62d1228923252a39eee264cf811e5c5f313e",
+      "coverage": "full",
+      "note": "Read cold-start mounted-state LS evidence, bounded Office observers, zero-depth semantics and reverse-control limitation, native input route capability, and ABI stale-object failure."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/macpad-fullscreen-input-performance-20260818.md": {
+      "sha256": "58f1728f10ecb29d55fdcdca28371cd90c777a9595c4b9d2c36cc333113464ec",
+      "coverage": "full",
+      "note": "Read cold-start mounted-state LS evidence, bounded Office observers, zero-depth semantics and reverse-control limitation, native input route capability, and ABI stale-object failure."
+    },
+    "WebKitChrootProxy/README.md": {
+      "sha256": "c17f370ec5361f555ea29e296620b0027862ebcadceadf88f321c981c836e5d1",
+      "coverage": "full",
+      "note": "Byte-identical alias of fully read analysis/MacWSBootingGuide/WebKitChrootProxy/README.md"
+    },
+    "misc/vscode-aquarium-runner/README.md": {
+      "sha256": "072c213e72e0d3551023c89e887146ae12b51a4c2a56f9cb9954c41215e460fe",
+      "coverage": "full",
+      "note": "Byte-identical alias of fully read analysis/MacWSBootingGuide/misc/vscode-aquarium-runner/README.md"
+    },
+    "docs/evidence/focused-window-pacing-lease-20260930.md": {
+      "sha256": "da50337b10d4600660a73fff4b04736ac532879a1fd11efc268929b959538690",
+      "coverage": "full",
+      "note": "Byte-identical alias of fully read analysis/MacWSBootingGuide/docs/evidence/focused-window-pacing-lease-20260930.md"
+    },
+    "docs/evidence/ios-ime-exact-appkit-focus-20261001.md": {
+      "sha256": "f55ab7bf2d7ec97ac8ae0ee7e43e30a599fdbd0ce7734beb6cb6a5f62ef74ee1",
+      "coverage": "full",
+      "note": "Byte-identical alias of fully read analysis/MacWSBootingGuide/docs/evidence/ios-ime-exact-appkit-focus-20261001.md"
+    },
+    "docs/evidence/m2-keyboard-windowing-20261002.md": {
+      "sha256": "e0a64b833990fed6dea202407a57bd4c51d1cd163cd28d1f84a1f17aee1b6dc0",
+      "coverage": "full",
+      "note": "Byte-identical alias of fully read analysis/MacWSBootingGuide/docs/evidence/m2-keyboard-windowing-20261002.md"
+    },
+    "docs/evidence/codex-code-mode-v8-code-range-20261001.md": {
+      "sha256": "8c485a3a3914bd42d67053186270239308f02cfd6896a926e78fb96d200d32f1",
+      "coverage": "full",
+      "note": "Byte-identical alias of fully read analysis/MacWSBootingGuide/docs/evidence/codex-code-mode-v8-code-range-20261001.md"
+    },
+    "docs/evidence/ios16-2-mps-native-llvm-identities-20260929.md": {
+      "sha256": "b65666060666fdbcb39333ba5fed5292003350f5ff6f886dfdc04144a2bc9bc0",
+      "coverage": "full",
+      "note": "Byte-identical alias of fully read analysis/MacWSBootingGuide/docs/evidence/ios16-2-mps-native-llvm-identities-20260929.md"
+    },
+    "docs/evidence/software-toolbar-exact-key-routing-20261001.md": {
+      "sha256": "30ddd75763e6eb482afd22b15593c573b80d1c441cf65690eb7d9567518ff063",
+      "coverage": "full",
+      "note": "Byte-identical alias of fully read analysis/MacWSBootingGuide/docs/evidence/software-toolbar-exact-key-routing-20261001.md"
+    },
+    "docs/evidence/vscode-window-scene-drawable-ownership-20261001.md": {
+      "sha256": "fb6abe794eaa4df99881d2cb35351872e0af5f602ccb4f4f8d0f6549d5fa2933",
+      "coverage": "full",
+      "note": "Byte-identical alias of fully read analysis/MacWSBootingGuide/docs/evidence/vscode-window-scene-drawable-ownership-20261001.md"
+    },
+    "docs/evidence/ipad14-5-ios16-mtlcompiler-adapter-20260925.md": {
+      "sha256": "a695aea47df2ca00af986ff8cd75e52df289d4e99eb794feb84b1a592fff5d2d",
+      "coverage": "full",
+      "note": "Byte-identical alias of fully read analysis/MacWSBootingGuide/docs/evidence/ipad14-5-ios16-mtlcompiler-adapter-20260925.md"
+    },
+    "docs/evidence/vscode-scroll-global-hit-regression-20261001.md": {
+      "sha256": "8b56e5e310a60a8cf7e9a079280cf23b20ac3f57789021cec12e8f5250efe31a",
+      "coverage": "full",
+      "note": "Byte-identical alias of fully read analysis/MacWSBootingGuide/docs/evidence/vscode-scroll-global-hit-regression-20261001.md"
+    },
+    "docs/evidence/magic-keyboard-during-ios-ime-20261001.md": {
+      "sha256": "ea7c244865d5327b973dceb1d84d3183f7d6f41c1324ff403a52f0979a2c3354",
+      "coverage": "full",
+      "note": "Byte-identical alias of fully read analysis/MacWSBootingGuide/docs/evidence/magic-keyboard-during-ios-ime-20261001.md"
+    },
+    "docs/evidence/windowing-rootless-load-command-20261002.md": {
+      "sha256": "a3d5cb3c795ae6b8f31371d604d1c44e7dfc05f2848f22bdbbe9da9bd1e85640",
+      "coverage": "full",
+      "note": "Byte-identical alias of fully read analysis/MacWSBootingGuide/docs/evidence/windowing-rootless-load-command-20261002.md"
+    },
+    "docs/evidence/catalyst-drawable-receive-budget-20260930.md": {
+      "sha256": "712fef8b9b5925939181cd2816e6414aa5b95de83f9370f86490d04037c631f5",
+      "coverage": "full",
+      "note": "Byte-identical alias of fully read analysis/MacWSBootingGuide/docs/evidence/catalyst-drawable-receive-budget-20260930.md"
+    },
+    "docs/evidence/retina-standard-unbounded-window-resize-20261001.md": {
+      "sha256": "6d6dbc9fcb13b56f108861415173091173ee418b49751713a7d62bd1add4ca56",
+      "coverage": "full",
+      "note": "Byte-identical alias of fully read analysis/MacWSBootingGuide/docs/evidence/retina-standard-unbounded-window-resize-20261001.md"
+    },
+    "MacWSHost/Testing/README.md": {
+      "sha256": "3513e9bce73fff3d2b19d4b1dcb781513d8280842954fbfe796d92401cb16d0c",
+      "coverage": "full",
+      "note": "Byte-identical alias of fully read analysis/MacWSBootingGuide/MacWSHost/Testing/README.md"
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/maps-location-registration-20260920.md": {
+      "sha256": "2d62f1f9857c3036750de4cd9151fe5fe607d8870c06c0643c47a3e1f5cd8e19",
+      "coverage": "full",
+      "note": "Read Maps identity verification versus authorization reset; VNC timer/cursor false positives; startup live-trust versus metadata cache; native completed composite and Dock-after-Spaces dependency."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/vnc-performance-production-20260730/README.md": {
+      "sha256": "4506f26f5701a4ee6b53584068a705b8c778d8813e6d30944b9a35eeaeffd710",
+      "coverage": "full",
+      "note": "Read Maps identity verification versus authorization reset; VNC timer/cursor false positives; startup live-trust versus metadata cache; native completed composite and Dock-after-Spaces dependency."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/startup-latency-20260912.md": {
+      "sha256": "9340aa0c919f191e2f0fbd17fdbddb930584923e191ebb4837b85c2c7cf098ad",
+      "coverage": "full",
+      "note": "Read Maps identity verification versus authorization reset; VNC timer/cursor false positives; startup live-trust versus metadata cache; native completed composite and Dock-after-Spaces dependency."
+    },
+    "analysis/MacWSBootingGuide/docs/ui-performance-regression-20260812.md": {
+      "sha256": "f778e43c36d78549c3e13e2153e1a65952d6dfc691963309310066ca50c9f71c",
+      "coverage": "full",
+      "note": "Read Maps identity verification versus authorization reset; VNC timer/cursor false positives; startup live-trust versus metadata cache; native completed composite and Dock-after-Spaces dependency."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/vscode-json-language-server-20260920.md": {
+      "sha256": "399f74f1cf39e732b5cfd23b29375e85f8c428753f757c5a14294d159b512c36",
+      "coverage": "full",
+      "note": "Address reservation actual return matters (Oilpan); read-only tab metrics caused state creation; transport FPS versus gameplay evidence; Semaphore readiness EAGAIN race; ACK absence is not rejection."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/7dtd-m2-fullscreen-shift-audio-20260929.md": {
+      "sha256": "d42f4dbb56712c96eadacdff140ac1789532398454610f55d528de18a81ca2e1",
+      "coverage": "full",
+      "note": "Address reservation actual return matters (Oilpan); read-only tab metrics caused state creation; transport FPS versus gameplay evidence; Semaphore readiness EAGAIN race; ACK absence is not rejection."
+    },
+    "analysis/MacWSBootingGuide/docs/steam-agx-memory-20260815.md": {
+      "sha256": "42534761a24eba3ba60536a9a6a9498ca961cb7a8f271ce0ede5cee151775f4f",
+      "coverage": "full",
+      "note": "Address reservation actual return matters (Oilpan); read-only tab metrics caused state creation; transport FPS versus gameplay evidence; Semaphore readiness EAGAIN race; ACK absence is not rejection."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/windowing-native-limits-and-configure-ack-20260912.md": {
+      "sha256": "62fbcee36497e7f6239e2dc2dbc1bfcc49532cb7c0d4c0fabe17ae315b056161",
+      "coverage": "full",
+      "note": "Read native-popup final-composite crop ownership, packed NSValue corruption, exact trust closure and service ordering. Homebrew notes contain historical broad AMFI/CLT impossibility assertions without demonstrated universal proof; treat as dated route failures."
+    },
+    "analysis/MacWSBootingGuide/docs/maps-cold-location-and-space-create-20260809.md": {
+      "sha256": "2dea72e1b9f4621c08d1e728d2f4c1ea0f4c9d8a23722f801289978435af33ec",
+      "coverage": "full",
+      "note": "Read native-popup final-composite crop ownership, packed NSValue corruption, exact trust closure and service ordering. Homebrew notes contain historical broad AMFI/CLT impossibility assertions without demonstrated universal proof; treat as dated route failures."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/window-native-popup-and-export-cancel-20260912.md": {
+      "sha256": "33feec5f646b7574dfd19d33c05045fa5d2b7b38e08db690e0f2695d60953677",
+      "coverage": "full",
+      "note": "Read native-popup final-composite crop ownership, packed NSValue corruption, exact trust closure and service ordering. Homebrew notes contain historical broad AMFI/CLT impossibility assertions without demonstrated universal proof; treat as dated route failures."
+    },
+    "analysis/MacWSBootingGuide/docs/homebrew-notes.md": {
+      "sha256": "4fe4ee1cab853f010b1ada33b688c962fd10ea8e329857a830d02285c9bbaa12",
+      "coverage": "full",
+      "note": "Read native-popup final-composite crop ownership, packed NSValue corruption, exact trust closure and service ordering. Homebrew notes contain historical broad AMFI/CLT impossibility assertions without demonstrated universal proof; treat as dated route failures."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/vscode-quit-sendfile-20260919.md": {
+      "sha256": "c66f5ad39cffae9e182ceb1c7801c4717262dab21aadbd0e14d473ced9913849",
+      "coverage": "full",
+      "note": "Read real sendfile errno/progress contract and signal handling; native OpenPanel capability selection; pending provider generations; TCC selective-capture stays blocked even on accepted author desktop."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/window-workspace-menu-maps-v54-20260912.md": {
+      "sha256": "ce74c911eccfe86474c2dc7b10d0e14de5ecfca720288e6c7429e2b27afc2b08",
+      "coverage": "full",
+      "note": "Read real sendfile errno/progress contract and signal handling; native OpenPanel capability selection; pending provider generations; TCC selective-capture stays blocked even on accepted author desktop."
+    },
+    "analysis/MacWSBootingGuide/docs/ipados-host-panels-finder-fullscreen-20260802.md": {
+      "sha256": "7365b67908c8d6b542d5f7e3edbc8ceba984ee681b59dbbfaf62a76e0d28169c",
+      "coverage": "full",
+      "note": "Read real sendfile errno/progress contract and signal handling; native OpenPanel capability selection; pending provider generations; TCC selective-capture stays blocked even on accepted author desktop."
+    },
+    "analysis/MacWSBootingGuide/docs/control-center-input-performance-regression-20260811.md": {
+      "sha256": "c019f475fcdd00b6b85dd9e22e484efe44a4cad1f15af170f2f9a7fedf697ad8",
+      "coverage": "full",
+      "note": "Read release gate separates automation from physical interaction; same-UUID author selective ScreenCapture still denied, not evidence of our PostEvent cause; Rosetta AOT success versus missing exec contract."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/window-v53-acceptance-20260912.md": {
+      "sha256": "2bfaf7b4fa9172ca2422d1f584d07084bc1a1d6a0c90453b9717b0d8c5abc3f0",
+      "coverage": "full",
+      "note": "Read release gate separates automation from physical interaction; same-UUID author selective ScreenCapture still denied, not evidence of our PostEvent cause; Rosetta AOT success versus missing exec contract."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/ipad14-5-ios16-rosetta-7dtd-20260925.md": {
+      "sha256": "4116c3405644cdc7e4ab755ee51bace09a6597b53946eafc7b3b7d750613ab91",
+      "coverage": "full",
+      "note": "Read release gate separates automation from physical interaction; same-UUID author selective ScreenCapture still denied, not evidence of our PostEvent cause; Rosetta AOT success versus missing exec contract."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/office-production-recovery-20260919.md": {
+      "sha256": "451b51b1e324ccf3f0ee5267c0e3e2d540091e457cb9748e2ec119b7793a9b8e",
+      "coverage": "full",
+      "note": "Office fixed real NoCopy + whole-library AIR, final canonical map distinct from prior candidates; compiler context must satisfy archive loader and native GPU; cache migration after quiescence, exact code-pointer PAC stripping."
+    },
+    "analysis/MacWSBootingGuide/docs/macports-notes.md": {
+      "sha256": "56e97883d71949ee7932026b94ead66c0a4d1bcb5b86f1323505ce345b845061",
+      "coverage": "full",
+      "note": "Office fixed real NoCopy + whole-library AIR, final canonical map distinct from prior candidates; compiler context must satisfy archive loader and native GPU; cache migration after quiescence, exact code-pointer PAC stripping."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/coreimage-dag-target-20260919.md": {
+      "sha256": "ce2239df9f34853026666e1ec70af2d314057b036787ef47f0880ca383d7342c",
+      "coverage": "full",
+      "note": "Office fixed real NoCopy + whole-library AIR, final canonical map distinct from prior candidates; compiler context must satisfy archive loader and native GPU; cache migration after quiescence, exact code-pointer PAC stripping."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/video-playback-20260801/README.md": {
+      "sha256": "62c8c483ff5dd6a6f6edeb6e905825f99267c299441c0d2b6b1721221c9a1a7a",
+      "coverage": "full",
+      "note": "NV12 exact plane field and primary scanout distinction; Finder cold-layer probes do not prove real UI state; Calculator misleading arch error resolved by trust; Safari BRK not PAC failure, complete gigacage contract required."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/finder-icon-descriptor-20260920.md": {
+      "sha256": "78bf4fd66bd8d74e156259a4a9c6b6377dfbc2e21f6c1dd1a9029bdac364136f",
+      "coverage": "full",
+      "note": "NV12 exact plane field and primary scanout distinction; Finder cold-layer probes do not prove real UI state; Calculator misleading arch error resolved by trust; Safari BRK not PAC failure, complete gigacage contract required."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/settings-system-apps-safari-20260913.md": {
+      "sha256": "880c5c25638c4245086dca7c3efc3153bf2f26d1d561d0bb6ca32f9669cf9df5",
+      "coverage": "full",
+      "note": "CoreLocation same class name was not same NSXPC archive ABI; scalar transport/native reconstruction preserved real metadata. Office all28 IR modules retained semantics. Namespace root identity survives env-i; self-root path alone cannot recover host prefix."
+    },
+    "analysis/MacWSBootingGuide/docs/maps-location-geoservices-20260804.md": {
+      "sha256": "2632b18cde597744031d50f892d625a8ea4bed5ce4ac091e14d09dcf3b84cdda",
+      "coverage": "full",
+      "note": "CoreLocation same class name was not same NSXPC archive ABI; scalar transport/native reconstruction preserved real metadata. Office all28 IR modules retained semantics. Namespace root identity survives env-i; self-root path alone cannot recover host prefix."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/office-metal-library-target-20260919.md": {
+      "sha256": "86ea4de97afc63496953b0a8c6f9eaa8148ba7dd65eb7fb54186e39e8d9b2c0c",
+      "coverage": "full",
+      "note": "CoreLocation same class name was not same NSXPC archive ABI; scalar transport/native reconstruction preserved real metadata. Office all28 IR modules retained semantics. Namespace root identity survives env-i; self-root path alone cannot recover host prefix."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/chroot-clean-environment-20260919.md": {
+      "sha256": "4fec7b3079339e8e6eeb871ec91597be5cc970e70e8428f5a0e20d7f3174931d",
+      "coverage": "full",
+      "note": "Preview CF direct branch bypasses public interpose; verify NSURL separately and distinguish SSH exit from child lifetime. Finder normal icon success does not prove thumbnail pipeline; peer replacement theory not observed. Stage membership must be whole-layout input."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/preview-namespace-20260919.md": {
+      "sha256": "8b60963ebad85d565957d6c7b2828eedcacfee1a8cd7fee0c767ab01d59a5473",
+      "coverage": "full",
+      "note": "Preview CF direct branch bypasses public interpose; verify NSURL separately and distinguish SSH exit from child lifetime. Finder normal icon success does not prove thumbnail pipeline; peer replacement theory not observed. Stage membership must be whole-layout input."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/finder-icon-acceptance-20260919.md": {
+      "sha256": "0473bd2dba09cb420f5ecf1c69480750873500c6cdbcbaac9fb1ea4cde203baa",
+      "coverage": "full",
+      "note": "Preview CF direct branch bypasses public interpose; verify NSURL separately and distinguish SSH exit from child lifetime. Finder normal icon success does not prove thumbnail pipeline; peer replacement theory not observed. Stage membership must be whole-layout input."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/windowing-programmatic-resize-stage-membership-20260912.md": {
+      "sha256": "4ce8f595ae1b0ab0926ece1e36a7a11340343f9ce01286f55542f275628c9cdc",
+      "coverage": "full",
+      "note": "Whole-layout verified locally then still limited physical acceptance; fullscreen graph is unique resource transferred with ownership. WebGL exact workload disproved heat/VNC/exclusive-mode universal causes; valid native shader throughput differs from frame scheduling."
+    },
+    "analysis/MacWSBootingGuide/docs/fullscreen-aqua-workspace-20260802.md": {
+      "sha256": "3dab8a77bfb90a367c96a97c7f30d9359d31ba96561045cc7fbab0365135de73",
+      "coverage": "full",
+      "note": "Whole-layout verified locally then still limited physical acceptance; fullscreen graph is unique resource transferred with ownership. WebGL exact workload disproved heat/VNC/exclusive-mode universal causes; valid native shader throughput differs from frame scheduling."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/webgl2-performance-optimization-20260728/README.md": {
+      "sha256": "a132ce3c7df5bb3e456914d34622f3b59924e00feb561f4a222f1d28cdd39810",
+      "coverage": "full",
+      "note": "Whole-layout verified locally then still limited physical acceptance; fullscreen graph is unique resource transferred with ownership. WebGL exact workload disproved heat/VNC/exclusive-mode universal causes; valid native shader throughput differs from frame scheduling."
+    },
+    "analysis/MacWSBootingGuide/docs/final-composite-effects-20260812.md": {
+      "sha256": "88c2609eedb3da3735e4b2ec93b00ea37a43db3c30c5bf80be7acebcbf07e257",
+      "coverage": "full",
+      "note": "Final scanout reuse tearing fixed with GPU-ordered snapshot ring, not retain count alone; system recovery removed global libobjc AUTDA-to-XPACD mutation causing post-Metal fork faults; cold no-env population matters."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/system-contract-recovery-20260919.md": {
+      "sha256": "6b5383c710dd08a02b2d58f77ed09f65dcf7b2e80d76e8c8141e6739457d60ad",
+      "coverage": "full",
+      "note": "Final scanout reuse tearing fixed with GPU-ordered snapshot ring, not retain count alone; system recovery removed global libobjc AUTDA-to-XPACD mutation causing post-Metal fork faults; cold no-env population matters."
+    },
+    "analysis/MacWSBootingGuide/docs/ipados-native-host.md": {
+      "sha256": "a7ee9ef89701b4ca91cb9c29991913918d4984931672bbf899d85215fdc30e50",
+      "coverage": "full",
+      "note": "Historical input CGPreflight false persists despite visible local controls; emergency SIGBUS recursion not inferred from mtime/heat; same clean namespace path control before actual locationd query; drop cancellation cannot become forced copy."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/emergency-load-crash-inventory-20260919.md": {
+      "sha256": "5221fbade1598b3cf22fc6722c85dae4472c71773322cc40adec37209d0e59ee",
+      "coverage": "full",
+      "note": "Historical input CGPreflight false persists despite visible local controls; emergency SIGBUS recursion not inferred from mtime/heat; same clean namespace path control before actual locationd query; drop cancellation cannot become forced copy."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/interoperation-launchpad-geekbench-20260913.md": {
+      "sha256": "c1f1aa47a88cfa80ed4d85da90472b70adc4ac067e670ef79cfefeb64f0989d4",
+      "coverage": "full",
+      "note": "Profiler unique presented sequence vs callback rate; transient cache and clean-app acceptance separated. Word original fixture passed while real kind5 failed due8byte alignment; captured real input fixes parser before shared-cache migration."
+    },
+    "analysis/MacWSBootingGuide/docs/ui-performance-profiler-20260811.md": {
+      "sha256": "565b2910834ffdb4b45f8a11b6d40273a5fa54854f6d4cb6d71e5597c6d481b5",
+      "coverage": "full",
+      "note": "Profiler unique presented sequence vs callback rate; transient cache and clean-app acceptance separated. Word original fixture passed while real kind5 failed due8byte alignment; captured real input fixes parser before shared-cache migration."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/office-unsaved-alert-20260920.md": {
+      "sha256": "d3396f8d9a9ce65d284938e07562500c4ca65f0abf2dab8c3a9c10c515112558",
+      "coverage": "full",
+      "note": "Profiler unique presented sequence vs callback rate; transient cache and clean-app acceptance separated. Word original fixture passed while real kind5 failed due8byte alignment; captured real input fixes parser before shared-cache migration."
+    },
+    "CLAUDE.md": {
+      "sha256": "02f458c67d2e1ee3a2647281072350524ddc28be61f38384976dae84db4bd7a6",
+      "coverage": "full",
+      "note": "Read preservation/coordination boundaries, old handover blocker resolved, R004A subset failure parity not allsuite pass; redirected archaeology must be paired with original archived content."
+    },
+    "docs/porting/ARCHAEOLOGY-15.6.1.md": {
+      "sha256": "8d07371781def63287f5b973d049c6352d03fc7e82e01fbcc80ee3232c4e8200",
+      "coverage": "full",
+      "note": "Read preservation/coordination boundaries, old handover blocker resolved, R004A subset failure parity not allsuite pass; redirected archaeology must be paired with original archived content."
+    },
+    "vendor/ios-xpc/README.md": {
+      "sha256": "adf01c7685ed05b393ce029c7fab9e29cf12f15326f6fe681c81ecd302f7f82d",
+      "coverage": "full",
+      "note": "Read preservation/coordination boundaries, old handover blocker resolved, R004A subset failure parity not allsuite pass; redirected archaeology must be paired with original archived content."
+    },
+    "coordination/reviews/HANDOVER-BLOCKED-20261015.md": {
+      "sha256": "d1acff9fc1a6d5e46e23acb960d6337f7f82317cb7095bd6d8592621313e38c0",
+      "coverage": "full",
+      "note": "Read preservation/coordination boundaries, old handover blocker resolved, R004A subset failure parity not allsuite pass; redirected archaeology must be paired with original archived content."
+    },
+    "tmp/dscvenv/lib/python3.14/site-packages/pip-26.2.1.dist-info/licenses/src/pip/_vendor/idna/LICENSE.md": {
+      "sha256": "1a9a4f0e3d479a27240ddd59a9137a66ab4a0f9dfdc8ca6188cc0bfd85187f04",
+      "coverage": "full",
+      "note": "Read preservation/coordination boundaries, old handover blocker resolved, R004A subset failure parity not allsuite pass; redirected archaeology must be paired with original archived content."
+    },
+    "tmp/dscvenv/lib/python3.14/site-packages/pip/_vendor/idna/LICENSE.md": {
+      "sha256": "1a9a4f0e3d479a27240ddd59a9137a66ab4a0f9dfdc8ca6188cc0bfd85187f04",
+      "coverage": "full",
+      "note": "Read preservation/coordination boundaries, old handover blocker resolved, R004A subset failure parity not allsuite pass; redirected archaeology must be paired with original archived content."
+    },
+    "coordination/PAUSE_REQUEST.md": {
+      "sha256": "5838bc95bd360564cfb2dece3465b5a5841ef39c895a38d974a18b622c815d12",
+      "coverage": "full",
+      "note": "Read preservation/coordination boundaries, old handover blocker resolved, R004A subset failure parity not allsuite pass; redirected archaeology must be paired with original archived content."
+    },
+    "coordination/reviews/R004A-final-20261014.md": {
+      "sha256": "cd01fc1807a058c69dcef8f956e07b76e03d86a2512e55f72e7aed4461321853",
+      "coverage": "full",
+      "note": "Read preservation/coordination boundaries, old handover blocker resolved, R004A subset failure parity not allsuite pass; redirected archaeology must be paired with original archived content."
+    },
+    "coordination/reviews/R003-task-20261014.md": {
+      "sha256": "0e0df2f9d29bbbafe12d1674b6ffad6410be00215fe25a1756048dd5ed68d1d5",
+      "coverage": "full",
+      "note": "R004B dlopen observation broke caller-relative loader semantics and was removed; no dlsym captured remains inconclusive. R005 fresh miss then cached deny proves library result, not daemon policy. Coordination files preserved."
+    },
+    "docs/porting/archive/README.md": {
+      "sha256": "8f8b0fa3bc83573b01e3f780d59b4171747bfe9b42941d8daa9eae936be02f22",
+      "coverage": "full",
+      "note": "R004B dlopen observation broke caller-relative loader semantics and was removed; no dlsym captured remains inconclusive. R005 fresh miss then cached deny proves library result, not daemon policy. Coordination files preserved."
+    },
+    "coordination/reviews/R004B-preflight-20261014.md": {
+      "sha256": "ffe9a34987e2a4c6256322d348cf1eb002d580e01cf82b4a1d294af23cebdafe",
+      "coverage": "full",
+      "note": "R004B dlopen observation broke caller-relative loader semantics and was removed; no dlsym captured remains inconclusive. R005 fresh miss then cached deny proves library result, not daemon policy. Coordination files preserved."
+    },
+    "DevinWatchdog_mac/README-local.md": {
+      "sha256": "8b8140323d6c4a0194997ce40b9ef07f5da4d4401e6b3db80fdcb9f63bb1ec1f",
+      "coverage": "full",
+      "note": "R004B dlopen observation broke caller-relative loader semantics and was removed; no dlsym captured remains inconclusive. R005 fresh miss then cached deny proves library result, not daemon policy. Coordination files preserved."
+    },
+    "coordination/reviews/R004B-final-20261015.md": {
+      "sha256": "821f6ad8fd39a36f1319168eabd4be9c5d9e0a59e31c56d3e2e4be80eda69e0f",
+      "coverage": "full",
+      "note": "R004B dlopen observation broke caller-relative loader semantics and was removed; no dlsym captured remains inconclusive. R005 fresh miss then cached deny proves library result, not daemon policy. Coordination files preserved."
+    },
+    "coordination/reviews/R004B-task-20261014.md": {
+      "sha256": "c4db93bbb1ab3633d6e5c56f98a93f45c1dbd14918a9f5537e5e841d3a529044",
+      "coverage": "full",
+      "note": "R004B dlopen observation broke caller-relative loader semantics and was removed; no dlsym captured remains inconclusive. R005 fresh miss then cached deny proves library result, not daemon policy. Coordination files preserved."
+    },
+    "coordination/reviews/R005-20261015.md": {
+      "sha256": "ac7e6ae0b72cb3bb9ae5e61e94070614dc00f094901b61514303720610ea3772",
+      "coverage": "full",
+      "note": "R004B dlopen observation broke caller-relative loader semantics and was removed; no dlsym captured remains inconclusive. R005 fresh miss then cached deny proves library result, not daemon policy. Coordination files preserved."
+    },
+    "docs/evidence/vscode-test-webview-lifecycle-20260930.md": {
+      "sha256": "e72ba0f32eeb0b50a1da197f6ef234d7d953108a5d9b344398b3ee1dfd962075",
+      "coverage": "full",
+      "note": "R004B dlopen observation broke caller-relative loader semantics and was removed; no dlsym captured remains inconclusive. R005 fresh miss then cached deny proves library result, not daemon policy. Coordination files preserved."
+    },
+    "coordination/reviews/R004A-task-20261014.md": {
+      "sha256": "a2f675cc2563acde348b56f4312c489e2c77afde8f4c06f06011755e75e3d73a",
+      "coverage": "full",
+      "note": "R004A source-scope exclusion and baseline tests required evidence; source CSUNKILL writes kernel, manual-pop remains scaffold. Old bootstrap prompts historical VM environment and actions, not authority for this offline review."
+    },
+    "coordination/reviews/R006-task-20261015.md": {
+      "sha256": "7f005a83035d581ad1e99ce87a7d3da18c4afea2fb14b461ee0e0de609a58410",
+      "coverage": "full",
+      "note": "R004A source-scope exclusion and baseline tests required evidence; source CSUNKILL writes kernel, manual-pop remains scaffold. Old bootstrap prompts historical VM environment and actions, not authority for this offline review."
+    },
+    "coordination/reviews/reviewer-state-through-R006-20261015.md": {
+      "sha256": "4e77deab06490a58972e5096149c27978cb20cc7eaae047c96f0f907be9654e0",
+      "coverage": "full",
+      "note": "R004A source-scope exclusion and baseline tests required evidence; source CSUNKILL writes kernel, manual-pop remains scaffold. Old bootstrap prompts historical VM environment and actions, not authority for this offline review."
+    },
+    "coordination/reviews/R001-task-20261014.md": {
+      "sha256": "7dca6d640ff28bd72481e8cd4a40c68352069a6ee4e301209732263b2ce40307",
+      "coverage": "full",
+      "note": "R004A source-scope exclusion and baseline tests required evidence; source CSUNKILL writes kernel, manual-pop remains scaffold. Old bootstrap prompts historical VM environment and actions, not authority for this offline review."
+    },
+    "docs/porting/TOOLS-AND-PORTING.md": {
+      "sha256": "6be18b2b9fab713ba0879adfe59613346296051cf98c0ab2a4fef6cb13a7bab8",
+      "coverage": "full",
+      "note": "R004A source-scope exclusion and baseline tests required evidence; source CSUNKILL writes kernel, manual-pop remains scaffold. Old bootstrap prompts historical VM environment and actions, not authority for this offline review."
+    },
+    "coordination/reviews/R004A-20261014.md": {
+      "sha256": "0d44c34f4e871d9e33e16b68e16ff76a2883fde1be0fe6d6a7a8a331b8bd9d07",
+      "coverage": "full",
+      "note": "R004A source-scope exclusion and baseline tests required evidence; source CSUNKILL writes kernel, manual-pop remains scaffold. Old bootstrap prompts historical VM environment and actions, not authority for this offline review."
+    },
+    "coordination/artifacts/r004b-evidence-summary.md": {
+      "sha256": "9dc97075c07a0e06d26036be276393507f4f2269593c102b95de51bbd926a5e5",
+      "coverage": "full",
+      "note": "R004A source-scope exclusion and baseline tests required evidence; source CSUNKILL writes kernel, manual-pop remains scaffold. Old bootstrap prompts historical VM environment and actions, not authority for this offline review."
+    },
+    "docs/porting/archive/handover-chain/AGENT-BOOTSTRAP-PROMPT.md": {
+      "sha256": "58695c0d0cdbf693957b1d59ec3e16a6b92d2be42949e7439852668983f3d12f",
+      "coverage": "full",
+      "note": "R004A source-scope exclusion and baseline tests required evidence; source CSUNKILL writes kernel, manual-pop remains scaffold. Old bootstrap prompts historical VM environment and actions, not authority for this offline review."
+    },
+    "coordination/reviews/R006-20261015.md": {
+      "sha256": "8c91a3d2e8fe915230b58a5c3da1759c6cc522741c78dc8cbc1d1d15a3671700",
+      "coverage": "full",
+      "note": "R006 actual default1 mechanism + wrong endpoint/parser negatives corrected. Original AGENT-START-PROMPT used arbitrary byte-signature hit-rate thresholds to decide abandon15; this estimates reuse effort, not feasibility proof."
+    },
+    "coordination/reviews/R004B-runtime-plan-20261014.md": {
+      "sha256": "2c662d3ff93531c62419ef7363b9ea9b68418b7f073c91e845223ce8874ef6ec",
+      "coverage": "full",
+      "note": "R006 actual default1 mechanism + wrong endpoint/parser negatives corrected. Original AGENT-START-PROMPT used arbitrary byte-signature hit-rate thresholds to decide abandon15; this estimates reuse effort, not feasibility proof."
+    },
+    "coordination/reviews/R003-final-20261014.md": {
+      "sha256": "001ca14e823aca1e3e702e6f0b427d5cc20579f542e9fd29b05f1de956d80a0b",
+      "coverage": "full",
+      "note": "R006 actual default1 mechanism + wrong endpoint/parser negatives corrected. Original AGENT-START-PROMPT used arbitrary byte-signature hit-rate thresholds to decide abandon15; this estimates reuse effort, not feasibility proof."
+    },
+    "docs/porting/archive/handover-chain/AGENT-START-PROMPT.md": {
+      "sha256": "84a44a59f896e814d6414f89d11ce520da3f63578a2c3d2812b2f549ed87fb71",
+      "coverage": "full",
+      "note": "R006 actual default1 mechanism + wrong endpoint/parser negatives corrected. Original AGENT-START-PROMPT used arbitrary byte-signature hit-rate thresholds to decide abandon15; this estimates reuse effort, not feasibility proof."
+    },
+    "docs/evidence/ventura-handover-device-inventory-20261006.md": {
+      "sha256": "6d97d40ac22abf99f3230d43b98e539b64f754826e9996c21bc7533aff691ae7",
+      "coverage": "full",
+      "note": "R006 actual default1 mechanism + wrong endpoint/parser negatives corrected. Original AGENT-START-PROMPT used arbitrary byte-signature hit-rate thresholds to decide abandon15; this estimates reuse effort, not feasibility proof."
+    },
+    "coordination/reviews/R007-task-20261015.md": {
+      "sha256": "2e37f7e4416e888646865252f37cc7103baec0f5ba7e9c7fc5375b4ca31a6dbb",
+      "coverage": "full",
+      "note": "R006 actual default1 mechanism + wrong endpoint/parser negatives corrected. Original AGENT-START-PROMPT used arbitrary byte-signature hit-rate thresholds to decide abandon15; this estimates reuse effort, not feasibility proof."
+    },
+    "docs/evidence/ventura-22F82-tcc-checker-20261015.md": {
+      "sha256": "9234c302f4d125085a5fed0b869292290a3a8e5f610852bfa91c3762ced56b2e",
+      "coverage": "full",
+      "note": "R006 actual default1 mechanism + wrong endpoint/parser negatives corrected. Original AGENT-START-PROMPT used arbitrary byte-signature hit-rate thresholds to decide abandon15; this estimates reuse effort, not feasibility proof."
+    },
+    "coordination/reviews/R005-task-20261015.md": {
+      "sha256": "b16b61138b2be654c8ab3f46511e1490fa775b47d366ce6c5dc1d6f79c4685fb",
+      "coverage": "full",
+      "note": "Completed all six docs, separately redelivered coordination README and HELLO after wrapper truncation. HELLO is explicit libSystem/libdyld shim result with unproven broader536/private impossibility; R008 real reply fields remain unknown."
+    },
+    "coordination/README.md": {
+      "sha256": "76f2db3f46d1fdb54f9b917e4a1a80d2304da19fe0ce2bf279cbeadc8ea7e050",
+      "coverage": "full",
+      "note": "Completed all six docs, separately redelivered coordination README and HELLO after wrapper truncation. HELLO is explicit libSystem/libdyld shim result with unproven broader536/private impossibility; R008 real reply fields remain unknown."
+    },
+    "docs/porting/archive/macos15-roots/HANDOVER-REPLY-2026-09-27-HELLO.md": {
+      "sha256": "fc00a06c8df80217a936dfb0ea02ff17b817252bd7e7a3f87071056e6f5ea305",
+      "coverage": "full",
+      "note": "Completed all six docs, separately redelivered coordination README and HELLO after wrapper truncation. HELLO is explicit libSystem/libdyld shim result with unproven broader536/private impossibility; R008 real reply fields remain unknown."
+    },
+    "docs/porting/PROJECT-ARCHAEOLOGY.md": {
+      "sha256": "eda5ac3c04677a35c71088ba2f4f306418163a5bf41d49cc1b957cd2a52a64d6",
+      "coverage": "full",
+      "note": "Completed all six docs, separately redelivered coordination README and HELLO after wrapper truncation. HELLO is explicit libSystem/libdyld shim result with unproven broader536/private impossibility; R008 real reply fields remain unknown."
+    },
+    "coordination/DEVIN_TASK.md": {
+      "sha256": "ab181fb29b806e60f09293fe066d7e8f5336569525633b6819fcd89c333ae56a",
+      "coverage": "full",
+      "note": "Completed all six docs, separately redelivered coordination README and HELLO after wrapper truncation. HELLO is explicit libSystem/libdyld shim result with unproven broader536/private impossibility; R008 real reply fields remain unknown."
+    },
+    "coordination/reviews/reviewer-handover-transition-history-20261015.md": {
+      "sha256": "79d4f3d22bc38ea7dc8a448fcd7901e6fac23b9638a107d53a911d0ecab428aa",
+      "coverage": "full",
+      "note": "Completed all six docs, separately redelivered coordination README and HELLO after wrapper truncation. HELLO is explicit libSystem/libdyld shim result with unproven broader536/private impossibility; R008 real reply fields remain unknown."
+    },
+    "docs/porting/archive/macos15-roots/HANDOVER-REPLY-2026-09-29-536-enum.md": {
+      "sha256": "d288c0902fb93183ccbcd615806c6bde8be6092b9470a42fcc8f5aeef87bccf1",
+      "coverage": "full",
+      "note": "Read old536 source-enumeration conclusions and unsupported absence-of-log shortcut; old09-27 successful-cache claim later superseded. Generic prologue matches were false positives; signing/env observation confounds explicitly retained. R003 no-op-to-real provider activates latent policies."
+    },
+    "coordination/reviews/R003-20261014.md": {
+      "sha256": "c830a70b55fb1d705fce518d821b2634a6e91359453a120f747fcc972f3df904",
+      "coverage": "full",
+      "note": "Read old536 source-enumeration conclusions and unsupported absence-of-log shortcut; old09-27 successful-cache claim later superseded. Generic prologue matches were false positives; signing/env observation confounds explicitly retained. R003 no-op-to-real provider activates latent policies."
+    },
+    "docs/evidence/game-pointer-lock-and-click-geometry-20261006.md": {
+      "sha256": "244057c29b2c642b9e075710eb6ff04ed23cb8726cec2263d6bab50860d7ef53",
+      "coverage": "full",
+      "note": "Read old536 source-enumeration conclusions and unsupported absence-of-log shortcut; old09-27 successful-cache claim later superseded. Generic prologue matches were false positives; signing/env observation confounds explicitly retained. R003 no-op-to-real provider activates latent policies."
+    },
+    "coordination/reviews/reviewer-checkpoints-20261014.md": {
+      "sha256": "416b7c4a7a4e5a42275d58ab46b99ac2d6e5962f4c7485cdbbf178ea9c580fb8",
+      "coverage": "full",
+      "note": "Read old536 source-enumeration conclusions and unsupported absence-of-log shortcut; old09-27 successful-cache claim later superseded. Generic prologue matches were false positives; signing/env observation confounds explicitly retained. R003 no-op-to-real provider activates latent policies."
+    },
+    "docs/porting/archive/macos15-roots/HANDOVER-REPLY-2026-09-27.md": {
+      "sha256": "eb4537ec1da958954db810adfa65a8e36e4623d1796eb4d32652a2497ed3d87e",
+      "coverage": "full",
+      "note": "Read old536 source-enumeration conclusions and unsupported absence-of-log shortcut; old09-27 successful-cache claim later superseded. Generic prologue matches were false positives; signing/env observation confounds explicitly retained. R003 no-op-to-real provider activates latent policies."
+    },
+    "coordination/REVIEWER_STATE.md": {
+      "sha256": "ab1569ef731149772d15b5396225c1cc0956564df9a0e60e32e467d6906b5ed4",
+      "coverage": "full",
+      "note": "09-27 shim report added41 symbols but cat hung; fstat stub returning0 without filling state was itself acknowledged. Do not equate symbol coverage with real libSystem compatibility or assert it caused hang without runtime. Current shutdown independently confirmed, R008 not accepted."
+    },
+    "docs/porting/archive/macos15-roots/HANDOVER-REPLY-2026-09-27-shim.md": {
+      "sha256": "83f450bc35c60aa68180380bf9646bd807fbe8017e887b42bea126d8c8ede60b",
+      "coverage": "full",
+      "note": "09-27 shim report added41 symbols but cat hung; fstat stub returning0 without filling state was itself acknowledged. Do not equate symbol coverage with real libSystem compatibility or assert it caused hang without runtime. Current shutdown independently confirmed, R008 not accepted."
+    },
+    "coordination/reviews/R003-addendum-20261014.md": {
+      "sha256": "ae7e11fa459aaabbeacc3d90ebe7165b7e591d6a7ff4f22470a8ab55a6010951",
+      "coverage": "full",
+      "note": "09-27 shim report added41 symbols but cat hung; fstat stub returning0 without filling state was itself acknowledged. Do not equate symbol coverage with real libSystem compatibility or assert it caused hang without runtime. Current shutdown independently confirmed, R008 not accepted."
+    },
+    "coordination/reviews/reviewer-state-through-R007-20261015.md": {
+      "sha256": "ecf71e8955004580de0ff9a4b2b3e040a57cad51a0cf0acd043f739b1f83928c",
+      "coverage": "full",
+      "note": "09-27 shim report added41 symbols but cat hung; fstat stub returning0 without filling state was itself acknowledged. Do not equate symbol coverage with real libSystem compatibility or assert it caused hang without runtime. Current shutdown independently confirmed, R008 not accepted."
+    },
+    "docs/porting/archive/macos15-roots/CLI-MILESTONE-2026-09-28.md": {
+      "sha256": "4046c212c0652c654cd84e77884530bb26c44f1a8946ea8a999356a224b7aeb7",
+      "coverage": "full",
+      "note": "CLI milestone honestly reports shim/msh limitations and date rc0 wrong output; do not promote it to real rootfs acceptance. Installation runbook contains obsolete universal AGX/arm64ify/signature and cursor-only input claims, superseded by exact roles/current source."
+    },
+    "docs/porting/archive/files-app-macpad_iOS-20261004/安装说明.md": {
+      "sha256": "543f62416ff03a5175ee0195b7e6337b0943df9f9ebb46123c9c74b14351b9c7",
+      "coverage": "full",
+      "note": "CLI milestone honestly reports shim/msh limitations and date rc0 wrong output; do not promote it to real rootfs acceptance. Installation runbook contains obsolete universal AGX/arm64ify/signature and cursor-only input claims, superseded by exact roles/current source."
+    },
+    "docs/porting/archive/macos15-roots/rootfs-15.6.1-install.md": {
+      "sha256": "543f62416ff03a5175ee0195b7e6337b0943df9f9ebb46123c9c74b14351b9c7",
+      "coverage": "full",
+      "note": "CLI milestone honestly reports shim/msh limitations and date rc0 wrong output; do not promote it to real rootfs acceptance. Installation runbook contains obsolete universal AGX/arm64ify/signature and cursor-only input claims, superseded by exact roles/current source."
+    },
+    "docs/porting/archive/macos15-roots/HANDOVER-DYLD-ADMIT-2026-09-27.md": {
+      "sha256": "4311aa26359cf4b884673e6b38b2f6d7d56699018a26461eb4583941ee13261d",
+      "coverage": "full",
+      "note": "CLI milestone honestly reports shim/msh limitations and date rc0 wrong output; do not promote it to real rootfs acceptance. Installation runbook contains obsolete universal AGX/arm64ify/signature and cursor-only input claims, superseded by exact roles/current source."
+    },
+    "docs/evidence/r004b-gate-dispatcher-impl-disasm-20261015.md": {
+      "sha256": "7095b9870ae8e52124618cdb77292dd7beec02c13a39ceff69d81973ded49220",
+      "coverage": "full",
+      "note": "Read archived project summary now superseded: false persistent-trust/cache-adoption/full-input-frontier claims retained only historically. Upstream merge correctly preferred negotiated0x78/0x70 over preclamp; speculative reclaim and namespace leads not proof."
+    },
+    "docs/porting/archive/macos15-roots/HANDOVER-REPLY-2026-09-30-upstream-merge-and-clues.md": {
+      "sha256": "eb36b87059d320fd9b7fde77a69c205195b3c9885339a46a82b449b0e89952f1",
+      "coverage": "full",
+      "note": "Read archived project summary now superseded: false persistent-trust/cache-adoption/full-input-frontier claims retained only historically. Upstream merge correctly preferred negotiated0x78/0x70 over preclamp; speculative reclaim and namespace leads not proof."
+    },
+    "docs/evidence/7dtd-m2-fullscreen-shift-audio-20260929.md": {
+      "sha256": "d42f4dbb56712c96eadacdff140ac1789532398454610f55d528de18a81ca2e1",
+      "coverage": "full",
+      "note": "Read archived project summary now superseded: false persistent-trust/cache-adoption/full-input-frontier claims retained only historically. Upstream merge correctly preferred negotiated0x78/0x70 over preclamp; speculative reclaim and namespace leads not proof."
+    },
+    "docs/Archive/20261015-pre-consolidation/PROJECT-ARCHAEOLOGY.md": {
+      "sha256": "cc4375f10f77019e3f5611328903ad3fd63e7d02eedc6d693eaadbd6673b5ec0",
+      "coverage": "full",
+      "note": "Read final R007 correction and original536 report. Original literal0x539b0000 claimed non16K aligned needs arithmetic correction; old report also says uint64 sf_slide with12-byte stride. Do not rely on these claims without actual header/bytes."
+    },
+    "coordination/reviews/R007-20261015.md": {
+      "sha256": "35a01d542763173f4c24d2e78c54a7f72d00c27348db24622c7e572482408384",
+      "coverage": "full",
+      "note": "Read final R007 correction and original536 report. Original literal0x539b0000 claimed non16K aligned needs arithmetic correction; old report also says uint64 sf_slide with12-byte stride. Do not rely on these claims without actual header/bytes."
+    },
+    "docs/porting/archive/macos15-roots/HANDOVER-REPLY-2026-09-28-536.md": {
+      "sha256": "355dae5e8a4e32a35a21c9eac7ed50e5b91b51472d00ed9bb7da9ca60e5512b8",
+      "coverage": "full",
+      "note": "Read final R007 correction and original536 report. Original literal0x539b0000 claimed non16K aligned needs arithmetic correction; old report also says uint64 sf_slide with12-byte stride. Do not rely on these claims without actual header/bytes."
+    },
+    "docs/porting/archive/macos15-roots/STATIC-536-EFAULT-enumeration.md": {
+      "sha256": "b24041cf887a6357bdbff45340277d9b4ce1a75ca5590d1e1fa365531914b606",
+      "coverage": "full",
+      "note": "Read final R007 correction and original536 report. Original literal0x539b0000 claimed non16K aligned needs arithmetic correction; old report also says uint64 sf_slide with12-byte stride. Do not rely on these claims without actual header/bytes."
+    },
+    "docs/porting/archive/macos15-roots/syscall536-errno-and-probe-sigill.md": {
+      "sha256": "34d85c5d1a229356809d80f5c99e6df8e7d474526b0c64ca5ad1ad320e0adc14",
+      "coverage": "full",
+      "note": "Read exact endian bug in old instrumentation; decoding littleendian bytes is independent of PAC. Historical deepRE task itself had wrong ABI premises and claimed IDA infallibility; method cannot replace identity/callsite verification."
+    },
+    "docs/porting/archive/macos15-roots/dyld-15.6.1-deep-re-handover.md": {
+      "sha256": "4934c70ff4942fb09bbc0cc41974a2e3cb9cd9c0636c3a799054ef3f363d0985",
+      "coverage": "full",
+      "note": "Read exact endian bug in old instrumentation; decoding littleendian bytes is independent of PAC. Historical deepRE task itself had wrong ABI premises and claimed IDA infallibility; method cannot replace identity/callsite verification."
+    },
+    "docs/porting/archive/handover-chain/AGENT-ROLE-macPad-static-side.md": {
+      "sha256": "228bfd0842c1fc623672fa9349817048300217bffca3385a670596699480f01e",
+      "coverage": "full",
+      "note": "Read exact endian bug in old instrumentation; decoding littleendian bytes is independent of PAC. Historical deepRE task itself had wrong ABI premises and claimed IDA infallibility; method cannot replace identity/callsite verification."
+    },
+    "coordination/reviews/reviewer-checkpoints-before-r005-20261015.md": {
+      "sha256": "48b6849d2b609f0417eff242c2b74a252d33b31f701056fa52fd8edfb38434e7",
+      "coverage": "full",
+      "note": "Read full current reviewer chronology, actual20F75 native0x78/type0 producer control and wallpaper-before-Dock ordering; duplicate Rosetta content read by exact paragraph reference."
+    },
+    "docs/evidence/ipad14-3-ios1651-port-20261006.md": {
+      "sha256": "65c51f0790d6a7e07dad0822634559256ad808296d89d908b1917b7ef9b36f0a",
+      "coverage": "full",
+      "note": "Read full current reviewer chronology, actual20F75 native0x78/type0 producer control and wallpaper-before-Dock ordering; duplicate Rosetta content read by exact paragraph reference."
+    },
+    "docs/evidence/ipad14-5-ios16-rosetta-7dtd-20260925.md": {
+      "sha256": "4116c3405644cdc7e4ab755ee51bace09a6597b53946eafc7b3b7d750613ab91",
+      "coverage": "full",
+      "note": "Read full current reviewer chronology, actual20F75 native0x78/type0 producer control and wallpaper-before-Dock ordering; duplicate Rosetta content read by exact paragraph reference."
+    },
+    "DevinWatchdog_mac/README-devin-iterm-watch.md": {
+      "sha256": "ae08503e3d8ff059de4585c30c20c7db849f5e542f6cad5e9b153cebfd23b2c5",
+      "coverage": "full",
+      "note": "Format13 exact pager triage is supported, no-printf is not absence evidence; native warmCOPY not coldmacOSexec control. HELLO task had false adopt-iOScache/upstream premises and loose success criteria. Oldwatchdog automation superseded, not invoked."
+    },
+    "docs/porting/archive/macos15-roots/HANDOVER-HELLO-2026-09-27.md": {
+      "sha256": "9885a8db7b3d543a012dbc8039dd74ab2c141b8fcc67068b60c02ca2c4d52009",
+      "coverage": "full",
+      "note": "Format13 exact pager triage is supported, no-printf is not absence evidence; native warmCOPY not coldmacOSexec control. HELLO task had false adopt-iOScache/upstream premises and loose success criteria. Oldwatchdog automation superseded, not invoked."
+    },
+    "docs/evidence/m1-dyld-pager-format13-20260930.md": {
+      "sha256": "d548a7efe7ba6858ec1c1cb3792a8c29e5a4d1e133050cdc57f5d626425d9aed",
+      "coverage": "full",
+      "note": "Format13 exact pager triage is supported, no-printf is not absence evidence; native warmCOPY not coldmacOSexec control. HELLO task had false adopt-iOScache/upstream premises and loose success criteria. Oldwatchdog automation superseded, not invoked."
+    },
+    "docs/porting/archive/handover-chain/HANDOVER-X86-DEVIN-2026-10-11.md": {
+      "sha256": "e8ee45ab8b6c39274adf910e9bf0fe92d11175032ffface1907176da61660dcb",
+      "coverage": "full",
+      "note": "PMAP proposal itself records3 negative child-data ABs with unchangedcode50, and acknowledges different pmap/later rejection possibilities. Static owner helper plus empty tree does not prove that helper is sole runtime rejection cause or that its proposed patch would fix it."
+    },
+    "docs/Archive/20261015-pre-consolidation/ARCHAEOLOGY-15.6.1.md": {
+      "sha256": "4d315c1d58af47658c8d65ee2f6e37db0038d568b3b00d0dfa01c45a073149da",
+      "coverage": "full",
+      "note": "PMAP proposal itself records3 negative child-data ABs with unchangedcode50, and acknowledges different pmap/later rejection possibilities. Static owner helper plus empty tree does not prove that helper is sole runtime rejection cause or that its proposed patch would fix it."
+    },
+    "docs/porting/archive/macos15-roots/T8103-PMAP-NESTED-OWNER-FIX-PROPOSAL.md": {
+      "sha256": "dc6ed348d66119c9764a882e700ef042dcebf672b7c9ab06d4f587b49e0d7a2d",
+      "coverage": "full",
+      "note": "PMAP proposal itself records3 negative child-data ABs with unchangedcode50, and acknowledges different pmap/later rejection possibilities. Static owner helper plus empty tree does not prove that helper is sole runtime rejection cause or that its proposed patch would fix it."
+    },
+    "docs/porting/archive/macos15-roots/MAC15-UNTRACKED-ARTIFACT-CATALOG-2026-10-04.md": {
+      "sha256": "a3034d2ea0bb8a01ce6b8a8a7d3d4a3b9074a795a1f094fd9189185d3e4b2be2",
+      "coverage": "full",
+      "note": "Artifact catalog preserves source/receipts, not automatic permission to run. Populate task claimed random X<0x20000000 could exceed0x5aa34000 with55percent probability; arithmetic disproves this bounded event, not actual syscall diagnosis."
+    },
+    "docs/porting/archive/macos15-roots/HANDOVER-DYLD-536-POPULATE-2026-09-28.md": {
+      "sha256": "aca04df9f69863214b22373927e7cc82fb0a6ea533cb95e09b61ae9f40120ff6",
+      "coverage": "full",
+      "note": "Artifact catalog preserves source/receipts, not automatic permission to run. Populate task claimed random X<0x20000000 could exceed0x5aa34000 with55percent probability; arithmetic disproves this bounded event, not actual syscall diagnosis."
+    },
+    "docs/Archive/20261015-pre-consolidation/TOOLS-AND-PORTING.md": {
+      "sha256": "a67643700b7e56aa9d699849078bf64354d9d8bcb3ac8d8258544ff6826e24ee",
+      "coverage": "full",
+      "note": "All3 archived summaries fully read. Static libSystem report corrected decimal298 vs hex0x298 later but used unverified process attribution and overclaimed injection implies shims only. Historical VM superhandover not current tool/delegation authority."
+    },
+    "docs/porting/archive/handover-chain/AGENT-SUPER-HANDOVER.md": {
+      "sha256": "45a404fc930a18d726247db6b7ce7760af9a5c8e5ef0a82abf133482732c23ac",
+      "coverage": "full",
+      "note": "All3 archived summaries fully read. Static libSystem report corrected decimal298 vs hex0x298 later but used unverified process attribution and overclaimed injection implies shims only. Historical VM superhandover not current tool/delegation authority."
+    },
+    "docs/porting/archive/macos15-roots/STATIC-libsystem-cache-vs-shim.md": {
+      "sha256": "304394fb82629f7d1790705b074ae79cb9369f2eb132988ae8280f8d3b2b412a",
+      "coverage": "full",
+      "note": "All3 archived summaries fully read. Static libSystem report corrected decimal298 vs hex0x298 later but used unverified process attribution and overclaimed injection implies shims only. Historical VM superhandover not current tool/delegation authority."
+    },
+    "docs/porting/archive/macos15-roots/kernel-syscall536-finding.md": {
+      "sha256": "2cbc2559069998a7644044afc3b3575c39e688043c570b11e1c5b29e86cd8f73",
+      "coverage": "full",
+      "note": "Kernel536 finding overstates exclusive sandbox source despite opaque returns and later-invalid probe; M3 handover no-printf deduction explicitly disproved by later exact releasekernel. No early candidate conclusions restored as fact."
+    },
+    "docs/porting/archive/macos15-roots/HANDOVER-M3-DYLD-PAGER-2026-09-30.md": {
+      "sha256": "ba43893cf058da473f2f6b79ae7a5756c44b728843c1bb28ac14a8dd06873d4d",
+      "coverage": "full",
+      "note": "Kernel536 finding overstates exclusive sandbox source despite opaque returns and later-invalid probe; M3 handover no-printf deduction explicitly disproved by later exact releasekernel. No early candidate conclusions restored as fact."
+    },
+    "docs/porting/archive/handover-chain/HANDOVER-MACOS13-VENTURA-2026-10-04.md": {
+      "sha256": "199249bfa9e51e203095d30c64a167429dd738818bda97388e49cbc92c087e9a",
+      "coverage": "full",
+      "note": "Read early15 graphics RE: names/prologues can survive with Render::Image and IOMFB fields drifting. Claimed all hooks selfport based on INSTALL logs is insufficient; broadDarwin-major replacement for exactABI unproven. Later role/provider audits control."
+    },
+    "docs/porting/archive/macos15-roots/re-analysis-15.6.1.md": {
+      "sha256": "3b29839db0c1d3a55120c5f7fbaef8cc21cad56bf43aed39135599e92cc2c67a",
+      "coverage": "full",
+      "note": "Read early15 graphics RE: names/prologues can survive with Render::Image and IOMFB fields drifting. Claimed all hooks selfport based on INSTALL logs is insufficient; broadDarwin-major replacement for exactABI unproven. Later role/provider audits control."
+    },
+    "docs/ui-performance-profiler-20260811.md": {
+      "sha256": "565b2910834ffdb4b45f8a11b6d40273a5fa54854f6d4cb6d71e5597c6d481b5",
+      "coverage": "full",
+      "note": "Desktop-chain source file includes laterlocalinput success and old global denial; distinguish them. Full old runbook read; topdatedhandoff supersedes persistent-trust, checkerunknown and input-dead-subsystem assertions. R008 current remains authoritative."
+    },
+    "docs/evidence/ventura-22F82-desktop-chain-20261011.md": {
+      "sha256": "e52f2c68798f094d416a904963471886f27b8d5cdb82504f608551ad540b99b8",
+      "coverage": "full",
+      "note": "Desktop-chain source file includes laterlocalinput success and old global denial; distinguish them. Full old runbook read; topdatedhandoff supersedes persistent-trust, checkerunknown and input-dead-subsystem assertions. R008 current remains authoritative."
+    },
+    "docs/porting/ventura-22F82-session-reproduction-20261013.md": {
+      "sha256": "a6b40f2803f351f25b3cfc50fb81e1458faef8f45918ca1da10ae324c86ced69",
+      "coverage": "full",
+      "note": "Desktop-chain source file includes laterlocalinput success and old global denial; distinguish them. Full old runbook read; topdatedhandoff supersedes persistent-trust, checkerunknown and input-dead-subsystem assertions. R008 current remains authoritative."
+    },
+    "docs/porting/archive/macos15-roots/hit-rate-table.md": {
+      "sha256": "426191a74cbab82ee318812849f8c5cc3713c8f4c35a3663f4caf95fd5021709",
+      "coverage": "full",
+      "note": "Hit-rate report actually used function survival≈90percent to recommend full port, despite0/19 fixed-offset signatures; threshold was not actual reason for freezing. Retain rootfs independent risk disclaimer; no0-rewrite-cost inference from exports."
+    },
+    "docs/porting/archive/macos15-roots/UPSTREAM-MERGE-AND-CLUES-2026-10-02.md": {
+      "sha256": "0fbfd6e90626a68b569d98664b633136da5cc210c03a6b0e0895ff0d5e069433",
+      "coverage": "full",
+      "note": "Full original port blueprint erroneously assumed unchanged host kernel implies no kernel-contract issue and version-neutral proxies; shareexec/service closure refutes simplification. Populate partial shows documented52800029 labelled MOVW9#0; literal consistency needs checked."
+    },
+    "docs/porting/archive/macos15-roots/PORT-TO-MACOS15-HANDOVER.md": {
+      "sha256": "c1724398e79bbdc390b58b5ca60a8c2480c53817e8f2eab51a9901ad631f7daf",
+      "coverage": "full",
+      "note": "Full original port blueprint erroneously assumed unchanged host kernel implies no kernel-contract issue and version-neutral proxies; shareexec/service closure refutes simplification. Populate partial shows documented52800029 labelled MOVW9#0; literal consistency needs checked."
+    },
+    "docs/porting/archive/macos15-roots/HANDOVER-REPLY-2026-09-28-populate.md": {
+      "sha256": "8153103f8dda559425bc31a8f484d6ceb0720e45ee40d14f20e8d3f62091bff5",
+      "coverage": "full",
+      "note": "Populate conclusion oscillates from static rootcause to disproved to invalidtest to missing-shim; retains no exact kernel trace for last attribution. Layout doc calls pre-main probe failure proof of impossible usermode path—invalid since testedcode never ran; later reboot refutes persistent-state theory."
+    },
+    "docs/porting/archive/macos15-roots/STATIC-cache-layout-exceeds-4gb-shared-region.md": {
+      "sha256": "07417a9bec9288eb8f964b8adc62c20bdae3cf79cd0557861e64101d6d99f224",
+      "coverage": "full",
+      "note": "Completed layout report—shrinking metadata cannot remove referenced content, but universal4GiB requirement does not follow for private contract. TerminalDock long chronology finally identifies globalframe provider; earlier return/model checks did not establish persistentvisible result."
+    },
+    "docs/evidence/terminal-tab-dock-windowing-20261001.md": {
+      "sha256": "65aa1d288230bb7f01a157d155182252e8013dcd9a3a47ce1498e8cd153e7bf6",
+      "coverage": "full",
+      "note": "Completed layout report—shrinking metadata cannot remove referenced content, but universal4GiB requirement does not follow for private contract. TerminalDock long chronology finally identifies globalframe provider; earlier return/model checks did not establish persistentvisible result."
+    },
+    "docs/porting/archive/macos15-roots/HANDOVER-REPLY-2026-10-01-FINAL.md": {
+      "sha256": "fc99152ae1c70753690656b177223e02127ee83bf569d82aab1cf4b2d82ce2d1",
+      "coverage": "full",
+      "note": "Full Oct1 FINAL read, including strongest retraction§11:131 images belonged iOS, patchcausalA/B also suspect. Laterbashrealpath only proves some macOSloads, exit90 unknown; initializer/ElleKit blamed before perPID attribution."
+    },
+    "docs/porting/archive/macos15-roots/KB-E-shared-region-limit.md": {
+      "sha256": "9616484b9e5fa8a5785dd973c2541581188f723b31bef52b6347e5e4145b4fac",
+      "coverage": "full",
+      "note": "Full KB-E chain read: genuine runtime guard words but broad route elimination and patch nonfatal mechanism laterretracted. No builder currently available does not prove allprivate routes unavailable; keep old experiments as bounded evidence."
+    },
+    "docs/porting/archive/macos15-roots/kernel-syscall536-re-handover.md": {
+      "sha256": "84fccb1faa26610f06bb208b5679d4892570afd49c13a381a274104ca32df31b",
+      "coverage": "full",
+      "note": "Full kernel handover read; redelivered lines250-325 after wrapper truncation. OldAMFI/Sandbox naming, errno1/EFAULT conflation and candidatecounts are historical; actual lateridentity/triage needed. Ventura state partial starts with superseded hashpair assumption."
+    },
+    "docs/porting/ventura-22F82-bringup-state.md": {
+      "sha256": "1bc56a3039f9564d1dd2e6922493d8528b32afa45ef105856aef430725e60545",
+      "coverage": "full",
+      "note": "Ventura longstate complete: current13 achieved realcacheCLI with intentionally diagnostic substrate seam; cdhash parser hashType offset34 vs37 corrected; volatiletrust finalcorrection controls; fat/thin historical staging changed later."
+    },
+    "docs/porting/archive/macos15-roots/STATIC-m3-dyld-pager-format13.md": {
+      "sha256": "043e7a93226da511430c03012dc613bc42706db243a56a7f62b70e9482981738",
+      "coverage": "full",
+      "note": "Full STATICm3 read: valid format mismatch plus laterwrongreclaim uniqueattribution; crucialD161E41A iOS control invalidates numerousoldlibSystemclaims. F1 escape candidate is not wholeCLIacceptance, evidence boundaries carried into report."
+    },
+    "docs/porting/archive/macos15-roots/HANDOVER-15.6.1-2026-09-26.md": {
+      "sha256": "fffbef8ddfa5b393927309088a858a76b1707c894f05675758e355bf63aa1e56",
+      "coverage": "full",
+      "note": "Full09-26 handover read inclcorrect endian/deploybits mixed with unsupported blanketexec rules. Composite/input longdoc first300lines read, oldEndUpdate-no-calls depends on laterprovidercorrection; scrolllocalfallback notWSgrant."
+    },
+    "docs/evidence/ventura-22F82-input-transport-and-composite-20261013.md": {
+      "sha256": "981cecf57ae32396480ef75e7edcff77aee7dbae8e98ce71073005f4fc0b221a",
+      "coverage": "full",
+      "note": "Full702line input/composite evidence read through§9retractions. Current coldtrust bug capture read in externalhandover; no mistaken claim entireproduction ran. Allnewclaims anchored to latestR008 and shareactualrole evidence."
+    },
+    "docs/porting/archive/macos15-roots/HANDOVER-DEVIN-TO-EXTERNAL-GPT-2026-10-02.md": {
+      "sha256": "7130d4a9ba4f452a9ef7903b4a3395559576314c99291e0ec6fe8e6563d4d0b3",
+      "coverage": "full",
+      "note": "Full externalGPT handover usefully bounded PMAP and fmt13kernelpatch risks, no safeverify/rollback oldscript. Completebrief earlydata repeats, laterlimits pending; no originalpristine authentication inferred from old prose alone."
+    },
+    "docs/porting/archive/macos15-roots/HANDOVER-15.6.1-COMPLETE-BRIEF-2026-10-01.md": {
+      "sha256": "c07d55b4aac955112d7c06ae78b4b1f1ee709e1cb23b3fa6c0a105e9feaf1578",
+      "coverage": "full",
+      "note": "Completebrief fullyread inclselfdoubt§6 and laterfalse131claim. This confirms uncertainty was explicitly available but laterconsolidationlostit. DEVIN currentstatus topread: pending fullpipelineandrawreply, oldR006overclaim not currentacceptedfact."
+    },
+    "coordination/DEVIN_STATUS.md": {
+      "sha256": "96718a1c42f98bfe1e68a8d8964fb16ed7209fde2fd7d55ad8ef4f33b7683562",
+      "coverage": "full",
+      "note": "Full818line DEVIN_STATUS read through all R001-R008 history. Final source/providerlimits and reviewer corrections control over repeated stale currentheaders. No new dispatch/changes to coordination performed."
+    },
+    "docs/porting/archive/macos15-roots/CONSOLIDATED-2026-09-29.md": {
+      "sha256": "2d62c8a40fd38321700a4566fa354509420f7f1f2e0a85d28c102357054afe04",
+      "coverage": "full",
+      "note": "CONSOLIDATED complete inclsuccessive controlledteardown/reserve tests. Existingproject already reached correctnonfixedPROT_NONE strategy; main15difference is completepager/execclosure, not rediscoveringreserve. Fullanalysis partial trace exactargv layouts withpristineclaim bounded bynewfullsegmentcomparison."
+    },
+    "docs/porting/archive/macos15-roots/dyld-15.6.1-full-analysis.md": {
+      "sha256": "019a54f95a386fb09da1553d44f08fee98000a59d17d352bf342bfbc0b20f8b6",
+      "coverage": "full",
+      "note": "Full1145line dyldanalysis read. Builder first470lines show tools falsely declared absent due CLTselector, corrected installedXcode and realcallback; unsupported v5tool earlier limitation not proof impossibleimplement; laterfollowup stillpending."
+    },
+    "docs/porting/archive/macos15-roots/STATIC-b2-cache-rebuild-pipeline.md": {
+      "sha256": "828d444207f4c959631833e21117d0efa62c66972464c9488ff4be843a5d30ae",
+      "coverage": "full",
+      "note": "Completebuilder1124lines read; onlystate remains local. Statefirst288 read, originalcdhashCDlength discovery explicitly retracts -Cadhoc-as-cause rule; repeated misleading top summaries confirm need latest evidence precedence."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/displaystream-host-ux-20260801/open-panel-fullscreen-popup-terminal.md": {
+      "sha256": "6baad5c0da0eaaec6f04de6f4789bb5e511e3ec2f1388dc453a12134cbac9236",
+      "coverage": "full",
+      "note": "Author OpenPanel/Hosthistory complete inclretired58percentkill; read-onlymenus must notactivate. IOSurface C/Client/ObjC directbranch gap proven by18mismatches, correctedby exactnativefield contract; genericGPUprobe cannot validate untestedplanarentrypoints."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/iosurface-layout-accessors-20260919.md": {
+      "sha256": "40844b322637b579eaae755bccbdd7967aa37b3f4afa95fe616b661ea84efffd",
+      "coverage": "full",
+      "note": "Author OpenPanel/Hosthistory complete inclretired58percentkill; read-onlymenus must notactivate. IOSurface C/Client/ObjC directbranch gap proven by18mismatches, correctedby exactnativefield contract; genericGPUprobe cannot validate untestedplanarentrypoints."
+    },
+    "analysis/MacWSBootingGuide/docs/catalyst-system-apps-20260804.md": {
+      "sha256": "a4b2e4dacffcf8bee6dac43c064cf0993fe71e2fb30f7fd0bc522aae2e3efd8c",
+      "coverage": "full",
+      "note": "Catalyst uses persistent UIKit parent, exact versioned identity and perappexcarrier; sharedsamecarrier fails unequalidentities. Native gestures targetactualDockcontroller with phase/cancel; successful UI can use distinctroute, not blanketglobalPostEvent acceptance."
+    },
+    "analysis/MacWSBootingGuide/docs/fullscreen-native-three-finger-gesture-20260808.md": {
+      "sha256": "1fb2ad275224fd6b0a9fcce4b4be8dd9a83731cc04765413283ffd07a8dc0b81",
+      "coverage": "full",
+      "note": "Catalyst uses persistent UIKit parent, exact versioned identity and perappexcarrier; sharedsamecarrier fails unequalidentities. Native gestures targetactualDockcontroller with phase/cancel; successful UI can use distinctroute, not blanketglobalPostEvent acceptance."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/coreui-image-filter-kind5-20260920.md": {
+      "sha256": "bab8d369db2c5e16f3fdff4661839e42e173c51668887deeefa72ba51a97229b",
+      "coverage": "full",
+      "note": "Kind5 fullproducer chain read: validate allmodules before mutation, realcomposer mayconsume pointers no postreturnrestore. Interopcallbackowned URLs stage synchronously; Filescontenttype actual gate not rawURL; QuickLook instance mapping acceptance narrow to testedrequests."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/ipados-macos-interop-20260906.md": {
+      "sha256": "f436790b5b986b26fb5df0c496665781059a7402b5a9e693153a1bb02dd0b52c",
+      "coverage": "full",
+      "note": "Author VNC usabilityfull355lines andinterop361 complete. System streamownership plus visiblemenu is acceptance, notcursor/digest. Productiondefaults partial read distinguishes admission fixtures and realapps; source/archive/mapped identity separate."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/vnc-usability-stability-20260729/README.md": {
+      "sha256": "5de509864806ada4e10e25750cd659707804ad5d3dcd92c1296511f0f5779ae2",
+      "coverage": "full",
+      "note": "Author VNC usabilityfull355lines andinterop361 complete. System streamownership plus visiblemenu is acceptance, notcursor/digest. Productiondefaults partial read distinguishes admission fixtures and realapps; source/archive/mapped identity separate."
     }
   }
 }

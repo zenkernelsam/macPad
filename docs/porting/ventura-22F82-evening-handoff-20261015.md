@@ -100,6 +100,31 @@ Cryptex 资源路径、WebKit 多实例 XPC proxies、RunningBoard 身份、Netw
 
 对 22F82 的启发是：先确认服务／协议版本、真实生产者和正确进程代际，再做保持语义的转换。这些发现**没有改变 R008/TCC 的未完成状态**，也不构成给 Ventura 添加 sidecar、额外 debug 标记或绕过权限检查的理由。
 
+### G. 原作者文档补充：桌面可用不等于所有 TCC 服务通过
+
+原作者 [v53 验收记录](../../analysis/MacWSBootingGuide/docs/evidence/window-v53-acceptance-20260912.md) 保存了选择性捕获的 `granted:false` / `request_returned:false`，且给隔离 helper 添加 ScreenCapture entitlement 后仍拒绝。[v54 后续](../../analysis/MacWSBootingGuide/docs/evidence/window-workspace-menu-maps-v54-20260912.md) 标注 SkyLight UUID `96676A53-B1E0-3D7E-B98B-B73873CD1880`，与我们当前 RE 输入一致，并记录 `TCCAccessPreflight` 的实际策略返回仍阻止捕获。这是**原作者保存的历史证据**，本轮没有重新运行其设备。
+
+它的用途是纠正验收尺度：不能从作者可操作桌面推导出完整 TCC 已恢复，也不能把 ScreenCapture 的历史失败直接归因到我们今天的 PostEvent。两者应分别记录 service、sender、真实请求和返回路径。分享包的 WS checker 恒真 override 与作者这些捕获拒绝也不矛盾：它们并非同一条检查路径。
+
+### H. 复用矩阵：优先找现有能力为何没有在实际进程中生效
+
+下表的“已有”仅指当前源码存在，不替代 22F82 上的加载和行为验收。作者记录是其历史平台的证据；不同 build 的私有偏移需要重新匹配。
+
+| 经验／来源 | 当前 13 的处理 | 有限时验收与禁止误判 |
+| --- | --- | --- |
+| 实际 provider 能力，见 [角色审计](../evidence/sequoia-share-audit-20261015/roles/README.md) | **新增离线基础工作**：验证局部符号、实例／类方法 hook、原函数调用和许可表；当前 scaffold 不完整 | 用真实 fixture 证明 replacement 执行及 original 可调用，再确认具体目标的装载身份；不以 `INSTALL` 日志过关，不直接换入整份 ElleKit |
+| [冷启动 HIServices 缺信任](../../analysis/MacWSBootingGuide/docs/maps-cold-location-and-space-create-20260809.md) | **复用已有工具**：[启动脚本](../../layout/usr/macOS/bin/macos_gui.sh)、[trust helper](../../layout/usr/macOS/bin/macws_boot_trust.py)；与 R008 service readiness 同步检查 | shell/WS 能启动不足以证明同步调用的 XPC helper 可执行；检查真实依赖 CDHash、job domain、请求与回复，避免把阻塞归为触摸坐标错误 |
+| [LaunchServices 记录失去 mounted 状态](../../analysis/MacWSBootingGuide/docs/cold-start-stability-20260807.md) | **保留后续恢复检查**：数据库存在、seed 完成与可解析 App 路径分别验证 | 真正应用 URL／ASN／窗口证据；不要反复 `kill/seed` 或只延长等待。作者早期和后续 Space/Dock 顺序有演进，当前 build 的运行记录优先 |
+| [Carbon 菜单嵌套循环](../../analysis/MacWSBootingGuide/docs/evidence/input-unification-20260731/host-native/multilayer-carbon-runtime.md) | **已有输入实现**：[AppInputBridge](../../libmachook/AppInputBridge.m)；先定位它实际使用的 route | 正常主线程异步队列不保证在菜单 tracking 中被处理；验收 submenu、Escape、完整 down/up/cancel，不能以 socket send 成功代替 |
+| [原生进程内 OpenPanel](../../analysis/MacWSBootingGuide/docs/ipados-host-panels-finder-fullscreen-20260802.md) | **已有能力**：[LocalFilePanel](../../libmachook/LocalFilePanel.m) 选择 AppKit 的 `NSUseRemoteSavePanel` 路径 | 真实原生 panel、delegate、URL、取消；无需重造 UIKit 文件浏览器或伪造 modal 结果 |
+| [NoCopy 所有权](../../analysis/MacWSBootingGuide/docs/evidence/native-nocopy-contract-20260919.md) | **已有转换**：`mac_hooks.m` / `Metal_hooks.x`；15/G14 参数不能照搬 | 原 CPU 地址别名、GPU 回写、真实 deallocator 恰好一次、两架构；复制到新 buffer 和提前回调不是等价实现 |
+| [Office／CoreImage 编译目标](../../analysis/MacWSBootingGuide/docs/evidence/coreimage-dag-target-20260919.md) | **已有模块，后续按实际 compiler UUID 检查** | archive 能加载与原生 AGX 能建 pipeline 是两个门槛；已缓存错误产物需可恢复、停写后的版本迁移，不强行跳过校验 |
+| [V8 地址预留](../../analysis/MacWSBootingGuide/docs/evidence/vscode-json-language-server-20260920.md) | **已有能力**：[PageAllocator](../../libmachook/Compatibility/MacWSElectronPageAllocator.c) | `mmap != MAP_FAILED` 不证明地址满足 cage；检查真实返回、对齐和完整 LSP 响应。与 15 dyld reserve 的方法相通，具体地址不能混用 |
+| [缺失 sendfile](../../analysis/MacWSBootingGuide/docs/evidence/vscode-quit-sendfile-20260919.md) | **已有实现**：[MacWSSendfile](../../libmachook/Compatibility/MacWSSendfile.c) | errno、已传字节、原调用方 fallback、正常 Quit；一律 ENOSYS 或返回0不等价 |
+| [只读 tab metrics 实际触发创建](../../analysis/MacWSBootingGuide/docs/evidence/7dtd-m2-fullscreen-shift-audio-20260929.md) | **已有修正**：AppInputBridge 使用 `_windowStackController` | 它是避免观测引入同步 IconServices 的例子；应用卡顿先查真实阻塞栈，不先禁用 Shift 或清空 tab 对象 |
+| [packed metrics 与 ObjC 编码](../../analysis/MacWSBootingGuide/docs/evidence/window-native-popup-and-export-cancel-20260912.md) | **复用 ABI 检查方法**，与分享包 role/profile 审计一致 | `sizeof`、wire stride、所有权、canary 均要匹配；不能 NOP `objc_release` 掩盖 56→64 字节越界 |
+| 15 的 reserve／format12 sidecar／exec 准入、G14 和 Safari 配套 | **留给 15 恢复，今晚不移植** | exact cache UUID、全部 segment/sidecar、PAC 语义、正确 exec generation 和应用终点缺一不可；M2 报告不构成 M1 接受 |
+
 ## 3. 今晚建议的工作顺序
 
 ### P0：先处理已保存的 R008 reviewer 边界问题
