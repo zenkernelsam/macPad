@@ -1,0 +1,10 @@
+{
+  "scope": "ordinary non-symlink files under analysis with documented exact sizes 1239632 or 1239616",
+  "expected_hashes": [
+    "9956915299c6e3e21c7e650242166bab05dc635da4acac2cbade4e646eec51a1",
+    "b8fdbc1b7cfd15cccbcd110c0c3cb1ff91d135d6664b84770d42df843381b91e"
+  ],
+  "candidate_files_hashed": 14,
+  "matches": [],
+  "limit": "Does not search other directories, compressed backups, alternative signing states or matching thin contents inside different fat containers."
+}

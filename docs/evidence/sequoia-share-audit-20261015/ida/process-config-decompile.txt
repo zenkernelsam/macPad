@@ -1,0 +1,209 @@
+uint16x4_t *__fastcall dyld4::ProcessConfig::Process::Process(
+        uint16x4_t *a1,
+        uint16x4_t *a2,
+        dyld4::SyscallDelegate *a3,
+        __int64 a4)
+{
+  uint16x4_t v8; // x8
+  uint16x4_t v9; // x9
+  uint16x4_t *v10; // x8
+  __int64 v11; // t1
+  uint16x4_t v12; // x1
+  uint16x4_t v13; // x1
+  char *v14; // x22
+  char *v15; // x0
+  char *v16; // x8
+  bool v17; // w8
+  unsigned __int8 *v18; // x0
+  int v19; // w8
+  int v20; // w9
+  int v21; // w8
+  const char *v22; // x20
+  const char *v23; // x20
+  __int64 (__fastcall ***v24)(mach_o::PlatformInfo *__hidden, unsigned __int16, bool); // x23
+  __int32 v25; // w24
+  unsigned __int32 v26; // w21
+  int v27; // w25
+  int v28; // w9
+  int v29; // w22
+  __int64 v30; // x26
+  __int64 v31; // x26
+  __int64 v33; // x23
+  __int64 v34; // x22
+  int v36; // w8
+  __int64 (__fastcall ***v37)(mach_o::PlatformInfo *__hidden, unsigned __int16, bool); // [xsp+0h] [xbp-60h]
+  __int32 v38; // [xsp+8h] [xbp-58h]
+
+  a1[8] = 0;
+  a1[9].i32[0] = 0;
+  a1[10] = 0;
+  a1[11].i32[0] = 0;
+  dyld4::SyscallDelegate::DyldCommPage::DyldCommPage((dyld4::SyscallDelegate::DyldCommPage *)&a1[16]);
+  v8 = *a2;
+  v9 = a2[1];
+  *a1 = *a2;
+  a1[1] = v8;
+  a1[17].i32[0] = v9.i32[0];
+  v10 = &a2[*(_QWORD *)&v9 + 3];
+  a1[18] = (uint16x4_t)&a2[2];
+  a1[19] = (uint16x4_t)v10;
+  do
+    v11 = (__int64)*v10++;
+  while ( v11 );
+  a1[20] = (uint16x4_t)v10;
+  a1[23].i32[0] = dyld4::SyscallDelegate::getpid();
+  a1[16] = (uint16x4_t)dyld4::SyscallDelegate::dyldCommPageFlags(a3);
+  a1[23].i8[4] = dyld4::SyscallDelegate::isTranslated(a3);
+  a1[4] = (uint16x4_t)dyld4::ProcessConfig::Process::getMainFileID(a1);
+  a1[5] = v12;
+  a1[14] = (uint16x4_t)dyld4::ProcessConfig::Process::getDyldFileID(a1);
+  a1[15] = v13;
+  a1[3] = (uint16x4_t)dyld4::ProcessConfig::Process::getMainUnrealPath(a1, a3, a4);
+  a1[2] = (uint16x4_t)dyld4::ProcessConfig::Process::getMainPath(a1, a3, a4);
+  v14 = (char *)a1[3];
+  v15 = strrchr(v14, 47);
+  if ( v15 )
+    v16 = v15 + 1;
+  else
+    v16 = v14;
+  a1[21] = (uint16x4_t)v16;
+  a1[12] = (uint16x4_t)dyld4::ProcessConfig::Process::getDyldPath(a1, a3, a4);
+  if ( a1[23].i32[0] == 1 )
+    a1[16].i32[1] = 4;
+  a1[13] = (uint16x4_t)&dword_0;
+  dyld4::ProcessConfig::Process::getMainPlatform((dyld4::ProcessConfig::Process *)a1);
+  a1[10] = (uint16x4_t)v37;
+  a1[11].i32[0] = v38;
+  v17 = v37 == &mach_o::PlatformInfo_macCatalyst::singleton && !v38
+     || v37 == &mach_o::PlatformInfo_iOS::singleton && v38 == 0;
+  a1[23].i8[5] = v17;
+  a1[22] = (uint16x4_t)dyld4::ProcessConfig::Process::getMainArchs((dyld4::ProcessConfig::Process *)a1, a3);
+  a1[23].i8[6] = (*(_QWORD *)&a1[16] & 0x200000LL) == 0;
+  a1[23].i8[7] = _simple_getenv(*(_QWORD *)&a1[20], "dyld_hw_tpro") != 0;
+  a1[24].i8[0] = _simple_getenv(*(_QWORD *)&a1[20], "dyld_hw_tpro_pagers") != 0;
+  a1[24].i8[1] = dyld4::ProcessConfig::Process::defaultTproStack(a1);
+  a1[24].i8[2] = _platform_strncmp(*(const char **)&a1[21], "MATLAB", 6u) == 0;
+  a1[24].i32[1] = 0;
+  if ( !(unsigned int)dyld4::SyscallDelegate::internalInstall(a3) )
+    goto LABEL_27;
+  if ( a1[16].i8[0] < 0 )
+  {
+LABEL_29:
+    v21 = 0;
+LABEL_30:
+    a1[24].i32[1] = v21;
+    goto LABEL_31;
+  }
+  v18 = (unsigned __int8 *)_simple_getenv(*(_QWORD *)&a1[19], "DYLD_PAGEIN_LINKING");
+  if ( !v18 )
+  {
+LABEL_27:
+    if ( a1[24].i32[1] <= 1 )
+      goto LABEL_31;
+    goto LABEL_28;
+  }
+  v19 = *v18;
+  if ( v19 == 48 && !v18[1] )
+    goto LABEL_29;
+  v20 = v19 - 49;
+  if ( v19 == 49 )
+    v20 = v18[1];
+  if ( !v20 )
+  {
+    v21 = 1;
+    goto LABEL_30;
+  }
+  if ( v19 == 51 )
+  {
+    if ( v18[1] )
+      goto LABEL_27;
+    v36 = 3;
+  }
+  else
+  {
+    if ( v19 != 50 || v18[1] )
+      goto LABEL_27;
+    v36 = 2;
+  }
+  a1[24].i32[1] = v36;
+LABEL_28:
+  if ( (unsigned int)dyld4::SyscallDelegate::sandboxBlockedPageInLinking(a3) )
+    goto LABEL_29;
+LABEL_31:
+  v22 = (const char *)a1[2];
+  if ( !_platform_strcmp(v22, "/usr/libexec/adid") )
+    a1[24].i32[1] = 0;
+  if ( !_platform_strcmp(v22, "/usr/libexec/fairplaydeviceidentityd") )
+    a1[24].i32[1] = 0;
+  if ( !_platform_strcmp(v22, "/System/Library/PrivateFrameworks/CoreADI.framework/Versions/A/adid") )
+    a1[24].i32[1] = 0;
+  if ( !_platform_strcmp(v22, "/System/Library/PrivateFrameworks/CoreFP.framework/Versions/A/fairplayd") )
+    a1[24].i32[1] = 0;
+  if ( a1[23].i8[4] == 1 )
+    a1[24].i32[1] = 0;
+  v23 = (const char *)a1[21];
+  v24 = (__int64 (__fastcall ***)(mach_o::PlatformInfo *__hidden, unsigned __int16, bool))a1[10];
+  v25 = a1[11].i32[0];
+  v26 = a1[6].u32[0];
+  v27 = a1[23].u8[6];
+  if ( v24 == &mach_o::PlatformInfo_iOS::singleton )
+    v28 = a1[23].u8[6];
+  else
+    v28 = 0;
+  if ( v25 )
+    v29 = 0;
+  else
+    v29 = v28;
+  if ( v29 == 1 )
+  {
+    v30 = 0;
+    while ( _platform_strcmp(v23, dyld4::dataConstApps_iOS14_5_arm64[v30]) )
+    {
+      if ( ++v30 == 37 )
+        goto LABEL_53;
+    }
+    if ( v26 >> 8 < 0xE0F )
+      goto LABEL_75;
+LABEL_53:
+    v31 = 0;
+    while ( _platform_strcmp(v23, dyld4::dataConstApps_iOS14_5_Intune_arm64[v31]) )
+    {
+      if ( ++v31 == 137 )
+        goto LABEL_58;
+    }
+    if ( v26 >> 8 < 0xE0F )
+      goto LABEL_75;
+  }
+LABEL_58:
+  if ( v27 )
+  {
+    if ( v24 == &mach_o::PlatformInfo_macOS::singleton && v25 == 0 )
+    {
+      v33 = 0;
+      while ( _platform_strcmp(v23, dyld4::dataConstApps_macos11_5_arm64[v33]) )
+      {
+        if ( ++v33 == 2 )
+          goto LABEL_69;
+      }
+      if ( v26 >> 8 < 0xB05 )
+      {
+LABEL_75:
+        a1[23].i8[6] = 0;
+        return a1;
+      }
+    }
+  }
+LABEL_69:
+  if ( v29 )
+  {
+    v34 = 0;
+    while ( _platform_strcmp(v23, dyld4::dataConstApps_iOS15_0[v34]) )
+    {
+      if ( ++v34 == 30 )
+        return a1;
+    }
+    if ( HIWORD(v26) <= 0xEu )
+      goto LABEL_75;
+  }
+  return a1;
+}

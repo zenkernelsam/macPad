@@ -140,6 +140,75 @@ helper 自身的已分析函数不执行自定义 PMAP/PTE/kernel-text 写入；
 
 **不能过度归因：**我们的 `misc/run_dbg.c` 历史上也有 START_SUSPENDED＋`proc_set_debugged`。因此“以前完全没开 debug”不成立；要比较的是被标记的是否是真正目标及正确 exec 代际、是否覆盖后续子进程，以及对应 mapping/pager 组合。静态 helper 分析仍没有证明 M1 旧 `code0=0x32` 必然消失。
 
+## 6. 可见 dyld 阶段之间的完整段数据差异
+
+继续对比时，先排除了“文件名就是来源证明”的误区。包内两份 `original` 目录下的备份，其 arm64e CodeDirectory 标识分别是 `dyld-15.6-fat-native-20261003` 与 `dyld-15.6-private-reserve-diagnostic`；当前产物是 `dyld-pager-candidate`。它们是有阶段标签的材料，不能称为经过独立核验的 Apple pristine。
+
+| 本地对照输入 | arm64e thin SHA-256 | 当前可确认的身份 |
+| --- | --- | --- |
+| `dyld-packaged-earlier-arm64e` | `bb5122e19ffa7ec50380a77a7b77bced997028e53c4f40da2f5440d0029a4be8` | 从包内 `.../usr/lib/dyld-15.6` 提取的早期材料 |
+| `dyld-packaged-reserve-arm64e` | `eca71e832d3f863eba2106612b0ce6e9e1a26ca5ee76bf8303653d26267f483a` | 从包内 `.../native15-cache-24G90/usr-lib-dyld-24G90` 提取的 reserve 阶段 |
+| `analysis/dyld_15.6.1_arm64e_thin` | `12dc97d541939a8e05d58f265f62eaef93fbce63740d7eefaee434cea7acbac5` | 当前旧研究工具命名为 PRISTINE 的本地输入；不是最终冻结的 b8fdbc1b 文件 |
+| `share-dyld-arm64e` | `def1d5e2ccde2ee7930a30f38d540981aab2ccda9a7f0d6212bd2f9339dd3a00` | 当前已核验分享产物 |
+
+四份输入的架构／平台头一致：arm64e subtype `0x80000002`、macOS platform 1、minos/sdk 15.6、Mach-O flags `0x85`。比较全部对应的 file-backed segment payload，排除实际头部/load commands 和 `__LINKEDIT`（签名与符号元数据）；**包括首个 4-KiB 页中 load commands 之后的 padding**，避免漏掉历史上 `0x970` 一类 header-page cave：
+
+| 与当前分享产物比较 | 全部差异范围（4-byte 对齐） |
+| --- | --- |
+| 包内早期版本 → 当前 | `+0xa67c`、`+0x344ec`、`+0x34790` 三个指令窗；`+0x9b580..+0x9b620` reserve stub/文本；`+0x9b680..+0x9b9f4` pager stub/常量/文本 |
+| 包内 reserve 版本 → 当前 | 只有 `+0x34790` 指令窗和 `+0x9b680..+0x9b9f4` pager 部分 |
+| 本地 12dc97d5 → 当前 | 与早期版本比较的上述五处，再加 `+0x841b0..+0x841b8` Rosetta 查询入口 |
+
+这已封闭**这些可见阶段之间的段 payload 差异清单**，不能改写成“相对 Apple 原版的完整补丁清单”。机器可读结果包括每个窗的 old/current bytes 和函数归属，见 [差异清单](dyld-input-differences.json)、[比较脚本](compare_dyld_inputs.py)、[签名身份](dyld-signature-identities.json)。
+
+对 `analysis/` 下符合旧记录精确文件尺寸的 14 个普通文件做完整 SHA 比较，没有找到最终冻结 `b8fdbc1b…381b91e` 或更早 `99569152…51a1` 的原样副本；[搜索记录](frozen-baseline-search.json)明确限定范围，没有搜索其他磁盘／压缩备份，也不证明这些文件永久丢失。
+
+## 7. 新确认的前提：默认关闭通用 page-in linking，单独开启受约束 sidecar 路径
+
+**RE-confirmed via share-dyld-arm64e +0xa67c/+0xa680、+0xbc9c、+0x21e04。**
+
+包内早期版本的 `+0xa67c` 是 `MOV W8,#2`，当前是 `MOV W8,#0`；下一条把值写到 `Process+0xc4`（pageInLinkingMode）。`+0xa688` 之后仍保留 `internalInstall()` 门控下的 `DYLD_PAGEIN_LINKING` 解析，因此这改变了**默认值**，并非删除所有配置逻辑，也不能说任何环境下永远为 0。
+
+实际 `DyldCache` constructor 读取该字段，达到 2 才考虑通用 cache page-in linking。`Loader::applyFixupsGeneric +0x21e04` 也读取它：为 0 时直接走真正的即时 chain fixup，不把普通 Mach-O 的页交给通用 `setUpPageInLinking`。
+另一方面，share dyld 的 `+0x34790 → +0x9b680` 仍为指定 cache UUID／slide=0 的 sidecar 单独调用 syscall 550。因此正确描述是 **“通用路径默认 eager，已转换的精确 cache 使用专用 pager 路径”**，不是“完全禁用 pager”或“所有文件都能用 format12”。
+
+证据：[Process 指令](process-config-pagein-asm.txt)、[Process 反编译](process-config-decompile.txt)、[cache 配置](cache-config-decompile.txt)、[普通镜像 fixup](generic-image-fixups.json)与[对应模式门控汇编](generic-mode-gate-asm.txt)。该前提在上一轮只分析 cache 追加 stub 时未完整展开，现加入以后复现组合。
+
+**还核实了旧实验补丁没有被照搬：**
+
+| 旧 builder 中的实验 key | 当前分享 dyld 的实际指令 |
+| --- | --- |
+| `crossarch`：把全局 trap 改为 mov-zero | `+0x76270` 仍是 `SVC 0x80` |
+| `plataccept`：NOP cache 平台比较分支 | `+0x35c24` 仍是 `B.NE` |
+| `imgplat`：NOP cache-image 平台检查 | `+0x2b580` 仍是 `TBZ W0,#0` |
+| `hardpriv`：强制 private 分支 | `+0x34268` 仍是 `B.NE`，private 选择依赖真实配置 |
+
+见 [当前指令证据](inherited-patch-sites.json)。表格对照的是旧 builder 的实验 key 与分享产物，**不声称这些 key 在每次历史实验或最终 b8fdbc1b 文件上都全部启用**。
+
+分享产物另在 `_rosetta_dyld_is_translated +0x841b0` 使用 `MOV W0,#0; RET`。本地 12dc97d5 对照的同一函数会调用 `__crossarch_trap`，见 [实际参考二进制反编译](reference-dyld/rosetta-query.json)。这是把处理限定到该查询入口，而非修改整个 crossarch syscall stub；它仍是一个**返回常量的 native-only 兼容假定／scaffold**，没有本轮运行证据证明其所有调用语义，不能叫做 Rosetta 支持或通用正确性修复。
+
+## 8. 生成器缺失时，已经恢复的重建契约与仍缺的证据
+
+本轮没有创建或部署新的 sidecar。根据实际消费者、完整文件语义对照，已能列出将来生成器必须实现的契约：
+
+1. 固定 cache 完整 SHA／UUID／layout／slide=0；保留原 cache 文件。
+2. 将有 slide-info 的原始 data mappings 存入独立、可签名的 Mach-O；`mwl_region` 的目标 VA、长度和保护属性不变，文件 offset/fd 改指 sidecar。
+3. 按 v5 链遍历指针并重编码为 format12：plain 指针保存 target/high8，auth 指针保存 target/diversity/addrDiv/key；超过 32-bit offset 的 auth 目标通过 64-bit bind targets 表和 24-bit ordinal 表示，不能截断。
+4. 保留逐页 chain starts 与 next，构造真实的 `mwl_info_hdr` 和 segment chains；映射中没有链的页同样保留全部原字节。
+5. 生成同文件 CodeDirectory，纳入实际设备的签名／trust 恢复；不能复用旧 CDHash。
+6. 先通过现有全量语义核验，再做真实目标 PID 内的 syscall/page-in/PAC/fork/exec/冷启动验收。
+
+这些是**从交付物恢复的格式和行为契约**，不是原作者生成器源码或 bit-identical 构建证明。bind 表排序/去重策略、元数据对齐、签名实现和完整工具版本仍需原构建材料，或者另做独立实现及验收；没有必要为了补齐文档先生成一个未验证的新 rootfs。
+
+文件体积不等于常驻 RAM：1 GiB 是 PROT_NONE 地址保留，401,539,072 字节是 sidecar 的 data payload。**THEORY：**按需 page-in 相比 eager 可能减少启动时触页和 COW 开销；本轮没有 RSS／缺页／内存压力测量，不能把这两个数字直接当成每进程 RAM 需求或节省值。
+
+以后恢复 15.6.1 的有限时对照应记录同一目标的输入 SHA、入口 launcher、process uniqueid/idversion、真实 cache UUID、pageInLinkingMode、sidecar 分支及实际 fault：
+
+- 若仍在首次 text page 得到 code 50，先比较 exec／PMAP 生产层；不要将尚未执行的 format12 路径算作已失败。
+- 若 syscall 550 成功但随后 data page fault，读取真实 pager/format/保护与 error，不能以 `linked OK` 代替异步 page-in 验收。
+- 如需比较 eager 与 sidecar，只使用实现自身的 fallback 契约，并保存原标记/配置；不能返回成功而跳过 fixup。
+- 本轮未取得本机 M1 运行结果，且最终冻结文件原样副本尚未定位，因此不做“同一 M1 已经证明能跑”的结论。
+
 ## 对复盘的结论更新
 
 可以从 THEORY 升级为已核验事实的是：高地址保留顺序、实际 sidecar 消费者、format12 payload 转换、eager v5/PAC 分支、exec 代际协调的具体实现。

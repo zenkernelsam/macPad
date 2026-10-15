@@ -1,0 +1,32 @@
+[
+  {
+    "address": "0x7626c",
+    "name": "__crossarch_trap",
+    "code": "signed __int64 __fastcall _crossarch_trap(\n        void *a1,\n        void *a2,\n        void *a3,\n        void *a4,\n        void *a5,\n        void *a6,\n        void *a7,\n        void *a8)\n{\n  return mac_syscall(SYS_crossarch_trap, a1, a2, a3, a4, a5, a6, a7, a8);\n}\n",
+    "instructions": [
+      "0x7626c d00480d2 MOV             X16, #0x26 ; '&'",
+      "0x76270 011000d4 SVC             0x80",
+      "0x76274 c0035fd6 RET"
+    ]
+  },
+  {
+    "address": "0x841b0",
+    "name": "_rosetta_dyld_is_translated",
+    "code": "signed __int64 __fastcall rosetta_dyld_is_translated(\n        __int64 a1,\n        __int64 a2,\n        __int64 a3,\n        __int64 a4,\n        void *a5,\n        void *a6,\n        void *a7,\n        void *a8)\n{\n  __int64 v9; // [xsp+8h] [xbp-8h] BYREF\n\n  v9 = a1;\n  return _crossarch_trap(0, 0, 0, &v9, a5, a6, a7, a8);\n}\n",
+    "instructions": [
+      "0x841b0 7f2303d5 PACIBSP",
+      "0x841b4 ff8300d1 SUB             SP, SP, #0x20",
+      "0x841b8 fd7b01a9 STP             X29, X30, [SP,#0x10+var_s0]",
+      "0x841bc fd430091 ADD             X29, SP, #0x10",
+      "0x841c0 e00700f9 STR             X0, [SP,#0x10+var_8]",
+      "0x841c4 e3230091 ADD             X3, SP, #0x10+var_8",
+      "0x841c8 00008052 MOV             W0, #0",
+      "0x841cc 01008052 MOV             W1, #0",
+      "0x841d0 02008052 MOV             W2, #0",
+      "0x841d4 26c8ff97 BL              __crossarch_trap",
+      "0x841d8 fd7b41a9 LDP             X29, X30, [SP,#0x10+var_s0]",
+      "0x841dc ff830091 ADD             SP, SP, #0x20 ; ' '",
+      "0x841e0 ff0f5fd6 RETAB"
+    ]
+  }
+]

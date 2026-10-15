@@ -314,5 +314,16 @@
     "initial_bulk_IDA_audit": "timed out under IDA MCP trace profiler without success output",
     "completed_bulk_audit": "same IDA-derived file comparison ran in ordinary Python; exit 0; 41.329927949 seconds",
     "reproduction": "python3 docs/evidence/sequoia-share-audit-20261015/ida/verify_sidecar_semantics.py"
+  },
+  "dyld_stage_comparison": {
+    "method": "IDA-hosted full matching file-backed segment payload comparison, excluding header/load commands and __LINKEDIT",
+    "evidence": "ida/dyld-input-differences.json",
+    "from_earlier_to_current_changed_ranges": 5,
+    "from_reserve_to_current_changed_ranges": 2,
+    "from_local_12dc97d5_to_current_changed_ranges": 6,
+    "new_confirmed_default": "pageInLinkingMode 2 -> 0; stock environment gate retained",
+    "existing_platform_and_crossarch_gates_retained": true,
+    "baseline_limit": "No independently authenticated Apple pristine; exact final frozen b8fdbc1b and earlier 99569152 file identities not found in the bounded size/hash search",
+    "sidecar_rebuild_status": "Format/consumer contract recovered; original generator and bit-identical build not supplied; no new sidecar generated"
   }
 }

@@ -1,0 +1,8 @@
+{
+  "engine": "IDA Pro 9.3 batch + Hex-Rays",
+  "input": "/Users/ciscohe/Desktop/macPad/analysis/dyld_15.6.1_arm64e_thin",
+  "sha256": "12dc97d541939a8e05d58f265f62eaef93fbce63740d7eefaee434cea7acbac5",
+  "imagebase": "0x0",
+  "hexrays_ready": true,
+  "provenance": "Historical local comparison input only; Apple pristine not independently established"
+}

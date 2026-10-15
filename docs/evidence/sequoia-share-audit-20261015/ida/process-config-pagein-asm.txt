@@ -1,0 +1,55 @@
+0xa63c 21a00d91 ADRL            X1, aDyldHwTproPage; "dyld_hw_tpro_pagers"
+0xa640 f2e8ff97 BL              __simple_getenv
+0xa644 1f0000f1 CMP             X0, #0
+0xa648 e8079f1a CSET            W8, NE
+0xa64c 68020339 STRB            W8, [X19,#0xC0]
+0xa650 e00313aa MOV             X0, X19
+0xa654 60ffff97 BL              __ZNK5dyld413ProcessConfig7Process16defaultTproStackEv; dyld4::ProcessConfig::Process::defaultTproStack(void)
+0xa658 60060339 STRB            W0, [X19,#0xC1]
+0xa65c 605640f9 LDR             X0, [X19,#0xA8]; __s1
+0xa660 010400b021240e91 ADRL            X1, aMatlab; "MATLAB"
+0xa668 c2008052 MOV             W2, #6; __n
+0xa66c 41e0ff97 BL              __platform_strncmp
+0xa670 1f000071 CMP             W0, #0
+0xa674 e8179f1a CSET            W8, EQ
+0xa678 680a0339 STRB            W8, [X19,#0xC2]
+0xa67c 08008052 MOV             W8, #0
+0xa680 68c600b9 STR             W8, [X19,#0xC4]
+0xa684 e00314aa MOV             X0, X20
+0xa688 30960094 BL              __ZNK5dyld415SyscallDelegate15internalInstallEv; dyld4::SyscallDelegate::internalInstall(void)
+0xa68c a0030034 CBZ             W0, loc_A700
+0xa690 68024838 LDURB           W8, [X19,#0x80]
+0xa694 28043837 TBNZ            W8, #7, loc_A718
+0xa698 604e40f9 LDR             X0, [X19,#0x98]
+0xa69c 010400b021400e91 ADRL            X1, aDyldPageinLink; "DYLD_PAGEIN_LINKING"
+0xa6a4 d9e8ff97 BL              __simple_getenv
+0xa6a8 c00200b4 CBZ             X0, loc_A700
+0xa6ac 08004039 LDRB            W8, [X0]
+0xa6b0 09c10071 SUBS            W9, W8, #0x30 ; '0'
+0xa6b4 60000054 B.EQ            loc_A6C0
+0xa6b8 89000035 CBNZ            W9, loc_A6C8
+0xa6bc 17000014 B               loc_A718
+0xa6c0 09044039 LDRB            W9, [X0,#1]
+0xa6c4 a9020034 CBZ             W9, loc_A718
+0xa6c8 09c50071 SUBS            W9, W8, #0x31 ; '1'
+0xa6cc 41000054 B.NE            loc_A6D4
+0xa6d0 09044039 LDRB            W9, [X0,#1]
+0xa6d4 49110034 CBZ             W9, loc_A8FC
+0xa6d8 1fcd0071 CMP             W8, #0x33 ; '3'
+0xa6dc e0000054 B.EQ            loc_A6F8
+0xa6e0 1fc90071 CMP             W8, #0x32 ; '2'
+0xa6e4 e1000054 B.NE            loc_A700
+0xa6e8 09044039 LDRB            W9, [X0,#1]
+0xa6ec 09110034 CBZ             W9, loc_A90C
+0xa6f0 1fcd0071 CMP             W8, #0x33 ; '3'
+0xa6f4 61000054 B.NE            loc_A700
+0xa6f8 08044039 LDRB            W8, [X0,#1]
+0xa6fc 48100034 CBZ             W8, loc_A904
+0xa700 68c640b9 LDR             W8, [X19,#0xC4]
+0xa704 1f050071 CMP             W8, #1
+0xa708 cd000054 B.LE            loc_A720
+0xa70c e00314aa MOV             X0, X20
+0xa710 3f9a0094 BL              __ZNK5dyld415SyscallDelegate27sandboxBlockedPageInLinkingEv; dyld4::SyscallDelegate::sandboxBlockedPageInLinking(void)
+0xa714 60000034 CBZ             W0, loc_A720
+0xa718 08008052 MOV             W8, #0
+0xa71c 68c600b9 STR             W8, [X19,#0xC4]

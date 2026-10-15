@@ -129,6 +129,16 @@ main c2ef6966687b008ffbc29ee5f4899bc3df0b1e5afeb59fe122dd5b928ff0c5b3
 
 `mac_hooks.m:54–86` 的网络候选选择框架现有的 BSD socket 能力，保留原始连接函数。这个源码例子可用于理解“在 producer 处选可支持的协议”，但其中注释所引 `network15-direct-https-socket-20261007.log` 没有随包交付，本轮没有重验 HTTPS。
 
+### 2.6 后续完整段对照：还有通用 page-in-linking 默认值这个前提
+
+**本轮 RE-confirmed via dyld +0xa67c/+0xa680 与 `Loader::applyFixupsGeneric`：**分享产物把 `Process.pageInLinkingMode` 默认值从 2 改成 0。普通 Mach-O 因而默认使用真正的即时 fixup；精确 UUID 的 cache 仍由追加 sidecar 分支调用 syscall 550。这不是“完全禁用 pager”，也不仅是 cache 内一个分支补丁。
+
+已比对包内早期／reserve／当前三个阶段的全部对应 file-backed segment payload，排除头部和 `__LINKEDIT` 元数据：早期→当前只出现默认值、reserve 入口、pager 入口及两个追加区；reserve→当前只剩 pager 入口和追加区。当前本地 `analysis/dyld_15.6.1_arm64e_thin` 与当前产物还多出 Rosetta 查询入口差异。完整地址、字节与哈希见 [机器码证据 §6–8](../evidence/sequoia-share-audit-20261015/ida/README.md)。
+
+**旧实验 key 不能叠加回去：**分享 dyld 的全局 crossarch syscall、cache 平台比较、cache-image 平台比较、private 选择条件均仍保留。它另外把 Rosetta 查询入口改成返回 0；这属于 native-only 兼容假定／常量 scaffold，不能宣称修复了 Rosetta 或所有调用语义。
+
+包内文件名含 `original` 不等于 Apple pristine：两份备份的签名标识都是项目阶段名。我们也未在本轮限定范围内找到最终冻结 `b8fdbc1b…381b91e` 的原样文件，因此目前得到的是**可见阶段间的完整段差异**，不是与 Apple 原版／最终冻结现场的完整因果对照。
+
 ## 3. 过去哪里做对了，哪里判断过头
 
 ### 3.1 四种限制必须分开
@@ -177,7 +187,7 @@ main c2ef6966687b008ffbc29ee5f4899bc3df0b1e5afeb59fe122dd5b928ff0c5b3
 
 ## 4. 分享包还不能证明什么
 
-- **核心恢复缺口仍在。** 未找到 pager sidecar 生成器及当前 exec-jitd 完整源码；不知道当前 dyld 全部补丁清单。应向分享者索取这些精确构建材料和脱敏运行见证，而不是索取个人配置或账号。
+- **核心恢复缺口仍在。** 未找到 pager sidecar 原生成器及当前 exec-jitd 完整源码；已封闭可见阶段之间的 dyld 段差异，但缺少独立核验的 Apple 原版与最终冻结文件，不能宣称完整原版补丁清单已闭环。应向分享者索取这些精确构建材料和脱敏运行见证，而不是索取个人配置或账号。
 - **参考源码不是可独立重建的完整树。** 实查缺 `config/production.mk`、Makefile 引用的 `Diagnostics/*.m`，以及 `MacWSInputLatency.h`、`macws_diagnostics_policy.h`、`skylight-resource-trace.h`、`MacWSIdentityDiagnostics.h`。`SOURCE-CONSISTENCY.json` 核对已安装文件副本，不证明从该参考树重建会生成同一二进制。
 - **存在旧分支和实验文件。** 包内有 13.4 fallback、stage15、诊断脚本和备份；必须追踪正常 `macos_gui.sh` 的实际依赖，不能执行所有 plist 或见文件就当它在生产中生效。
 - **可靠性仍有限。** 包方明确保留最小化、颜色、复杂视频、内存、会话及 Settings 问题。10-13 Finder 更新只报告双击 DMG 不再退出，后续仍有 `RBSServiceErrorDomain Code=501`；不能声称 DMG 安装器或 Chrome 已工作。
@@ -190,7 +200,7 @@ main c2ef6966687b008ffbc29ee5f4899bc3df0b1e5afeb59fe122dd5b928ff0c5b3
 | 顺序 | 工作 | 必须得到的证据／停止条件 |
 | --- | --- | --- |
 | 1 | 固定三份身份：原始 Apple 24G90、我们冻结基线、分享包 dyld | 每份 fat/thin SHA、UUID、架构、签名、补丁清单；不得再用“original”含糊命名 |
-| 2 | 在本轮已完成的 dyld／exec-jitd RE 上继续做版本差异对照 | 已确认地址保留、format12 消费者、eager/PAC 和代际准入；仍需原始 Apple／冻结基线的完整补丁比较 |
+| 2 | 沿已完成的阶段差异与 dyld／exec-jitd RE，补齐真正基线 | 已确认地址保留、通用 pageInLinkingMode 默认0、format12 消费者、eager/PAC 和代际准入；保留原有平台检查，仍需 Apple／最终冻结基线 |
 | 3 | 补齐 sidecar 生成器和 exec helper 源码／构建记录 | 输入 cache hash → 输出 hash、PAC/重定位与页面保护不变量；未知 cache 拒绝使用旧 sidecar |
 | 4 | 对比 M1/20D47 与 M2/20C65 内核契约 | 先确认是否进入相同 owner/pager 路径，才判断设备差异是否决定性；不先写 kernel text |
 | 5 | 用新隔离 rootfs 跑真正的最小目标 | 单一 launchd 入口、真实 `/bin/echo HI`、退出 0，且该 PID 的主镜像和 libSystem/cache UUID 为 24G90 |

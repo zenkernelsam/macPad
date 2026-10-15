@@ -1,0 +1,225 @@
+_QWORD *__fastcall dyld4::ProcessConfig::DyldCache::DyldCache(
+        _QWORD *a1,
+        __int64 a2,
+        _BYTE *a3,
+        __int64 a4,
+        svuint64_t *a5,
+        lsl::Allocator *a6,
+        __int64 a7)
+{
+  unsigned __int64 v14; // x25
+  unsigned __int64 v15; // x28
+  bool v16; // w1
+  const char *v17; // x27
+  char v18; // w8
+  bool v19; // w9
+  __int64 v20; // x8
+  __int64 (__fastcall ****v21)(mach_o::PlatformInfo_macOS *__hidden, unsigned __int16, bool); // x25
+  _QWORD *v22; // x26
+  const char *v23; // x1
+  __int64 v24; // x8
+  __int64 v25; // x8
+  __n64 *v26; // x0
+  __int64 v27; // x8
+  __int64 v28; // x9
+  __int64 v29; // x0
+  const char *v30; // x23
+  size_t v31; // x0
+  const char *v33; // x0
+  _QWORD v34[5]; // [xsp+18h] [xbp-518h] BYREF
+  __int64 v35; // [xsp+40h] [xbp-4F0h] BYREF
+  __int64 v36; // [xsp+48h] [xbp-4E8h]
+  __int64 v37; // [xsp+50h] [xbp-4E0h]
+  __int16 v38; // [xsp+58h] [xbp-4D8h]
+  __int128 v39; // [xsp+5Ch] [xbp-4D4h] BYREF
+  int v40; // [xsp+70h] [xbp-4C0h] BYREF
+  bool v41; // [xsp+74h] [xbp-4BCh]
+  char v42; // [xsp+75h] [xbp-4BBh]
+  char v43; // [xsp+76h] [xbp-4BAh]
+  char v44; // [xsp+77h] [xbp-4B9h]
+  char v45; // [xsp+78h] [xbp-4B8h]
+  bool v46; // [xsp+79h] [xbp-4B7h]
+  char v47; // [xsp+7Ah] [xbp-4B6h]
+  char v48; // [xsp+7Bh] [xbp-4B5h]
+  char v49; // [xsp+7Ch] [xbp-4B4h]
+  char v50; // [xsp+7Dh] [xbp-4B3h]
+  __int64 v51; // [xsp+80h] [xbp-4B0h]
+  int v52; // [xsp+88h] [xbp-4A8h]
+  __int64 v53; // [xsp+90h] [xbp-4A0h]
+  _DWORD v54[14]; // [xsp+98h] [xbp-498h] BYREF
+  char v55[8]; // [xsp+D0h] [xbp-460h] BYREF
+  __int64 v56; // [xsp+D8h] [xbp-458h]
+  __int64 (__fastcall *v57)(); // [xsp+E0h] [xbp-450h]
+  void *v58; // [xsp+E8h] [xbp-448h]
+  _QWORD *v59; // [xsp+F0h] [xbp-440h]
+  __int64 v60; // [xsp+F8h] [xbp-438h]
+  svuint64_t *v61; // [xsp+100h] [xbp-430h]
+  int v62; // [xsp+108h] [xbp-428h]
+
+  bzero(a1 + 1, 0x10u);
+  a1[11] = 0;
+  a1[12] = 0;
+  a1[17] = 0;
+  a1[18] = 0;
+  a1[16] = 0;
+  *((_DWORD *)a1 + 38) = 0;
+  v14 = *(_QWORD *)(a2 + 128);
+  dyld4::CacheFinder::CacheFinder(v54, a2, a4, a5);
+  if ( *(_DWORD *)(a2 + 184) == 1 )
+  {
+    if ( a3[1] == 1 )
+    {
+      v15 = ((unsigned __int64)((unsigned int)*(_QWORD *)(a2 + 128) | (unsigned int)v14) >> 2) & 1;
+      LOBYTE(v14) = ((*(_QWORD *)(a2 + 128) & 4LL) == 0) & *(_QWORD *)(a2 + 128);
+    }
+    else
+    {
+      LOBYTE(v15) = 0;
+      LOBYTE(v14) = 1;
+    }
+  }
+  else
+  {
+    v15 = (v14 >> 2) & 1;
+  }
+  v17 = (const char *)_simple_getenv(*(_QWORD *)(a2 + 152), "DYLD_SHARED_REGION");
+  v18 = 0;
+  v51 = 0;
+  v52 = 0;
+  v53 = 0;
+  v40 = v54[0];
+  if ( *(int *)(a2 + 196) >= 2 )
+    v18 = dyld4::SyscallDelegate::sandboxBlockedPageInLinking(a5) ^ 1;
+  v19 = 0;
+  v50 = v18;
+  if ( a3[20] == 1 && v17 )
+    v19 = _platform_strcmp(v17, "private") == 0;
+  v41 = v19;
+  v43 = *(_BYTE *)(a4 + 1);
+  if ( v43 == 1 && (unsigned int)mach_o::Platform::isSimulator(a2 + 80) )
+    v43 = 0;
+  v42 = dyld4::PrebuiltLoader::hiddenFromFlat(a5, v16);
+  v44 = 0;
+  v45 = *(_BYTE *)(a2 + 190);
+  v46 = _simple_getenv(*(_QWORD *)(a2 + 160), "dyld_hw_tpro_pagers") != 0;
+  v47 = v14 & 1;
+  v48 = v15;
+  v21 = (__int64 (__fastcall ****)(mach_o::PlatformInfo_macOS *__hidden, unsigned __int16, bool))(a2 + 80);
+  v20 = *(_QWORD *)(a2 + 80);
+  v49 = *(_BYTE *)(a2 + 188);
+  v51 = v20;
+  v52 = *(_DWORD *)(a2 + 88);
+  v53 = a7;
+  *a1 = 0;
+  a1[3] = 0;
+  a1[4] = 0;
+  *((_BYTE *)a1 + 208) = 1;
+  *((_WORD *)a1 + 84) = 0;
+  *((_BYTE *)a1 + 170) = v41;
+  *(_OWORD *)(a1 + 5) = 0u;
+  v22 = a1 + 5;
+  a1[18] = 0;
+  *((_DWORD *)a1 + 38) = 0;
+  *(_OWORD *)(a1 + 7) = 0u;
+  *(_OWORD *)(a1 + 9) = 0u;
+  a1[14] = 0;
+  a1[15] = 0;
+  a1[13] = 0;
+  a1[20] = 0;
+  v35 = 0;
+  v36 = 0;
+  v38 = 0;
+  v37 = 0;
+  bzero(&v39, 0x10u);
+  if ( (mach_o::Platform::isSimulator(a2 + 80) & 1) == 0 )
+    dyld4::SyscallDelegate::getDyldCache(a5, &v40, &v35);
+  v24 = v35;
+  if ( v35 )
+  {
+    *((_BYTE *)a1 + 171) = a3[26];
+    *(_OWORD *)(a1 + 1) = v39;
+    *a1 = v24;
+    *((_BYTE *)a1 + 168) = HIBYTE(v38);
+    *((_BYTE *)a1 + 169) = *(_BYTE *)(v24 + 221) & 1;
+    a1[3] = v36;
+    dyld4::ProcessConfig::DyldCache::setPlatformOSVersion(
+      (dyld4::ProcessConfig::DyldCache *)a1,
+      (const dyld4::ProcessConfig::Process *)a2);
+    a1[4] = DyldSharedCache::unslidLoadAddress((__n64 *)*a1);
+    a1[6] = DyldSharedCache::objcHeaderInfoRO((__n64 *)*a1);
+    a1[7] = DyldSharedCache::objcHeaderInfoRW((__n64 *)*a1);
+    a1[8] = DyldSharedCache::objcSelectorHashTable(*a1);
+    a1[9] = DyldSharedCache::objcClassHashTable(*a1);
+    a1[10] = DyldSharedCache::objcProtocolHashTable(*a1);
+    a1[13] = DyldSharedCache::swiftOpt((__n64 *)*a1);
+    *((_DWORD *)a1 + 41) = DyldSharedCache::imagesCount(*a1);
+    a1[14] = 0;
+    v25 = a1[6];
+    v26 = (__n64 *)*a1;
+    if ( v25 )
+      a1[14] = v25 - (_QWORD)v26 + a1[4];
+    a1[15] = 0;
+    v27 = DyldSharedCache::patchTable(v26);
+    v28 = *(_QWORD *)(*a1 + 152LL);
+    a1[16] = v27;
+    a1[17] = v28;
+    if ( (v45 & 1) == 0 )
+    {
+      *(_QWORD *)v55 = _NSConcreteStackBlock;
+      v56 = 0x40000000;
+      v57 = ___ZNK5dyld413ProcessConfig9DyldCache21makeDataConstWritableERKNS0_7LoggingERKNS_15SyscallDelegateEb_block_invoke;
+      v58 = &__block_descriptor_tmp_96;
+      v59 = a1;
+      v60 = a4;
+      v62 = 19;
+      v61 = a5;
+      DyldSharedCache::forEachCache();
+    }
+    if ( !_simple_getenv(*(_QWORD *)(a2 + 160), "dyld_hw_tpro") )
+    {
+      v29 = *a1;
+      v34[0] = _NSConcreteStackBlock;
+      v34[1] = 0x40000000;
+      v34[2] = ___ZN5dyld413ProcessConfig9DyldCacheC2ERNS0_7ProcessERKNS0_8SecurityERKNS0_7LoggingERNS_15SyscallDelegateERN3lsl9AllocatorERKS0__block_invoke;
+      v34[3] = &__block_descriptor_tmp_73;
+      v34[4] = a1;
+      DyldSharedCache::forEachTPRORegion(v29, v34);
+    }
+    if ( (*(_BYTE *)(a2 + 132) & 6) == 0
+      && (*(_BYTE *)(a2 + 188) & 1) == 0
+      && (*v21 == &mach_o::PlatformInfo_macOS::singleton && !*(_DWORD *)(a2 + 88)
+       || *v21 == &mach_o::PlatformInfo_macCatalyst::singleton && !*(_DWORD *)(a2 + 88)) )
+    {
+      *((_BYTE *)a1 + 168) = 0;
+      *((_BYTE *)a1 + 208) = 0;
+    }
+    if ( (unsigned int)FileIdTuple::operator bool(&v39) )
+    {
+      if ( (unsigned int)FileIdTuple::getPath((fsid_t *)&v39, v55) )
+        *v22 = lsl::Allocator::strdup(a6, v55);
+      goto LABEL_38;
+    }
+    v33 = "dyld shared region dynamic config data was not set\n";
+LABEL_45:
+    dyld4::halt(v33, 0);
+  }
+  if ( (unsigned __int8)v38 == 1 )
+    dyld4::console((dyld4 *)"dyld cache '%s' not loaded: %s\n", v23, *v22, v37);
+  if ( v17 && !_platform_strcmp(v17, "private") && (v38 & 1) == 0 )
+  {
+    v33 = "dyld private shared cache could not be found\n";
+    goto LABEL_45;
+  }
+LABEL_38:
+  if ( v54[13] != -1 && (unsigned int)dyld4::SyscallDelegate::getpath(a5) )
+  {
+    v30 = (const char *)lsl::Allocator::strdup(a6, v55);
+    v31 = _platform_strlen(v30);
+    a1[11] = v30;
+    a1[12] = v31;
+  }
+  if ( *(_DWORD *)(a2 + 184) == 1 )
+    dyld4::ProcessConfig::DyldCache::setupDyldCommPage(a1, a2, a3, a5);
+  dyld4::CacheFinder::~CacheFinder((dyld4::CacheFinder *)v54);
+  return a1;
+}

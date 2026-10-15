@@ -1,0 +1,38 @@
+[
+  {
+    "address": "0x76270",
+    "bytes": "011000d4",
+    "instruction": "SVC             0x80",
+    "function": "__crossarch_trap"
+  },
+  {
+    "address": "0x35c24",
+    "bytes": "c1010054",
+    "instruction": "B.NE            loc_35C5C",
+    "function": "__ZN5dyld3L18preflightCacheFileERKNS_18SharedCacheOptionsEPNS_19SharedCacheLoadInfoEPNS_9CacheInfoEiPNSt3__15arrayIA32_cLm128EEE"
+  },
+  {
+    "address": "0x2b580",
+    "bytes": "40010036",
+    "instruction": "TBZ             W0, #0, loc_2B5A8",
+    "function": "__ZN5dyld416JustInTimeLoader29makeJustInTimeLoaderDyldCacheER11DiagnosticsRNS_12RuntimeStateEPKcRKNS_6Loader11LoadOptionsEjPKN6mach_o6LayoutE"
+  },
+  {
+    "address": "0x841b0",
+    "bytes": "00008052",
+    "instruction": "MOV             W0, #0",
+    "function": "_rosetta_dyld_is_translated"
+  },
+  {
+    "address": "0x841b4",
+    "bytes": "c0035fd6",
+    "instruction": "RET",
+    "function": "_rosetta_dyld_is_translated"
+  },
+  {
+    "address": "0x34268",
+    "bytes": "41010054",
+    "instruction": "B.NE            loc_34290",
+    "function": "__ZN5dyld313loadDyldCacheERKNS_18SharedCacheOptionsEPNS_19SharedCacheLoadInfoE"
+  }
+]

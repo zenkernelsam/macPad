@@ -1,0 +1,38 @@
+[
+  {
+    "path": "analysis/share-review-20261015/dyld-packaged-earlier-arm64e",
+    "sha256": "bb5122e19ffa7ec50380a77a7b77bced997028e53c4f40da2f5440d0029a4be8",
+    "command": [
+      "codesign",
+      "-d",
+      "--verbose=4",
+      "analysis/share-review-20261015/dyld-packaged-earlier-arm64e"
+    ],
+    "exit": 0,
+    "stderr": "Executable=/Users/ciscohe/Desktop/macPad/analysis/share-review-20261015/dyld-packaged-earlier-arm64e\nIdentifier=dyld-15.6-fat-native-20261003\nFormat=Mach-O thin (arm64e)\nCodeDirectory v=20400 size=9686 flags=0x0(none) hashes=297+2 location=embedded\nVersionPlatform=1\nVersionMin=984576\nVersionSDK=984576\nHash type=sha256 size=32\nCandidateCDHash sha1=b93c230791f3aa3f386c17160e1e9797b80c8d2b\nCandidateCDHashFull sha1=b93c230791f3aa3f386c17160e1e9797b80c8d2b\nCandidateCDHash sha256=e3e6c7652473ff15c0d01c041abb62b308e21ea0\nCandidateCDHashFull sha256=e3e6c7652473ff15c0d01c041abb62b308e21ea056a497349ce2b8068f1d5b50\nHash choices=sha1,sha256\nCMSDigest=44ecb01edcdef2905100a4ef3c8c6819d61b13c83f5c48041955bba9d201db04\nCMSDigestType=2\nExecutable Segment base=0\nExecutable Segment limit=638976\nExecutable Segment flags=0x0\nPage size=4096\nLaunch Constraints:\n\tNone\nCDHash=e3e6c7652473ff15c0d01c041abb62b308e21ea0\nanalysis/share-review-20261015/dyld-packaged-earlier-arm64e: no signature\nInfo.plist=not bound\nTeamIdentifier=not set\nSealed Resources=none\nInternal requirements count=1 size=148\n"
+  },
+  {
+    "path": "analysis/share-review-20261015/dyld-packaged-reserve-arm64e",
+    "sha256": "eca71e832d3f863eba2106612b0ce6e9e1a26ca5ee76bf8303653d26267f483a",
+    "command": [
+      "codesign",
+      "-d",
+      "--verbose=4",
+      "analysis/share-review-20261015/dyld-packaged-reserve-arm64e"
+    ],
+    "exit": 0,
+    "stderr": "Executable=/Users/ciscohe/Desktop/macPad/analysis/share-review-20261015/dyld-packaged-reserve-arm64e\nIdentifier=dyld-15.6-private-reserve-diagnostic\nFormat=Mach-O thin (arm64e)\nCodeDirectory v=20400 size=9853 flags=0x0(none) hashes=297+7 location=embedded\nVersionPlatform=1\nVersionMin=984576\nVersionSDK=984576\nHash type=sha256 size=32\nCandidateCDHash sha1=bcd5728f5bd57016facb241011d3aa9a9c507131\nCandidateCDHashFull sha1=bcd5728f5bd57016facb241011d3aa9a9c507131\nCandidateCDHash sha256=612ea734a668352561b84692e0013a3e0a741439\nCandidateCDHashFull sha256=612ea734a668352561b84692e0013a3e0a7414399bd6ce253b87eb39930f5639\nHash choices=sha1,sha256\nCMSDigest=ff8a5fb4f321b1e3617add6a43e7879a4f82647dc0fe291179523d83325073a5\nCMSDigestType=2\nExecutable Segment base=0\nExecutable Segment limit=638976\nExecutable Segment flags=0x110\nPage size=4096\nLaunch Constraints:\n\tNone\nCDHash=612ea734a668352561b84692e0013a3e0a741439\nanalysis/share-review-20261015/dyld-packaged-reserve-arm64e: no signature\nInfo.plist=not bound\nTeamIdentifier=not set\nSealed Resources=none\nInternal requirements count=1 size=152\n"
+  },
+  {
+    "path": "analysis/share-review-20261015/share-dyld-arm64e",
+    "sha256": "def1d5e2ccde2ee7930a30f38d540981aab2ccda9a7f0d6212bd2f9339dd3a00",
+    "command": [
+      "codesign",
+      "-d",
+      "--verbose=4",
+      "analysis/share-review-20261015/share-dyld-arm64e"
+    ],
+    "exit": 0,
+    "stderr": "Executable=/Users/ciscohe/Desktop/macPad/analysis/share-review-20261015/share-dyld-arm64e\nIdentifier=dyld-pager-candidate\nFormat=Mach-O thin (arm64e)\nCodeDirectory v=20400 size=9837 flags=0x0(none) hashes=297+7 location=embedded\nVersionPlatform=1\nVersionMin=984576\nVersionSDK=984576\nHash type=sha256 size=32\nCandidateCDHash sha1=0bad52ec258df7a1e27eff2f16051369a232f522\nCandidateCDHashFull sha1=0bad52ec258df7a1e27eff2f16051369a232f522\nCandidateCDHash sha256=55e27aa1e1f84ff1fc3690fb99df5c1ee79feed1\nCandidateCDHashFull sha256=55e27aa1e1f84ff1fc3690fb99df5c1ee79feed1445b02f9ece4788fc1e82f40\nHash choices=sha1,sha256\nCMSDigest=d536122468bf1f8c522aaf144fe3654237fca4b28a689dd822d671f9347c5643\nCMSDigestType=2\nExecutable Segment base=0\nExecutable Segment limit=638976\nExecutable Segment flags=0x110\nPage size=4096\nLaunch Constraints:\n\tNone\nCDHash=55e27aa1e1f84ff1fc3690fb99df5c1ee79feed1\nanalysis/share-review-20261015/share-dyld-arm64e: no signature\nInfo.plist=not bound\nTeamIdentifier=not set\nSealed Resources=none\nInternal requirements count=1 size=136\n"
+  }
+]

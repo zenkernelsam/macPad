@@ -1,0 +1,144 @@
+{
+  "addr": "0x21e04",
+  "code": "__int64 __fastcall dyld4::Loader::applyFixupsGeneric(\n        __int64 a1,\n        Diagnostics *a2,\n        __n128 *a3,\n        __int64 a4,\n        __int64 a5,\n        __int64 a6,\n        __int64 a7,\n        __int64 a8)\n{\n  const mach_header *Address; // x22\n  __int64 Slide; // x24\n  int hasError; // w23\n  __int64 result; // x0\n  __int64 v19; // x22\n  __int64 v20; // x0\n  _QWORD v21[8]; // [xsp+8h] [xbp-588h] BYREF\n  _QWORD v22[7]; // [xsp+48h] [xbp-548h] BYREF\n  _QWORD v23[8]; // [xsp+80h] [xbp-510h] BYREF\n  _QWORD v24[9]; // [xsp+C0h] [xbp-4D0h] BYREF\n  _QWORD v25[7]; // [xsp+108h] [xbp-488h] BYREF\n  _QWORD v26[9]; // [xsp+140h] [xbp-450h] BYREF\n  _QWORD v27[4]; // [xsp+188h] [xbp-408h] BYREF\n  _QWORD v28[58]; // [xsp+1A8h] [xbp-3E8h] BYREF\n  _QWORD __src[54]; // [xsp+378h] [xbp-218h] BYREF\n\n  Address = (const mach_header *)dyld4::Loader::loadAddress(a1, a3); /*0x21e60*/\n  Slide = dyld3::MachOLoaded::getSlide(); /*0x21e68*/\n  if ( (unsigned int)dyld3::MachOFile::hasChainedFixups(Address) ) /*0x21e70*/\n  {\n    if ( !*(_DWORD *)(a3->n128_u64[1] + 212) /*0x21ed8*/\n      || !(unsigned int)dyld3::MachOFile::hasChainedFixupsLoadCommand(Address)\n      || *(_QWORD *)(a5 + 16) >> 4 > 0x270u\n      || (*(_WORD *)(a1 + 4) & 0x4000) != 0\n      || (dyld4::Loader::setUpPageInLinking(a1, a2, a3, Slide, a4, a5),\n          hasError = Diagnostics::hasError(a2),\n          result = Diagnostics::clearError(a2),\n          hasError) )\n    {\n      if ( (unsigned int)dyld3::MachOFile::hasChainedFixupsLoadCommand(Address) ) /*0x21ee0*/\n      {\n        mach_o::Image::Image((mach_o::Image *)__src, Address); /*0x21ef0*/\n        v19 = mach_o::Header::preferredLoadAddress(__src[0]); /*0x21efc*/\n        v27[0] = _NSConcreteStackBlock; /*0x21f18*/\n        v27[1] = 0x40000000; /*0x21f24*/\n        v27[2] = ___ZNK5dyld46Loader18applyFixupsGenericER11DiagnosticsRNS_12RuntimeStateEyRKN5dyld35ArrayIPKvEESB_bRKNS6_INS0_21MissingFlatLazySymbolEEE_block_invoke; /*0x21f40*/\n        v27[3] = &__block_descriptor_tmp_99; /*0x21f40*/\n        memmove(v28, __src, 0x1B0u); /*0x21f50*/\n        v28[54] = v19; /*0x21f54*/\n        v28[55] = a2; /*0x21f58*/\n        v28[56] = a5; /*0x21f5c*/\n        v28[57] = a3; /*0x21f60*/\n        return mach_o::Image::withSegments(__src, v27); /*0x21f6c*/\n      }\n      else\n      {\n        v20 = dyld3::MachOAnalyzer::chainStartsOffset(Address); /*0x22150*/\n        v26[0] = _NSConcreteStackBlock; /*0x22170*/\n        v26[1] = 0x40000000; /*0x2217c*/\n        v26[2] = ___ZNK5dyld46Loader18applyFixupsGenericER11DiagnosticsRNS_12RuntimeStateEyRKN5dyld35ArrayIPKvEESB_bRKNS6_INS0_21MissingFlatLazySymbolEEE_block_invoke_4; /*0x22198*/\n        v26[3] = &__block_descriptor_tmp_102; /*0x22198*/\n        v26[4] = Address; /*0x2219c*/\n        v26[5] = a2; /*0x2219c*/\n        v26[6] = Slide; /*0x221a0*/\n        v26[7] = a5; /*0x221a0*/\n        v26[8] = a3; /*0x221a4*/\n        return dyld3::MachOAnalyzer::withChainStarts(Address, a2, v20, v26); /*0x221b4*/\n      }\n    }\n  }\n  else if ( (unsigned int)dyld3::MachOFile::hasOpcodeFixups(Address) ) /*0x21f78*/\n  {\n    v25[0] = _NSConcreteStackBlock; /*0x21f98*/\n    v25[1] = 0x40000000; /*0x21fa4*/\n    v25[2] = ___ZNK5dyld46Loader18applyFixupsGenericER11DiagnosticsRNS_12RuntimeStateEyRKN5dyld35ArrayIPKvEESB_bRKNS6_INS0_21MissingFlatLazySymbolEEE_block_invoke_6; /*0x21fc0*/\n    v25[3] = &__block_descriptor_tmp_105_0; /*0x21fc0*/\n    v25[4] = Address; /*0x21fc4*/\n    v25[5] = Slide; /*0x21fc4*/\n    v25[6] = a3; /*0x21fc8*/\n    dyld3::MachOAnalyzer::forEachRebaseLocation_Opcodes(Address, a2, v25); /*0x21fd8*/\n    result = Diagnostics::hasError(a2); /*0x21fe0*/\n    if ( (result & 1) == 0 ) /*0x21fe4*/\n    {\n      v24[0] = _NSConcreteStackBlock; /*0x22000*/\n      v24[1] = 0x40000000; /*0x22004*/\n      v24[2] = ___ZNK5dyld46Loader18applyFixupsGenericER11DiagnosticsRNS_12RuntimeStateEyRKN5dyld35ArrayIPKvEESB_bRKNS6_INS0_21MissingFlatLazySymbolEEE_block_invoke_7; /*0x22020*/\n      v24[3] = &__block_descriptor_tmp_108; /*0x22020*/\n      v24[4] = a1; /*0x22024*/\n      v24[5] = Address; /*0x22024*/\n      v24[6] = a5; /*0x22028*/\n      v24[7] = a8; /*0x22028*/\n      v24[8] = a3; /*0x2202c*/\n      v23[0] = _NSConcreteStackBlock; /*0x22048*/\n      v23[1] = 0x40000000; /*0x2204c*/\n      v23[2] = ___ZNK5dyld46Loader18applyFixupsGenericER11DiagnosticsRNS_12RuntimeStateEyRKN5dyld35ArrayIPKvEESB_bRKNS6_INS0_21MissingFlatLazySymbolEEE_block_invoke_8; /*0x22068*/\n      v23[3] = &__block_descriptor_tmp_111; /*0x22068*/\n      v23[4] = a1; /*0x2206c*/\n      v23[5] = Address; /*0x2206c*/\n      v23[6] = a6; /*0x22070*/\n      v23[7] = a3; /*0x22070*/\n      return dyld3::MachOAnalyzer::forEachBindLocation_Opcodes(Address, a2, v24, v23); /*0x22084*/\n    }\n  }\n  else\n  {\n    v22[0] = _NSConcreteStackBlock; /*0x220a4*/\n    v22[1] = 0x40000000; /*0x220b0*/\n    v22[2] = ___ZNK5dyld46Loader18applyFixupsGenericER11DiagnosticsRNS_12RuntimeStateEyRKN5dyld35ArrayIPKvEESB_bRKNS6_INS0_21MissingFlatLazySymbolEEE_block_invoke_9; /*0x220cc*/\n    v22[3] = &__block_descriptor_tmp_112_0; /*0x220cc*/\n    v22[4] = Address; /*0x220d0*/\n    v22[5] = Slide; /*0x220d0*/\n    v22[6] = a3; /*0x220d4*/\n    dyld3::MachOAnalyzer::forEachRebaseLocation_Relocations(Address, a2, v22); /*0x220e4*/\n    result = Diagnostics::hasError(a2); /*0x220ec*/\n    if ( (result & 1) == 0 ) /*0x220f0*/\n    {\n      v21[0] = _NSConcreteStackBlock; /*0x2210c*/\n      v21[1] = 0x40000000; /*0x22110*/\n      v21[2] = ___ZNK5dyld46Loader18applyFixupsGenericER11DiagnosticsRNS_12RuntimeStateEyRKN5dyld35ArrayIPKvEESB_bRKNS6_INS0_21MissingFlatLazySymbolEEE_block_invoke_10; /*0x2212c*/\n      v21[3] = &__block_descriptor_tmp_113; /*0x2212c*/\n      v21[4] = a1; /*0x22130*/\n      v21[5] = Address; /*0x22130*/\n      v21[6] = a5; /*0x22134*/\n      v21[7] = a3; /*0x22134*/\n      return dyld3::MachOAnalyzer::forEachBindLocation_Relocations(Address, a2, v21); /*0x22144*/\n    }\n  }\n  return result; /*0x221f0*/\n}",
+  "line_count": 129,
+  "total_lines": 129,
+  "truncated": false,
+  "cursor": {
+    "done": true
+  },
+  "refs": [
+    {
+      "addr": "0x1dc88",
+      "name": "__ZNK5dyld46Loader11loadAddressERKNS_12RuntimeStateE"
+    },
+    {
+      "addr": "0x574dc",
+      "name": "__ZNK5dyld311MachOLoaded8getSlideEv"
+    },
+    {
+      "addr": "0x8322c",
+      "name": "__ZN6mach_o5ImageC1EPK11mach_header"
+    },
+    {
+      "addr": "0x7e5c8",
+      "name": "__ZNK6mach_o6Header20preferredLoadAddressEv"
+    },
+    {
+      "addr": "0xa5f20",
+      "name": "__NSConcreteStackBlock"
+    },
+    {
+      "addr": "0x221f8",
+      "name": "____ZNK5dyld46Loader18applyFixupsGenericER11DiagnosticsRNS_12RuntimeStateEyRKN5dyld35ArrayIPKvEESB_bRKNS6_INS0_21MissingFlatLazySymbolEEE_block_invoke"
+    },
+    {
+      "addr": "0x9d8c0",
+      "name": "___block_descriptor_tmp.99"
+    },
+    {
+      "addr": "0x2280",
+      "name": "_memmove"
+    },
+    {
+      "addr": "0x83cd4",
+      "name": "__ZNK6mach_o5Image12withSegmentsEU13block_pointerFvNSt3__14spanIKNS_13MappedSegmentELm18446744073709551615EEEE"
+    },
+    {
+      "addr": "0x6014c",
+      "name": "__ZNK5dyld313MachOAnalyzer17chainStartsOffsetEv"
+    },
+    {
+      "addr": "0x22510",
+      "name": "____ZNK5dyld46Loader18applyFixupsGenericER11DiagnosticsRNS_12RuntimeStateEyRKN5dyld35ArrayIPKvEESB_bRKNS6_INS0_21MissingFlatLazySymbolEEE_block_invoke_4"
+    },
+    {
+      "addr": "0x9d900",
+      "name": "___block_descriptor_tmp.102"
+    },
+    {
+      "addr": "0x5fea0",
+      "name": "__ZNK5dyld313MachOAnalyzer15withChainStartsER11DiagnosticsyU13block_pointerFvPK28dyld_chained_starts_in_imageE"
+    },
+    {
+      "addr": "0x53dc0",
+      "name": "__ZNK5dyld39MachOFile27hasChainedFixupsLoadCommandEv"
+    },
+    {
+      "addr": "0x2125c",
+      "name": "__ZNK5dyld46Loader18setUpPageInLinkingER11DiagnosticsRNS_12RuntimeStateEmyRKN5dyld35ArrayIPKvEE"
+    },
+    {
+      "addr": "0x2bec",
+      "name": "__ZNK11Diagnostics8hasErrorEv"
+    },
+    {
+      "addr": "0x64588",
+      "name": "__ZN11Diagnostics10clearErrorEv"
+    },
+    {
+      "addr": "0x225f4",
+      "name": "____ZNK5dyld46Loader18applyFixupsGenericER11DiagnosticsRNS_12RuntimeStateEyRKN5dyld35ArrayIPKvEESB_bRKNS6_INS0_21MissingFlatLazySymbolEEE_block_invoke_6"
+    },
+    {
+      "addr": "0x9d920",
+      "name": "___block_descriptor_tmp.105_0"
+    },
+    {
+      "addr": "0x63188",
+      "name": "__ZNK5dyld313MachOAnalyzer29forEachRebaseLocation_OpcodesER11DiagnosticsU13block_pointerFvyRbE"
+    },
+    {
+      "addr": "0x22650",
+      "name": "____ZNK5dyld46Loader18applyFixupsGenericER11DiagnosticsRNS_12RuntimeStateEyRKN5dyld35ArrayIPKvEESB_bRKNS6_INS0_21MissingFlatLazySymbolEEE_block_invoke_7"
+    },
+    {
+      "addr": "0x9d940",
+      "name": "___block_descriptor_tmp.108"
+    },
+    {
+      "addr": "0x22760",
+      "name": "____ZNK5dyld46Loader18applyFixupsGenericER11DiagnosticsRNS_12RuntimeStateEyRKN5dyld35ArrayIPKvEESB_bRKNS6_INS0_21MissingFlatLazySymbolEEE_block_invoke_8"
+    },
+    {
+      "addr": "0x9d960",
+      "name": "___block_descriptor_tmp.111"
+    },
+    {
+      "addr": "0x630ac",
+      "name": "__ZNK5dyld313MachOAnalyzer27forEachBindLocation_OpcodesER11DiagnosticsU13block_pointerFvyjRbES5_"
+    },
+    {
+      "addr": "0x22850",
+      "name": "____ZNK5dyld46Loader18applyFixupsGenericER11DiagnosticsRNS_12RuntimeStateEyRKN5dyld35ArrayIPKvEESB_bRKNS6_INS0_21MissingFlatLazySymbolEEE_block_invoke_9"
+    },
+    {
+      "addr": "0x9d980",
+      "name": "___block_descriptor_tmp.112_0"
+    },
+    {
+      "addr": "0x637d0",
+      "name": "__ZNK5dyld313MachOAnalyzer33forEachRebaseLocation_RelocationsER11DiagnosticsU13block_pointerFvyRbE"
+    },
+    {
+      "addr": "0x228ac",
+      "name": "____ZNK5dyld46Loader18applyFixupsGenericER11DiagnosticsRNS_12RuntimeStateEyRKN5dyld35ArrayIPKvEESB_bRKNS6_INS0_21MissingFlatLazySymbolEEE_block_invoke_10"
+    },
+    {
+      "addr": "0x9d9a0",
+      "name": "___block_descriptor_tmp.113"
+    },
+    {
+      "addr": "0x62d58",
+      "name": "__ZNK5dyld313MachOAnalyzer31forEachBindLocation_RelocationsER11DiagnosticsU13block_pointerFvyjRbE"
+    },
+    {
+      "addr": "0x53dcc",
+      "name": "__ZNK5dyld39MachOFile15hasOpcodeFixupsEv"
+    },
+    {
+      "addr": "0x53d38",
+      "name": "__ZNK5dyld39MachOFile16hasChainedFixupsEv"
+    }
+  ]
+}

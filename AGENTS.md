@@ -118,6 +118,10 @@ The same day's IDA follow-up now confirms the share dyld's address reservation,
 format-12 sidecar consumer, real eager v5/PAC fallback, and exec-generation
 admission helper. Offline comparison checked 22,818,485 pointers; this is not
 device acceptance. See `docs/evidence/sequoia-share-audit-20261015/ida/README.md`.
+The subsequent stage comparison also confirms generic pageInLinkingMode defaults
+to 0 while the exact sidecar path remains active; old blanket platform/crossarch
+experiment patches are absent from this share dyld. Available stage diffs are
+not a substitute for an independently identified Apple/final-freeze baseline.
 
 This section is the current summary. Later sections retain detailed and
 historical bring-up knowledge. If an older section conflicts with this one,

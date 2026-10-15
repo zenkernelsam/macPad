@@ -1,0 +1,29 @@
+0x21e70 b2c70094 BL              __ZNK5dyld39MachOFile16hasChainedFixupsEv; dyld3::MachOFile::hasChainedFixups(void)
+0x21e74 00080034 CBZ             W0, loc_21F74
+0x21e78 880640f9 LDR             X8, [X20,#8]
+0x21e7c 08d540b9 LDR             W8, [X8,#0xD4]
+0x21e80 e8020034 CBZ             W8, loc_21EDC
+0x21e84 e00316aa MOV             X0, X22
+0x21e88 cec70094 BL              __ZNK5dyld39MachOFile27hasChainedFixupsLoadCommandEv; dyld3::MachOFile::hasChainedFixupsLoadCommand(void)
+0x21e8c 80020034 CBZ             W0, loc_21EDC
+0x21e90 a80a40f9 LDR             X8, [X21,#0x10]
+0x21e94 08fd44d3 LSR             X8, X8, #4
+0x21e98 1fc109f1 CMP             X8, #0x270
+0x21e9c 08020054 B.HI            loc_21EDC
+0x21ea0 e80a4079 LDRH            W8, [X23,#4]
+0x21ea4 c8017037 TBNZ            W8, #0xE, loc_21EDC
+0x21ea8 e00317aa MOV             X0, X23
+0x21eac e10313aa MOV             X1, X19
+0x21eb0 e20314aa MOV             X2, X20
+0x21eb4 e30318aa MOV             X3, X24
+0x21eb8 e4031baa MOV             X4, X27
+0x21ebc e50315aa MOV             X5, X21
+0x21ec0 e7fcff97 BL              __ZNK5dyld46Loader18setUpPageInLinkingER11DiagnosticsRNS_12RuntimeStateEmyRKN5dyld35ArrayIPKvEE; dyld4::Loader::setUpPageInLinking(Diagnostics &,dyld4::RuntimeState &,ulong,ulong long,dyld3::Array<void const*> const&)
+0x21ec4 e00313aa MOV             X0, X19
+0x21ec8 4983ff97 BL              __ZNK11Diagnostics8hasErrorEv; Diagnostics::hasError(void)
+0x21ecc f70300aa MOV             X23, X0
+0x21ed0 e00313aa MOV             X0, X19
+0x21ed4 ad090194 BL              __ZN11Diagnostics10clearErrorEv; Diagnostics::clearError(void)
+0x21ed8 17170034 CBZ             W23, loc_221B8
+0x21edc e00316aa MOV             X0, X22
+0x21ee0 b8c70094 BL              __ZNK5dyld39MachOFile27hasChainedFixupsLoadCommandEv; dyld3::MachOFile::hasChainedFixupsLoadCommand(void)
