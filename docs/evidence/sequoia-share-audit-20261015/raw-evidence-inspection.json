@@ -1,0 +1,384 @@
+{
+  "date": "2026-10-16",
+  "scope": "Header/tail inspection of all 63 initial raw text evidence artifacts, plus targeted evidence already quoted by reports; not a full independent RE or sample-line review. Long lines display only first 180 characters.",
+  "entries": [
+    {
+      "path": "misc/lldb_cfx_notification_trace.txt",
+      "total_lines": 8,
+      "head_lines": 2,
+      "tail_lines": 1
+    },
+    {
+      "path": ".ida-mcp/dyld-prepare-m3-write-proof.txt",
+      "total_lines": 30,
+      "head_lines": 2,
+      "tail_lines": 1
+    },
+    {
+      "path": ".ida-mcp/kernel-dyld-pager-format-proof.txt",
+      "total_lines": 885,
+      "head_lines": 2,
+      "tail_lines": 1
+    },
+    {
+      "path": ".ida-mcp/dyld-cache-format13-proof.txt",
+      "total_lines": 738,
+      "head_lines": 2,
+      "tail_lines": 1
+    },
+    {
+      "path": "analysis/MacWSBootingGuide/misc/lldb_cfx_notification_trace.txt",
+      "total_lines": 8,
+      "head_lines": 2,
+      "tail_lines": 1
+    },
+    {
+      "path": "analysis/MacWSBootingGuide/docs/evidence/launchd-performance-class-20260730/launchd-performance-class-disassembly.txt",
+      "total_lines": 72,
+      "head_lines": 2,
+      "tail_lines": 1
+    },
+    {
+      "path": "analysis/MacWSBootingGuide/docs/evidence/vnc-usability-stability-20260729/osxvnc-handle-keyboard-arm64-disasm.txt",
+      "total_lines": 233,
+      "head_lines": 2,
+      "tail_lines": 1
+    },
+    {
+      "path": "analysis/MacWSBootingGuide/docs/evidence/vnc-usability-stability-20260729/osxvnc-send-key-event-arm64-disasm.txt",
+      "total_lines": 65,
+      "head_lines": 2,
+      "tail_lines": 1
+    },
+    {
+      "path": "analysis/MacWSBootingGuide/docs/evidence/vnc-usability-stability-20260729/osxvnc-handle-mouse-arm64-disasm.txt",
+      "total_lines": 95,
+      "head_lines": 2,
+      "tail_lines": 1
+    },
+    {
+      "path": "analysis/MacWSBootingGuide/docs/evidence/vscode-generalized-command-fix-20260728-2108/sample-71583.txt",
+      "total_lines": 875,
+      "head_lines": 2,
+      "tail_lines": 1
+    },
+    {
+      "path": "analysis/MacWSBootingGuide/docs/evidence/vscode-generalized-command-fix-20260728-2108/sample-71566.txt",
+      "total_lines": 857,
+      "head_lines": 2,
+      "tail_lines": 1
+    },
+    {
+      "path": "analysis/MacWSBootingGuide/docs/evidence/vscode-generalized-command-fix-20260728-2108/sample-71560.txt",
+      "total_lines": 1335,
+      "head_lines": 2,
+      "tail_lines": 1
+    },
+    {
+      "path": "analysis/MacWSBootingGuide/docs/evidence/webgl2-performance-optimization-20260728/ipad-vscode-gpu-process-15000.sample.txt",
+      "total_lines": 2022,
+      "head_lines": 2,
+      "tail_lines": 1
+    },
+    {
+      "path": "analysis/MacWSBootingGuide/docs/evidence/webgl2-performance-optimization-20260728/m1-chrome150-gpu-process-15000-unthrottled.sample.txt",
+      "total_lines": 3639,
+      "head_lines": 2,
+      "tail_lines": 1
+    },
+    {
+      "path": "analysis/MacWSBootingGuide/docs/evidence/webgl2-performance-optimization-20260728/ipad-vscode-gpu-process-15000-fast-ring.sample.txt",
+      "total_lines": 3115,
+      "head_lines": 2,
+      "tail_lines": 1
+    },
+    {
+      "path": "analysis/MacWSBootingGuide/docs/evidence/windowserver-production-cpu-20260730/windowserver-production-stable.sample.txt",
+      "total_lines": 1902,
+      "head_lines": 2,
+      "tail_lines": 1
+    },
+    {
+      "path": "analysis/MacWSBootingGuide/docs/evidence/windowserver-production-cpu-20260730/windowserver-production-idle.sample.txt",
+      "total_lines": 1439,
+      "head_lines": 2,
+      "tail_lines": 1
+    },
+    {
+      "path": "analysis/MacWSBootingGuide/docs/evidence/windowserver-production-cpu-20260730/systemstatusd-private.sample.txt",
+      "total_lines": 292,
+      "head_lines": 2,
+      "tail_lines": 1
+    },
+    {
+      "path": "analysis/MacWSBootingGuide/docs/evidence/windowserver-production-cpu-20260730/windowserver-with-systemstatusd.sample.txt",
+      "total_lines": 1393,
+      "head_lines": 2,
+      "tail_lines": 1
+    },
+    {
+      "path": "analysis/MacWSBootingGuide/docs/evidence/windowserver-production-cpu-20260730/windowserver-cold-systemstatusd.sample.txt",
+      "total_lines": 1518,
+      "head_lines": 2,
+      "tail_lines": 1
+    },
+    {
+      "path": "analysis/MacWSBootingGuide/docs/evidence/windowserver-production-cpu-20260730/systemstatusd.sample.txt",
+      "total_lines": 292,
+      "head_lines": 2,
+      "tail_lines": 1
+    },
+    {
+      "path": "analysis/MacWSBootingGuide/docs/evidence/windowserver-production-cpu-20260730/windowserver-production-serial-worker.sample.txt",
+      "total_lines": 1455,
+      "head_lines": 2,
+      "tail_lines": 1
+    },
+    {
+      "path": "analysis/MacWSBootingGuide/docs/evidence/launchd-performance-class-20260730/first-error-diag/iogpu-signal-event-disassembly.txt",
+      "total_lines": 47,
+      "head_lines": 2,
+      "tail_lines": 1
+    },
+    {
+      "path": "analysis/MacWSBootingGuide/docs/evidence/launchd-performance-class-20260730/first-error-diag/macws_fast_submit_error_48199_1/manifest.txt",
+      "total_lines": 49,
+      "head_lines": 2,
+      "tail_lines": 1
+    },
+    {
+      "path": "analysis/MacWSBootingGuide/docs/evidence/launchd-performance-class-20260730/first-error-diag/macws_fast_submit_error_48199_1/resources.txt",
+      "total_lines": 4874,
+      "head_lines": 2,
+      "tail_lines": 1
+    },
+    {
+      "path": "analysis/MacWSBootingGuide/docs/evidence/webgl2-performance-optimization-20260728/production-hotpath-cache-20260730/windowserver-before-old-deadline.sample.txt",
+      "total_lines": 678,
+      "head_lines": 2,
+      "tail_lines": 1
+    },
+    {
+      "path": "analysis/MacWSBootingGuide/docs/evidence/webgl2-performance-optimization-20260728/production-hotpath-cache-20260730/gpu-before.sample.txt",
+      "total_lines": 2968,
+      "head_lines": 2,
+      "tail_lines": 1
+    },
+    {
+      "path": "analysis/MacWSBootingGuide/docs/evidence/webgl2-performance-optimization-20260728/production-hotpath-cache-20260730/gpu-after.sample.txt",
+      "total_lines": 2789,
+      "head_lines": 2,
+      "tail_lines": 1
+    },
+    {
+      "path": "analysis/MacWSBootingGuide/docs/evidence/webgl2-performance-optimization-20260728/fishtank-absolute-pacing-error-20260729/macws_fast_submit_error_28606_1/manifest.txt",
+      "total_lines": 2,
+      "head_lines": 2,
+      "tail_lines": 0
+    },
+    {
+      "path": "analysis/MacWSBootingGuide/docs/evidence/webgl2-performance-optimization-20260728/fishtank-absolute-pacing-error-20260729/macws_fast_submit_error_28629_1/manifest.txt",
+      "total_lines": 3,
+      "head_lines": 2,
+      "tail_lines": 1
+    },
+    {
+      "path": "analysis/MacWSBootingGuide/docs/evidence/webgl2-performance-optimization-20260728/fishtank-absolute-pacing-error-20260729/macws_fast_submit_error_28629_1/resources.txt",
+      "total_lines": 118,
+      "head_lines": 2,
+      "tail_lines": 1
+    },
+    {
+      "path": "analysis/MacWSBootingGuide/docs/evidence/webgl2-performance-optimization-20260728/fast-submit-error-20260728-2245/windowserver/manifest.txt",
+      "total_lines": 2,
+      "head_lines": 2,
+      "tail_lines": 0
+    },
+    {
+      "path": "analysis/MacWSBootingGuide/docs/evidence/webgl2-performance-optimization-20260728/fast-submit-error-20260728-2245/windowserver/resources.txt",
+      "total_lines": 93,
+      "head_lines": 2,
+      "tail_lines": 1
+    },
+    {
+      "path": "analysis/MacWSBootingGuide/docs/evidence/webgl2-performance-optimization-20260728/fast-submit-error-20260728-2245/vscode-gpu/manifest.txt",
+      "total_lines": 3,
+      "head_lines": 2,
+      "tail_lines": 1
+    },
+    {
+      "path": "analysis/MacWSBootingGuide/docs/evidence/webgl2-performance-optimization-20260728/fast-submit-error-20260728-2245/vscode-gpu/resources.txt",
+      "total_lines": 123,
+      "head_lines": 2,
+      "tail_lines": 1
+    },
+    {
+      "path": "analysis/MacWSBootingGuide/docs/evidence/webgl2-performance-optimization-20260728/cold-start-stability-20260730/macws_fast_submit_error_32070_1/manifest.txt",
+      "total_lines": 3,
+      "head_lines": 2,
+      "tail_lines": 1
+    },
+    {
+      "path": "analysis/MacWSBootingGuide/docs/evidence/webgl2-performance-optimization-20260728/cold-start-stability-20260730/macws_fast_submit_error_43328_1/manifest.txt",
+      "total_lines": 14,
+      "head_lines": 2,
+      "tail_lines": 1
+    },
+    {
+      "path": "analysis/MacWSBootingGuide/docs/evidence/vscode-trailing-wrapper-fix-20260728-2105/macws_submit_error_70663_1/manifest.txt",
+      "total_lines": 19,
+      "head_lines": 2,
+      "tail_lines": 1
+    },
+    {
+      "path": "analysis/MacWSBootingGuide/docs/evidence/vscode-trailing-wrapper-fix-20260728-2105/macws_submit_error_70663_2/manifest.txt",
+      "total_lines": 47,
+      "head_lines": 2,
+      "tail_lines": 1
+    },
+    {
+      "path": "analysis/MacWSBootingGuide/docs/evidence/vscode-batch-submit-fix-69624/macws_submit_error_69624_2/manifest.txt",
+      "total_lines": 14,
+      "head_lines": 2,
+      "tail_lines": 1
+    },
+    {
+      "path": "analysis/MacWSBootingGuide/docs/evidence/vscode-batch-submit-fix-69624/macws_submit_error_69624_1/manifest.txt",
+      "total_lines": 13,
+      "head_lines": 2,
+      "tail_lines": 1
+    },
+    {
+      "path": "coordination/artifacts/r007-lldb-pane.txt",
+      "total_lines": 448,
+      "head_lines": 2,
+      "tail_lines": 1
+    },
+    {
+      "path": "coordination/artifacts/r005-lldb-pane1.txt",
+      "total_lines": 1978,
+      "head_lines": 2,
+      "tail_lines": 1
+    },
+    {
+      "path": "coordination/artifacts/r005-lldb-pane2.txt",
+      "total_lines": 2042,
+      "head_lines": 2,
+      "tail_lines": 1
+    },
+    {
+      "path": "coordination/artifacts/r004b-disasm-impl.txt",
+      "total_lines": 257,
+      "head_lines": 2,
+      "tail_lines": 1
+    },
+    {
+      "path": "coordination/artifacts/r007-lldb-pane-full.txt",
+      "total_lines": 866,
+      "head_lines": 2,
+      "tail_lines": 1
+    },
+    {
+      "path": "coordination/artifacts/R003-device-review.txt",
+      "total_lines": 32,
+      "head_lines": 2,
+      "tail_lines": 1
+    },
+    {
+      "path": "coordination/artifacts/r004b-disasm-dispatcher.txt",
+      "total_lines": 129,
+      "head_lines": 2,
+      "tail_lines": 1
+    },
+    {
+      "path": "coordination/artifacts/r004b-disasm-gate.txt",
+      "total_lines": 257,
+      "head_lines": 2,
+      "tail_lines": 1
+    },
+    {
+      "path": "coordination/artifacts/r004a-failing-testids.txt",
+      "total_lines": 24,
+      "head_lines": 2,
+      "tail_lines": 1
+    },
+    {
+      "path": "coordination/artifacts/r006-lldb-pane.txt",
+      "total_lines": 1517,
+      "head_lines": 2,
+      "tail_lines": 1
+    },
+    {
+      "path": "coordination/artifacts/R005-static/lldb-dispatcher.txt",
+      "total_lines": 4,
+      "head_lines": 2,
+      "tail_lines": 1
+    },
+    {
+      "path": "coordination/artifacts/R005-static/lldb-dispatcher-v2.txt",
+      "total_lines": 230,
+      "head_lines": 2,
+      "tail_lines": 1
+    },
+    {
+      "path": "coordination/artifacts/R005-static/exact-functions.txt",
+      "total_lines": 323,
+      "head_lines": 2,
+      "tail_lines": 1
+    },
+    {
+      "path": "coordination/artifacts/R006-review-static/exact-tcc-functions.txt",
+      "total_lines": 806,
+      "head_lines": 2,
+      "tail_lines": 1
+    },
+    {
+      "path": "coordination/artifacts/R006-review-static/preflight-completions.txt",
+      "total_lines": 26,
+      "head_lines": 2,
+      "tail_lines": 1
+    },
+    {
+      "path": "tmp/imports/sh_arm64_syms.txt",
+      "total_lines": 0,
+      "head_lines": 0,
+      "tail_lines": 0
+    },
+    {
+      "path": "tmp/imports/cat_imports.txt",
+      "total_lines": 1,
+      "head_lines": 1,
+      "tail_lines": 0
+    },
+    {
+      "path": "tmp/imports/ls_imports.txt",
+      "total_lines": 1,
+      "head_lines": 1,
+      "tail_lines": 0
+    },
+    {
+      "path": "tmp/imports/cat_arm64_syms.txt",
+      "total_lines": 0,
+      "head_lines": 0,
+      "tail_lines": 0
+    },
+    {
+      "path": "tmp/imports/sh_imports.txt",
+      "total_lines": 1,
+      "head_lines": 1,
+      "tail_lines": 0
+    },
+    {
+      "path": "tmp/local-history/R006-review-static-raw/exact-tcc-functions.txt",
+      "total_lines": 806,
+      "head_lines": 2,
+      "tail_lines": 1
+    },
+    {
+      "path": "tmp/local-history/R006-review-static-raw/preflight-completions.txt",
+      "total_lines": 26,
+      "head_lines": 2,
+      "tail_lines": 1
+    }
+  ]
+}

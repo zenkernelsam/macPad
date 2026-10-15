@@ -1,6 +1,6 @@
 # macPad 文档导航
 
-更新：2026-10-15。先区分原作者的验证记录、我们当前的 Ventura 复现和已冻结的 Sequoia 研究；它们不是同一设备的同一验收状态。
+更新：2026-10-16（10-15 分享包研究收尾）。先区分原作者的验证记录、我们当前的 Ventura 复现和已冻结的 Sequoia 研究；它们不是同一设备的同一验收状态。
 
 ## 今晚继续 macOS 13
 
@@ -31,3 +31,5 @@
 [Archive](Archive/README.md) 保存三份已被合并替代的旧总结，并导航已有历史归档。原始证据、原作者资料和交接工程文件没有搬动。新旧入口与哈希见 [整理清单](Archive/manifest-20261015.json)。
 
 全量目录／哈希／主题检索覆盖见 [文档索引](evidence/sequoia-share-audit-20261015/document-index.json)。索引覆盖不代表每一条历史结论已被独立复验。
+
+本次阅读已覆盖初始289份 Markdown、73份补充说明／摘录及三份归档旧汇总；原始采样、反汇编、结构化清单与环境附带文件另行分类，见[覆盖范围](evidence/sequoia-share-audit-20261015/corpus-coverage.json)。[完成审计](evidence/sequoia-share-audit-20261015/completion-audit.json)逐项记录交付、保存检查和仍待未来运行验证的边界。

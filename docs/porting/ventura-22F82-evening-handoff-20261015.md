@@ -1,6 +1,6 @@
 # 今晚继续 Ventura：分享包提供的线索与当前验证顺序
 
-日期：2026-10-15。目标仍是 **iPad13,11／20D47 上的 macOS 13.4.1／22F82 复现**。本文是可交给隔壁 Agent 的建议包，没有向任何 Agent 派发任务，没有启动设备。15.6.1 继续冻结，待 Ventura 完成后另行恢复。
+日期：2026-10-15；资料核对完成于10-16。目标仍是 **iPad13,11／20D47 上的 macOS 13.4.1／22F82 复现**。本文是可交给隔壁 Agent 的建议包，没有向任何 Agent 派发任务，没有启动设备。15.6.1 继续冻结，待 Ventura 完成后另行恢复。
 
 当前工程状态以 [coordination/PAUSE_REQUEST.md](../../coordination/PAUSE_REQUEST.md)、[REVIEWER_STATE.md](../../coordination/REVIEWER_STATE.md) 和后续交接为准；它们与 `_RELAY SYNC` 类文件保持原位。不能将本文视为用户已经返回或同意重启。
 
@@ -163,4 +163,8 @@ Cryptex 资源路径、WebKit 多实例 XPC proxies、RunningBoard 身份、Netw
 
 ## 4. 可直接交给隔壁 Agent 的提示
 
+以下两段一起交给接续 Agent；恢复运行前仍以用户届时的指示和最新 coordination 状态为准。
+
 > 继续当前 22F82 Ventura 复现，不恢复或部署 15.6.1。先读 docs/README.md、当前 coordination/PAUSE_REQUEST.md 和 REVIEWER_STATE.md；本文不解除暂停，只有用户明确返回后才能做设备操作。源码 candidate 是 529c412，停机记录是 6d1b7f6。先处理 coordination/artifacts/R008-review-edge-repro.py/json 中的六项未通过边界，不以已有 55 项通过替代它们。随后按项目 pipeline 做部署身份和有限时 cold/recovery 验证，在真正 WS sender/audit 上下文捕捉 TCC 完整 request/reply；get_bool(result)=0 不等于显式 false。分享包同样使用 -virtualonly，其相关 TCC entitlement 列表与我们相同，但实际 libmachook 仍有试图将 audit_token_check_tcc_access 恒返1的 override；其运行落钩未证明，不能恢复这种绕过，也不能把双方权限策略当作一致。复用现有 exact PID/window AppInput 与唯一系统指针 owner，分别验收 Terminal 内容输入、Dock/菜单、drag/cancel；不能把局部 AppKit 成功算全局输入已修复。不要复制 24G90/M2 的 dyld、sidecar、G14 ABI 或检查绕过。每个结论附同一 generation 的原始证据，最后确认新帧、实际界面变化、原生 iOS 健康及清理。详细研究见 docs/porting/sequoia-24G90-share-review-20261015.md。
+
+> 还要核对 provider 的真实能力：当前 misc/cydiasubstrate_macos.m 的 MSHookMessageEx 为 no-op，局部符号 LINKEDIT 换算缺口已由本地行为探针复现。一个 MSHookFunction 成功不能证明所有继承 hooks 生效。分享包的 macOS13 arm64/arm64e ElleKit 可作离线审计候选；先检查会被激活的 hook 集合、PAC／线程与失败契约，不能直接替换后恢复旧 TCC／assert 绕过。按本文§H十二项复用矩阵，优先确认现有实现为何没有在正确角色／切片／进程中生效，避免重新开发已有输入或渲染框架。

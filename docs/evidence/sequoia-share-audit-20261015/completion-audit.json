@@ -4,44 +4,76 @@
     {
       "id": "all_project_docs",
       "requirement": "Read and reconcile project documentation including original-author material",
-      "status": "in_progress",
-      "evidence": "460 initial artifacts inventoried; explicit full-text reading ledger continues, with exact-byte duplicate paragraphs referenced to already read files; incomplete deliveries not counted."
+      "status": "complete",
+      "evidence": "Initial corpus reconciled: all 289 Markdown plus 73 narrative/excerpt text files read, plus three archived summaries. 63 raw supporting artifacts inventoried/header-tail inspected; 35 third-party Python files excluded explicitly; four TSV inventories separately recorded. Full reading is not independent verification of all historical claims."
     },
     {
       "id": "historical_macos15",
       "requirement": "Explain previous failure and misjudgments with exact evidence",
-      "status": "substantial_progress",
-      "evidence": "Main report covers bounded failure versus impossibility, invalid131-image witness, wrong-baseline/trust/provider assumptions, uncalibrated hit-rate decisions, arithmetic/ABI errors, and PMAP negativeAB causality limits; long-form state reading still in progress."
+      "status": "complete",
+      "evidence": "Main report §§3.1–3.6 preserves real failures, retracts universal impossibility/131-image claims, records arithmetic/ABI errors and invalid probe/exec-generation conclusions with dated sources."
     },
     {
       "id": "share_success_mechanisms",
       "requirement": "Analyze delivered success case, active closure and limits",
-      "status": "in_progress",
-      "evidence": "Loader/sidecar/exec closed static analysis; installed-role TCC override and provider/AppleEvent differences now confirmed; remaining role/corpus synthesis continues."
+      "status": "complete",
+      "evidence": "IDA-backed loader reserve, generic linking default, format12 sidecar consumer/eager PAC, exec helper, actual role-specific TCC/provider/Dock closure documented; all-page sidecar semantic comparison retained. M1 runtime and missing generators explicitly deferred to future porting."
     },
     {
       "id": "macos13_feedforward",
       "requirement": "Produce concrete transferable improvements for current Ventura work",
-      "status": "in_progress",
-      "evidence": "Evening handoff now contains12-row transfer matrix: existing source versus new provider audit versus15-specific work, with exact historical sources and bounded acceptance; full-corpus reconciliation still in progress."
+      "status": "complete",
+      "evidence": "Evening handoff includes six existing R008 fixture failures, TCC reply distinctions, actual provider capability gaps, 12-row source reuse matrix, route-specific visible acceptance, and a two-paragraph prompt for the adjacent Agent."
     },
     {
       "id": "macos15_resume",
       "requirement": "Produce future resumption roadmap after Ventura acceptance",
-      "status": "substantial_progress",
-      "evidence": "roadmap/rebuild contract present; reconcile with complete source/role findings"
+      "status": "complete",
+      "evidence": "Main report §5 gives ordered reconstruction, exact identities, missing-source recovery, kernel contract comparison, real CLI/fork/exec/cold boot and GUI acceptance. Old rootfs deletion documented; no current device work authorized by this report."
     },
     {
       "id": "preservation",
       "requirement": "Keep author/share/coordination/_RELAY SYNC engineering material in place; archive obsolete summaries",
-      "status": "verified_so_far",
-      "evidence": "three hash-preserved summary snapshots; 364 protected document hash checks unchanged"
+      "status": "complete",
+      "evidence": "364 initial protected documents remain at their paths with identical SHA-256; three obsolete summary originals preserved byte-for-byte in Archive. Original author/share and coordination/handover material not moved."
     },
     {
       "id": "delivery_validation",
       "requirement": "Consolidated reports, working links, evidence provenance and requirement-by-requirement final audit",
-      "status": "pending_final",
-      "evidence": "prior partial packets committed; full-goal completion not yet asserted"
+      "status": "complete",
+      "evidence": "166 local link targets checked in nine maintained entry/report documents, no missing files; all 62 audit JSON files parse and 6 evidence Python sources parse; git diff --check passed. Eight-file documentation staging and staged whitespace checks passed; unrelated coordination/runtime changes excluded."
     }
+  ],
+  "completed_date": "2026-10-16",
+  "verification": {
+    "protected_documents": 364,
+    "protected_mismatches": 0,
+    "archived_originals": 3,
+    "local_links_checked": 166,
+    "broken_links": 0,
+    "json_parse_count_before_final_write": 62,
+    "python_ast_parse_count": 6,
+    "git_diff_check": "passed",
+    "device_runtime_tests": "not performed: offline research/docs scope",
+    "base_commit_before_final_commit": "08e1412a056dff844092232bd40a83fc1c8856d2",
+    "staged_scope": [
+      "docs/README.md",
+      "docs/evidence/sequoia-share-audit-20261015/completion-audit.json",
+      "docs/evidence/sequoia-share-audit-20261015/corpus-coverage.json",
+      "docs/evidence/sequoia-share-audit-20261015/raw-evidence-inspection.json",
+      "docs/evidence/sequoia-share-audit-20261015/reading-ledger.json",
+      "docs/evidence/sequoia-share-audit-20261015/roles/README.md",
+      "docs/porting/sequoia-24G90-share-review-20261015.md",
+      "docs/porting/ventura-22F82-evening-handoff-20261015.md"
+    ],
+    "staged_diff_check": "passed",
+    "staged_artifacts": "Eight documentation/metadata files only; UTF-8 text, no NUL/binary payload, JSON parses; private-key/token pattern scan passed."
+  },
+  "remaining_future_porting_work": [
+    "M1/20D47 CLI and GUI acceptance with a reconstructed isolated Sequoia rootfs",
+    "Authenticated pristine/final-frozen binary baseline and complete patch/build provenance",
+    "Original sidecar generator and complete exec-jitd source/build; jailbreak backend effects",
+    "Share-device live TCC hook hit evidence and clean sanitized-install acceptance",
+    "Ventura R008 repairs/deployment/true request-reply and visible input acceptance after user resumes that work"
   ]
 }

@@ -1,5 +1,5 @@
 {
-  "method": "Explicit full-text reading; only acknowledged complete deliveries count. Large documents can span batches. Supporting raw sample dumps are separately inventoried.",
+  "method": "Explicit full-text reading; only acknowledged complete deliveries count. Large files span batches. Exact-byte duplicate paragraphs may reference an already fully read file whose current SHA matches the ledger. Initial narrative corpus is complete; raw samples and third-party environment artifacts are classified separately in corpus-coverage.json. Reading is not independent runtime/RE verification.",
   "documents": {
     "AGENTS.md": {
       "sha256": "8a61abbed9bb4c83f20f78740c270a3243721c30b08a6dff2613fa67f6ad9812",
@@ -1027,9 +1027,9 @@
       "note": "Completed all six docs, separately redelivered coordination README and HELLO after wrapper truncation. HELLO is explicit libSystem/libdyld shim result with unproven broader536/private impossibility; R008 real reply fields remain unknown."
     },
     "docs/porting/PROJECT-ARCHAEOLOGY.md": {
-      "sha256": "eda5ac3c04677a35c71088ba2f4f306418163a5bf41d49cc1b957cd2a52a64d6",
+      "sha256": "dc4515a227e97694a2633b50c4755a8753fe1441634063e8c1274ba0cc647f5a",
       "coverage": "full",
-      "note": "Completed all six docs, separately redelivered coordination README and HELLO after wrapper truncation. HELLO is explicit libSystem/libdyld shim result with unproven broader536/private impossibility; R008 real reply fields remain unknown."
+      "note": "Final consolidated timeline read in full on 2026-10-16; archived initial version separately read and hash-preserved."
     },
     "coordination/DEVIN_TASK.md": {
       "sha256": "ab181fb29b806e60f09293fe066d7e8f5336569525633b6819fcd89c333ae56a",
@@ -1390,6 +1390,441 @@
       "sha256": "5de509864806ada4e10e25750cd659707804ad5d3dcd92c1296511f0f5779ae2",
       "coverage": "full",
       "note": "Author VNC usabilityfull355lines andinterop361 complete. System streamownership plus visiblemenu is acceptance, notcursor/digest. Productiondefaults partial read distinguishes admission fixtures and realapps; source/archive/mapped identity separate."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/production-defaults-regressions-20260919.md": {
+      "sha256": "1f42f8b1bca9e619f8eea343293090db0eda1f2d10bd657d31a15bd2ec851e2b",
+      "coverage": "full",
+      "note": "Productiondefaults completed; installedunusedjobs separate fromrunningprocess audits. Runtime switches full351 read: productionenablevsdiagnostic, realIOSurface ring, utilityprocess, volatiletrust/devfs; older prose contradictions stay historical besidecurrentactualsource."
+    },
+    "analysis/MacWSBootingGuide/docs/runtime-switches.md": {
+      "sha256": "c3352eb3be5326754c6a9ed370ebbd5950b9b9fc9c7b100620941ec2be5c9ef9",
+      "coverage": "full",
+      "note": "Productiondefaults completed; installedunusedjobs separate fromrunningprocess audits. Runtime switches full351 read: productionenablevsdiagnostic, realIOSurface ring, utilityprocess, volatiletrust/devfs; older prose contradictions stay historical besidecurrentactualsource."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/terminal-tab-dock-windowing-20261001.md": {
+      "sha256": "65aa1d288230bb7f01a157d155182252e8013dcd9a3a47ce1498e8cd153e7bf6",
+      "coverage": "full",
+      "note": "Author terminalDock duplicate fullyreadby exactparagraphrefs. NoCopy partialthrough301 includes true originalalias and actualOffice directview path; completedprimitive doesnotcertifyapplication or newproductionbuild."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/office-nocopy-contract-20260919.md": {
+      "sha256": "af349df4adfff851ea4dbbd264e294774dc294098cbc416753f30ca36320bbff",
+      "coverage": "full",
+      "note": "NoCopy full447lines read: deallocator releases realcapturedowner, early callback unsafe even absent immediateUAF. Keyboard partial484: proxyinternalzero notWSzero, asyncUPhistory/state readiness distinct; local65536cases not hardwareguarantee."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/keyboard-modifier-snapshot-20260920.md": {
+      "sha256": "6fec6c0828164f87a8dbf963e10247edee93478e006a8e4dc0d5d5becc68e208",
+      "coverage": "full",
+      "note": "Keyboard full547lines: finalheldscene accepted but immediateTab duringnewScene stillfailed, 0.8s testwait notfix. Weather first614: CAconsumer realprotection getter mismatch16<<32 masquerades as restriction; preserve all64bitsincluding genuine1, notmaskorzero."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/weather-mission-control-20260919.md": {
+      "sha256": "b0a68052d5e274bb41338a4151c247b1a2587a685e1f996d98c045cb7ea27fe9",
+      "coverage": "full",
+      "note": "Weather full679lines closes actualMCpixels via realprotectionmetadata; code/readpixels/consumerroute separate. Dock first592lines retainsfreshcounterexample after10passes; overlapping oldmomentum stream is sourcecandidate, notattributedfromfirstBegan timestamp."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/dock-touch-hover-20260920.md": {
+      "sha256": "92482c614cdd6a76347db3e0e275776cc8ef91ae142c67d89aca8c47f2e1f689",
+      "coverage": "full",
+      "note": "Dock full685lines finalcontactmomentum fix tested actualnewstream endingoldtail, nofakeposition. Stray first569lines demonstrates runtimeprofile changing, samegameplay/thermal needed; fallbackownerquiesce rejected; numericalsamplerate not actualgameplay."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/stray-steam-performance-20260821.md": {
+      "sha256": "03b9f2c03fc1c0243361500cad3b098afebfd93f9a3d2da100a14f869ff88f67",
+      "coverage": "full",
+      "note": "Stray complete922lines: preservinghalf-float conversion tested exactnativeoutputs, sourceformat-targetchain notglobalclamp; shaderload vs pipeline vs gameflow. Office stride324lines: probeorigin MH_EXECUTE vsdyldindex0, timing/attachedparentexit invalidated earliertraces."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/office-image-stride-20260919.md": {
+      "sha256": "366bc6ff332350001fae691088e1b54048439efb0200247c597f45b7579368f9",
+      "coverage": "full",
+      "note": "Office stride full974lines read: real decode/CPUbitmap/upstreamNoCopy/shaderpipeline chain; observedbudget exhaustion must notclaimzeroerrors; exactsource/nativesignatures/currentmappedroles distinguish finalcanonicalacceptance from precedingisolatedcandidate."
+    },
+    "analysis/MacWSBootingGuide/docs/displaystream-host-architecture.md": {
+      "sha256": "14137aeecd1e6dcd1e14b1bfd4163d0bd88480b6117f4772d8206eab52cda731",
+      "coverage": "full",
+      "note": "Full749line architecture read; latercurrentruntimegoals win over olderplannedone-shotgesture/multiversion tables. AuthorAGENTSfirst343 readmostlyidentical to currentroot, newmodelmatrixlessbroad and oldpointercalibration claim pendingcurrentcorrection."
+    },
+    "analysis/MacWSBootingGuide/AGENTS.md": {
+      "sha256": "a05210d08e6a854916bb3cf4c7d08fcbc1062923cd5d9c5a8adeaaaaec56e2e0",
+      "coverage": "full",
+      "note": "AuthorAGENTSall1726lines covered, exact paragraphs referenced to previouslyreadrootAGENTS; historicaltool recipes are evidence notnewauthorization. Currentuserinstructionsandactualpipeline take precedence over stale sign/exec/guard notes."
+    },
+    "analysis/MacWSBootingGuide/docs/agx-native-milestones.md": {
+      "sha256": "3b498ac23b66a8b82dba2a122b3bbfe517617f45e55b1cf46784dca16cebb4c2",
+      "coverage": "full",
+      "note": "Completed all original AGX milestones through authoritative final-composite acceptance, retaining historical scope and unchanged acceptance thresholds."
+    },
+    "docs/porting/archive/macos15-roots/dyld-15.6.1-state.md": {
+      "sha256": "999f2d01f047aa50a44a3030f2c16775df07fdcdc64880b1c37791be8a04c6e5",
+      "coverage": "full",
+      "note": "Completed 3954-line frozen state, including final cleanup and deletion of the old rootfs/cache payload; resumption needs reconstructing inputs, not assuming the old device rootfs survives."
+    },
+    "analysis/files-app-macpad_iOS-archive-20261004/安装说明.md": {
+      "sha256": "543f62416ff03a5175ee0195b7e6337b0943df9f9ebb46123c9c74b14351b9c7",
+      "coverage": "full",
+      "note": "Final initial Markdown duplicate installation runbook read by exact reference; obsolete MTLSim guidance remains historical, not current acceptance."
+    },
+    "docs/evidence/nodep_skip.txt": {
+      "sha256": "697a8548cbe1a779669e44942f3f2169a19fa8e297928034295894269ed002c6",
+      "coverage": "full",
+      "note": "Read short narrative/evidence and coordination messages as historical handover artifacts only; exit provenance, actual-hook proof, exact UUID and bounded observation requirements match current handoff."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/webgl2-performance-optimization-20260728/cold-start-stability-20260730/production-error-count.txt": {
+      "sha256": "537c3ff4109f783866d1495f95b093b36decf683bbf8729c984c4ea6f9cd46af",
+      "coverage": "full",
+      "note": "Read short narrative/evidence and coordination messages as historical handover artifacts only; exit provenance, actual-hook proof, exact UUID and bounded observation requirements match current handoff."
+    },
+    "coordination/next-pointer.txt": {
+      "sha256": "1da62a5acb2887ab558190feeb7b208472237dee9d4f985b1a67adbb5ad03733",
+      "coverage": "full",
+      "note": "Read short narrative/evidence and coordination messages as historical handover artifacts only; exit provenance, actual-hook proof, exact UUID and bounded observation requirements match current handoff."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/webgl2-performance-optimization-20260728/vscode-lifecycle-cleanup-proof.txt": {
+      "sha256": "ff269ae81dcb71e2e26ba65a13ffa69a7a9d97508cd4a6f3a86080669bf48644",
+      "coverage": "full",
+      "note": "Read short narrative/evidence and coordination messages as historical handover artifacts only; exit provenance, actual-hook proof, exact UUID and bounded observation requirements match current handoff."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/windowserver-production-cpu-20260730/systemstatus-listener-trace.txt": {
+      "sha256": "a7c298dd3aff534868ae834bef2e369880ebe3322c2cb6c335c49f7295883aa6",
+      "coverage": "full",
+      "note": "Read short narrative/evidence and coordination messages as historical handover artifacts only; exit provenance, actual-hook proof, exact UUID and bounded observation requirements match current handoff."
+    },
+    "coordination/r004a-git-release.txt": {
+      "sha256": "6504237bed1b370a1939413257497cc7edb9c3520180587eba6a20faad49996a",
+      "coverage": "full",
+      "note": "Read short narrative/evidence and coordination messages as historical handover artifacts only; exit provenance, actual-hook proof, exact UUID and bounded observation requirements match current handoff."
+    },
+    "coordination/scp-exit-message.txt": {
+      "sha256": "38b681a9da4f124a32b9d185d89c77abccdad5d94c117d53ba2297f7ef93b6d0",
+      "coverage": "full",
+      "note": "Read short narrative/evidence and coordination messages as historical handover artifacts only; exit provenance, actual-hook proof, exact UUID and bounded observation requirements match current handoff."
+    },
+    "coordination/r003-refusal-message.txt": {
+      "sha256": "882c2ee94b6cd53c6430f1e49070602aea195aa2474683ea669cf5d67fe89a98",
+      "coverage": "full",
+      "note": "Read short narrative/evidence and coordination messages as historical handover artifacts only; exit provenance, actual-hook proof, exact UUID and bounded observation requirements match current handoff."
+    },
+    "coordination/r004b-preflight-message.txt": {
+      "sha256": "1313ce205340d2efba11036493d8fc85ec2b90ecb6d082b6e745c2b03eef4da0",
+      "coverage": "full",
+      "note": "Read short narrative/evidence and coordination messages as historical handover artifacts only; exit provenance, actual-hook proof, exact UUID and bounded observation requirements match current handoff."
+    },
+    "coordination/r004b-git-release.txt": {
+      "sha256": "dca9c6fe83aa1c69bdabcb19051e7cecb8347aa44e558b5c9cb4c7a5a6fc8c38",
+      "coverage": "full",
+      "note": "Read short narrative/evidence and coordination messages as historical handover artifacts only; exit provenance, actual-hook proof, exact UUID and bounded observation requirements match current handoff."
+    },
+    "coordination/r003-slot-guard-message.txt": {
+      "sha256": "5a3d37d8065fa6e8edc2f3cfb3b89abd116b18cb046a097c949f2832ee921918",
+      "coverage": "full",
+      "note": "Read short narrative/evidence and coordination messages as historical handover artifacts only; exit provenance, actual-hook proof, exact UUID and bounded observation requirements match current handoff."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/webgl2-performance-optimization-20260728/unthrottled-102-runtime-excerpt.txt": {
+      "sha256": "80b8078bec895cfffc762973ad89f39bd3b29961ec84a0461260d2a301da9ae7",
+      "coverage": "full",
+      "note": "Read short narrative/evidence and coordination messages as historical handover artifacts only; exit provenance, actual-hook proof, exact UUID and bounded observation requirements match current handoff."
+    },
+    "coordination/r003-checkpoint-message.txt": {
+      "sha256": "9e12dcf09315dec2eb8cc4eb85fa2efaa2a05d36483a529e326b1cc5eb53d113",
+      "coverage": "full",
+      "note": "Read short narrative/evidence and coordination messages as historical handover artifacts only; exit provenance, actual-hook proof, exact UUID and bounded observation requirements match current handoff."
+    },
+    "coordination/ssh-tool-message.txt": {
+      "sha256": "0aefd0ab04f8fd736dae186b71075c8eec33ffb488f2620701b4cfae2fa6aa45",
+      "coverage": "full",
+      "note": "Read short narrative/evidence and coordination messages as historical handover artifacts only; exit provenance, actual-hook proof, exact UUID and bounded observation requirements match current handoff."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/webgl2-performance-optimization-20260728/cpu-singlethread-probe.txt": {
+      "sha256": "59712ad80ce01b8140ecd81b65a28b15ab5a1e76f46ba6718f703a7194834552",
+      "coverage": "full",
+      "note": "Read short narrative/evidence and coordination messages as historical handover artifacts only; exit provenance, actual-hook proof, exact UUID and bounded observation requirements match current handoff."
+    },
+    "coordination/git-release-message.txt": {
+      "sha256": "cec608498bd7101e55d5fa013743e8c69471fbcfb85de8f86a8c3ad6536d04ae",
+      "coverage": "full",
+      "note": "Read short narrative/evidence and coordination messages as historical handover artifacts only; exit provenance, actual-hook proof, exact UUID and bounded observation requirements match current handoff."
+    },
+    "coordination/r004b-startup-feedback.txt": {
+      "sha256": "d6d44ba9c031e72ee61e50e9f467829f24ca2e586b390bf4d4d3f6ba70b75634",
+      "coverage": "full",
+      "note": "Read short narrative/evidence and coordination messages as historical handover artifacts only; exit provenance, actual-hook proof, exact UUID and bounded observation requirements match current handoff."
+    },
+    "coordination/r004a-review-message.txt": {
+      "sha256": "d8806a523426988295a4b7799c4e3e0b9539cc3593096995e4c632a8370b176f",
+      "coverage": "full",
+      "note": "Read short narrative/evidence and coordination messages as historical handover artifacts only; exit provenance, actual-hook proof, exact UUID and bounded observation requirements match current handoff."
+    },
+    "coordination/r003-evidence-channel-message.txt": {
+      "sha256": "22c5b74e6067678cf748e49a3d1fbaded0df94b93d4b05af509b84b9509c71de",
+      "coverage": "full",
+      "note": "Read short narrative/evidence and coordination messages as historical handover artifacts only; exit provenance, actual-hook proof, exact UUID and bounded observation requirements match current handoff."
+    },
+    "coordination/r003-final-guidance.txt": {
+      "sha256": "35021b00145c7435621c0de09131affdead199ab46297dc5dc54360b58523521",
+      "coverage": "full",
+      "note": "Read short narrative/evidence and coordination messages as historical handover artifacts only; exit provenance, actual-hook proof, exact UUID and bounded observation requirements match current handoff."
+    },
+    "coordination/ida-status-message.txt": {
+      "sha256": "578ec6812cb45fe5456665c901cd08d256b978300fd12ee84531ca4e1d229ceb",
+      "coverage": "full",
+      "note": "Read short narrative/evidence and coordination messages as historical handover artifacts only; exit provenance, actual-hook proof, exact UUID and bounded observation requirements match current handoff."
+    },
+    "coordination/r004a-dispatch.txt": {
+      "sha256": "d4c99343ab418ac7401797f3b3e8d1cfe875cdbca2c568b53fc48d6e27728e30",
+      "coverage": "full",
+      "note": "Read short narrative/evidence and coordination messages as historical handover artifacts only; exit provenance, actual-hook proof, exact UUID and bounded observation requirements match current handoff."
+    },
+    "coordination/r003-freeze-message.txt": {
+      "sha256": "0036f4b5e7121d7f8330f364c80ed5c826aaa66b474bfd5db6c671aa52d4dedd",
+      "coverage": "full",
+      "note": "Read short narrative/evidence and coordination messages as historical handover artifacts only; exit provenance, actual-hook proof, exact UUID and bounded observation requirements match current handoff."
+    },
+    "coordination/r004b-dispatch.txt": {
+      "sha256": "15060dbe455a15a4e7891e6a05f787b9801196b83e01f38430f3a37b8de694c9",
+      "coverage": "full",
+      "note": "Read short narrative/evidence and coordination messages as historical handover artifacts only; exit provenance, actual-hook proof, exact UUID and bounded observation requirements match current handoff."
+    },
+    "coordination/r005-dispatch.txt": {
+      "sha256": "f67734a1770652ca8ecb0b83d4af6c1b4405e097e0ebd7e53a29ac86867c7c38",
+      "coverage": "full",
+      "note": "Read remaining short relay narratives, original simulator framework instructions, selective service namespace repair, real Carbon menu stack and exact source-vs-runtime boundaries. Relay script was read only, never run."
+    },
+    "coordination/r003-cleanup-correction.txt": {
+      "sha256": "e0cb2d8fa826aa14be5f3b821859423b7e36b35bda2c898d34a22f1f1acc058e",
+      "coverage": "full",
+      "note": "Read remaining short relay narratives, original simulator framework instructions, selective service namespace repair, real Carbon menu stack and exact source-vs-runtime boundaries. Relay script was read only, never run."
+    },
+    "coordination/r005-static-correction.txt": {
+      "sha256": "27ad312874f4c240b199a179c8194ec389cba58b4cf1b20e7b62b098e98f75db",
+      "coverage": "full",
+      "note": "Read remaining short relay narratives, original simulator framework instructions, selective service namespace repair, real Carbon menu stack and exact source-vs-runtime boundaries. Relay script was read only, never run."
+    },
+    "coordination/dispatch-message.txt": {
+      "sha256": "8be5cde4ca51981601e6e9d8fada6e40c7537cc6828bc9a74509e98e56e6f143",
+      "coverage": "full",
+      "note": "Read remaining short relay narratives, original simulator framework instructions, selective service namespace repair, real Carbon menu stack and exact source-vs-runtime boundaries. Relay script was read only, never run."
+    },
+    "coordination/r005-static-finding.txt": {
+      "sha256": "c9d946c6d21b9f9df46a00f514f27c0199b337d02d189763679708023873ee70",
+      "coverage": "full",
+      "note": "Read remaining short relay narratives, original simulator framework instructions, selective service namespace repair, real Carbon menu stack and exact source-vs-runtime boundaries. Relay script was read only, never run."
+    },
+    "coordination/r005-git-release.txt": {
+      "sha256": "fc79f3e0d8ba164805836a38b9d3d49ac2c03a0b4bbb25c91e1c3fb94a63a402",
+      "coverage": "full",
+      "note": "Read remaining short relay narratives, original simulator framework instructions, selective service namespace repair, real Carbon menu stack and exact source-vs-runtime boundaries. Relay script was read only, never run."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/webgl2-performance-optimization-20260728/cvdisplaylink-probe.txt": {
+      "sha256": "f45f325550c22079ed51639f0d76bf41233b0afa5fc2452d9972a2045391a421",
+      "coverage": "full",
+      "note": "Read remaining short relay narratives, original simulator framework instructions, selective service namespace repair, real Carbon menu stack and exact source-vs-runtime boundaries. Relay script was read only, never run."
+    },
+    "coordination/scp-tool-message.txt": {
+      "sha256": "5ca16410759c7adf2eef99b1040e436164b58ec8a94cd8d311942b7bcfd5d908",
+      "coverage": "full",
+      "note": "Read remaining short relay narratives, original simulator framework instructions, selective service namespace repair, real Carbon menu stack and exact source-vs-runtime boundaries. Relay script was read only, never run."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/webgl2-performance-optimization-20260728/ios16-agx-priority-re-excerpt.txt": {
+      "sha256": "155b35ebdf995e3c1b527c6e5a0084821370f0dcb0eb954beedb13a078153ef0",
+      "coverage": "full",
+      "note": "Read remaining short relay narratives, original simulator framework instructions, selective service namespace repair, real Carbon menu stack and exact source-vs-runtime boundaries. Relay script was read only, never run."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/webgl2-performance-optimization-20260728/production-hotpath-cache-20260730/production-start-result.txt": {
+      "sha256": "b55ec0b2c7843c032435289b1452c4722718acbd40828d6393768bd0ef4883a2",
+      "coverage": "full",
+      "note": "Read remaining short relay narratives, original simulator framework instructions, selective service namespace repair, real Carbon menu stack and exact source-vs-runtime boundaries. Relay script was read only, never run."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/windowserver-production-cpu-20260730/systemstatus-bootstrap-collision.txt": {
+      "sha256": "62cbd34b5560241c5ff5c120b2a6ff85e35632569aa18259a329a2834e3d7124",
+      "coverage": "full",
+      "note": "Read remaining short relay narratives, original simulator framework instructions, selective service namespace repair, real Carbon menu stack and exact source-vs-runtime boundaries. Relay script was read only, never run."
+    },
+    "coordination/r004b-outcome-and-rules.txt": {
+      "sha256": "8c250dfb6f2b14304ede611aa637043837d3c2abad5a28070c28bbc91fa1291e",
+      "coverage": "full",
+      "note": "Read remaining short relay narratives, original simulator framework instructions, selective service namespace repair, real Carbon menu stack and exact source-vs-runtime boundaries. Relay script was read only, never run."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/webgl2-performance-optimization-20260728/jit-page-wx-20260730/runtime-excerpts.txt": {
+      "sha256": "52deadbb35928321836018eb5df9404088d6bcd0fcc56d0d28f663e6c0fea4dc",
+      "coverage": "full",
+      "note": "Read remaining short relay narratives, original simulator framework instructions, selective service namespace repair, real Carbon menu stack and exact source-vs-runtime boundaries. Relay script was read only, never run."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/windowserver-production-cpu-20260730/systemstatus-private-lldb.txt": {
+      "sha256": "5b83aa1c2518590b5ac4547d3d0776ef4418d69003dcc2c439c2178a48cd6c7e",
+      "coverage": "full",
+      "note": "Read remaining short relay narratives, original simulator framework instructions, selective service namespace repair, real Carbon menu stack and exact source-vs-runtime boundaries. Relay script was read only, never run."
+    },
+    "docs/evidence/m1-cache-slide-metadata-20260930.txt": {
+      "sha256": "8131a182885a394eafbb9ed5451a5b411c71acd6c890560943dff1661527d65a",
+      "coverage": "full",
+      "note": "Read remaining short relay narratives, original simulator framework instructions, selective service namespace repair, real Carbon menu stack and exact source-vs-runtime boundaries. Relay script was read only, never run."
+    },
+    "coordination/reviews/macpad_devin_relay-before-handover-20261015.txt": {
+      "sha256": "e5f0480c726584d22ed90779d4664d66b9cb1b2983df6f3ec5a4bdff14ddb762",
+      "coverage": "full",
+      "note": "Read remaining short relay narratives, original simulator framework instructions, selective service namespace repair, real Carbon menu stack and exact source-vs-runtime boundaries. Relay script was read only, never run."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/fullscreen-workspace-20260802/display-handoff-production.txt": {
+      "sha256": "4368061fdfb319cd00bf998b886b2c8a2d66cb91536f45cf4540ac843ffb266a",
+      "coverage": "full",
+      "note": "Read remaining short relay narratives, original simulator framework instructions, selective service namespace repair, real Carbon menu stack and exact source-vs-runtime boundaries. Relay script was read only, never run."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/webgl2-performance-optimization-20260728/ipad-60000-thermal-and-agx-runtime-excerpt.txt": {
+      "sha256": "1800ee7b84b60e92a1ff8e2e12969d9ceca9048d53881200bc479e68123a017e",
+      "coverage": "full",
+      "note": "Read remaining short relay narratives, original simulator framework instructions, selective service namespace repair, real Carbon menu stack and exact source-vs-runtime boundaries. Relay script was read only, never run."
+    },
+    "analysis/MacWSBootingGuide/layout/usr/macOS/Frameworks/README.txt": {
+      "sha256": "9d8c8d903b02c289c063f2bdb483e3fdbb4fd94e93c02b1ee7a2b5a069976c57",
+      "coverage": "full",
+      "note": "Read remaining short relay narratives, original simulator framework instructions, selective service namespace repair, real Carbon menu stack and exact source-vs-runtime boundaries. Relay script was read only, never run."
+    },
+    "layout/usr/macOS/Frameworks/README.txt": {
+      "sha256": "9d8c8d903b02c289c063f2bdb483e3fdbb4fd94e93c02b1ee7a2b5a069976c57",
+      "coverage": "full",
+      "note": "Read remaining short relay narratives, original simulator framework instructions, selective service namespace repair, real Carbon menu stack and exact source-vs-runtime boundaries. Relay script was read only, never run."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/stray-half-float-runtime-20260824.txt": {
+      "sha256": "3f433a379dfce258897cf6816aa2fad9a8d7672941548fcf75b3862fcf020ca2",
+      "coverage": "full",
+      "note": "Read remaining short relay narratives, original simulator framework instructions, selective service namespace repair, real Carbon menu stack and exact source-vs-runtime boundaries. Relay script was read only, never run."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/vnc-performance-production-20260730/context-menu-lldb-stack.txt": {
+      "sha256": "42c6acc6a4b584adb2e2150434d3793b566a1622388826ffac95163c0fd85320",
+      "coverage": "full",
+      "note": "Read remaining short relay narratives, original simulator framework instructions, selective service namespace repair, real Carbon menu stack and exact source-vs-runtime boundaries. Relay script was read only, never run."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/vnc-performance-production-20260730/context-routing-stall-excerpt.txt": {
+      "sha256": "3ab47b72083ab7a19889c5df60b4ec3f29f8edc6ce084bf5b7a2b9615b343b77",
+      "coverage": "full",
+      "note": "Original narrative evidence: routing stalls, rAF/GPU split, blur/control output, complete event destruction lifecycle, publisher source identity and AppKit pressed-button invariant; no historical scaffold generalized to production."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/webgl2-performance-optimization-20260728/presentation-scheduler-split-20260729.txt": {
+      "sha256": "d35fd625d51d18df021d90ac0ab2d04f73eca7128fbf53f03f74880a18796ade",
+      "coverage": "full",
+      "note": "Original narrative evidence: routing stalls, rAF/GPU split, blur/control output, complete event destruction lifecycle, publisher source identity and AppKit pressed-button invariant; no historical scaffold generalized to production."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/native-agx-glassdemo-20260725.txt": {
+      "sha256": "e5620ffe2be94cd5a6de2367283a4d083aa364b34831cda985b802de18118079",
+      "coverage": "full",
+      "note": "Original narrative evidence: routing stalls, rAF/GPU split, blur/control output, complete event destruction lifecycle, publisher source identity and AppKit pressed-button invariant; no historical scaffold generalized to production."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/native-agx-glassdemo-blur-ab-20260725.txt": {
+      "sha256": "a934f7c66ec35c461f02af79a4da31b68dd387481bf47607e491161d691277c9",
+      "coverage": "full",
+      "note": "Original narrative evidence: routing stalls, rAF/GPU split, blur/control output, complete event destruction lifecycle, publisher source identity and AppKit pressed-button invariant; no historical scaffold generalized to production."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/chrome150-event-lifecycle-selector-20260729.txt": {
+      "sha256": "d32207be6ad57766992dc8fb4c0062b0ac9616a98a9c738df073b84d49b3c615",
+      "coverage": "full",
+      "note": "Original narrative evidence: routing stalls, rAF/GPU split, blur/control output, complete event destruction lifecycle, publisher source identity and AppKit pressed-button invariant; no historical scaffold generalized to production."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/coexist-vnc-stability-20260726.txt": {
+      "sha256": "d3acd5593110af58f96b3561cdbd93dc952cf0620215371df6f3144e0511476e",
+      "coverage": "full",
+      "note": "Original narrative evidence: routing stalls, rAF/GPU split, blur/control output, complete event destruction lifecycle, publisher source identity and AppKit pressed-button invariant; no historical scaffold generalized to production."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/coexist-vnc-appkit-drag-m6-20260727.txt": {
+      "sha256": "60621106f304e59a397d32c134aff4c0d1077f103d8ad6ba7fd1cd3fc10fd175",
+      "coverage": "full",
+      "note": "Original narrative evidence: routing stalls, rAF/GPU split, blur/control output, complete event destruction lifecycle, publisher source identity and AppKit pressed-button invariant; no historical scaffold generalized to production."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/webgl2-performance-optimization-20260728/private-metal-event-selector-20260729.txt": {
+      "sha256": "89412122e4d7d87c9d107fca45c58ce6eee8f31182590108b4a41081f7934bcf",
+      "coverage": "full",
+      "note": "Read exact Metal event and third compiler callsite evidence, atomic input versus unchanged control pixels, full PartitionAlloc invariant migration and refresh pipeline; historical disabled watchdog commands are not current instructions."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/coexist-vnc-atomic-input-m5-20260726.txt": {
+      "sha256": "832928745dfba2d6f8ba30a85389f4b135f829e1084060c6921f0229b2956f5d",
+      "coverage": "full",
+      "note": "Read exact Metal event and third compiler callsite evidence, atomic input versus unchanged control pixels, full PartitionAlloc invariant migration and refresh pipeline; historical disabled watchdog commands are not current instructions."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/coexist-vnc-input-refresh-20260726.txt": {
+      "sha256": "cc6deeb469ee7a8a61da3d2cf2dc2d2d76f1df5fd877a0763286902179f91804",
+      "coverage": "full",
+      "note": "Read exact Metal event and third compiler callsite evidence, atomic input versus unchanged control pixels, full PartitionAlloc invariant migration and refresh pipeline; historical disabled watchdog commands are not current instructions."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/chrome-partitionalloc-va-limit-20260728.txt": {
+      "sha256": "fa3eddf47f05606a54006853517e23f3f71066a19159572be773cf2c644bdc65",
+      "coverage": "full",
+      "note": "Read exact Metal event and third compiler callsite evidence, atomic input versus unchanged control pixels, full PartitionAlloc invariant migration and refresh pipeline; historical disabled watchdog commands are not current instructions."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/webgl2-performance-optimization-20260728/metal-target-worker-and-controlled-pace-20260729.txt": {
+      "sha256": "057da522a6622b388417e80d1525a116f5f4f8a1a7d6bb8c5261505f9eb9f5c4",
+      "coverage": "full",
+      "note": "Read exact Metal event and third compiler callsite evidence, atomic input versus unchanged control pixels, full PartitionAlloc invariant migration and refresh pipeline; historical disabled watchdog commands are not current instructions."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/ipados-native-host-input-m2-20260725.txt": {
+      "sha256": "0d469a252930969392072872a5cc5657a8d3aca26dd4f4b0a3ad1369da433357",
+      "coverage": "full",
+      "note": "Read M2 cursor-state correction, native blur/control evidence, correct-slice wrapper A/B and completion-record ABI. IOSurface release proof in progress confirms measured lifetime repair upstream."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/native-agx-vnc-glassdemo-20260727.txt": {
+      "sha256": "8af02f6a67b4e4a53ae6a1878e856eb108bbe616b2de08dae5d2b6501bc85300",
+      "coverage": "full",
+      "note": "Read M2 cursor-state correction, native blur/control evidence, correct-slice wrapper A/B and completion-record ABI. IOSurface release proof in progress confirms measured lifetime repair upstream."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/webgl2-performance-optimization-20260728/windowserver-wrapper-generation3-20260729.txt": {
+      "sha256": "6d8f47770f26141e5141a77da2465a00f68d3c5825d4828a07c2968e12652f72",
+      "coverage": "full",
+      "note": "Read M2 cursor-state correction, native blur/control evidence, correct-slice wrapper A/B and completion-record ABI. IOSurface release proof in progress confirms measured lifetime repair upstream."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/coexist-native-agx-completion-re-20260727.txt": {
+      "sha256": "edc4801296c334c48de3bec094d650eb40d34c10174cadd690344977d58acfab",
+      "coverage": "full",
+      "note": "Read M2 cursor-state correction, native blur/control evidence, correct-slice wrapper A/B and completion-record ABI. IOSurface release proof in progress confirms measured lifetime repair upstream."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/iosurface-release-abi-20260725.txt": {
+      "sha256": "f96f7b5faefeb7bb0af1771b9263e82287f971e42a938a39e40b8e9463473492",
+      "coverage": "full",
+      "note": "Read complete IOSurface lifetime, M3 cold control path, secondary allocator full geometry, RGB/generation-based readiness and partial exact first-fault correlation; same-geometry and startup failure limits preserved."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/ipados-native-host-control-m3-20260726.txt": {
+      "sha256": "09a3647046544bc62fd6407e302415225bf094fd4192cc31bb4c410c4fc64986",
+      "coverage": "full",
+      "note": "Read complete IOSurface lifetime, M3 cold control path, secondary allocator full geometry, RGB/generation-based readiness and partial exact first-fault correlation; same-geometry and startup failure limits preserved."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/chrome150-secondary-partitionalloc-20260729.txt": {
+      "sha256": "3cf25babe5015e8a78358047f1782d0838485acb0ae36d3bda7aa4745cae0ac2",
+      "coverage": "full",
+      "note": "Read complete IOSurface lifetime, M3 cold control path, secondary allocator full geometry, RGB/generation-based readiness and partial exact first-fault correlation; same-geometry and startup failure limits preserved."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/coexist-vnc-retina-ready-20260726.txt": {
+      "sha256": "c4bb9b6d4187f9c1ec10a8d33291cc1d8b6c98aaf9587f629128cf95457559a6",
+      "coverage": "full",
+      "note": "Read complete IOSurface lifetime, M3 cold control path, secondary allocator full geometry, RGB/generation-based readiness and partial exact first-fault correlation; same-geometry and startup failure limits preserved."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/coexist-native-agx-first-pagefault-20260727.txt": {
+      "sha256": "3a5cb56655ceba63685d5ed30d054b8e1f7812a96293b02b78114c1bec225484",
+      "coverage": "full",
+      "note": "Read final exact-geometry fault control, persistent-client Terminal refresh, nonce-bound multi-app target selection and gesture-owner/pacing evidence; observation loops do not substitute for visible endpoint acceptance."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/native-agx-terminal-vnc-refresh-20260728.txt": {
+      "sha256": "4a94bd15396312f2cd240082caecbd655e562a475adb0eb4d7593f3c6d79d63a",
+      "coverage": "full",
+      "note": "Read final exact-geometry fault control, persistent-client Terminal refresh, nonce-bound multi-app target selection and gesture-owner/pacing evidence; observation loops do not substitute for visible endpoint acceptance."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/native-agx-vnc-multiapp-soak-20260728.txt": {
+      "sha256": "59b0cd607a4a8ea422927141a657fb4b6eb7b352755643d673c655a229f89ff5",
+      "coverage": "full",
+      "note": "Read final exact-geometry fault control, persistent-client Terminal refresh, nonce-bound multi-app target selection and gesture-owner/pacing evidence; observation loops do not substitute for visible endpoint acceptance."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/native-agx-vnc-interactive-pacing-20260728.txt": {
+      "sha256": "511e524715089f29c21fd0754e807955883b99270cbcabe276d7b73428be6fbf",
+      "coverage": "full",
+      "note": "Read final exact-geometry fault control, persistent-client Terminal refresh, nonce-bound multi-app target selection and gesture-owner/pacing evidence; observation loops do not substitute for visible endpoint acceptance."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/launchd-performance-class-20260730/ipad-60k-round3-error-count.txt": {
+      "sha256": "b3c052dca33820b43eb594a4d1b83cf36f4ff7805a3585261aad821f2f6e5bcc",
+      "coverage": "full",
+      "note": "Completed remaining narrative text corpus, including explicit error-count increase, M0 dedicated-entitlement and actual-build identity controls, and final M4 visible input witness."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/ipados-native-host-m0-20260725.txt": {
+      "sha256": "59c66038968db3e729bc0d5b32cf450f93885b5f9e01c33d3652a3497aa81f10",
+      "coverage": "full",
+      "note": "Completed remaining narrative text corpus, including explicit error-count increase, M0 dedicated-entitlement and actual-build identity controls, and final M4 visible input witness."
+    },
+    "analysis/MacWSBootingGuide/docs/evidence/ipados-native-host-input-m4-20260726.txt": {
+      "sha256": "b416073c2fcd0f66c9df6745667c0718aaf9fb1ef2508f1d39caa0e00b411d2e",
+      "coverage": "full",
+      "note": "Completed remaining narrative text corpus, including explicit error-count increase, M0 dedicated-entitlement and actual-build identity controls, and final M4 visible input witness."
     }
   }
 }
