@@ -1,0 +1,105 @@
+[
+  {
+    "file": "sidecar0.dylib",
+    "magic": "MPAGER01",
+    "blob_size": 28448,
+    "region_count": 5,
+    "regions": [
+      {
+        "fd_placeholder": 0,
+        "protection": "0x1",
+        "file_offset": "0xc000",
+        "address": "0x1e7f5c000",
+        "size": "0x1e90000"
+      },
+      {
+        "fd_placeholder": 0,
+        "protection": "0x3",
+        "file_offset": "0x1e9c000",
+        "address": "0x1ebdec000",
+        "size": "0x239c000"
+      },
+      {
+        "fd_placeholder": 0,
+        "protection": "0x1",
+        "file_offset": "0x4238000",
+        "address": "0x1ee188000",
+        "size": "0x24000"
+      },
+      {
+        "fd_placeholder": 0,
+        "protection": "0x3",
+        "file_offset": "0x425c000",
+        "address": "0x1ee1ac000",
+        "size": "0x1200000"
+      },
+      {
+        "fd_placeholder": 0,
+        "protection": "0x1",
+        "file_offset": "0x545c000",
+        "address": "0x1ef3ac000",
+        "size": "0x7cc4000"
+      }
+    ],
+    "mwl_info": {
+      "version": "0x7",
+      "page_size": "0x4000",
+      "pointer_format": "0xc",
+      "binds_offset": "0x6940",
+      "binds_count": "0xbc",
+      "chains_offset": "0x28",
+      "chains_size": "0x6914",
+      "slide": "0x0",
+      "image_address": "0x180000000"
+    },
+    "header_bytes": "0700000000400c0040690000bc000000280000001469000000000000000000000000008001000000"
+  },
+  {
+    "file": "sidecar1.dylib",
+    "magic": "MPAGER01",
+    "blob_size": 2282864,
+    "region_count": 4,
+    "regions": [
+      {
+        "fd_placeholder": 0,
+        "protection": "0x1",
+        "file_offset": "0x234000",
+        "address": "0x279e14000",
+        "size": "0x21c4000"
+      },
+      {
+        "fd_placeholder": 0,
+        "protection": "0x3",
+        "file_offset": "0x23f8000",
+        "address": "0x27dfd8000",
+        "size": "0x38b4000"
+      },
+      {
+        "fd_placeholder": 0,
+        "protection": "0x3",
+        "file_offset": "0x5cac000",
+        "address": "0x28188c000",
+        "size": "0xd90000"
+      },
+      {
+        "fd_placeholder": 0,
+        "protection": "0x1",
+        "file_offset": "0x6a3c000",
+        "address": "0x28261c000",
+        "size": "0x45d4000"
+      }
+    ],
+    "mwl_info": {
+      "version": "0x7",
+      "page_size": "0x4000",
+      "pointer_format": "0xc",
+      "binds_offset": "0x5788",
+      "binds_count": "0x44fbd",
+      "chains_offset": "0x28",
+      "chains_size": "0x575c",
+      "slide": "0x0",
+      "image_address": "0x180000000"
+    },
+    "header_bytes": "0700000000400c0088570000bd4f0400280000005c57000000000000000000000000008001000000"
+  }
+]

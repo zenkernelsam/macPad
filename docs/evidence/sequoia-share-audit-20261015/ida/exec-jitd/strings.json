@@ -1,0 +1,230 @@
+[
+  {
+    "address": "0x100000028",
+    "text": "__PAGEZERO"
+  },
+  {
+    "address": "0x100000070",
+    "text": "__TEXT"
+  },
+  {
+    "address": "0x1000000b0",
+    "text": "__text"
+  },
+  {
+    "address": "0x1000000c0",
+    "text": "__TEXT"
+  },
+  {
+    "address": "0x100000100",
+    "text": "__stubs"
+  },
+  {
+    "address": "0x100000110",
+    "text": "__TEXT"
+  },
+  {
+    "address": "0x100000150",
+    "text": "__cstring"
+  },
+  {
+    "address": "0x100000160",
+    "text": "__TEXT"
+  },
+  {
+    "address": "0x1000001a0",
+    "text": "__const"
+  },
+  {
+    "address": "0x1000001b0",
+    "text": "__TEXT"
+  },
+  {
+    "address": "0x1000001f0",
+    "text": "__unwind_info"
+  },
+  {
+    "address": "0x100000200",
+    "text": "__TEXT"
+  },
+  {
+    "address": "0x100000248",
+    "text": "__DATA_CONST"
+  },
+  {
+    "address": "0x100000288",
+    "text": "__got"
+  },
+  {
+    "address": "0x100000298",
+    "text": "__DATA_CONST"
+  },
+  {
+    "address": "0x1000002d8",
+    "text": "__const"
+  },
+  {
+    "address": "0x1000002e8",
+    "text": "__DATA_CONST"
+  },
+  {
+    "address": "0x100000330",
+    "text": "__DATA"
+  },
+  {
+    "address": "0x100000370",
+    "text": "__data"
+  },
+  {
+    "address": "0x100000380",
+    "text": "__DATA"
+  },
+  {
+    "address": "0x1000003c0",
+    "text": "__bss"
+  },
+  {
+    "address": "0x1000003d0",
+    "text": "__DATA"
+  },
+  {
+    "address": "0x100000418",
+    "text": "__LINKEDIT"
+  },
+  {
+    "address": "0x1000004ec",
+    "text": "/usr/lib/dyld"
+  },
+  {
+    "address": "0x100000590",
+    "text": "/usr/lib/libSystem.B.dylib"
+  },
+  {
+    "address": "0x1000052d4",
+    "text": "SIGPIPE disposition"
+  },
+  {
+    "address": "0x1000052e8",
+    "text": "/var/mnt/rootfs/tmp/exec-jitd.lock"
+  },
+  {
+    "address": "0x10000530b",
+    "text": "exec admission lock"
+  },
+  {
+    "address": "0x100005324",
+    "text": "stale socket recovery"
+  },
+  {
+    "address": "0x10000533a",
+    "text": "EXECJIT recovered refused stale socket\n"
+  },
+  {
+    "address": "0x100005362",
+    "text": "listen"
+  },
+  {
+    "address": "0x100005369",
+    "text": "EXECJIT listening pid=%d\n"
+  },
+  {
+    "address": "0x100005388",
+    "text": "ARM HOLD\n"
+  },
+  {
+    "address": "0x100005392",
+    "text": "CANCEL\n"
+  },
+  {
+    "address": "0x10000539a",
+    "text": "SPAWN %ld %d %c"
+  },
+  {
+    "address": "0x1000053aa",
+    "text": "EXECJIT rejected non-owned/non-suspended child peer=%d child=%ld\n"
+  },
+  {
+    "address": "0x1000053f5",
+    "text": "/var/jb/Applications/MacWSSettingsExtension-com.apple.Wallpaper-Settings.extension.app/SettingsExtensionProxy"
+  },
+  {
+    "address": "0x100005463",
+    "text": "/var/jb/usr/macOS/Frameworks/Dock.framework/Versions/A/XPCServices/DockHelperProxy.xpc/DockHelperProxy"
+  },
+  {
+    "address": "0x1000054ca",
+    "text": "/var/jb/Applications/MacWSSettingsExtension-com.apple.Desktop-Settings.extension.app/SettingsExtensionProxy"
+  },
+  {
+    "address": "0x100005536",
+    "text": "/var/jb/usr/macOS/bin/launchdchrootexec-sequoia-main-20261005"
+  },
+  {
+    "address": "0x100005574",
+    "text": "/var/jb/usr/macOS/bin/launchdchrootexec-dock-reopen-20261010"
+  },
+  {
+    "address": "0x1000055b1",
+    "text": "/var/jb/usr/macOS/Frameworks/WebKit.framework/Versions/A/XPCServices/WebContentProxy.xpc/WebContentProxy"
+  },
+  {
+    "address": "0x10000561a",
+    "text": "/var/jb/usr/macOS/Frameworks/WebKit.framework/Versions/A/XPCServices/WebNetworkingProxy.xpc/WebNetworkingProxy"
+  },
+  {
+    "address": "0x100005689",
+    "text": "/var/jb/usr/macOS/Frameworks/WebKit.framework/Versions/A/XPCServices/WebGPUProxy.xpc/WebGPUProxy"
+  },
+  {
+    "address": "0x1000056ea",
+    "text": "/var/jb/usr/macOS/Frameworks/WebKit.framework/Versions/A/XPCServices/VideoDecoderProxy.xpc/VideoDecoderProxy"
+  },
+  {
+    "address": "0x100005757",
+    "text": "/var/jb/usr/macOS/Frameworks/ExtensionFoundation.framework/Versions/A/XPCServices/SettingsServiceProxy.xpc/SettingsServiceProxy"
+  },
+  {
+    "address": "0x1000057d7",
+    "text": "/var/jb/usr/macOS/Frameworks/WebKit.framework/Versions/A/XPCServices/SafariSandboxProxy.xpc/SafariSandboxProxy"
+  },
+  {
+    "address": "0x100005846",
+    "text": "EXECJIT rejecting peer %d path=%s\n"
+  },
+  {
+    "address": "0x100005869",
+    "text": "EXECJIT new suspended image pid=%d generation=%d->%d\n"
+  },
+  {
+    "address": "0x10000589f",
+    "text": "EXECJIT terminating owned failed suspended image pid=%d\n"
+  },
+  {
+    "address": "0x1000058d8",
+    "text": "EXECJIT watch ended pid=%d cancelled=%d\n"
+  },
+  {
+    "address": "0x100005904",
+    "text": "/var/jb/usr/bin/jbctl"
+  },
+  {
+    "address": "0x10000591a",
+    "text": "proc_set_debugged"
+  },
+  {
+    "address": "0x10000592c",
+    "text": "EXECJIT authorized pid=%d resume=%d\n"
+  },
+  {
+    "address": "0x100005951",
+    "text": "EXECJIT grant failed pid=%d spawn=%d status=%x\n"
+  },
+  {
+    "address": "0x100005990",
+    "text": "/var/mnt/rootfs/tmp/exec-jitd.sock"
+  },
+  {
+    "address": "0x1000059b3",
+    "text": "/private/var/mnt/rootfs/"
+  }
+]

@@ -78,6 +78,12 @@ Cryptex 资源路径、WebKit 多实例 XPC proxies、RunningBoard 身份、Netw
 
 先记入待办，不把 24G90/G14 的命令数据、136 字节配置、pager sidecars、gigacage 或 Safari 专项补丁复制到 22F82/G13。完整版分析见 [15.6.1 复盘](sequoia-24G90-share-review-20261015.md)。
 
+### F. 新增 IDA 结果：借鉴协议转换，别照搬 15 的补丁
+
+本轮已经确认：分享 dyld 在内核共享区之外先保留地址，再映射真实 cache；将 sidecar 的 format12 数据交给真实 syscall 550；前置失败时执行真正的 eager v5/PAC；exec helper 按 uniqueid/idversion 协调 `jbctl proc_set_debugged`。22,818,485 个指针的静态目标与 PAC 输入语义对照通过，详见 [机器码证据](../evidence/sequoia-share-audit-20261015/ida/README.md)。
+
+对 22F82 的启发是：先确认服务／协议版本、真实生产者和正确进程代际，再做保持语义的转换。这些发现**没有改变 R008/TCC 的未完成状态**，也不构成给 Ventura 添加 sidecar、额外 debug 标记或绕过权限检查的理由。
+
 ## 3. 今晚建议的工作顺序
 
 ### P0：先处理已保存的 R008 reviewer 边界问题

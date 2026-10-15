@@ -1,0 +1,16 @@
+{
+  "addr": "0x5aa98",
+  "code": "#182 *__fastcall mach_o::ChainedFixupPointerOnDisk::Cache64e::signPointer(\n        #182 *this,\n        __int64 a2,\n        void *a3,\n        unsigned __int16 a4,\n        int a5,\n        unsigned __int8 a6)\n{\n  unsigned __int64 v6; // x1\n\n  if ( this ) /*0x5aa98*/\n  {\n    v6 = a2 & 0xFFFFFFFFFFFFLL | ((unsigned __int64)a4 << 48); /*0x5aaa0*/\n    if ( a5 == 1 ) /*0x5aab0*/\n      return this; /*0x5aac4*/\n    if ( a5 ) /*0x5aab4*/\n      mach_o::ChainedFixupPointerOnDisk::Cache64e::signPointer(this, v6, a3, a4, a5, a6); /*0x5aae0*/\n    return this; /*0x5aacc*/\n  }\n  return this; /*0x5aad0*/\n}",
+  "line_count": 21,
+  "total_lines": 21,
+  "truncated": false,
+  "cursor": {
+    "done": true
+  },
+  "refs": [
+    {
+      "addr": "0x87530",
+      "name": "__ZN6mach_o25ChainedFixupPointerOnDisk8Cache64e11signPointerEyPvbth.cold.1"
+    }
+  ]
+}

@@ -1,0 +1,51 @@
+{
+  "result": [
+    {
+      "data": [
+        {
+          "addr": "0x3420c",
+          "name": "__ZN5dyld329deallocateExistingSharedCacheEv",
+          "size": "0x34",
+          "has_type": false
+        },
+        {
+          "addr": "0x34240",
+          "name": "__ZN5dyld313loadDyldCacheERKNS_18SharedCacheOptionsEPNS_19SharedCacheLoadInfoE",
+          "size": "0x9c",
+          "has_type": false
+        },
+        {
+          "addr": "0x342dc",
+          "name": "__ZN5dyld3L20mapSplitCachePrivateERKNS_18SharedCacheOptionsEPNS_19SharedCacheLoadInfoE",
+          "size": "0xecc",
+          "has_type": false
+        },
+        {
+          "addr": "0x35a10",
+          "name": "____ZN5dyld3L20mapSplitCachePrivateERKNS_18SharedCacheOptionsEPNS_19SharedCacheLoadInfoE_block_invoke",
+          "size": "0x44",
+          "has_type": false
+        },
+        {
+          "addr": "0x35a54",
+          "name": "____ZN5dyld3L20mapSplitCachePrivateERKNS_18SharedCacheOptionsEPNS_19SharedCacheLoadInfoE_block_invoke_2",
+          "size": "0x44",
+          "has_type": false
+        },
+        {
+          "addr": "0x360e8",
+          "name": "____ZN3lsl13MemoryManager26withWritableMemoryInternalIZN5dyld3L20mapSplitCachePrivateERKNS2_18SharedCacheOptionsEPNS2_19SharedCacheLoadInfoEE3$_0EEvT__block_invoke",
+          "size": "0x8",
+          "has_type": false
+        },
+        {
+          "addr": "0x360f0",
+          "name": "__ZZN5dyld3L20mapSplitCachePrivateERKNS_18SharedCacheOptionsEPNS_19SharedCacheLoadInfoEENK3$_0clEv",
+          "size": "0x2ec",
+          "has_type": false
+        }
+      ],
+      "next_offset": null
+    }
+  ]
+}

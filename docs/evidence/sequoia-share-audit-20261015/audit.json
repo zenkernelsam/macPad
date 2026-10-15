@@ -1,7 +1,7 @@
 {
   "date": "2026-10-15",
   "repository_baseline": "6d1b7f6",
-  "review_kind": "local documentation, file-integrity, metadata and reference-source audit; no new behavioral disassembly or device execution",
+  "review_kind": "local documentation, file-integrity and reference-source audit, followed by exact IDA binary analysis and offline sidecar semantic comparison; no device execution",
   "package": "analysis/macPad-15.6 2.1-分享包-20261013",
   "package_checksum_results": [
     {
@@ -283,9 +283,9 @@
     "Package historical runtime claims are source-reported, not independently reproduced.",
     "All package checklist hashes matched; this does not validate all unextracted payload file contents against inventory.",
     "The source-consistency list compares deployed/copy files and is not reproducible-build proof.",
-    "Behavior of helper internal admission and pager consumers remains THEORY until exact-binary RE and runtime evidence.",
-    "IDA MCP endpoints 13337-13339 refused connection at the bounded availability check.",
-    "No device connection, startup, build, install, kernel write, TCC policy change or Agent dispatch was performed."
+    "No device connection, startup, build, install, kernel write, TCC policy change or Agent dispatch was performed.",
+    "The initial IDA availability failure was resolved for Instance1 after user configuration/restart; Instance2 was unavailable during the follow-up, so the same IDA Pro 9.3 batch engine analyzed exec-jitd.",
+    "IDA confirms the supplied loader/helper control flow; full sidecar comparison confirms static targets and PAC inputs. Actual M1 kernel execution, PAC results, cold startup and GUI remain untested."
   ],
   "documentation_validation": {
     "new_navigation_file_links_checked": 73,
@@ -296,5 +296,23 @@
     "protected_document_hash_changes": 0,
     "staged_whitespace_check": "git diff --cached --check",
     "runtime_tests": "not run; this is a documentation-only change"
+  },
+  "ida_followup": {
+    "dyld_sha256": "def1d5e2ccde2ee7930a30f38d540981aab2ccda9a7f0d6212bd2f9339dd3a00",
+    "helper_sha256": "17d5f21a109b3df408640857dc06d8bbd63d85b41b3601f92f8297a52855d09e",
+    "evidence_index": "ida/README.md",
+    "semantic_validation": {
+      "pages": 24508,
+      "payload_bytes": 401539072,
+      "pointers": 22818485,
+      "plain_rebase": 14836648,
+      "auth_rebase": 7656359,
+      "auth_bind": 325478,
+      "target_chain_pac_inputs_and_nonchain_bytes_match": true,
+      "runtime_acceptance": false
+    },
+    "initial_bulk_IDA_audit": "timed out under IDA MCP trace profiler without success output",
+    "completed_bulk_audit": "same IDA-derived file comparison ran in ordinary Python; exit 0; 41.329927949 seconds",
+    "reproduction": "python3 docs/evidence/sequoia-share-audit-20261015/ida/verify_sidecar_semantics.py"
   }
 }

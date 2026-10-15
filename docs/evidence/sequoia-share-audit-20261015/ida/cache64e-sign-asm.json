@@ -1,0 +1,173 @@
+{
+  "addr": "0x5aa98",
+  "asm": {
+    "name": "__ZN6mach_o25ChainedFixupPointerOnDisk8Cache64e11signPointerEyPvbth",
+    "start_ea": "0x5aa98",
+    "segment": "__text",
+    "lines": [
+      {
+        "addr": "5aa98",
+        "instruction": "CBZ X0, locret_5AAD0",
+        "label": "__ZN6mach_o25ChainedFixupPointerOnDisk8Cache64e11signPointerEyPvbth",
+        "refs": [
+          {
+            "addr": "0x5aad0",
+            "name": "locret_5AAD0"
+          }
+        ]
+      },
+      {
+        "addr": "5aa9c",
+        "instruction": "MOV W8, W3"
+      },
+      {
+        "addr": "5aaa0",
+        "instruction": "BFI X1, X8, #0x30, #0x10 ; '0'; unsigned __int64",
+        "comments": [
+          "unsigned __int64"
+        ]
+      },
+      {
+        "addr": "5aaa4",
+        "instruction": "CMP W2, #0"
+      },
+      {
+        "addr": "5aaa8",
+        "instruction": "CSEL X16, X8, X1, EQ"
+      },
+      {
+        "addr": "5aaac",
+        "instruction": "CMP W4, #1"
+      },
+      {
+        "addr": "5aab0",
+        "instruction": "B.EQ loc_5AAC4",
+        "refs": [
+          {
+            "addr": "0x5aac4",
+            "name": "loc_5AAC4"
+          }
+        ]
+      },
+      {
+        "addr": "5aab4",
+        "instruction": "CBNZ W4, loc_5AAD4",
+        "refs": [
+          {
+            "addr": "0x5aad4",
+            "name": "loc_5AAD4"
+          }
+        ]
+      },
+      {
+        "addr": "5aab8",
+        "instruction": "MOV X17, X0"
+      },
+      {
+        "addr": "5aabc",
+        "instruction": "PACIA1716"
+      },
+      {
+        "addr": "5aac0",
+        "instruction": "B loc_5AACC",
+        "refs": [
+          {
+            "addr": "0x5aacc",
+            "name": "loc_5AACC"
+          }
+        ]
+      },
+      {
+        "addr": "5aac4",
+        "instruction": "MOV X17, X0",
+        "label": "loc_5AAC4"
+      },
+      {
+        "addr": "5aac8",
+        "instruction": "PACDA X17, X16"
+      },
+      {
+        "addr": "5aacc",
+        "instruction": "MOV X0, X17; this",
+        "label": "loc_5AACC",
+        "comments": [
+          "this"
+        ]
+      },
+      {
+        "addr": "5aad0",
+        "instruction": "RET",
+        "label": "locret_5AAD0"
+      },
+      {
+        "addr": "5aad4",
+        "instruction": "PACIBSP",
+        "label": "loc_5AAD4"
+      },
+      {
+        "addr": "5aad8",
+        "instruction": "STP X29, X30, [SP,#var_10_1]!"
+      },
+      {
+        "addr": "5aadc",
+        "instruction": "MOV X29, SP"
+      },
+      {
+        "addr": "5aae0",
+        "instruction": "BL __ZN6mach_o25ChainedFixupPointerOnDisk8Cache64e11signPointerEyPvbth.cold.1; mach_o::ChainedFixupPointerOnDisk::Cache64e::signPointer(ulong long,void *,bool,ushort,uchar) [clone]",
+        "refs": [
+          {
+            "addr": "0x87530",
+            "name": "__ZN6mach_o25ChainedFixupPointerOnDisk8Cache64e11signPointerEyPvbth.cold.1"
+          }
+        ]
+      }
+    ],
+    "stack_frame": [
+      {
+        "name": "var_10_1",
+        "offset": "0x0",
+        "size": "0x8",
+        "type": "_QWORD"
+      },
+      {
+        "name": "var_10",
+        "offset": "0x10",
+        "size": "0x8",
+        "type": "_QWORD"
+      }
+    ],
+    "return_type": "#182 *",
+    "arguments": [
+      {
+        "name": "this",
+        "type": "#182 *"
+      },
+      {
+        "name": "arg1",
+        "type": "__int64"
+      },
+      {
+        "name": "arg2",
+        "type": "void *"
+      },
+      {
+        "name": "arg3",
+        "type": "unsigned __int16"
+      },
+      {
+        "name": "arg4",
+        "type": "int"
+      },
+      {
+        "name": "arg5",
+        "type": "unsigned __int8"
+      }
+    ]
+  },
+  "instruction_count": 19,
+  "total_instructions": null,
+  "cursor": {
+    "done": true
+  }
+}

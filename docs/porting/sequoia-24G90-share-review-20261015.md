@@ -1,6 +1,6 @@
 # macOS 15.6.1 分享包复盘：冻结结论应如何修正
 
-日期：2026-10-15。用途：先完成当前 Ventura 复现，再恢复 Sequoia 研究时的决策依据。本文只做本地资料、归档文件及源码审计，没有启动 iPad、部署补丁或解除工程暂停。
+日期：2026-10-15。用途：先完成当前 Ventura 复现，再恢复 Sequoia 研究时的决策依据。本文包含本地资料、归档／源码审计及随后完成的 IDA 实际二进制分析，没有启动 iPad、部署补丁或解除工程暂停。
 
 **应撤回的是“15.6.1 整体不可行”的断言，保留的是“我们在 M1／20D47 上试过的特定加载组合未通过验收”的事实。** 分享包提供了不同的 private-cache、exec 准入和 pager 配套实现，值得作为下一次研究的对照基线；但现有材料还不足以证明这套实现已经解决了本机 T8103 的全部问题。
 
@@ -31,7 +31,9 @@
 
 复核摘要和文件身份见 [本轮审计证据](../evidence/sequoia-share-audit-20261015/audit.json)。完整本地工作材料在 `analysis/share-review-20261015/`；Apple 二进制不进入 Git。
 
-本文采用四种标签：**文件核验**、**源码确认**、**历史 RE/runtime 证据**、**THEORY**。源码注释里自称“runtime-confirmed”，而原日志不在包中时，仍归为来源方报告。
+随后恢复 IDA 后，已核对 dyld 身份并完成关键分支、sidecar 消费者和 exec helper 的实际反编译／汇编核验；对两个 sidecar 完成全量指针语义比较。详见 [新增机器码证据](../evidence/sequoia-share-audit-20261015/ida/README.md)。
+
+本文区分 **文件核验**、**源码确认**、**本轮 RE-confirmed**、**历史 RE/runtime 证据**与 **THEORY**。源码注释里自称“runtime-confirmed”，而原日志不在包中时，仍归为来源方报告。
 
 ## 2. 分享包实际上与我们哪里不同
 
@@ -76,7 +78,9 @@
 
 **判断：**这是本次最值得借鉴的工程方向之一——加载器、父子进程、信任准入和服务启动必须作为一套可重复的生命周期实现，而不只是“echo 在一次特殊 debugger 运行中活下来”。
 
-**THEORY，待二进制／实机核实：**`main15-exec-jitd-dock-reopen-20261010` 在新 exec generation 上具体做了哪些准入操作，是否避开我们的 nested-owner 故障，不能由 helper 名称、`DEBUG` 字符串或客户端源码推导。包内未找到它的完整对应源码。
+**本轮 RE-confirmed via exec helper +0x4844/+0x4c10：**现已反编译确认，它跟踪同一 process uniqueid 的新 idversion，确认暂停后调用真正的 `jbctl proc_set_debugged`，等待成功，再复核路径／uniqueid／idversion 和 `CS_DEBUGGED`，最后按请求恢复进程。helper 自身没有实现自定义 PMAP 补丁；它依赖 jbctl 的 jailbreak 后端，不能据此声称完全不改内核数据。完整对应源码仍未在包内找到。
+
+**仍为 THEORY：**这套组合是否足以消除本机的 nested-owner fault。旧 `run_dbg.c` 也调用过 `proc_set_debugged`，所以不能把区别简化为“以前忘记开 debug”；必须比较真正目标、exec 代际、后续子进程及 mapping/pager 组合。
 
 ### 2.3 新增了与完整 cache 绑定的 pager sidecars
 
@@ -98,9 +102,15 @@ main c2ef6966687b008ffbc29ee5f4899bc3df0b1e5afeb59fe122dd5b928ff0c5b3
 
 `otool -l` 显示 sidecar0 是有签名的 Mach-O 容器，包含 `__TEXT`、大段 `__DATA`、`__LINKEDIT`，ID 为 `cache-pager-sidecar`；这些是格式事实。
 
-**THEORY：**它们可能承载某种经过转换的分页数据／fixup 后备方案，正好值得与我们的 format-13 阻塞对照。但本轮**没有证实**其指针编码、映射地址、PAC 处理、按需分页过程或 eager fallback 是否正确。不能把“存在 sidecar”直接写成“已将 format 13 转成 12”，更不能把 sidecar 当作无需重建就能跨 cache 使用的通用库。
+**本轮 RE-confirmed via share-dyld-arm64e +0x34790 → +0x9b680：**已经确认消费者打开 sidecar、登记同文件签名、核对 cache UUID／slide／region VA 与 size，然后把 sidecar 的 fd 和真正的 linking blob 提交给 syscall 550。两个 blob 实测都是 **format 12（ARM64E_USERLAND24）**。
 
-恢复 15 研究时，必须获取其生成器或对实际 dyld 的消费者路径做 IDA 分析；这是目前比继续枚举 mmap flags 更有信息量的缺口。
+**全量文件语义核验通过：**24,508 页、22,818,485 个链式指针的目标地址、PAC key/diversity/addrDiv 输入、链路步长、page starts 和所有非链字节均对应原 cache。超过 32-bit offset 的认证目标被转换为 auth-bind＋24-bit ordinal＋64-bit targets 表，不能只把格式号 13 改成 12。详见 [证据与可复核脚本](../evidence/sequoia-share-audit-20261015/ida/README.md)。这是静态语义验证，不是真实 PAC 或内核 page-in 验收。
+
+**本轮 RE-confirmed via dyld +0x9b8ec → +0x34c00/+0x360f0：**前置条件不满足时确实进入 dyld 原有 eager v5 fixup；PAC helper 中仍有真实 `PACIA1716` 和 `PACDA`。但 syscall 550 **已经调用后失败**则退出 91，不能统称“任何失败都会回退”。旧 STATIC-m3 文档已经发现过 F1 eager 路线；不能把它当成以前完全没想到的新思路。
+
+另一个明确差异是 dyld `+0x9b580` 先用非固定地址 hint 在 `0x280000000` 保留 1 GiB PROT_NONE 区域，并核对实际返回地址，再由原循环映射真实 cache 文件。这没有改内核共享区大小，也没有把零页当作 cache 内容。
+
+恢复研究仍需补齐生成器和完整构建／补丁清单，并在本机做受控验证；不能将这些固定 UUID、slide=0 的 sidecar 用于别的 cache。
 
 ### 2.4 GPU 适配的是实际 M2 驱动 ABI
 
@@ -180,7 +190,7 @@ main c2ef6966687b008ffbc29ee5f4899bc3df0b1e5afeb59fe122dd5b928ff0c5b3
 | 顺序 | 工作 | 必须得到的证据／停止条件 |
 | --- | --- | --- |
 | 1 | 固定三份身份：原始 Apple 24G90、我们冻结基线、分享包 dyld | 每份 fat/thin SHA、UUID、架构、签名、补丁清单；不得再用“original”含糊命名 |
-| 2 | IDA 对分享 dyld 及 exec-jitd 做语义比较 | private-map、shared-region teardown、实际映射 VA、format-13/pager/fallback 的消费者路径；解释完整函数，不靠字节相似猜测 |
+| 2 | 在本轮已完成的 dyld／exec-jitd RE 上继续做版本差异对照 | 已确认地址保留、format12 消费者、eager/PAC 和代际准入；仍需原始 Apple／冻结基线的完整补丁比较 |
 | 3 | 补齐 sidecar 生成器和 exec helper 源码／构建记录 | 输入 cache hash → 输出 hash、PAC/重定位与页面保护不变量；未知 cache 拒绝使用旧 sidecar |
 | 4 | 对比 M1/20D47 与 M2/20C65 内核契约 | 先确认是否进入相同 owner/pager 路径，才判断设备差异是否决定性；不先写 kernel text |
 | 5 | 用新隔离 rootfs 跑真正的最小目标 | 单一 launchd 入口、真实 `/bin/echo HI`、退出 0，且该 PID 的主镜像和 libSystem/cache UUID 为 24G90 |
@@ -189,7 +199,7 @@ main c2ef6966687b008ffbc29ee5f4899bc3df0b1e5afeb59fe122dd5b928ff0c5b3
 
 原冻结记录中“kernel text 写失败、IMG4 摘要不匹配、没有可用自定义启动链”的证据继续保留；它们支持不重复这条高代价实验，不支持禁止研究其他加载契约。
 
-本轮 IDA 状态：本机 13337／13338／13339 在探测时均拒绝连接，未进行新的行为反编译。已准备 `analysis/share-review-20261015/share-dyld-arm64e`，SHA `def1d5e2ccde2ee7930a30f38d540981aab2ccda9a7f0d6212bd2f9339dd3a00`。以上关于 helper 内部和 pager 的 THEORY 在获得实际反编译／实机结果前保持未决。
+IDA 状态已更新：用户重启后 Instance1 的 ServerHealth／SHA／UUID 核对通过；dyld 行为分析用该 MCP 完成。13338 未监听时，exec helper 用同一 IDA Pro 9.3 的批处理＋Hex-Rays 分析并核对 SHA。旧“未做新反编译”只适用于初版。当前未决的是本机运行结果、jbctl 后端差异、生成器及完整构建复现；不能把已经核实的文件转换与尚未取得的运行验收混在一起。
 
 ## 6. 主要复核入口
 

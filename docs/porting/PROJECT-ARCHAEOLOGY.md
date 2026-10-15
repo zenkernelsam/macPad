@@ -47,3 +47,5 @@
 本地核验分享包全部校验项，提取关键文件并与 inventory 比对。确认材料包含 native15 loader 选择、private-cache exec/fork 配套、绑定 cache 哈希的 pager sidecars，以及 G14G 版本转换。其 WindowServer 配置同样有 `-virtualonly`；其相关 TCC entitlement 列表也不是简单多了 PostEvent grant。
 
 这些是具体的下一轮对照对象；helper 内部、pager 机制与 M1 适用性仍待实际 RE／运行证据。完整说明与恢复阶梯见 [15.6.1 复盘](sequoia-24G90-share-review-20261015.md)，今晚可用建议见 [Ventura 清单](ventura-22F82-evening-handoff-20261015.md)。
+
+同日 IDA 补充已完成：Instance1 身份与所需 dyld 完全吻合；实际代码确认高地址保留、format12 sidecar 消费者、eager v5/PAC 与 exec 代际准入。两个 sidecar 的 24,508 页／22,818,485 个指针静态语义比较通过。helper 在 13338 未就绪时用同一 IDA Pro 批处理分析。M1 的实际 text fault／CLI／GUI 验收仍未进行，详见 [机器码证据](../evidence/sequoia-share-audit-20261015/ida/README.md)。

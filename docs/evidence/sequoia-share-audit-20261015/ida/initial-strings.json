@@ -1,0 +1,36 @@
+{
+  "n": 7,
+  "matches": [
+    {
+      "addr": "0x8b73e",
+      "string": "dyld private shared cache could not be found\n"
+    },
+    {
+      "addr": "0x9055e",
+      "string": "mapped dyld cache file private to process (%s):\n"
+    },
+    {
+      "addr": "0x9b5d8",
+      "string": "macPad diagnostic: could not reserve the Sequoia private cache extension"
+    },
+    {
+      "addr": "0x9b936",
+      "string": "d\rMPAGER01/usr/local/share/macpad-pager15/enable"
+    },
+    {
+      "addr": "0x9b967",
+      "string": "/usr/local/share/macpad-pager15/sidecar0.dylib"
+    },
+    {
+      "addr": "0x9b996",
+      "string": "/usr/local/share/macpad-pager15/sidecar1.dylib"
+    },
+    {
+      "addr": "0x9b9c5",
+      "string": "MACPAD-PAGER15 linked OK\nMACPAD-PAGER15 failed\n"
+    }
+  ],
+  "cursor": {
+    "done": true
+  }
+}

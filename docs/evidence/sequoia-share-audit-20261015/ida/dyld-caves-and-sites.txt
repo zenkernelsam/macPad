@@ -1,0 +1,281 @@
+BLOCK 0x9b580..0x9b5d8
+0x9b580 7f2303d5 PACIBSP
+0x9b584 fd7bbfa9 STP             X29, X30, [SP,#-0x10]!
+0x9b588 fd030091 MOV             X29, SP
+0x9b58c 7f370039 STRB            WZR, [X27,#0xD]
+0x9b590 1f63fe97 BL              __ZN5dyld329deallocateExistingSharedCacheEv; dyld3::deallocateExistingSharedCache(void)
+0x9b594 0000b0d24000c0f2 MOV             X0, #0x280000000
+0x9b59c 0100a8d2 MOV             X1, #0x40000000
+0x9b5a0 020080d2 MOV             X2, #0
+0x9b5a4 430082d2 MOV             X3, #0x1002
+0x9b5a8 04008092 MOV             X4, #0xFFFFFFFFFFFFFFFF
+0x9b5ac 050080d2 MOV             X5, #0
+0x9b5b0 65a6fd97 BL              _mmap
+0x9b5b4 0800b0d24800c0f2 MOV             X8, #0x280000000
+0x9b5bc 1f0008eb CMP             X0, X8
+0x9b5c0 80000054 B.EQ            loc_9B5D0
+0x9b5c4 a0000010 ADR             X0, aMacpadDiagnost; "macPad diagnostic: could not reserve th"...
+0x9b5c8 010080d2 MOV             X1, #0
+0x9b5cc 4ec1fd97 BL              __ZN5dyld44haltEPKcPKNS_15StructuredErrorE; dyld4::halt(char const*,dyld4::StructuredError const*)
+0x9b5d0 fd7bc1a8 LDP             X29, X30, [SP],#0x10
+0x9b5d4 ff0f5fd6 RETAB
+BLOCK 0x9b680..0x9b918
+0x9b680 fd7bb8a9 STP             X29, X30, [SP,#-0x80]!
+0x9b684 f35301a9 STP             X19, X20, [SP,#0x10]
+0x9b688 f55b02a9 STP             X21, X22, [SP,#0x20]
+0x9b68c f76303a9 STP             X23, X24, [SP,#0x30]
+0x9b690 f96b04a9 STP             X25, X26, [SP,#0x40]
+0x9b694 fb7305a9 STP             X27, X28, [SP,#0x50]
+0x9b698 fd030091 MOV             X29, SP
+0x9b69c f90316aa MOV             X25, X22
+0x9b6a0 1a8300d1 SUB             X26, X24, #0x20 ; ' '
+0x9b6a4 7b8242b9 LDR             W27, [X19,#0x280]
+0x9b6a8 68464af9 LDR             X8, [X19,#0x1488]
+0x9b6ac 080540f9 LDR             X8, [X8,#8]
+0x9b6b0 281100b5 CBNZ            X8, loc_9B8D4
+0x9b6b4 3f0700f1 CMP             X25, #1
+0x9b6b8 e8100054 B.HI            loc_9B8D4
+0x9b6bc 480340f9 LDR             X8, [X26]
+0x9b6c0 08610191 ADD             X8, X8, #0x58 ; 'X'
+0x9b6c4 a9120010 ADR             X9, qword_9B918
+0x9b6c8 590000b4 CBZ             X25, loc_9B6D0
+0x9b6cc e9120010 ADR             X9, qword_9B928
+0x9b6d0 0a2d40a9 LDP             X10, X11, [X8]
+0x9b6d4 2c3540a9 LDP             X12, X13, [X9]
+0x9b6d8 5f010ceb CMP             X10, X12
+0x9b6dc c10f0054 B.NE            loc_9B8D4
+0x9b6e0 7f010deb CMP             X11, X13
+0x9b6e4 810f0054 B.NE            loc_9B8D4
+0x9b6e8 c0120010 ADR             X0, (aMpager01UsrLoc+8); "/usr/local/share/macpad-pager15/enable"
+0x9b6ec 010080d2 MOV             X1, #0
+0x9b6f0 020080d2 MOV             X2, #0
+0x9b6f4 b00080d2 MOV             X16, #5
+0x9b6f8 011000d4 SVC             0x80
+0x9b6fc c20e0054 B.CS            loc_9B8D4
+0x9b700 d00080d2 MOV             X16, #6
+0x9b704 011000d4 SVC             0x80
+0x9b708 e0120070 ADR             X0, aUsrLocalShareM_0; "/usr/local/share/macpad-pager15/sidecar"...
+0x9b70c 590000b4 CBZ             X25, loc_9B714
+0x9b710 20140050 ADR             X0, aUsrLocalShareM_1; "/usr/local/share/macpad-pager15/sidecar"...
+0x9b714 010080d2 MOV             X1, #0
+0x9b718 020080d2 MOV             X2, #0
+0x9b71c b00080d2 MOV             X16, #5
+0x9b720 011000d4 SVC             0x80
+0x9b724 820d0054 B.CS            loc_9B8D4
+0x9b728 f40300aa MOV             X20, X0
+0x9b72c 000080d2 MOV             X0, #0
+0x9b730 0108a0d2 MOV             X1, #0x400000
+0x9b734 620080d2 MOV             X2, #3
+0x9b738 430080d2 MOV             X3, #2
+0x9b73c e40314aa MOV             X4, X20
+0x9b740 050080d2 MOV             X5, #0
+0x9b744 b01880d2 MOV             X16, #0xC5
+0x9b748 011000d4 SVC             0x80
+0x9b74c e20b0054 B.CS            loc_9B8C8
+0x9b750 15104091 ADD             X21, X0, #4,LSL#12
+0x9b754 0a1040b9 LDR             W10, [X0,#dword_10]
+0x9b758 5f810071 CMP             W10, #0x20 ; ' '
+0x9b75c e80a0054 B.HI            loc_9B8B8
+0x9b760 09800091 ADD             X9, X0, #0x20 ; ' '
+0x9b764 aa0a0034 CBZ             W10, loc_9B8B8
+0x9b768 2b0140b9 LDR             W11, [X9]
+0x9b76c 7f750071 CMP             W11, #0x1D
+0x9b770 40010054 B.EQ            loc_9B798
+0x9b774 2b0540b9 LDR             W11, [X9,#4]
+0x9b778 7f210071 CMP             W11, #8
+0x9b77c e3090054 B.CC            loc_9B8B8
+0x9b780 29010b8b ADD             X9, X9, X11
+0x9b784 4a050051 SUB             W10, W10, #1
+0x9b788 2b0100cb SUB             X11, X9, X0
+0x9b78c 7f0d40f1 CMP             X11, #3,LSL#12
+0x9b790 48090054 B.HI            loc_9B8B8
+0x9b794 f4ffff17 B               loc_9B764
+0x9b798 2b0940b9 LDR             W11, [X9,#8]
+0x9b79c 2c0d40b9 LDR             W12, [X9,#0xC]
+0x9b7a0 ff3300f9 STR             XZR, [SP,#0x60]
+0x9b7a4 ebb306a9 STP             X11, X12, [SP,#0x68]
+0x9b7a8 e00314aa MOV             X0, X20
+0x9b7ac 210c80d2 MOV             X1, #0x61 ; 'a'
+0x9b7b0 e2830191 ADD             X2, SP, #0x60 ; '`'
+0x9b7b4 900b80d2 MOV             X16, #0x5C ; '\'
+0x9b7b8 011000d4 SVC             0x80
+0x9b7bc e2070054 B.CS            loc_9B8B8
+0x9b7c0 a80240f9 LDR             X8, [X21]
+0x9b7c4 a90b0010 ADR             X9, aMpager01UsrLoc; "MPAGER01/usr/local/share/macpad-pager15"...
+0x9b7c8 290140f9 LDR             X9, [X9]; "MPAGER01/usr/local/share/macpad-pager15"...
+0x9b7cc 1f0109eb CMP             X8, X9
+0x9b7d0 41070054 B.NE            loc_9B8B8
+0x9b7d4 b70a40b9 LDR             W23, [X21,#(loc_4008 - 0x4000)]
+0x9b7d8 ffa20071 CMP             W23, #0x28 ; '('
+0x9b7dc e9060054 B.LS            loc_9B8B8
+0x9b7e0 e807a052 MOV             W8, #0x3F0000
+0x9b7e4 ff02086b CMP             W23, W8
+0x9b7e8 88060054 B.HI            loc_9B8B8
+0x9b7ec b80e40b9 LDR             W24, [X21,#(loc_400C - 0x4000)]
+0x9b7f0 58060034 CBZ             W24, loc_9B8B8
+0x9b7f4 1f170071 CMP             W24, #5
+0x9b7f8 08060054 B.HI            loc_9B8B8
+0x9b7fc a9420091 ADD             X9, X21, #0x10
+0x9b800 ea03182a MOV             W10, W24
+0x9b804 2b0940f9 LDR             X11, [X9,#0x10]
+0x9b808 2c0d40f9 LDR             X12, [X9,#0x18]
+0x9b80c ed031aaa MOV             X13, X26
+0x9b810 ee031b2a MOV             W14, W27
+0x9b814 2e050034 CBZ             W14, loc_9B8B8
+0x9b818 af0140f9 LDR             X15, [X13]
+0x9b81c 7f010feb CMP             X11, X15
+0x9b820 81000054 B.NE            loc_9B830
+0x9b824 af0540f9 LDR             X15, [X13,#8]
+0x9b828 9f010feb CMP             X12, X15
+0x9b82c 80000054 B.EQ            loc_9B83C
+0x9b830 adc10091 ADD             X13, X13, #0x30 ; '0'
+0x9b834 ce050051 SUB             W14, W14, #1
+0x9b838 f7ffff17 B               loc_9B814
+0x9b83c 340100b9 STR             W20, [X9]
+0x9b840 29810091 ADD             X9, X9, #0x20 ; ' '
+0x9b844 4a050071 SUBS            W10, W10, #1
+0x9b848 e1fdff54 B.NE            loc_9B804
+0x9b84c a0420091 ADD             X0, X21, #0x10
+0x9b850 e103182a MOV             W1, W24
+0x9b854 a2c20291 ADD             X2, X21, #0xB0
+0x9b858 e303172a MOV             W3, W23
+0x9b85c d04480d2 MOV             X16, #0x226
+0x9b860 011000d4 SVC             0x80
+0x9b864 62040054 B.CS            loc_9B8F0
+0x9b868 400400b5 CBNZ            X0, loc_9B8F0
+0x9b86c a01240d1 SUB             X0, X21, #4,LSL#12
+0x9b870 0108a0d2 MOV             X1, #0x400000
+0x9b874 300980d2 MOV             X16, #0x49 ; 'I'
+0x9b878 011000d4 SVC             0x80
+0x9b87c e00314aa MOV             X0, X20
+0x9b880 d00080d2 MOV             X16, #6
+0x9b884 011000d4 SVC             0x80
+0x9b888 400080d2 MOV             X0, #2
+0x9b88c c1090030 ADR             X1, aMacpadPager15L; "MACPAD-PAGER15 linked OK\nMACPAD-PAGER1"...
+0x9b890 220380d2 MOV             X2, #0x19
+0x9b894 900080d2 MOV             X16, #4
+0x9b898 011000d4 SVC             0x80
+0x9b89c f35341a9 LDP             X19, X20, [SP,#0x10]
+0x9b8a0 f55b42a9 LDP             X21, X22, [SP,#0x20]
+0x9b8a4 f76343a9 LDP             X23, X24, [SP,#0x30]
+0x9b8a8 f96b44a9 LDP             X25, X26, [SP,#0x40]
+0x9b8ac fb7345a9 LDP             X27, X28, [SP,#0x50]
+0x9b8b0 fd7bc8a8 LDP             X29, X30, [SP],#0x80
+0x9b8b4 c165fe17 B               loc_34FB8
+0x9b8b8 a01240d1 SUB             X0, X21, #4,LSL#12
+0x9b8bc 0108a0d2 MOV             X1, #0x400000
+0x9b8c0 300980d2 MOV             X16, #0x49 ; 'I'
+0x9b8c4 011000d4 SVC             0x80
+0x9b8c8 e00314aa MOV             X0, X20
+0x9b8cc d00080d2 MOV             X16, #6
+0x9b8d0 011000d4 SVC             0x80
+0x9b8d4 f35341a9 LDP             X19, X20, [SP,#0x10]
+0x9b8d8 f55b42a9 LDP             X21, X22, [SP,#0x20]
+0x9b8dc f76343a9 LDP             X23, X24, [SP,#0x30]
+0x9b8e0 f96b44a9 LDP             X25, X26, [SP,#0x40]
+0x9b8e4 fb7345a9 LDP             X27, X28, [SP,#0x50]
+0x9b8e8 fd7bc8a8 LDP             X29, X30, [SP],#0x80
+0x9b8ec c564fe17 B               loc_34C00
+0x9b8f0 400080d2 MOV             X0, #2
+0x9b8f4 41070050 ADR             X1, (aMacpadPager15L+0x19); "MACPAD-PAGER15 failed\n"
+0x9b8f8 c20280d2 MOV             X2, #0x16
+0x9b8fc 900080d2 MOV             X16, #4
+0x9b900 011000d4 SVC             0x80
+0x9b904 600b80d2 MOV             X0, #0x5B ; '['
+0x9b908 300080d2 MOV             X16, #1
+0x9b90c 011000d4 SVC             0x80
+0x9b910 000020d4 BRK             #0
+0x9b914 1f2003d5 NOP
+BLOCK 0x34740..0x347a0
+0x34740 0a008052 MOV             W10, #0
+0x34744 69374039 LDRB            W9, [X27,#0xD]
+0x34748 eb0308aa MOV             X11, X8
+0x3474c ec0318aa MOV             X12, X24
+0x34750 8d815ff8 LDUR            X13, [X12,#-8]
+0x34754 ed0000b4 CBZ             X13, loc_34770
+0x34758 4a050011 ADD             W10, W10, #1
+0x3475c 8d0140f9 LDR             X13, [X12]
+0x34760 ad0140b9 LDR             W13, [X13]
+0x34764 bf150071 CMP             W13, #5
+0x34768 ed179f1a CSET            W13, EQ
+0x3476c a901090a AND             W9, W13, W9
+0x34770 8cc10091 ADD             X12, X12, #0x30 ; '0'
+0x34774 6b0500f1 SUBS            X11, X11, #1
+0x34778 c1feff54 B.NE            loc_34750
+0x3477c ea410034 CBZ             W10, loc_34FB8
+0x34780 5f190071 CMP             W10, #6
+0x34784 ea279f1a CSET            W10, CC
+0x34788 4901090a AND             W9, W10, W9
+0x3478c 3f050071 CMP             W9, #1
+0x34790 bc9b0114 B               loc_9B680
+0x34794 1c0080d2 MOV             X28, #0
+0x34798 69064091 ADD             X9, X19, #1,LSL#12
+0x3479c 29611291 ADD             X9, X9, #0x498
+BLOCK 0x34b40..0x34c20
+0x34b40 31e20091 ADRL            X17, off_9C038
+0x34b44 300240f9 LDR             X16, [X17]
+0x34b48 110a3fd7 BLRAA           X16, X17
+0x34b4c f94300d1 SUB             X25, SP, #0x10
+0x34b50 3f030091 MOV             SP, X25
+0x34b54 1a0080d2 MOV             X26, #0
+0x34b58 681b4039 LDRB            W8, [X27,#6]
+0x34b5c c8000036 TBZ             W8, #0, loc_34B74
+0x34b60 f60f1ff8 STR             X22, [SP,#0xFBB0+var_FBC0_1]!
+0x34b64 e002009000441a91 ADRL            X0, aSettingUpKerne_0; "Setting up kernel page-in linking for s"...
+0x34b6c e255ff97 BL              __ZN5dyld47consoleEPKcz; dyld4::console(char const*,...)
+0x34b70 ff430091 ADD             SP, SP, #0x10
+0x34b74 e00319aa MOV             X0, X25; regions
+0x34b78 e1031aaa MOV             X1, X26; regionCount
+0x34b7c e20318aa MOV             X2, X24; blob
+0x34b80 e30317aa MOV             X3, X23; blobSize
+0x34b84 92070194 BL              ___map_with_linking_np
+0x34b88 1f000071 CMP             W0, #0
+0x34b8c f4179f1a CSET            W20, EQ
+0x34b90 20010034 CBZ             W0, loc_34BB4
+0x34b94 681b4039 LDRB            W8, [X27,#6]
+0x34b98 1f050071 CMP             W8, #1
+0x34b9c c1000054 B.NE            loc_34BB4
+0x34ba0 f60f1ff8 STR             X22, [SP,#0xFBB0+var_FBC0_1]!
+0x34ba4 e002009000101b91 ADRL            X0, aMapWithLinking_0; "__map_with_linking_np(subcache %d) fail"...
+0x34bac d255ff97 BL              __ZN5dyld47consoleEPKcz; dyld4::console(char const*,...)
+0x34bb0 ff430091 ADD             SP, SP, #0x10
+0x34bb4 bf020091 MOV             SP, X21
+0x34bb8 7f7600f9 STR             XZR, [X19,#0xE8]
+0x34bbc 617a40f9 LDR             X1, [X19,#0xF0]; address
+0x34bc0 c10000b4 CBZ             X1, loc_34BD8
+0x34bc4 a80300b008c12b91 ADRL            X8, _mach_task_self_
+0x34bcc 000140b9 LDR             W0, [X8]; target_task
+0x34bd0 627e40f9 LDR             X2, [X19,#0xF8]; size
+0x34bd4 493cff97 BL              _vm_deallocate
+0x34bd8 9f0300f1 CMP             X28, #0
+0x34bdc 88169f1a CSINC           W8, W20, WZR, NE
+0x34be0 751e40f9 LDR             X21, [X19,#0x38]
+0x34be4 f44f70b2942198f2 MOV             X20, #0xFFFFFC10C
+0x34bec 780e40f9 LDR             X24, [X19,#0x18]
+0x34bf0 19388052 MOV             W25, #0x1C0
+0x34bf4 7a064091 ADD             X26, X19, #1,LSL#12
+0x34bf8 5a832891 ADD             X26, X26, #0xA20
+0x34bfc e81d0037 TBNZ            W8, #0, loc_34FB8
+0x34c00 68234039 LDRB            W8, [X27,#8]
+0x34c04 1f050071 CMP             W8, #1
+0x34c08 a1020054 B.NE            loc_34C5C
+0x34c0c 608240f9 LDR             X0, [X19,#0x100]
+0x34c10 68a20291 ADD             X8, X19, #0xA8
+0x34c14 900300b010823c91 ADRL            X16, __NSConcreteStackBlock
+0x34c1c f10308aa MOV             X17, X8
+BLOCK 0x3420c..0x34240
+0x3420c 7f2303d5 PACIBSP
+0x34210 ff8300d1 SUB             SP, SP, #0x20
+0x34214 fd7b01a9 STP             X29, X30, [SP,#0x10+var_s0]
+0x34218 fd430091 ADD             X29, SP, #0x10
+0x3421c ff0700f9 STR             XZR, [SP,#0x10+var_8]
+0x34220 e0230091 ADD             X0, SP, #0x10+var_8
+0x34224 ea0a0194 BL              ___shared_region_check_np
+0x34228 60000035 CBNZ            W0, loc_34234
+0x3422c 000080d2 MOV             X0, #0
+0x34230 e70a0194 BL              ___shared_region_check_np
+0x34234 fd7b41a9 LDP             X29, X30, [SP,#0x10+var_s0]
+0x34238 ff830091 ADD             SP, SP, #0x20 ; ' '
+0x3423c ff0f5fd6 RETAB
+BLOCK 0x9b620..0x9b680
+0x9b620 DECODE-FAILED

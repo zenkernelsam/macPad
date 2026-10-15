@@ -1,0 +1,7 @@
+{
+  "engine": "IDA Pro 9.3 batch + Hex-Rays",
+  "input": "/Users/ciscohe/Desktop/macPad/analysis/share-review-20261015/extracted/host-overlay/var/jb/usr/local/libexec/main15-exec-jitd-dock-reopen-20261010",
+  "imagebase": "0x100000000",
+  "sha256": "17d5f21a109b3df408640857dc06d8bbd63d85b41b3601f92f8297a52855d09e",
+  "hexrays_ready": true
+}

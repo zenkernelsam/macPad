@@ -114,6 +114,10 @@ timeline and evening handoff. The Sequoia share-package review in
 `docs/porting/sequoia-24G90-share-review-20261015.md` retracts the universal
 “15.6.1 is impossible” inference and the recycled “131 macOS images” claim;
 it does not claim a working M1 port or authorize resuming device work.
+The same day's IDA follow-up now confirms the share dyld's address reservation,
+format-12 sidecar consumer, real eager v5/PAC fallback, and exec-generation
+admission helper. Offline comparison checked 22,818,485 pointers; this is not
+device acceptance. See `docs/evidence/sequoia-share-audit-20261015/ida/README.md`.
 
 This section is the current summary. Later sections retain detailed and
 historical bring-up knowledge. If an older section conflicts with this one,

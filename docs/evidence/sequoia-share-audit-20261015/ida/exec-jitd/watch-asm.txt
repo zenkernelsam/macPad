@@ -1,0 +1,160 @@
+0x100004844 fc6fbba9 STP             X28, X27, [SP,#-0x10+var_40]!
+0x100004848 f85f01a9 STP             X24, X23, [SP,#0x40+var_30]
+0x10000484c f65702a9 STP             X22, X21, [SP,#0x40+var_20]
+0x100004850 f44f03a9 STP             X20, X19, [SP,#0x40+var_10]
+0x100004854 fd7b04a9 STP             X29, X30, [SP,#0x40+var_s0]
+0x100004858 fd030191 ADD             X29, SP, #0x40
+0x10000485c 090c8252 MOV             W9, #0x1060
+0x100004860 30000090 ADRP            X16, #___chkstk_darwin_ptr@PAGE
+0x100004864 100240f9 LDR             X16, [X16,#___chkstk_darwin_ptr@PAGEOFF]; ___chkstk_darwin
+0x100004868 00023fd6 BLR             X16; ___chkstk_darwin
+0x10000486c ff0740d1 SUB             SP, SP, #1,LSL#12
+0x100004870 ff8301d1 SUB             SP, SP, #0x60
+0x100004874 f30300aa MOV             X19, X0
+0x100004878 28000090 ADRP            X8, #___stack_chk_guard_ptr@PAGE
+0x10000487c 080d40f9 LDR             X8, [X8,#___stack_chk_guard_ptr@PAGEOFF]; ___stack_chk_guard
+0x100004880 080140f9 LDR             X8, [X8]
+0x100004884 a8831bf8 STUR            X8, [X29,#var_48]
+0x100004888 140040b9 LDR             W20, [X0]
+0x10000488c 150440f9 LDR             X21, [X0,#8]
+0x100004890 18584229 LDP             W24, W22, [X0,#0x10]
+0x100004894 17fa8052 MOV             W23, #0x7D0
+0x100004898 05000014 B               loc_1000048AC
+0x10000489c 007d8052 MOV             W0, #0x3E8; useconds_t
+0x1000048a0 84020094 BL              _usleep
+0x1000048a4 f7060071 SUBS            W23, W23, #1
+0x1000048a8 e0060054 B.EQ            loc_100004984
+0x1000048ac 68620091 ADD             X8, X19, #0x18
+0x1000048b0 08fddf88 LDAR            W8, [X8]
+0x1000048b4 88060035 CBNZ            W8, loc_100004984
+0x1000048b8 e1830091 ADD             X1, SP, #0x10A0+var_1080
+0x1000048bc e00314aa MOV             X0, X20
+0x1000048c0 22008052 MOV             W2, #1
+0x1000048c4 91010094 BL              _identity_allowed
+0x1000048c8 e0050034 CBZ             W0, loc_100004984
+0x1000048cc e81b40f9 LDR             X8, [SP,#0x10A0+var_1070]
+0x1000048d0 1f0115eb CMP             X8, X21
+0x1000048d4 81050054 B.NE            loc_100004984
+0x1000048d8 e84340b9 LDR             W8, [SP,#0x10A0+var_1060]
+0x1000048dc 1f01186b CMP             W8, W24
+0x1000048e0 e0fdff54 B.EQ            loc_10000489C
+0x1000048e4 e00314aa MOV             X0, X20
+0x1000048e8 010080d2 MOV             X1, #0
+0x1000048ec 89000094 BL              _stopped
+0x1000048f0 60fdff34 CBZ             W0, loc_10000489C
+0x1000048f4 37000090 ADRP            X23, #___stderrp_ptr@PAGE
+0x1000048f8 f71240f9 LDR             X23, [X23,#___stderrp_ptr@PAGEOFF]; ___stderrp
+0x1000048fc e00240f9 LDR             X0, [X23]; FILE *
+0x100004900 e84340b9 LDR             W8, [SP,#0x10A0+var_1060]
+0x100004904 f8a300a9 STP             X24, X8, [SP,#0x10A0+var_1098]
+0x100004908 f40300f9 STR             X20, [SP,#0x10A0+var_10A0]
+0x10000490c 010000b021a42191 ADRL            X1, aExecjitNewSusp; "EXECJIT new suspended image pid=%d gene"...
+0x100004914 07020094 BL              _fprintf
+0x100004918 4000009000000091 ADRL            X0, _watchers_lock; pthread_mutex_t *
+0x100004920 3a020094 BL              _pthread_mutex_lock
+0x100004924 68620091 ADD             X8, X19, #0x18
+0x100004928 08fddf88 LDAR            W8, [X8]
+0x10000492c e8000035 CBNZ            W8, loc_100004948
+0x100004930 e24340b9 LDR             W2, [SP,#0x10A0+var_1060]
+0x100004934 e00314aa MOV             X0, X20
+0x100004938 e10315aa MOV             X1, X21
+0x10000493c e30316aa MOV             X3, X22
+0x100004940 b4000094 BL              _grant
+0x100004944 60070034 CBZ             W0, loc_100004A30
+0x100004948 5400009094020091 ADRL            X20, _watchers_lock
+0x100004950 e00314aa MOV             X0, X20; pthread_mutex_t *
+0x100004954 30020094 BL              _pthread_mutex_unlock
+0x100004958 e00314aa MOV             X0, X20; pthread_mutex_t *
+0x10000495c 2b020094 BL              _pthread_mutex_lock
+0x100004960 4900009029010191 ADRL            X9, _watchers
+0x100004968 e80309aa MOV             X8, X9
+0x10000496c 2a0140f9 LDR             X10, [X9]
+0x100004970 49810091 ADD             X9, X10, #0x20 ; ' '
+0x100004974 5f0100f1 CMP             X10, #0
+0x100004978 441153fa CCMP            X10, X19, #4, NE
+0x10000497c 61ffff54 B.NE            loc_100004968
+0x100004980 15000014 B               loc_1000049D4
+0x100004984 28000090 ADRP            X8, #___stderrp_ptr@PAGE
+0x100004988 081140f9 LDR             X8, [X8,#___stderrp_ptr@PAGEOFF]; ___stderrp
+0x10000498c 000140f9 LDR             X0, [X8]; FILE *
+0x100004990 68620091 ADD             X8, X19, #0x18
+0x100004994 08fddf88 LDAR            W8, [X8]
+0x100004998 f42300a9 STP             X20, X8, [SP,#0x10A0+var_10A0]
+0x10000499c 010000b021602391 ADRL            X1, aExecjitWatchEn; "EXECJIT watch ended pid=%d cancelled=%d"...
+0x1000049a4 e3010094 BL              _fprintf
+0x1000049a8 4000009000000091 ADRL            X0, _watchers_lock; pthread_mutex_t *
+0x1000049b0 16020094 BL              _pthread_mutex_lock
+0x1000049b4 4900009029010191 ADRL            X9, _watchers
+0x1000049bc e80309aa MOV             X8, X9
+0x1000049c0 2a0140f9 LDR             X10, [X9]
+0x1000049c4 49810091 ADD             X9, X10, #0x20 ; ' '
+0x1000049c8 5f0100f1 CMP             X10, #0
+0x1000049cc 441153fa CCMP            X10, X19, #4, NE
+0x1000049d0 61ffff54 B.NE            loc_1000049BC
+0x1000049d4 6a0000b4 CBZ             X10, loc_1000049E0
+0x1000049d8 691240f9 LDR             X9, [X19,#0x20]
+0x1000049dc 090100f9 STR             X9, [X8]
+0x1000049e0 4000009000000091 ADRL            X0, _watchers_lock; pthread_mutex_t *
+0x1000049e8 0b020094 BL              _pthread_mutex_unlock
+0x1000049ec e00313aa MOV             X0, X19; void *
+0x1000049f0 d3010094 BL              _free
+0x1000049f4 a8835bf8 LDUR            X8, [X29,#var_48]
+0x1000049f8 29000090 ADRP            X9, #___stack_chk_guard_ptr@PAGE
+0x1000049fc 290d40f9 LDR             X9, [X9,#___stack_chk_guard_ptr@PAGEOFF]; ___stack_chk_guard
+0x100004a00 290140f9 LDR             X9, [X9]
+0x100004a04 3f0108eb CMP             X9, X8
+0x100004a08 21080054 B.NE            loc_100004B0C
+0x100004a0c 000080d2 MOV             X0, #0
+0x100004a10 ff074091 ADD             SP, SP, #1,LSL#12
+0x100004a14 ff830191 ADD             SP, SP, #0x60 ; '`'
+0x100004a18 fd7b44a9 LDP             X29, X30, [SP,#0x40+var_s0]
+0x100004a1c f44f43a9 LDP             X20, X19, [SP,#0x40+var_10]
+0x100004a20 f65742a9 LDP             X22, X21, [SP,#0x40+var_20]
+0x100004a24 f85f41a9 LDP             X24, X23, [SP,#0x40+var_30]
+0x100004a28 fc6fc5a8 LDP             X28, X27, [SP+0x40+var_40],#0x50
+0x100004a2c c0035fd6 RET
+0x100004a30 e1630191 ADD             X1, SP, #0x10A0+buffer; buffer
+0x100004a34 e00314aa MOV             X0, X20; pid
+0x100004a38 02008252 MOV             W2, #0x1000; buffersize
+0x100004a3c ea010094 BL              _proc_pidpath
+0x100004a40 1f040071 CMP             W0, #1
+0x100004a44 2bf8ff54 B.LT            loc_100004948
+0x100004a48 e8a745a9 LDP             X8, X9, [SP,#0x10A0+buffer]
+0x100004a4c ea3740f9 LDR             X10, [SP,#0x10A0+var_1038]
+0x100004a50 eb058ed24b2eadf2cb2eccf28baeecf2 MOV             X11, #0x657461766972702F
+0x100004a60 1f010beb CMP             X8, X11
+0x100004a64 e8c58ed2284caef2e8a5cdf2c88deef2 MOV             X8, #0x746E6D2F7261762F
+0x100004a74 200148fa CCMP            X9, X8, #0, EQ
+0x100004a78 e8458ed2e8edadf288ceccf268eee5f2 MOV             X8, #0x2F7366746F6F722F
+0x100004a88 400148fa CCMP            X10, X8, #0, EQ
+0x100004a8c 00010054 B.EQ            loc_100004AAC
+0x100004a90 e00240f9 LDR             X0, [X23]; FILE *
+0x100004a94 e8630191 ADD             X8, SP, #0x10A0+buffer
+0x100004a98 f42300a9 STP             X20, X8, [SP,#0x10A0+var_10A0]
+0x100004a9c 010000b021182191 ADRL            X1, aExecjitRejecti; "EXECJIT rejecting peer %d path=%s\n"
+0x100004aa4 a3010094 BL              _fprintf
+0x100004aa8 a8ffff17 B               loc_100004948
+0x100004aac e3830091 ADD             X3, SP, #0x10A0+var_1080; buffer
+0x100004ab0 e00314aa MOV             X0, X20; pid
+0x100004ab4 21028052 MOV             W1, #0x11; flavor
+0x100004ab8 020080d2 MOV             X2, #0; arg
+0x100004abc 04078052 MOV             W4, #0x38 ; '8'; buffersize
+0x100004ac0 c6010094 BL              _proc_pidinfo
+0x100004ac4 1fe00071 CMP             W0, #0x38 ; '8'
+0x100004ac8 01f4ff54 B.NE            loc_100004948
+0x100004acc e81b40f9 LDR             X8, [SP,#0x10A0+var_1070]
+0x100004ad0 1f0115eb CMP             X8, X21
+0x100004ad4 a1f3ff54 B.NE            loc_100004948
+0x100004ad8 e00314aa MOV             X0, X20
+0x100004adc 010080d2 MOV             X1, #0
+0x100004ae0 0c000094 BL              _stopped
+0x100004ae4 20f3ff34 CBZ             W0, loc_100004948
+0x100004ae8 e00240f9 LDR             X0, [X23]; FILE *
+0x100004aec f40300f9 STR             X20, [SP,#0x10A0+var_10A0]
+0x100004af0 010000b0217c2291 ADRL            X1, aExecjitTermina; "EXECJIT terminating owned failed suspen"...
+0x100004af8 8e010094 BL              _fprintf
+0x100004afc e00314aa MOV             X0, X20; pid_t
+0x100004b00 21018052 MOV             W1, #9; int
+0x100004b04 9d010094 BL              _kill
+0x100004b08 90ffff17 B               loc_100004948
+0x100004b0c 6b010094 BL              ___stack_chk_fail

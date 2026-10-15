@@ -1,0 +1,30 @@
+[
+  {
+    "file": 0,
+    "bind_count": 188,
+    "min_target": "0x2818a5030",
+    "max_target": "0x28253a220",
+    "first_targets": [
+      "0x281e1e5c8",
+      "0x281e1e5f0",
+      "0x281dc2cd0",
+      "0x281dc2cf8",
+      "0x281a353d8"
+    ],
+    "all_targets_exceed_32bit_runtime_offset": true
+  },
+  {
+    "file": 1,
+    "bind_count": 282557,
+    "min_target": "0x281890820",
+    "max_target": "0x286becc28",
+    "first_targets": [
+      "0x2818d78d0",
+      "0x2818d5f3a",
+      "0x282855fa8",
+      "0x281890b68",
+      "0x282856d70"
+    ],
+    "all_targets_exceed_32bit_runtime_offset": true
+  }
+]

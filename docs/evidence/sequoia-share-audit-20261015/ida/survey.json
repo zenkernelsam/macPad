@@ -1,0 +1,485 @@
+{
+  "metadata": {
+    "path": "/Users/ciscohe/Desktop/macPad/analysis/share-review-20261015/share-dyld-arm64e.i64",
+    "module": "share-dyld-arm64e",
+    "arch": "64",
+    "base_address": "0x0",
+    "image_size": "0xcc0e0",
+    "md5": "80ae0ec00929857609970f833354fec7",
+    "sha256": "def1d5e2ccde2ee7930a30f38d540981aab2ccda9a7f0d6212bd2f9339dd3a00"
+  },
+  "statistics": {
+    "total_functions": 2886,
+    "named_functions": 2832,
+    "library_functions": 0,
+    "unnamed_functions": 54,
+    "total_strings": 1969,
+    "total_segments": 19
+  },
+  "segments": [
+    {
+      "name": "HEADER",
+      "start": "0x0",
+      "end": "0x1000",
+      "size": "0x1000",
+      "permissions": "rx"
+    },
+    {
+      "name": "__text",
+      "start": "0x1000",
+      "end": "0x886c0",
+      "size": "0x876c0",
+      "permissions": "rx"
+    },
+    {
+      "name": "__const",
+      "start": "0x886c0",
+      "end": "0x8aae0",
+      "size": "0x2420",
+      "permissions": "rx"
+    },
+    {
+      "name": "__cstring",
+      "start": "0x8aae0",
+      "end": "0x9abed",
+      "size": "0x1010d",
+      "permissions": "rx"
+    },
+    {
+      "name": "__info_plist",
+      "start": "0x9abed",
+      "end": "0x9b0d0",
+      "size": "0x4e3",
+      "permissions": "rx"
+    },
+    {
+      "name": "__unwind_info",
+      "start": "0x9b0d0",
+      "end": "0x9b578",
+      "size": "0x4a8",
+      "permissions": "rx"
+    },
+    {
+      "name": "__TEXT_hidden",
+      "start": "0x9b578",
+      "end": "0x9c000",
+      "size": "0xa88",
+      "permissions": "rx"
+    },
+    {
+      "name": "__auth_ptr",
+      "start": "0x9c000",
+      "end": "0x9c080",
+      "size": "0x80",
+      "permissions": "r"
+    },
+    {
+      "name": "__const",
+      "start": "0x9c080",
+      "end": "0xa4000",
+      "size": "0x7f80",
+      "permissions": "r"
+    },
+    {
+      "name": "__data",
+      "start": "0xa4000",
+      "end": "0xa5f00",
+      "size": "0x1f00",
+      "permissions": "rw"
+    },
+    {
+      "name": "__common",
+      "start": "0xa5f00",
+      "end": "0xa67f0",
+      "size": "0x8f0",
+      "permissions": "rw"
+    },
+    {
+      "name": "__bss",
+      "start": "0xa67f0",
+      "end": "0xa8000",
+      "size": "0x1810",
+      "permissions": "rw"
+    },
+    {
+      "name": "__all_image_info",
+      "start": "0xa8000",
+      "end": "0xa8170",
+      "size": "0x170",
+      "permissions": "rw"
+    },
+    {
+      "name": "__data",
+      "start": "0xa8170",
+      "end": "0xa8188",
+      "size": "0x18",
+      "permissions": "rw"
+    },
+    {
+      "name": "__crash_info",
+      "start": "0xa8188",
+      "end": "0xa8200",
+      "size": "0x78",
+      "permissions": "rw"
+    },
+    {
+      "name": "__common",
+      "start": "0xa8200",
+      "end": "0xa9af8",
+      "size": "0x18f8",
+      "permissions": "rw"
+    },
+    {
+      "name": "__bss",
+      "start": "0xa9af8",
+      "end": "0xac000",
+      "size": "0x2508",
+      "permissions": "rw"
+    },
+    {
+      "name": "__data",
+      "start": "0xac000",
+      "end": "0xac0e0",
+      "size": "0xe0",
+      "permissions": "rw"
+    },
+    {
+      "name": "__allocator",
+      "start": "0xac0e0",
+      "end": "0xcc0e0",
+      "size": "0x20000",
+      "permissions": "rw"
+    }
+  ],
+  "entrypoints": [
+    {
+      "addr": "0x47c0",
+      "name": "__dyld_start",
+      "ordinal": 18368
+    },
+    {
+      "addr": "0xa8000",
+      "name": "_dyld_all_image_infos",
+      "ordinal": 688128
+    },
+    {
+      "addr": "0x4a8cc",
+      "name": "_lldb_image_notifier",
+      "ordinal": 305356
+    }
+  ],
+  "interesting_strings": [
+    {
+      "addr": "0x8ab41",
+      "string": "v24@?0r^v8^B16",
+      "xref_count": 64
+    },
+    {
+      "addr": "0x8ab62",
+      "string": "v8@?0",
+      "xref_count": 52
+    },
+    {
+      "addr": "0x93086",
+      "string": "v24@?0r^{load_command=II}8^B16",
+      "xref_count": 50
+    },
+    {
+      "addr": "0x9a1d1",
+      "string": "writeChainEntry",
+      "xref_count": 48
+    },
+    {
+      "addr": "0x9a1e1",
+      "string": "ChainedFixups.cpp",
+      "xref_count": 48
+    },
+    {
+      "addr": "0x8abeb",
+      "string": "{ProtectedStackReturnType=(?=QiB^v**^?)}8@?0",
+      "xref_count": 43
+    },
+    {
+      "addr": "0x9003d",
+      "string": "Allocator.cpp",
+      "xref_count": 32
+    },
+    {
+      "addr": "0x8d710",
+      "string": "Loader.cpp",
+      "xref_count": 29
+    },
+    {
+      "addr": "0x8d71b",
+      "string": "this->magic == kMagic",
+      "xref_count": 23
+    },
+    {
+      "addr": "0x8b514",
+      "string": "v24@?0r*8^B16",
+      "xref_count": 17
+    },
+    {
+      "addr": "0x92b97",
+      "string": "ObjCVisitor.cpp",
+      "xref_count": 17
+    },
+    {
+      "addr": "0x8ab78",
+      "string": "/usr/lib/dyld",
+      "xref_count": 15
+    },
+    {
+      "addr": "0x8c89a",
+      "string": "DyldRuntimeState.cpp",
+      "xref_count": 14
+    },
+    {
+      "addr": "0x8d6b9",
+      "string": "v16@?0r^v8",
+      "xref_count": 14
+    },
+    {
+      "addr": "0x8f2a2",
+      "string": "__TEXT",
+      "xref_count": 14
+    }
+  ],
+  "interesting_functions": [
+    {
+      "addr": "0x10b08",
+      "name": "__ZNK5dyld412RuntimeState3logEPKcz",
+      "size": 44,
+      "xref_count": 253,
+      "callee_count": 1,
+      "type": "wrapper"
+    },
+    {
+      "addr": "0x86fb0",
+      "name": "___assert_rtn",
+      "size": 60,
+      "xref_count": 230,
+      "callee_count": 2,
+      "type": "complex"
+    },
+    {
+      "addr": "0x4f180",
+      "name": "___stack_chk_fail",
+      "size": 28,
+      "xref_count": 171,
+      "callee_count": 1,
+      "type": "wrapper"
+    },
+    {
+      "addr": "0x1db4",
+      "name": "__ZN11DiagnosticsD1Ev",
+      "size": 52,
+      "xref_count": 137,
+      "callee_count": 1,
+      "type": "wrapper"
+    },
+    {
+      "addr": "0x2890",
+      "name": "__platform_strcmp",
+      "size": 216,
+      "xref_count": 131,
+      "callee_count": 0,
+      "type": "leaf"
+    },
+    {
+      "addr": "0x2d88",
+      "name": "___error",
+      "size": 28,
+      "xref_count": 130,
+      "callee_count": 0,
+      "type": "leaf"
+    },
+    {
+      "addr": "0x1ee0",
+      "name": "__platform_strlen",
+      "size": 96,
+      "xref_count": 129,
+      "callee_count": 0,
+      "type": "leaf"
+    },
+    {
+      "addr": "0x4d28",
+      "name": "_getpid",
+      "size": 80,
+      "xref_count": 129,
+      "callee_count": 1,
+      "type": "wrapper"
+    },
+    {
+      "addr": "0x645b8",
+      "name": "__ZN11Diagnostics5errorEPKcz",
+      "size": 44,
+      "xref_count": 129,
+      "callee_count": 1,
+      "type": "wrapper"
+    },
+    {
+      "addr": "0x6de0",
+      "name": "___destroy_helper_block_8_32r",
+      "size": 12,
+      "xref_count": 106,
+      "callee_count": 1,
+      "type": "wrapper"
+    },
+    {
+      "addr": "0x2280",
+      "name": "_memmove",
+      "size": 712,
+      "xref_count": 98,
+      "callee_count": 0,
+      "type": "leaf"
+    },
+    {
+      "addr": "0x6dd0",
+      "name": "___copy_helper_block_8_32r",
+      "size": 16,
+      "xref_count": 97,
+      "callee_count": 0,
+      "type": "leaf"
+    },
+    {
+      "addr": "0x6fe7c",
+      "name": "_dlog",
+      "size": 44,
+      "xref_count": 96,
+      "callee_count": 1,
+      "type": "wrapper"
+    },
+    {
+      "addr": "0x2d64",
+      "name": "_cerror_nocancel",
+      "size": 36,
+      "xref_count": 86,
+      "callee_count": 0,
+      "type": "leaf"
+    },
+    {
+      "addr": "0x32608",
+      "name": "__ZN3lsl13MemoryManager13memoryManagerEv",
+      "size": 40,
+      "xref_count": 82,
+      "callee_count": 1,
+      "type": "wrapper"
+    }
+  ],
+  "imports_by_category": {
+    "crypto": [],
+    "network": [],
+    "file_io": [],
+    "process": [],
+    "registry": [],
+    "other": []
+  },
+  "call_graph_summary": {
+    "total_edges": 8374,
+    "max_depth_estimate": null,
+    "root_functions": [
+      "__kernelrpc_mach_vm_purgable_control_trap",
+      "__kernelrpc_mach_port_move_member_trap",
+      "__kernelrpc_mach_port_insert_member_trap",
+      "__kernelrpc_mach_port_extract_member_trap",
+      "_thread_self_trap",
+      "_host_self_trap",
+      "_mach_msg_trap",
+      "_mach_msg_overwrite_trap",
+      "_semaphore_signal_trap",
+      "_semaphore_signal_all_trap",
+      "_semaphore_signal_thread_trap",
+      "_semaphore_wait_trap",
+      "_semaphore_wait_signal_trap",
+      "_semaphore_timedwait_trap",
+      "_semaphore_timedwait_signal_trap",
+      "__kernelrpc_mach_port_get_attributes_trap",
+      "__kernelrpc_mach_port_guard_trap",
+      "_mach_generate_activity_id",
+      "_task_name_for_pid",
+      "_task_for_pid",
+      "_pid_for_task",
+      "_macx_swapon",
+      "_macx_swapoff",
+      "_thread_get_special_reply_port",
+      "_macx_triggers",
+      "_macx_backing_store_suspend",
+      "_macx_backing_store_recovery",
+      "_swtch_pri",
+      "_swtch",
+      "_syscall_thread_switch",
+      "_clock_sleep_trap",
+      "_host_create_mach_voucher_trap",
+      "_mach_voucher_extract_attr_recipe_trap",
+      "__kernelrpc_mach_port_type_trap",
+      "__kernelrpc_mach_port_request_notification_trap",
+      "__exclaves_ctl_trap",
+      "_mach_wait_until",
+      "_mk_timer_create",
+      "_mk_timer_destroy",
+      "_mk_timer_arm",
+      "_mk_timer_cancel",
+      "_mk_timer_arm_leeway",
+      "_debug_control_port_for_pid",
+      "_mach_msg",
+      "_mach_absolute_time_kernel",
+      "_mach_continuous_time_kernel",
+      "_posix_madvise",
+      "_mach_thread_self",
+      "__platform_strlcat",
+      "_getattrlist",
+      "___munmap",
+      "__platform_strstr",
+      "___kdebug_trace64",
+      "_readlink",
+      "____ZNK5dyld313MachOAnalyzer9validMainER11DiagnosticsPKc_block_invoke",
+      "__dyld_start",
+      "_issetugid",
+      "_mach_port_allocate",
+      "___mmap",
+      "_thread_switch",
+      "_vm_copy",
+      "start",
+      "___Block_byref_object_copy_",
+      "___Block_byref_object_dispose_",
+      "____ZN5dyld4L10rebaseSelfEPKN5dyld313MachOAnalyzerE_block_invoke",
+      "___copy_helper_block_8_32r",
+      "___destroy_helper_block_8_32r",
+      "____ZN5dyld4L10rebaseSelfEPKN5dyld313MachOAnalyzerE_block_invoke.3",
+      "____ZN3lsl13MemoryManager26withWritableMemoryInternalIZN5dyld4L14initializeLibcEPNS2_10KernelArgsEPvE3$_0EEvT__block_invoke",
+      "___Block_byref_object_copy_.11",
+      "___Block_byref_object_dispose_.12",
+      "____ZN5dyld4L17handleDyldInCacheERN3lsl9AllocatorEPKN6mach_o6HeaderEPKNS_10KernelArgsES6__block_invoke",
+      "____ZN3lsl13MemoryManager26withWritableMemoryInternalIZN5dyld4L17handleDyldInCacheERNS_9AllocatorEPKN6mach_o6HeaderEPKNS2_10KernelArgsES8_E3$_0EEvT__block_invoke",
+      "____ZN3lsl13MemoryManager26withWritableMemoryInternalIZN5dyld4L17handleDyldInCacheERNS_9AllocatorEPKN6mach_o6HeaderEPKNS2_10KernelArgsES8_E3$_1EEvT__block_invoke",
+      "____ZN3lsl13MemoryManager26withWritableMemoryInternalIZN5dyld4L17handleDyldInCacheERNS_9AllocatorEPKN6mach_o6HeaderEPKNS2_10KernelArgsES8_E3$_2EEvT__block_invoke",
+      "____ZN3lsl13MemoryManager22withReadOnlyTPROMemoryIZNK5dyld423LibSystemHelpersWrapper4exitEiEUlvE_EEN13callback_impl11return_typeIDTadsrT_onclEE4typeES7__block_invoke",
+      "____ZN3lsl13MemoryManager26withWritableMemoryInternalIZN5dyld45startEPNS2_10KernelArgsEPvS5_E3$_0EEvT__block_invoke",
+      "__ZN5dyld412RuntimeState9emptySlotEv",
+      "___Block_byref_object_copy_.39",
+      "___Block_byref_object_dispose_.40",
+      "____ZN5dyld4L7prepareERNS_4APIsEPKN6mach_o6HeaderE_block_invoke",
+      "____ZN5dyld4L7prepareERNS_4APIsEPKN6mach_o6HeaderE_block_invoke.45",
+      "____ZN5dyld4L7prepareERNS_4APIsEPKN6mach_o6HeaderE_block_invoke_2",
+      "__ZN5dyld4L9fake_mainEiPKPKcS3_S3_",
+      "____ZN5dyld4L10prepareSimERNS_12RuntimeStateEPKc_block_invoke",
+      "__ZN5dyld4L18getcwd_sans_mallocEPcm",
+      "__ZN5dyld4L20realpath_sans_mallocEPKcPc",
+      "__ZN5dyld4L8sim_vlogEPKcPc",
+      "__ZL32OSAtomicCompareAndSwapPtrBarrierPvS_PVS_",
+      "__ZL15OSMemoryBarrierv",
+      "__ZN5dyld4L12opendir_fakeEPKc",
+      "__ZN5dyld4L35sim_coresymbolication_load_notifierEPvyPKcPK11mach_header",
+      "__ZN5dyld4L37sim_coresymbolication_unload_notifierEPvyPKcPK11mach_header",
+      "__ZN5dyld4L29sim_notifyMonitorOfMainCalledEv",
+      "__ZN5dyld4L35sim_notifyMonitorOfImageListChangesEbjPPK11mach_headerPPKc",
+      "__ZN5dyld4L41sim_notifyMonitorOfDyldBeforeInitializersEv",
+      "__ZN5dyld413ProcessConfigC2EPKNS_10KernelArgsERNS_15SyscallDelegateERN3lsl9AllocatorE",
+      "____ZN5dyld413ProcessConfigC2EPKNS_10KernelArgsERNS_15SyscallDelegateERN3lsl9AllocatorE_block_invoke",
+      "____ZNK5dyld413ProcessConfig7Process26selectFromFunctionVariantsERKN6mach_o16FunctionVariantsEj_block_invoke",
+      "___copy_helper_block_8_32r40r"
+    ],
+    "leaf_functions_count": 990
+  }
+}

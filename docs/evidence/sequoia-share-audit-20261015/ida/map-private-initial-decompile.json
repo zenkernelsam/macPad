@@ -1,0 +1,117 @@
+{
+  "addr": "0x342dc",
+  "code": "__int64 dyld3::mapSplitCachePrivate()\n{\n  __int64 v0; // x0\n  __int64 v1; // x1\n  __int64 v2; // x21\n  __int64 v3; // x27\n  int v4; // w0\n  char v5; // w8\n  const char *v6; // x1\n  __int64 v7; // x26\n  __int64 i; // x8\n  _QWORD *v9; // x10\n  __int64 *v10; // x21\n  __int64 v11; // x24\n  __int64 *v12; // x22\n  const char *v13; // x1\n  void *v14; // x0\n  unsigned __int64 v15; // x1\n  __int64 v16; // x8\n  __int64 v17; // x24\n  _QWORD *v18; // x8\n  __int64 v19; // x26\n  __int64 v20; // x20\n  int v21; // w21\n  __int64 v22; // x25\n  int *v23; // x27\n  int v24; // w11\n  unsigned int v25; // w10\n  unsigned int v26; // w12\n  __int64 v27; // x23\n  __int64 v28; // x22\n  __int64 v29; // x0\n  DyldSharedCache::DynamicRegion *v30; // x21\n  __int64 v31; // x0\n  __int64 v32; // x1\n  __int64 v33; // x3\n  __int64 v34; // x0\n  __int64 v35; // x1\n  __int64 v36; // x3\n  __int64 v37; // x21\n  __int64 j; // x22\n  int v39; // w10\n  char v40; // w9\n  __int64 v41; // x11\n  fsid_t *v42; // x12\n  int *v43; // x20\n  __int64 v44; // x9\n  const char *v45; // x10\n  int *v46; // x0\n  const char *v47; // x1\n  __int64 v48; // x21\n  int *v49; // x20\n  __int64 v51; // [xsp+50h] [xbp-FB70h]\n  __int64 v52; // [xsp+58h] [xbp-FB68h]\n  int *v53; // [xsp+88h] [xbp-FB38h]\n  __int64 v54; // [xsp+90h] [xbp-FB30h]\n  _BYTE v55[24]; // [xsp+120h] [xbp-FAA0h] BYREF\n  __int16 v56; // [xsp+138h] [xbp-FA88h]\n  fsid_t v57[44]; // [xsp+13Ch] [xbp-FA84h] BYREF\n  unsigned int v58; // [xsp+2A0h] [xbp-F920h]\n  char v59; // [xsp+2E7h] [xbp-F8D9h]\n  __int64 v60; // [xsp+2E8h] [xbp-F8D8h] BYREF\n  __int64 v61[48]; // [xsp+12E8h] [xbp-E8D8h] BYREF\n  char v62; // [xsp+146Dh] [xbp-E753h]\n  int v63; // [xsp+1470h] [xbp-E750h]\n  unsigned int v64; // [xsp+1490h] [xbp-E730h]\n  __int64 v65; // [xsp+1498h] [xbp-E728h]\n  __int64 v66; // [xsp+14A8h] [xbp-E718h]\n  char v67[1024]; // [xsp+1640h] [xbp-E580h] BYREF\n  _QWORD v68[5]; // [xsp+1A40h] [xbp-E180h] BYREF\n  int v69; // [xsp+1A6Ch] [xbp-E154h] BYREF\n  _BYTE v70[56]; // [xsp+1BC8h] [xbp-DFF8h] BYREF\n  __int64 v71; // [xsp+1C00h] [xbp-DFC0h] BYREF\n  _BYTE v72[264]; // [xsp+FA40h] [xbp-180h] BYREF\n  unsigned __int128 v73; // 0:x1.16\n  unsigned __int128 v74; // 0:x1.16\n\n  v0 = __chkstk_darwin(); /*0x34310*/\n  v2 = v1; /*0x34320*/\n  v3 = v0; /*0x34324*/\n  v66 = v1; /*0x34338*/\n  v62 = 0; /*0x3434c*/\n  v63 = 0; /*0x34350*/\n  memset(v72, 0, 256); /*0x34374*/\n  v4 = dyld3::preflightMainCacheFile(); /*0x3438c*/\n  v5 = 0; /*0x34390*/\n  if ( !v4 ) /*0x34394*/\n    return v5 & 1; /*0x34394*/\n  if ( *(_BYTE *)(v3 + 6) == 1 && (unsigned int)FileIdTuple::getPath((fsid_t *)(v2 + 28), (char *)v68) ) /*0x343b8*/\n    dyld4::console((dyld4 *)\"mapped dyld cache file private to process (%s):\\n\", v6, v68); /*0x343cc*/\n  v7 = v64; /*0x343d4*/\n  if ( v64 ) /*0x343d8*/\n  {\n    v5 = 0; /*0x34ff4*/\n    v44 = v66; /*0x34ff8*/\n    v45 = \"shared cache is too old, missing subcache suffixes\"; /*0x34ffc*/\nLABEL_63:\n    *(_QWORD *)(v44 + 16) = v45; /*0x350bc*/\n    return v5 & 1; /*0x350bc*/\n  }\n  for ( i = 0; i != 7168; i += 56 ) /*0x343e4*/\n  {\n    v9 = &v68[i]; /*0x343f0*/\n    *((_BYTE *)v9 + 389) = 0; /*0x343f4*/\n    *((_DWORD *)v9 + 98) = 0; /*0x343f8*/\n  }\n  if ( (unsigned int)v7 >= 2 ) /*0x3440c*/\n  {\n    v10 = &v71; /*0x3441c*/\n    v11 = v7 - 1; /*0x34420*/\n    v12 = &v60; /*0x34424*/\n    do /*0x34438*/\n    {\n      memset(v55, 0, sizeof(v55)); /*0x34438*/\n      v56 = 0; /*0x3443c*/\n      bzero(v57, 0x10u); /*0x3444c*/\n      if ( !(unsigned int)dyld3::preflightSubCacheFile(v3, v55, v10, v72, v12) ) /*0x34468*/\n        goto LABEL_61; /*0x3446c*/\n      if ( *(_BYTE *)(v3 + 6) == 1 ) /*0x34478*/\n      {\n        bzero(v67, 0x400u); /*0x34488*/\n        if ( (unsigned int)FileIdTuple::getPath(v57, v67) ) /*0x34498*/\n          dyld4::console((dyld4 *)\"mapped dyld cache file private to process (%s):\\n\", v13, v67); /*0x344a8*/\n      }\n      v10 += 56; /*0x344b0*/\n      v12 += 4; /*0x344b4*/\n    }\n    while ( --v11 ); /*0x34438*/\n  }\n  v54 = v3; /*0x344c0*/\n  v14 = memmove(v68, v61, 0x1C0u); /*0x344e0*/\n  v51 = v61[0]; /*0x344e8*/\n  ((void (__fastcall *)(void *))unk_9B580)(v14); /*0x344ec*/\n  v16 = v66; /*0x344f0*/\n  *(_QWORD *)v66 = v68[0]; /*0x344f8*/\n  *(_QWORD *)(v16 + 8) = 0; /*0x344f8*/\n  v52 = v7; /*0x344fc*/\n  if ( (_DWORD)v7 )\n  {\n    v17 = 0; /*0x34504*/\n    v53 = &v69; /*0x3450c*/\n    while ( 1 ) /*0x34518*/\n    {\n      v18 = &v68[56 * v17]; /*0x34518*/\n      v19 = *((unsigned int *)v18 + 96); /*0x3451c*/\n      if ( (_DWORD)v19 ) /*0x34520*/\n        break; /*0x34520*/\nLABEL_32:\n      ++v17; /*0x345c4*/\n      v53 += 112; /*0x345d0*/\n      if ( v17 == v52 ) /*0x345e4*/\n        goto LABEL_33; /*0x345e4*/\n    }\n    v20 = *v18; /*0x34524*/\n    v21 = *((_DWORD *)v18 + 98); /*0x3453c*/\n    v22 = *v18 - (v51 + *(_QWORD *)(v66 + 8)) + 0x180000000LL; /*0x34544*/\n    v23 = v53; /*0x34548*/\n    while ( 1 )\n    {\n      v24 = *(v23 - 1); /*0x34550*/\n      v25 = *v23 & 5 | 2; /*0x34558*/\n      if ( (*(_BYTE *)(v54 + 9) & 1) != 0 ) /*0x34570*/\n        v26 = 524306; /*0x34570*/\n      else\n        v26 = 18; /*0x34570*/\n      if ( (*(_BYTE *)(v54 + 9) & 1) == 0 ) /*0x34574*/\n        v25 = *v23 & 7; /*0x34574*/\n      v27 = (v24 & 0x200) != 0 ? v26 : 18LL;\n      v28 = (v24 & 0x200) != 0 ? v25 : *v23 & 7u;\n      if ( mmap( /*0x345b4*/\n             (void *)(v22 + *(_QWORD *)(v23 - 11) - v20 + *(_QWORD *)(v66 + 8)),\n             *(_QWORD *)(v23 - 9),\n             v28,\n             v27,\n             v21,\n             *(_QWORD *)(v23 - 7)) == (void *)-1LL )\n        break; /*0x345b4*/\n      v23 += 12; /*0x345b8*/\n      if ( !--v19 ) /*0x345c0*/\n        goto LABEL_32; /*0x345c0*/\n    }\n    if ( *(_BYTE *)(v54 + 6) == 1 )\n    {\n      v46 = __error(); /*0x35018*/\n      dyld4::console(\n        (dyld4 *)\"mmap(%d, %d) the shared cache region failed due to: %d\\n\",\n        v47,\n        v28,\n        v27,\n        (unsigned int)*v46);\n    }\n    v48 = v52; /*0x35044*/\n    if ( !*(_QWORD *)(v66 + 16) ) /*0x35040*/\n      *(_QWORD *)(v66 + 16) = \"mmap() the shared cache region failed\"; /*0x35054*/\n    v49 = (int *)v70; /*0x35060*/\n    do /*0x3507c*/\n    {\n      if ( *v49 != -1 ) /*0x3506c*/\n        close(*v49); /*0x35070*/\n      v49 += 112; /*0x35074*/\n      --v48; /*0x35078*/\n    }\n    while ( v48 ); /*0x3507c*/\nLABEL_61:\n    v5 = 0; /*0x35080*/\n    return v5 & 1; /*0x35084*/\n  }\nLABEL_33:\n  v29 = DyldSharedCache::DynamicRegion::make((#123 *)(*(_QWORD *)(v66 + 8) + v65), v15); /*0x345e8*/\n  if ( !v29 ) /*0x345fc*/\n  {\n    mmap((void *)0x180000000LL, 0x180000000uLL, 0, 4114, 0, 0); /*0x350a0*/\n    v5 = 0; /*0x350a4*/\n    *(_QWORD *)v66 = 0; /*0x350ac*/\n    v44 = v66; /*0x350b0*/\n    v45 = \"could not mmap() dynamic config memory\"; /*0x350b4*/\n    goto LABEL_63; /*0x350b4*/\n  }\n  v30 = (DyldSharedCache::DynamicRegion *)v29; /*0x34600*/\n  bzero(v67, 0x400u); /*0x34610*/\n  if ( (unsigned int)FileIdTuple::getPath((fsid_t *)(v66 + 28), v67) ) /*0x34624*/\n    DyldSharedCache::DynamicRegion::setCachePath(v30, v67); /*0x34638*/\n  DyldSharedCache::DynamicRegion::setDyldCacheFileID(v30, *(_QWORD *)(v66 + 28), *(_QWORD *)(v66 + 36)); /*0x3464c*/\n  v31 = dyld4::ProcessConfig::evaluateProcessorSpecificFunctionVariantFlags(*(_QWORD *)(v54 + 32)); /*0x34658*/\n  v33 = v32; /*0x34660*/\n  *(_QWORD *)&v73 = v31; /*0x34668*/\n  *((_QWORD *)&v73 + 1) = v33; /*0x3466c*/\n  DyldSharedCache::DynamicRegion::setProcessorFlags(v30, v73); /*0x34670*/\n  v34 = dyld4::ProcessConfig::evaluateSystemWideFunctionVariantFlags(*(_QWORD *)(v54 + 32)); /*0x34678*/\n  v36 = v35; /*0x34680*/\n  *(_QWORD *)&v74 = v34; /*0x34688*/\n  *((_QWORD *)&v74 + 1) = v36; /*0x3468c*/\n  DyldSharedCache::DynamicRegion::setSystemWideFlags(v30, v74); /*0x34690*/\n  DyldSharedCache::DynamicRegion::setReadOnly(v30); /*0x34698*/\n  v37 = v52; /*0x346a4*/\n  if ( *(_BYTE *)(v54 + 6) == 1 ) /*0x346a8*/\n    dyld3::verboseSharedCacheMappings(*(_QWORD *)v66); /*0x346b4*/\n  v59 = 1; /*0x346bc*/\n  if ( (_DWORD)v52 ) /*0x346c0*/\n  {\n    for ( j = 0; j != v52; ++j ) /*0x346c4*/\n    {\n      memmove(v55, &v68[56 * j], 0x1C0u); /*0x34734*/\n      if ( v58 ) /*0x3473c*/\n      {\n        v39 = 0; /*0x34740*/\n        v40 = *(_BYTE *)(v54 + 13); /*0x34744*/\n        v41 = v58; /*0x34748*/\n        v42 = (fsid_t *)((char *)v57 + 4); /*0x3474c*/\n        do /*0x34778*/\n        {\n          if ( v42[-1] ) /*0x34750*/\n          {\n            ++v39; /*0x34758*/\n            v40 &= *(_DWORD *)v42->val[0] == 5; /*0x3476c*/\n          }\n          v42 += 6; /*0x34770*/\n          --v41; /*0x34774*/\n        }\n        while ( v41 ); /*0x34778*/\n        if ( v39 ) /*0x3477c*/\n          JUMPOUT(0x9B680); /*0x9b680*/\n      }\n    }\n    v43 = (int *)v70; /*0x34fcc*/\n    do /*0x34fe8*/\n    {\n      if ( *v43 != -1 ) /*0x34fd8*/\n        close(*v43); /*0x34fdc*/\n      v43 += 112; /*0x34fe0*/\n      --v37; /*0x34fe4*/\n    }\n    while ( v37 ); /*0x34fe8*/\n  }\n  v5 = v59; /*0x34fec*/\n  return v5 & 1; /*0x350fc*/\n}",
+  "line_count": 277,
+  "total_lines": 277,
+  "truncated": false,
+  "cursor": {
+    "done": true
+  },
+  "refs": [
+    {
+      "addr": "0x84164",
+      "name": "___chkstk_darwin"
+    },
+    {
+      "addr": "0x3576c",
+      "name": "__ZN5dyld3L22preflightMainCacheFileERKNS_18SharedCacheOptionsEPNS_19SharedCacheLoadInfoEPNS_9CacheInfoEPcPNSt3__15arrayIA32_cLm128EEE"
+    },
+    {
+      "addr": "0xa2f4",
+      "name": "__ZN5dyld47consoleEPKcz"
+    },
+    {
+      "addr": "0x9055e",
+      "name": "aMappedDyldCach",
+      "string": "mapped dyld cache file private to process (%s):\n"
+    },
+    {
+      "addr": "0x51398",
+      "name": "__ZNK11FileIdTuple7getPathEPc"
+    },
+    {
+      "addr": "0x9058f",
+      "name": "aSharedCacheIsT",
+      "string": "shared cache is too old, missing subcache suffixes"
+    },
+    {
+      "addr": "0x1f80",
+      "name": "_bzero"
+    },
+    {
+      "addr": "0x3588c",
+      "name": "__ZN5dyld3L21preflightSubCacheFileERKNS_18SharedCacheOptionsEPNS_19SharedCacheLoadInfoEPNS_9CacheInfoEPcPKc"
+    },
+    {
+      "addr": "0x2280",
+      "name": "_memmove"
+    },
+    {
+      "addr": "0x9b580",
+      "name": "unk_9B580"
+    },
+    {
+      "addr": "0x4f44",
+      "name": "_mmap"
+    },
+    {
+      "addr": "0x2d88",
+      "name": "___error"
+    },
+    {
+      "addr": "0x905c2",
+      "name": "aMmapDDTheShare",
+      "string": "mmap(%d, %d) the shared cache region failed due to: %d\n"
+    },
+    {
+      "addr": "0x905fa",
+      "name": "aMmapTheSharedC",
+      "string": "mmap() the shared cache region failed"
+    },
+    {
+      "addr": "0x2718",
+      "name": "_close"
+    },
+    {
+      "addr": "0x511c0",
+      "name": "__ZN15DyldSharedCache13DynamicRegion4makeEm"
+    },
+    {
+      "addr": "0x90620",
+      "name": "aCouldNotMmapDy",
+      "string": "could not mmap() dynamic config memory"
+    },
+    {
+      "addr": "0x51278",
+      "name": "__ZN15DyldSharedCache13DynamicRegion12setCachePathEPKc"
+    },
+    {
+      "addr": "0x51270",
+      "name": "__ZN15DyldSharedCache13DynamicRegion18setDyldCacheFileIDE11FileIdTuple"
+    },
+    {
+      "addr": "0xb0e4",
+      "name": "__ZN5dyld413ProcessConfig45evaluateProcessorSpecificFunctionVariantFlagsERKS0_"
+    },
+    {
+      "addr": "0x512ec",
+      "name": "__ZN15DyldSharedCache13DynamicRegion17setProcessorFlagsEo"
+    },
+    {
+      "addr": "0xb0b8",
+      "name": "__ZN5dyld413ProcessConfig38evaluateSystemWideFunctionVariantFlagsERKS0_"
+    },
+    {
+      "addr": "0x512e4",
+      "name": "__ZN15DyldSharedCache13DynamicRegion18setSystemWideFlagsEo"
+    },
+    {
+      "addr": "0x512d8",
+      "name": "__ZN15DyldSharedCache13DynamicRegion11setReadOnlyEv"
+    },
+    {
+      "addr": "0x3598c",
+      "name": "__ZN5dyld3L26verboseSharedCacheMappingsEPK15DyldSharedCache"
+    }
+  ]
+}

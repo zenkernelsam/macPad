@@ -1,0 +1,309 @@
+BLOCK 0x34378..0x34410
+0x34378 62064091 ADD             X2, X19, #1,LSL#12
+0x3437c 42200b91 ADD             X2, X2, #0x2C8
+0x34380 633e4091 ADD             X3, X19, #0xF,LSL#12
+0x34384 63802891 ADD             X3, X3, #0xA20
+0x34388 64220b91 ADD             X4, X19, #0x2C8
+0x3438c f8040094 BL              __ZN5dyld3L22preflightMainCacheFileERKNS_18SharedCacheOptionsEPNS_19SharedCacheLoadInfoEPNS_9CacheInfoEPcPNSt3__15arrayIA32_cLm128EEE; dyld3::preflightMainCacheFile(dyld3::SharedCacheOptions const&,dyld3::SharedCacheLoadInfo *,dyld3::CacheInfo *,char *,std::array<char [32],128ul> *)
+0x34390 08008052 MOV             W8, #0
+0x34394 60690034 CBZ             W0, loc_350C0
+0x34398 681b4039 LDRB            W8, [X27,#6]
+0x3439c 1f050071 CMP             W8, #1
+0x343a0 a1010054 B.NE            loc_343D4
+0x343a4 76064091 ADD             X22, X19, #1,LSL#12
+0x343a8 d6822891 ADD             X22, X22, #0xA20
+0x343ac a0720091 ADD             X0, X21, #0x1C; this
+0x343b0 61064091 ADD             X1, X19, #1,LSL#12
+0x343b4 21802891 ADD             X1, X1, #0xA20; char *
+0x343b8 f8730094 BL              __ZNK11FileIdTuple7getPathEPc; FileIdTuple::getPath(char *)
+0x343bc c0000034 CBZ             W0, loc_343D4
+0x343c0 f60f1ff8 STR             X22, [SP,#0xFBA0+var_FBB0_1]!
+0x343c4 e002009000781591 ADRL            X0, aMappedDyldCach; "mapped dyld cache file private to proce"...
+0x343cc ca57ff97 BL              __ZN5dyld47consoleEPKcz; dyld4::console(char const*,...)
+0x343d0 ff430091 ADD             SP, SP, #0x10
+0x343d4 7a7254b9 LDR             W26, [X19,#0x1470]
+0x343d8 7a000034 CBZ             W26, loc_343E4
+0x343dc 88164639 LDRB            W8, [X20,#0x185]
+0x343e0 a8600036 TBZ             W8, #0, loc_34FF4
+0x343e4 080080d2 MOV             X8, #0
+0x343e8 69064091 ADD             X9, X19, #1,LSL#12
+0x343ec 29812891 ADD             X9, X9, #0xA20
+0x343f0 2a01088b ADD             X10, X9, X8
+0x343f4 5f150639 STRB            WZR, [X10,#0x185]
+0x343f8 5f8901b9 STR             WZR, [X10,#0x188]
+0x343fc 08010791 ADD             X8, X8, #0x1C0
+0x34400 1f3940f1 CMP             X8, #0xE,LSL#12
+0x34404 61ffff54 B.NE            loc_343F0
+0x34408 5f0b0071 CMP             W26, #2
+0x3440c a3050054 B.CC            loc_344C0
+BLOCK 0x34c00..0x34fc4
+0x34c00 68234039 LDRB            W8, [X27,#8]
+0x34c04 1f050071 CMP             W8, #1
+0x34c08 a1020054 B.NE            loc_34C5C
+0x34c0c 608240f9 LDR             X0, [X19,#0x100]
+0x34c10 68a20291 ADD             X8, X19, #0xA8
+0x34c14 900300b010823c91 ADRL            X16, __NSConcreteStackBlock
+0x34c1c f10308aa MOV             X17, X8
+0x34c20 315cedf2 MOVK            X17, #0x6AE1,LSL#48
+0x34c24 300ac1da PACDA           X16, X17
+0x34c28 705600f9 STR             X16, [X19,#0xA8]
+0x34c2c 695a00fd STR             D9, [X19,#0xB0]
+0x34c30 680a40f9 LDR             X8, [X19,#0x10]
+0x34c34 100000b010422891 ADRL            X16, ____ZN5dyld3L20mapSplitCachePrivateERKNS_18SharedCacheOptionsEPNS_19SharedCacheLoadInfoE_block_invoke
+0x34c3c 1001c1da PACIA           X16, X8
+0x34c40 480300d008010e91 ADRL            X8, ___block_descriptor_tmp_7
+0x34c48 70a20ba9 STP             X16, X8, [X19,#0xB8]
+0x34c4c 68464af9 LDR             X8, [X19,#0x1488]
+0x34c50 7ba20ca9 STP             X27, X8, [X19,#0xC8]
+0x34c54 61a20291 ADD             X1, X19, #0xA8
+0x34c58 db690094 BL              __ZNK15DyldSharedCache13forEachRegionEU13block_pointerFvPKvyyjjyRbE; DyldSharedCache::forEachRegion(void ( {block_pointer})(void const*,ulong long,ulong long,uint,uint,ulong long,bool &))
+0x34c5c 6bf6ff97 BL              __ZN3lsl13MemoryManager13memoryManagerEv; lsl::MemoryManager::memoryManager(void)
+0x34c60 f70300aa MOV             X23, X0
+0x34c64 68020491 ADD             X8, X19, #0x100
+0x34c68 686e00f9 STR             X8, [X19,#0xD8]
+0x34c6c 681e0b91 ADD             X8, X19, #0x2C7
+0x34c70 686e0ea9 STP             X8, X27, [X19,#0xE0]
+0x34c74 68064091 ADD             X8, X19, #1,LSL#12
+0x34c78 08211291 ADD             X8, X8, #0x488
+0x34c7c 687a00f9 STR             X8, [X19,#0xF0]
+0x34c80 001840f9 LDR             X0, [X0,#0x30]
+0x34c84 000a00b4 CBZ             X0, loc_34DC4
+0x34c88 2dfbff97 BL              __ZNK3lsl14ProtectedStack29onStackInAnyFrameInThisThreadEv; lsl::ProtectedStack::onStackInAnyFrameInThisThread(void)
+0x34c8c c0090034 CBZ             W0, loc_34DC4
+0x34c90 88024039 LDRB            W8, [X20]
+0x34c94 68280034 CBZ             W8, loc_351A0
+0x34c98 88024039 LDRB            W8, [X20]
+0x34c9c 08191f12 AND             W8, W8, #0xFE
+0x34ca0 1f090071 CMP             W8, #2
+0x34ca4 e1270054 B.NE            loc_351A0
+0x34ca8 88024039 LDRB            W8, [X20]
+0x34cac bf3a03d5 DMB             ISHST
+0x34cb0 08191f12 AND             W8, W8, #0xFE
+0x34cb4 1f090071 CMP             W8, #2
+0x34cb8 41270054 B.NE            loc_351A0
+0x34cbc 001a98f2 MOVK            X0, #0xC0D0
+0x34cc0 e0ffbff2 MOVK            X0, #0xFFFF,LSL#16
+0x34cc4 e001c0f2 MOVK            X0, #0xF,LSL#32
+0x34cc8 0000e0f2 MOVK            X0, #0,LSL#48
+0x34ccc 000040f9 LDR             X0, [X0]
+0x34cd0 a0f11ed5 MSR             SPRR_UPERM_EL0, X0
+0x34cd4 df3f03d5 ISB
+0x34cd8 011a98f2 MOVK            X1, #0xC0D0
+0x34cdc e1ffbff2 MOVK            X1, #0xFFFF,LSL#16
+0x34ce0 e101c0f2 MOVK            X1, #0xF,LSL#32
+0x34ce4 0100e0f2 MOVK            X1, #0,LSL#48
+0x34ce8 280040f9 LDR             X8, [X1]
+0x34cec a9f13ed5 MRS             X9, SPRR_UPERM_EL0
+0x34cf0 1f0109eb CMP             X8, X9
+0x34cf4 61250054 B.NE            loc_351A0
+0x34cf8 e01a40f9 LDR             X0, [X23,#0x30]
+0x34cfc 68064091 ADD             X8, X19, #1,LSL#12
+0x34d00 08611291 ADD             X8, X8, #0x498
+0x34d04 900300b010823c91 ADRL            X16, __NSConcreteStackBlock
+0x34d0c f10308aa MOV             X17, X8
+0x34d10 315cedf2 MOVK            X17, #0x6AE1,LSL#48
+0x34d14 300ac1da PACDA           X16, X17
+0x34d18 704e0af9 STR             X16, [X19,#0x1498]
+0x34d1c 69520afd STR             D9, [X19,#0x14A0]
+0x34d20 690240f9 LDR             X9, [X19]
+0x34d24 100000d010a20391 ADRL            X16, ____ZN3lsl13MemoryManager26withWritableMemoryInternalIZN5dyld3L20mapSplitCachePrivateERKNS2_18SharedCacheOptionsEPNS2_19SharedCacheLoadInfoEE3$_0EEvT__block_invoke
+0x34d2c 3001c1da PACIA           X16, X9
+0x34d30 70560af9 STR             X16, [X19,#0x14A8]
+0x34d34 490300d029810f91 ADRL            X9, ___block_descriptor_tmp.40
+0x34d3c 695a0af9 STR             X9, [X19,#0x14B0]
+0x34d40 6082cd3c LDUR            Q0, [X19,#0xD8]
+0x34d44 6182ce3c LDUR            Q1, [X19,#0xE8]
+0x34d48 000501ad STP             Q0, Q1, [X8,#0x20]
+0x34d4c 61064091 ADD             X1, X19, #1,LSL#12
+0x34d50 21601291 ADD             X1, X1, #0x498
+0x34d54 c8fbff97 BL              __ZN3lsl14ProtectedStack24withNestedProtectedStackEU13block_pointerFvvE; lsl::ProtectedStack::withNestedProtectedStack(void ( {block_pointer})(void))
+0x34d58 88024039 LDRB            W8, [X20]
+0x34d5c 28220034 CBZ             W8, loc_351A0
+0x34d60 88024039 LDRB            W8, [X20]
+0x34d64 08191f12 AND             W8, W8, #0xFE
+0x34d68 1f090071 CMP             W8, #2
+0x34d6c a1210054 B.NE            loc_351A0
+0x34d70 88024039 LDRB            W8, [X20]
+0x34d74 bf3a03d5 DMB             ISHST
+0x34d78 08191f12 AND             W8, W8, #0xFE
+0x34d7c 1f090071 CMP             W8, #2
+0x34d80 01210054 B.NE            loc_351A0
+0x34d84 001b98f2 MOVK            X0, #0xC0D8
+0x34d88 e0ffbff2 MOVK            X0, #0xFFFF,LSL#16
+0x34d8c e001c0f2 MOVK            X0, #0xF,LSL#32
+0x34d90 0000e0f2 MOVK            X0, #0,LSL#48
+0x34d94 000040f9 LDR             X0, [X0]
+0x34d98 a0f11ed5 MSR             SPRR_UPERM_EL0, X0
+0x34d9c df3f03d5 ISB
+0x34da0 011b98f2 MOVK            X1, #0xC0D8
+0x34da4 e1ffbff2 MOVK            X1, #0xFFFF,LSL#16
+0x34da8 e101c0f2 MOVK            X1, #0xF,LSL#32
+0x34dac 0100e0f2 MOVK            X1, #0,LSL#48
+0x34db0 280040f9 LDR             X8, [X1]
+0x34db4 a9f13ed5 MRS             X9, SPRR_UPERM_EL0
+0x34db8 1f0109eb CMP             X8, X9
+0x34dbc 211f0054 B.NE            loc_351A0
+0x34dc0 67000014 B               loc_34F5C
+0x34dc4 e8824039 LDRB            W8, [X23,#0x20]
+0x34dc8 1f050071 CMP             W8, #1
+0x34dcc 81080054 B.NE            loc_34EDC
+0x34dd0 88024039 LDRB            W8, [X20]
+0x34dd4 681e0034 CBZ             W8, loc_351A0
+0x34dd8 88024039 LDRB            W8, [X20]
+0x34ddc 08191f12 AND             W8, W8, #0xFE
+0x34de0 1f090071 CMP             W8, #2
+0x34de4 e11d0054 B.NE            loc_351A0
+0x34de8 88024039 LDRB            W8, [X20]
+0x34dec 08191f12 AND             W8, W8, #0xFE
+0x34df0 1f090071 CMP             W8, #2
+0x34df4 611d0054 B.NE            loc_351A0
+0x34df8 a8f13ed5 MRS             X8, SPRR_UPERM_EL0
+0x34dfc c80a20b7 TBNZ            X8, #0x24, loc_34F54 ; '$'
+0x34e00 88024039 LDRB            W8, [X20]
+0x34e04 e81c0034 CBZ             W8, loc_351A0
+0x34e08 88024039 LDRB            W8, [X20]
+0x34e0c 08191f12 AND             W8, W8, #0xFE
+0x34e10 1f090071 CMP             W8, #2
+0x34e14 611c0054 B.NE            loc_351A0
+0x34e18 88024039 LDRB            W8, [X20]
+0x34e1c bf3a03d5 DMB             ISHST
+0x34e20 08191f12 AND             W8, W8, #0xFE
+0x34e24 1f090071 CMP             W8, #2
+0x34e28 c11b0054 B.NE            loc_351A0
+0x34e2c 001a98f2 MOVK            X0, #0xC0D0
+0x34e30 e0ffbff2 MOVK            X0, #0xFFFF,LSL#16
+0x34e34 e001c0f2 MOVK            X0, #0xF,LSL#32
+0x34e38 0000e0f2 MOVK            X0, #0,LSL#48
+0x34e3c 000040f9 LDR             X0, [X0]
+0x34e40 a0f11ed5 MSR             SPRR_UPERM_EL0, X0
+0x34e44 df3f03d5 ISB
+0x34e48 011a98f2 MOVK            X1, #0xC0D0
+0x34e4c e1ffbff2 MOVK            X1, #0xFFFF,LSL#16
+0x34e50 e101c0f2 MOVK            X1, #0xF,LSL#32
+0x34e54 0100e0f2 MOVK            X1, #0,LSL#48
+0x34e58 280040f9 LDR             X8, [X1]
+0x34e5c a9f13ed5 MRS             X9, SPRR_UPERM_EL0
+0x34e60 1f0109eb CMP             X8, X9
+0x34e64 e1190054 B.NE            loc_351A0
+0x34e68 60620391 ADD             X0, X19, #0xD8
+0x34e6c a1040094 BL              __ZZN5dyld3L20mapSplitCachePrivateERKNS_18SharedCacheOptionsEPNS_19SharedCacheLoadInfoEENK3$_0clEv; dyld3::mapSplitCachePrivate(dyld3::SharedCacheOptions const&,dyld3::SharedCacheLoadInfo *)::$_0::operator()(void)
+0x34e70 88024039 LDRB            W8, [X20]
+0x34e74 68190034 CBZ             W8, loc_351A0
+0x34e78 88024039 LDRB            W8, [X20]
+0x34e7c 08191f12 AND             W8, W8, #0xFE
+0x34e80 1f090071 CMP             W8, #2
+0x34e84 e1180054 B.NE            loc_351A0
+0x34e88 88024039 LDRB            W8, [X20]
+0x34e8c bf3a03d5 DMB             ISHST
+0x34e90 08191f12 AND             W8, W8, #0xFE
+0x34e94 1f090071 CMP             W8, #2
+0x34e98 41180054 B.NE            loc_351A0
+0x34e9c 001b98f2 MOVK            X0, #0xC0D8
+0x34ea0 e0ffbff2 MOVK            X0, #0xFFFF,LSL#16
+0x34ea4 e001c0f2 MOVK            X0, #0xF,LSL#32
+0x34ea8 0000e0f2 MOVK            X0, #0,LSL#48
+0x34eac 000040f9 LDR             X0, [X0]
+0x34eb0 a0f11ed5 MSR             SPRR_UPERM_EL0, X0
+0x34eb4 df3f03d5 ISB
+0x34eb8 011b98f2 MOVK            X1, #0xC0D8
+0x34ebc e1ffbff2 MOVK            X1, #0xFFFF,LSL#16
+0x34ec0 e101c0f2 MOVK            X1, #0xF,LSL#32
+0x34ec4 0100e0f2 MOVK            X1, #0,LSL#48
+0x34ec8 280040f9 LDR             X8, [X1]
+0x34ecc a9f13ed5 MRS             X9, SPRR_UPERM_EL0
+0x34ed0 1f0109eb CMP             X8, X9
+0x34ed4 61160054 B.NE            loc_351A0
+0x34ed8 21000014 B               loc_34F5C
+0x34edc 68064091 ADD             X8, X19, #1,LSL#12
+0x34ee0 08411291 ADD             X8, X8, #0x490
+0x34ee4 e00317aa MOV             X0, X23
+0x34ee8 80f6ff97 BL              __ZN3lsl13MemoryManager9lockGuardEv; lsl::MemoryManager::lockGuard(void)
+0x34eec e80e40f9 LDR             X8, [X23,#0x18]
+0x34ef0 a80000b5 CBNZ            X8, loc_34F04
+0x34ef4 e00317aa MOV             X0, X23
+0x34ef8 01008052 MOV             W1, #0
+0x34efc 7df6ff97 BL              __ZN3lsl13MemoryManager12writeProtectEb; lsl::MemoryManager::writeProtect(bool)
+0x34f00 e80e40f9 LDR             X8, [X23,#0x18]
+0x34f04 08050091 ADD             X8, X8, #1
+0x34f08 e80e00f9 STR             X8, [X23,#0x18]
+0x34f0c 604a4af9 LDR             X0, [X19,#0x1490]
+0x34f10 3bf4ff97 BL              __ZN3lsl4Lock6unlockEv; lsl::Lock::unlock(void)
+0x34f14 60620391 ADD             X0, X19, #0xD8
+0x34f18 76040094 BL              __ZZN5dyld3L20mapSplitCachePrivateERKNS_18SharedCacheOptionsEPNS_19SharedCacheLoadInfoEENK3$_0clEv; dyld3::mapSplitCachePrivate(dyld3::SharedCacheOptions const&,dyld3::SharedCacheLoadInfo *)::$_0::operator()(void)
+0x34f1c 68064091 ADD             X8, X19, #1,LSL#12
+0x34f20 08411291 ADD             X8, X8, #0x490
+0x34f24 e00317aa MOV             X0, X23
+0x34f28 70f6ff97 BL              __ZN3lsl13MemoryManager9lockGuardEv; lsl::MemoryManager::lockGuard(void)
+0x34f2c e80e40f9 LDR             X8, [X23,#0x18]
+0x34f30 080500f1 SUBS            X8, X8, #1
+0x34f34 e80e00f9 STR             X8, [X23,#0x18]
+0x34f38 81000054 B.NE            loc_34F48
+0x34f3c e00317aa MOV             X0, X23
+0x34f40 21008052 MOV             W1, #1
+0x34f44 6bf6ff97 BL              __ZN3lsl13MemoryManager12writeProtectEb; lsl::MemoryManager::writeProtect(bool)
+0x34f48 604a4af9 LDR             X0, [X19,#0x1490]
+0x34f4c 2cf4ff97 BL              __ZN3lsl4Lock6unlockEv; lsl::Lock::unlock(void)
+0x34f50 03000014 B               loc_34F5C
+0x34f54 60620391 ADD             X0, X19, #0xD8
+0x34f58 66040094 BL              __ZZN5dyld3L20mapSplitCachePrivateERKNS_18SharedCacheOptionsEPNS_19SharedCacheLoadInfoEENK3$_0clEv; dyld3::mapSplitCachePrivate(dyld3::SharedCacheOptions const&,dyld3::SharedCacheLoadInfo *)::$_0::operator()(void)
+0x34f5c 68234039 LDRB            W8, [X27,#8]
+0x34f60 1f050071 CMP             W8, #1
+0x34f64 a1020054 B.NE            loc_34FB8
+0x34f68 608240f9 LDR             X0, [X19,#0x100]
+0x34f6c 68e20191 ADD             X8, X19, #0x78 ; 'x'
+0x34f70 900300b010823c91 ADRL            X16, __NSConcreteStackBlock
+0x34f78 f10308aa MOV             X17, X8
+0x34f7c 315cedf2 MOVK            X17, #0x6AE1,LSL#48
+0x34f80 300ac1da PACDA           X16, X17
+0x34f84 703e00f9 STR             X16, [X19,#0x78]
+0x34f88 694200fd STR             D9, [X19,#0x80]
+0x34f8c 680640f9 LDR             X8, [X19,#8]
+0x34f90 100000b010522991 ADRL            X16, ____ZN5dyld3L20mapSplitCachePrivateERKNS_18SharedCacheOptionsEPNS_19SharedCacheLoadInfoE_block_invoke_2
+0x34f98 1001c1da PACIA           X16, X8
+0x34f9c 480300d008810e91 ADRL            X8, ___block_descriptor_tmp.10_0
+0x34fa4 70a208a9 STP             X16, X8, [X19,#0x88]
+0x34fa8 68464af9 LDR             X8, [X19,#0x1488]
+0x34fac 7ba209a9 STP             X27, X8, [X19,#0x98]
+0x34fb0 61e20191 ADD             X1, X19, #0x78 ; 'x'
+0x34fb4 04690094 BL              __ZNK15DyldSharedCache13forEachRegionEU13block_pointerFvPKvyyjjyRbE; DyldSharedCache::forEachRegion(void ( {block_pointer})(void const*,ulong long,ulong long,uint,uint,ulong long,bool &))
+0x34fb8 d6060091 ADD             X22, X22, #1
+0x34fbc df0215eb CMP             X22, X21
+0x34fc0 21bbff54 B.NE            loc_34724
+BLOCK 0x3420c..0x34240
+0x3420c 7f2303d5 PACIBSP
+0x34210 ff8300d1 SUB             SP, SP, #0x20
+0x34214 fd7b01a9 STP             X29, X30, [SP,#0x10+var_s0]
+0x34218 fd430091 ADD             X29, SP, #0x10
+0x3421c ff0700f9 STR             XZR, [SP,#0x10+var_8]
+0x34220 e0230091 ADD             X0, SP, #0x10+var_8
+0x34224 ea0a0194 BL              ___shared_region_check_np
+0x34228 60000035 CBNZ            W0, loc_34234
+0x3422c 000080d2 MOV             X0, #0
+0x34230 e70a0194 BL              ___shared_region_check_np
+0x34234 fd7b41a9 LDP             X29, X30, [SP,#0x10+var_s0]
+0x34238 ff830091 ADD             SP, SP, #0x20 ; ' '
+0x3423c ff0f5fd6 RETAB
+BLOCK 0x4f44..0x4fa0
+0x4f44 63010837 TBNZ            W3, #1, loc_4F70
+0x4f48 410000b4 CBZ             X1, loc_4F50
+0x4f4c 43010037 TBNZ            W3, #0, loc_4F74
+0x4f50 7f2303d5 PACIBSP
+0x4f54 fd7bbfa9 STP             X29, X30, [SP,#-0x10+var_s0]!
+0x4f58 fd030091 MOV             X29, SP
+0x4f5c c0028052 MOV             W0, #0x16
+0x4f60 81f7ff97 BL              _cerror_nocancel
+0x4f64 00008092 MOV             X0, #0xFFFFFFFFFFFFFFFF
+0x4f68 fd7bc1a8 LDP             X29, X30, [SP+var_s0],#0x10
+0x4f6c ff0f5fd6 RETAB
+0x4f70 01ffffb4 CBZ             X1, loc_4F50
+0x4f74 63000e32 ORR             W3, W3, #0x40000
+0x4f78 d0071eca EOR             X16, X30, X30,LSL#1
+0x4f7c 5000f0b6 TBZ             X16, #0x3E, loc_4F84 ; '>'
+0x4f80 208e38d4 BRK             #0xC471
+0x4f84 01000014 B               ___mmap
+0x4f88 b01880d2 MOV             X16, #0xC5
+0x4f8c 011000d4 SVC             0x80
+0x4f90 03010054 B.CC            locret_4FB0
+0x4f94 7f2303d5 PACIBSP
+0x4f98 fd7bbfa9 STP             X29, X30, [SP,#var_10]!
+0x4f9c fd030091 MOV             X29, SP

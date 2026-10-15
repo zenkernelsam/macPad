@@ -1,0 +1,24 @@
+{
+  "addr": "0x34240",
+  "code": "__int64 __fastcall dyld3::loadDyldCache(__int64 a1, _QWORD *a2)\n{\n  __int64 _18; // [xsp+18h] [xbp+8h]\n\n  *a2 = 0; /*0x34258*/\n  a2[1] = 0; /*0x34258*/\n  a2[2] = 0; /*0x3425c*/\n  if ( *(_BYTE *)(a1 + 4) == 1 ) /*0x34268*/\n  {\n    if ( ((_18 ^ (2 * _18)) & 0x4000000000000000LL) != 0 ) /*0x34284*/\n      __break(0xC471u); /*0x34288*/\n    return dyld3::mapSplitCachePrivate(); /*0x3428c*/\n  }\n  else if ( (unsigned int)dyld3::reuseExistingCache(a1, a2) ) /*0x34298*/\n  {\n    return a2[2] == 0; /*0x342a8*/\n  }\n  else\n  {\n    if ( ((_18 ^ (2 * _18)) & 0x4000000000000000LL) != 0 ) /*0x342d0*/\n      __break(0xC471u); /*0x342d4*/\n    return dyld3::mapSplitCacheSystemWide(a1, a2); /*0x342d8*/\n  }\n}",
+  "line_count": 24,
+  "total_lines": 24,
+  "truncated": false,
+  "cursor": {
+    "done": true
+  },
+  "refs": [
+    {
+      "addr": "0x342dc",
+      "name": "__ZN5dyld3L20mapSplitCachePrivateERKNS_18SharedCacheOptionsEPNS_19SharedCacheLoadInfoE"
+    },
+    {
+      "addr": "0x352bc",
+      "name": "__ZN5dyld3L23mapSplitCacheSystemWideERKNS_18SharedCacheOptionsEPNS_19SharedCacheLoadInfoE"
+    },
+    {
+      "addr": "0x351a8",
+      "name": "__ZN5dyld3L18reuseExistingCacheERKNS_18SharedCacheOptionsEPNS_19SharedCacheLoadInfoE"
+    }
+  ]
+}

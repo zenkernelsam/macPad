@@ -1,0 +1,29 @@
+{
+  "addr": "0x9b580",
+  "code": "void *__fastcall sub_9B580(dyld3 *a1)\n{\n  __int64 v1; // x27\n  void *result; // x0\n\n  *(_BYTE *)(v1 + 13) = 0; /*0x9b58c*/\n  dyld3::deallocateExistingSharedCache(a1); /*0x9b590*/\n  result = mmap((void *)0x280000000LL, 0x40000000u, 0, 4098, -1, 0); /*0x9b5b0*/\n  if ( result != (void *)0x280000000LL )\n    dyld4::halt(\"macPad diagnostic: could not reserve the Sequoia private cache extension\", 0);\n  return result; /*0x9b5d4*/\n}",
+  "line_count": 12,
+  "total_lines": 12,
+  "truncated": false,
+  "cursor": {
+    "done": true
+  },
+  "refs": [
+    {
+      "addr": "0x3420c",
+      "name": "__ZN5dyld329deallocateExistingSharedCacheEv"
+    },
+    {
+      "addr": "0x4f44",
+      "name": "_mmap"
+    },
+    {
+      "addr": "0xbb04",
+      "name": "__ZN5dyld44haltEPKcPKNS_15StructuredErrorE"
+    },
+    {
+      "addr": "0x9b5d8",
+      "name": "aMacpadDiagnost",
+      "string": "macPad diagnostic: could not reserve the Sequoia private cache extension"
+    }
+  ]
+}

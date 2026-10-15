@@ -1,0 +1,174 @@
+0x100004c10 fc6fbaa9 STP             X28, X27, [SP,#-0x10+var_50]!
+0x100004c14 fa6701a9 STP             X26, X25, [SP,#0x50+var_40]
+0x100004c18 f85f02a9 STP             X24, X23, [SP,#0x50+var_30]
+0x100004c1c f65703a9 STP             X22, X21, [SP,#0x50+var_20]
+0x100004c20 f44f04a9 STP             X20, X19, [SP,#0x50+var_10]
+0x100004c24 fd7b05a9 STP             X29, X30, [SP,#0x50+var_s0]
+0x100004c28 fd430191 ADD             X29, SP, #0x50
+0x100004c2c 09168252 MOV             W9, #0x10B0
+0x100004c30 30000090 ADRP            X16, #___chkstk_darwin_ptr@PAGE
+0x100004c34 100240f9 LDR             X16, [X16,#___chkstk_darwin_ptr@PAGEOFF]; ___chkstk_darwin
+0x100004c38 00023fd6 BLR             X16; ___chkstk_darwin
+0x100004c3c ff0740d1 SUB             SP, SP, #1,LSL#12
+0x100004c40 ffc302d1 SUB             SP, SP, #0xB0
+0x100004c44 f40303aa MOV             X20, X3
+0x100004c48 f50302aa MOV             X21, X2
+0x100004c4c f60301aa MOV             X22, X1
+0x100004c50 f30300aa MOV             X19, X0
+0x100004c54 28000090 ADRP            X8, #___stack_chk_guard_ptr@PAGE
+0x100004c58 080d40f9 LDR             X8, [X8,#___stack_chk_guard_ptr@PAGEOFF]; ___stack_chk_guard
+0x100004c5c 080140f9 LDR             X8, [X8]
+0x100004c60 a8831af8 STUR            X8, [X29,#var_58]
+0x100004c64 ff2f00b9 STR             WZR, [SP,#0x1100+var_10D4]
+0x100004c68 e1a30291 ADD             X1, SP, #0x1100+buffer; buffer
+0x100004c6c 02008252 MOV             W2, #0x1000; buffersize
+0x100004c70 5d010094 BL              _proc_pidpath
+0x100004c74 1f040071 CMP             W0, #1
+0x100004c78 ab090054 B.LT            loc_100004DAC
+0x100004c7c faa30291 ADD             X26, SP, #0x1100+buffer
+0x100004c80 f8c58ed2384caef2f8a5cdf2d88deef2 MOV             X24, #0x746E6D2F7261762F
+0x100004c90 fb058ed25b2eadf2db2eccf29baeecf2 MOV             X27, #0x657461766972702F
+0x100004ca0 f9458ed2f9edadf299ceccf279eee5f2 MOV             X25, #0x2F7366746F6F722F
+0x100004cb0 482740a9 LDP             X8, X9, [X26]
+0x100004cb4 4a0b40f9 LDR             X10, [X26,#0x10]
+0x100004cb8 1f011beb CMP             X8, X27
+0x100004cbc 200158fa CCMP            X9, X24, #0, EQ
+0x100004cc0 400159fa CCMP            X10, X25, #0, EQ
+0x100004cc4 40010054 B.EQ            loc_100004CEC
+0x100004cc8 28000090 ADRP            X8, #___stderrp_ptr@PAGE
+0x100004ccc 081140f9 LDR             X8, [X8,#___stderrp_ptr@PAGEOFF]; ___stderrp
+0x100004cd0 000140f9 LDR             X0, [X8]; FILE *
+0x100004cd4 e8a30291 ADD             X8, SP, #0x1100+buffer
+0x100004cd8 f32300a9 STP             X19, X8, [SP,#0x1100+var_1100]
+0x100004cdc 010000b021182191 ADRL            X1, aExecjitRejecti; "EXECJIT rejecting peer %d path=%s\n"
+0x100004ce4 13010094 BL              _fprintf
+0x100004ce8 31000014 B               loc_100004DAC
+0x100004cec e3c30191 ADD             X3, SP, #0x1100+var_1090; buffer
+0x100004cf0 e00313aa MOV             X0, X19; pid
+0x100004cf4 21028052 MOV             W1, #0x11; flavor
+0x100004cf8 020080d2 MOV             X2, #0; arg
+0x100004cfc 04078052 MOV             W4, #0x38 ; '8'; buffersize
+0x100004d00 36010094 BL              _proc_pidinfo
+0x100004d04 1fe00071 CMP             W0, #0x38 ; '8'
+0x100004d08 21050054 B.NE            loc_100004DAC
+0x100004d0c e84340f9 LDR             X8, [SP,#0x1100+var_1080]
+0x100004d10 1f0116eb CMP             X8, X22
+0x100004d14 c1040054 B.NE            loc_100004DAC
+0x100004d18 e89340b9 LDR             W8, [SP,#0x1100+var_1070]
+0x100004d1c 1f01156b CMP             W8, W21
+0x100004d20 61040054 B.NE            loc_100004DAC
+0x100004d24 e80313aa MOV             X8, X19
+0x100004d28 e80300f9 STR             X8, [SP,#0x1100+var_1100]
+0x100004d2c 020000b042042491 ADRL            X2, aD; "%d"
+0x100004d34 f7430191 ADD             X23, SP, #0x1100+__str
+0x100004d38 e0430191 ADD             X0, SP, #0x1100+__str; __str
+0x100004d3c 01048052 MOV             W1, #0x20 ; ' '; __size
+0x100004d40 44010094 BL              _snprintf
+0x100004d44 010000b021102491 ADRL            X1, aVarJbUsrBinJbc; "/var/jb/usr/bin/jbctl"
+0x100004d4c 080000b008692491 ADRL            X8, aProcSetDebugge; "proc_set_debugged"
+0x100004d54 e12303a9 STP             X1, X8, [SP,#0x1100+__argv]
+0x100004d58 f77f04a9 STP             X23, XZR, [SP,#0x1100+var_10C0]
+0x100004d5c ffff0429 STP             WZR, WZR, [SP,#0x1100+var_10DC]
+0x100004d60 28000090 ADRP            X8, #_environ_ptr@PAGE
+0x100004d64 083140f9 LDR             X8, [X8,#_environ_ptr@PAGEOFF]; _environ
+0x100004d68 050140f9 LDR             X5, [X8]; __envp
+0x100004d6c e0a30091 ADD             X0, SP, #0x1100+var_10D8; pid_t *
+0x100004d70 e4c30091 ADD             X4, SP, #0x1100+__argv; __argv
+0x100004d74 020080d2 MOV             X2, #0; posix_spawn_file_actions_t *
+0x100004d78 030080d2 MOV             X3, #0; posix_spawnattr_t *
+0x100004d7c 14010094 BL              _posix_spawn
+0x100004d80 f70300aa MOV             X23, X0
+0x100004d84 40030034 CBZ             W0, loc_100004DEC
+0x100004d88 28000090 ADRP            X8, #___stderrp_ptr@PAGE
+0x100004d8c 081140f9 LDR             X8, [X8,#___stderrp_ptr@PAGEOFF]; ___stderrp
+0x100004d90 000140f9 LDR             X0, [X8]
+0x100004d94 e82740b9 LDR             W8, [SP,#0x1100+var_10DC]
+0x100004d98 f7a300a9 STP             X23, X8, [SP,#0x1100+var_10F8]
+0x100004d9c f30300f9 STR             X19, [SP,#0x1100+var_1100]
+0x100004da0 010000b021442591 ADRL            X1, aExecjitGrantFa; "EXECJIT grant failed pid=%d spawn=%d st"...
+0x100004da8 cfffff17 B               loc_100004CE4
+0x100004dac 00008052 MOV             W0, #0
+0x100004db0 a8835af8 LDUR            X8, [X29,#var_58]
+0x100004db4 29000090 ADRP            X9, #___stack_chk_guard_ptr@PAGE
+0x100004db8 290d40f9 LDR             X9, [X9,#___stack_chk_guard_ptr@PAGEOFF]; ___stack_chk_guard
+0x100004dbc 290140f9 LDR             X9, [X9]
+0x100004dc0 3f0108eb CMP             X9, X8
+0x100004dc4 010a0054 B.NE            loc_100004F04
+0x100004dc8 ff074091 ADD             SP, SP, #1,LSL#12
+0x100004dcc ffc30291 ADD             SP, SP, #0xB0
+0x100004dd0 fd7b45a9 LDP             X29, X30, [SP,#0x50+var_s0]
+0x100004dd4 f44f44a9 LDP             X20, X19, [SP,#0x50+var_10]
+0x100004dd8 f65743a9 LDP             X22, X21, [SP,#0x50+var_20]
+0x100004ddc f85f42a9 LDP             X24, X23, [SP,#0x50+var_30]
+0x100004de0 fa6741a9 LDP             X26, X25, [SP,#0x50+var_40]
+0x100004de4 fc6fc6a8 LDP             X28, X27, [SP+0x50+var_50],#0x60
+0x100004de8 c0035fd6 RET
+0x100004dec e02b40b9 LDR             W0, [SP,#0x1100+var_10D8]; pid_t
+0x100004df0 e1930091 ADD             X1, SP, #0x1100+var_10DC; int *
+0x100004df4 02008052 MOV             W2, #0; int
+0x100004df8 31010094 BL              _waitpid
+0x100004dfc e82b40b9 LDR             W8, [SP,#0x1100+var_10D8]
+0x100004e00 1f00086b CMP             W0, W8
+0x100004e04 21fcff54 B.NE            loc_100004D88
+0x100004e08 e82740b9 LDR             W8, [SP,#0x1100+var_10DC]
+0x100004e0c e8fbff35 CBNZ            W8, loc_100004D88
+0x100004e10 e1a30291 ADD             X1, SP, #0x1100+buffer; buffer
+0x100004e14 e00313aa MOV             X0, X19; pid
+0x100004e18 02008252 MOV             W2, #0x1000; buffersize
+0x100004e1c f2000094 BL              _proc_pidpath
+0x100004e20 1f040071 CMP             W0, #1
+0x100004e24 2bfbff54 B.LT            loc_100004D88
+0x100004e28 482740a9 LDP             X8, X9, [X26]
+0x100004e2c 4a0b40f9 LDR             X10, [X26,#0x10]
+0x100004e30 1f011beb CMP             X8, X27
+0x100004e34 200158fa CCMP            X9, X24, #0, EQ
+0x100004e38 400159fa CCMP            X10, X25, #0, EQ
+0x100004e3c 60010054 B.EQ            loc_100004E68
+0x100004e40 28000090 ADRP            X8, #___stderrp_ptr@PAGE
+0x100004e44 081140f9 LDR             X8, [X8,#___stderrp_ptr@PAGEOFF]; ___stderrp
+0x100004e48 000140f9 LDR             X0, [X8]; FILE *
+0x100004e4c e8a30291 ADD             X8, SP, #0x1100+buffer
+0x100004e50 e90313aa MOV             X9, X19
+0x100004e54 e92300a9 STP             X9, X8, [SP,#0x1100+var_1100]
+0x100004e58 010000b021182191 ADRL            X1, aExecjitRejecti; "EXECJIT rejecting peer %d path=%s\n"
+0x100004e60 b4000094 BL              _fprintf
+0x100004e64 c9ffff17 B               loc_100004D88
+0x100004e68 e3c30191 ADD             X3, SP, #0x1100+var_1090; buffer
+0x100004e6c e00313aa MOV             X0, X19; pid
+0x100004e70 21028052 MOV             W1, #0x11; flavor
+0x100004e74 020080d2 MOV             X2, #0; arg
+0x100004e78 04078052 MOV             W4, #0x38 ; '8'; buffersize
+0x100004e7c d7000094 BL              _proc_pidinfo
+0x100004e80 1fe00071 CMP             W0, #0x38 ; '8'
+0x100004e84 21f8ff54 B.NE            loc_100004D88
+0x100004e88 e84340f9 LDR             X8, [SP,#0x1100+var_1080]
+0x100004e8c 1f0116eb CMP             X8, X22
+0x100004e90 c1f7ff54 B.NE            loc_100004D88
+0x100004e94 e89340b9 LDR             W8, [SP,#0x1100+var_1070]
+0x100004e98 1f01156b CMP             W8, W21
+0x100004e9c 61f7ff54 B.NE            loc_100004D88
+0x100004ea0 e2b30091 ADD             X2, SP, #0x1100+var_10D4
+0x100004ea4 e00313aa MOV             X0, X19
+0x100004ea8 01008052 MOV             W1, #0
+0x100004eac 83008052 MOV             W3, #4
+0x100004eb0 97000094 BL              _csops
+0x100004eb4 a0f6ff35 CBNZ            W0, loc_100004D88
+0x100004eb8 e8bf4039 LDRB            W8, [SP,#0x1100+var_10D4+3]
+0x100004ebc 68f62736 TBZ             W8, #4, loc_100004D88
+0x100004ec0 28000090 ADRP            X8, #___stderrp_ptr@PAGE
+0x100004ec4 081140f9 LDR             X8, [X8,#___stderrp_ptr@PAGEOFF]; ___stderrp
+0x100004ec8 000140f9 LDR             X0, [X8]; FILE *
+0x100004ecc e80313aa MOV             X8, X19
+0x100004ed0 e85300a9 STP             X8, X20, [SP,#0x1100+var_1100]
+0x100004ed4 010000b021b02491 ADRL            X1, aExecjitAuthori; "EXECJIT authorized pid=%d resume=%d\n"
+0x100004edc 95000094 BL              _fprintf
+0x100004ee0 f4000034 CBZ             W20, loc_100004EFC
+0x100004ee4 e00313aa MOV             X0, X19; pid_t
+0x100004ee8 61028052 MOV             W1, #0x13; int
+0x100004eec a3000094 BL              _kill
+0x100004ef0 1f000071 CMP             W0, #0
+0x100004ef4 e0179f1a CSET            W0, EQ
+0x100004ef8 aeffff17 B               loc_100004DB0
+0x100004efc 20008052 MOV             W0, #1
+0x100004f00 acffff17 B               loc_100004DB0
+0x100004f04 6d000094 BL              ___stack_chk_fail

@@ -1,0 +1,12 @@
+{
+  "status": "ok",
+  "uptime_sec": 124.177,
+  "idb_path": "/Users/ciscohe/Desktop/macPad/analysis/share-review-20261015/share-dyld-arm64e.i64",
+  "module": "share-dyld-arm64e",
+  "input_path": "/Users/ciscohe/Desktop/macPad/analysis/share-review-20261015/share-dyld-arm64e",
+  "imagebase": "0x0",
+  "auto_analysis_ready": true,
+  "hexrays_ready": true,
+  "strings_cache_ready": false,
+  "strings_cache_size": 0
+}

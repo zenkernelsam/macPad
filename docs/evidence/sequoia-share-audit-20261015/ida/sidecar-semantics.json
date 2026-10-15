@@ -1,0 +1,299 @@
+{
+  "method": "Offline semantic file comparison derived from exact IDA consumer disassembly; bulk run outside IDA because its trace profiler timed out",
+  "not_runtime_acceptance": true,
+  "results": [
+    {
+      "sidecar": "sidecar0.dylib",
+      "pointer_format": 12,
+      "regions": [
+        {
+          "address": "0x1e7f5c000",
+          "size": 32047104,
+          "counts": {
+            "plain_rebase": 3048190,
+            "pages": 1956
+          },
+          "all_page_starts_match": true,
+          "non_chain_bytes_match": true
+        },
+        {
+          "address": "0x1ebdec000",
+          "size": 37339136,
+          "counts": {
+            "plain_rebase": 183784,
+            "pages": 2279
+          },
+          "all_page_starts_match": true,
+          "non_chain_bytes_match": true
+        },
+        {
+          "address": "0x1ee188000",
+          "size": 147456,
+          "counts": {
+            "pages": 9
+          },
+          "all_page_starts_match": true,
+          "non_chain_bytes_match": true
+        },
+        {
+          "address": "0x1ee1ac000",
+          "size": 18874368,
+          "counts": {
+            "pages": 1152,
+            "auth_rebase": 1085897,
+            "plain_rebase": 387490,
+            "auth_bind": 1185
+          },
+          "all_page_starts_match": true,
+          "non_chain_bytes_match": true
+        },
+        {
+          "address": "0x1ef3ac000",
+          "size": 130826240,
+          "counts": {
+            "auth_rebase": 3714372,
+            "pages": 7985,
+            "plain_rebase": 5827336
+          },
+          "all_page_starts_match": true,
+          "non_chain_bytes_match": true
+        }
+      ],
+      "counts": {
+        "plain_rebase": 9446800,
+        "pages": 13381,
+        "auth_rebase": 4800269,
+        "auth_bind": 1185
+      },
+      "examples": [
+        {
+          "location": "0x1e7f5c000",
+          "v5_word": "0x10000069cb7e58",
+          "format12_word": "0x8000069cb7e58",
+          "target": "0x1e9cb7e58",
+          "kind": "plain_rebase"
+        },
+        {
+          "location": "0x1e7f5c008",
+          "v5_word": "0x10000069cb7e60",
+          "format12_word": "0x8000069cb7e60",
+          "target": "0x1e9cb7e60",
+          "kind": "plain_rebase"
+        },
+        {
+          "location": "0x1e7f5c010",
+          "v5_word": "0x10000069cb7e70",
+          "format12_word": "0x8000069cb7e70",
+          "target": "0x1e9cb7e70",
+          "kind": "plain_rebase"
+        },
+        {
+          "location": "0x1e7f5c018",
+          "v5_word": "0x10000069cb7e68",
+          "format12_word": "0x8000069cb7e68",
+          "target": "0x1e9cb7e68",
+          "kind": "plain_rebase"
+        },
+        {
+          "location": "0x1e7f5c020",
+          "v5_word": "0x10000069cb7f68",
+          "format12_word": "0x8000069cb7f68",
+          "target": "0x1e9cb7f68",
+          "kind": "plain_rebase"
+        },
+        {
+          "location": "0x1e7f5c028",
+          "v5_word": "0x100000687bc838",
+          "format12_word": "0x80000687bc838",
+          "target": "0x1e87bc838",
+          "kind": "plain_rebase"
+        },
+        {
+          "location": "0x1e7f5c030",
+          "v5_word": "0x100000687bc858",
+          "format12_word": "0x80000687bc858",
+          "target": "0x1e87bc858",
+          "kind": "plain_rebase"
+        },
+        {
+          "location": "0x1e7f5c038",
+          "v5_word": "0x100000687bc848",
+          "format12_word": "0x80000687bc848",
+          "target": "0x1e87bc848",
+          "kind": "plain_rebase"
+        },
+        {
+          "location": "0x1e7f5c040",
+          "v5_word": "0x100000687bc8c0",
+          "format12_word": "0x80000687bc8c0",
+          "target": "0x1e87bc8c0",
+          "kind": "plain_rebase"
+        },
+        {
+          "location": "0x1e7f5c048",
+          "v5_word": "0x100000687bc850",
+          "format12_word": "0x80000687bc850",
+          "target": "0x1e87bc850",
+          "kind": "plain_rebase"
+        },
+        {
+          "location": "0x1e7f5c050",
+          "v5_word": "0x100000687bcb20",
+          "format12_word": "0x80000687bcb20",
+          "target": "0x1e87bcb20",
+          "kind": "plain_rebase"
+        },
+        {
+          "location": "0x1e7f5c058",
+          "v5_word": "0x100000687bcb20",
+          "format12_word": "0x80000687bcb20",
+          "target": "0x1e87bcb20",
+          "kind": "plain_rebase"
+        }
+      ]
+    },
+    {
+      "sidecar": "sidecar1.dylib",
+      "pointer_format": 12,
+      "regions": [
+        {
+          "address": "0x279e14000",
+          "size": 35405824,
+          "counts": {
+            "plain_rebase": 2169418,
+            "pages": 2161
+          },
+          "all_page_starts_match": true,
+          "non_chain_bytes_match": true
+        },
+        {
+          "address": "0x27dfd8000",
+          "size": 59457536,
+          "counts": {
+            "plain_rebase": 119545,
+            "pages": 3629
+          },
+          "all_page_starts_match": true,
+          "non_chain_bytes_match": true
+        },
+        {
+          "address": "0x28188c000",
+          "size": 14221312,
+          "counts": {
+            "auth_rebase": 713556,
+            "auth_bind": 275818,
+            "plain_rebase": 173762,
+            "pages": 868
+          },
+          "all_page_starts_match": true,
+          "non_chain_bytes_match": true
+        },
+        {
+          "address": "0x28261c000",
+          "size": 73220096,
+          "counts": {
+            "auth_rebase": 2142534,
+            "pages": 4469,
+            "plain_rebase": 2927123,
+            "auth_bind": 48475
+          },
+          "all_page_starts_match": true,
+          "non_chain_bytes_match": true
+        }
+      ],
+      "counts": {
+        "plain_rebase": 5389848,
+        "pages": 11127,
+        "auth_rebase": 2856090,
+        "auth_bind": 324293
+      },
+      "examples": [
+        {
+          "location": "0x279e14020",
+          "v5_word": "0x10000069cb7f68",
+          "format12_word": "0x8000069cb7f68",
+          "target": "0x1e9cb7f68",
+          "kind": "plain_rebase"
+        },
+        {
+          "location": "0x279e14028",
+          "v5_word": "0x10000069cb7e40",
+          "format12_word": "0x8000069cb7e40",
+          "target": "0x1e9cb7e40",
+          "kind": "plain_rebase"
+        },
+        {
+          "location": "0x279e14030",
+          "v5_word": "0x100000687bc838",
+          "format12_word": "0x80000687bc838",
+          "target": "0x1e87bc838",
+          "kind": "plain_rebase"
+        },
+        {
+          "location": "0x279e14038",
+          "v5_word": "0x100000687bc868",
+          "format12_word": "0x80000687bc868",
+          "target": "0x1e87bc868",
+          "kind": "plain_rebase"
+        },
+        {
+          "location": "0x279e14040",
+          "v5_word": "0x100000687bc858",
+          "format12_word": "0x80000687bc858",
+          "target": "0x1e87bc858",
+          "kind": "plain_rebase"
+        },
+        {
+          "location": "0x279e14048",
+          "v5_word": "0x100000687bc848",
+          "format12_word": "0x80000687bc848",
+          "target": "0x1e87bc848",
+          "kind": "plain_rebase"
+        },
+        {
+          "location": "0x279e14050",
+          "v5_word": "0x100000687bc8c0",
+          "format12_word": "0x80000687bc8c0",
+          "target": "0x1e87bc8c0",
+          "kind": "plain_rebase"
+        },
+        {
+          "location": "0x279e14058",
+          "v5_word": "0x100000687bc878",
+          "format12_word": "0x80000687bc878",
+          "target": "0x1e87bc878",
+          "kind": "plain_rebase"
+        },
+        {
+          "location": "0x279e14060",
+          "v5_word": "0x100000687bcb20",
+          "format12_word": "0x80000687bcb20",
+          "target": "0x1e87bcb20",
+          "kind": "plain_rebase"
+        },
+        {
+          "location": "0x279e14068",
+          "v5_word": "0x100000687bcc00",
+          "format12_word": "0x80000687bcc00",
+          "target": "0x1e87bcc00",
+          "kind": "plain_rebase"
+        },
+        {
+          "location": "0x279e14070",
+          "v5_word": "0x100000687bcc20",
+          "format12_word": "0x80000687bcc20",
+          "target": "0x1e87bcc20",
+          "kind": "plain_rebase"
+        },
+        {
+          "location": "0x279e14078",
+          "v5_word": "0x100000687bcbf8",
+          "format12_word": "0x80000687bcbf8",
+          "target": "0x1e87bcbf8",
+          "kind": "plain_rebase"
+        }
+      ]
+    }
+  ],
+  "elapsed_seconds": 41.32992794900201
+}

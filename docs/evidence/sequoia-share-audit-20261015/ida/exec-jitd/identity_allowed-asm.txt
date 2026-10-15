@@ -1,0 +1,94 @@
+0x100004f08 f85fbca9 STP             X24, X23, [SP,#-0x10+var_30]!
+0x100004f0c f65701a9 STP             X22, X21, [SP,#0x30+var_20]
+0x100004f10 f44f02a9 STP             X20, X19, [SP,#0x30+var_10]
+0x100004f14 fd7b03a9 STP             X29, X30, [SP,#0x30+var_s0]
+0x100004f18 fdc30091 ADD             X29, SP, #0x30
+0x100004f1c 09168452 MOV             W9, #0x20B0
+0x100004f20 30000090 ADRP            X16, #___chkstk_darwin_ptr@PAGE
+0x100004f24 100240f9 LDR             X16, [X16,#___chkstk_darwin_ptr@PAGEOFF]; ___chkstk_darwin
+0x100004f28 00023fd6 BLR             X16; ___chkstk_darwin
+0x100004f2c ff0b40d1 SUB             SP, SP, #2,LSL#12
+0x100004f30 ffc302d1 SUB             SP, SP, #0xB0
+0x100004f34 f50302aa MOV             X21, X2
+0x100004f38 f40301aa MOV             X20, X1
+0x100004f3c f30300aa MOV             X19, X0
+0x100004f40 28000090 ADRP            X8, #___stack_chk_guard_ptr@PAGE
+0x100004f44 080d40f9 LDR             X8, [X8,#___stack_chk_guard_ptr@PAGEOFF]; ___stack_chk_guard
+0x100004f48 080140f9 LDR             X8, [X8]
+0x100004f4c a8831cf8 STUR            X8, [X29,#var_38]
+0x100004f50 e1074091 ADD             X1, SP, #0x20E0+var_20DF,LSL#12
+0x100004f54 21a00291 ADD             X1, X1, #0xA8; buffer
+0x100004f58 02008252 MOV             W2, #0x1000; buffersize
+0x100004f5c a2000094 BL              _proc_pidpath
+0x100004f60 1f040071 CMP             W0, #1
+0x100004f64 6b080054 B.LT            loc_100005070
+0x100004f68 e85748f9 LDR             X8, [SP,#0x20E0+var_1038]
+0x100004f6c e95b48f9 LDR             X9, [SP,#0x20E0+var_1030]
+0x100004f70 ea5f48f9 LDR             X10, [SP,#0x20E0+var_1028]
+0x100004f74 eb058ed24b2eadf2cb2eccf28baeecf2 MOV             X11, #0x657461766972702F
+0x100004f84 1f010beb CMP             X8, X11
+0x100004f88 e8c58ed2284caef2e8a5cdf2c88deef2 MOV             X8, #0x746E6D2F7261762F
+0x100004f98 200148fa CCMP            X9, X8, #0, EQ
+0x100004f9c e8458ed2e8edadf288ceccf268eee5f2 MOV             X8, #0x2F7366746F6F722F
+0x100004fac 400148fa CCMP            X10, X8, #0, EQ
+0x100004fb0 c0030054 B.EQ            loc_100005028
+0x100004fb4 d5040034 CBZ             W21, loc_10000504C
+0x100004fb8 15008092 MOV             X21, #0xFFFFFFFFFFFFFFFF
+0x100004fbc 36000090d6620691 ADRL            X22, _identity_allowed.peers
+0x100004fc4 57029e52 MOV             W23, #0xF012
+0x100004fc8 05000014 B               loc_100004FDC
+0x100004fcc b5060091 ADD             X21, X21, #1
+0x100004fd0 d6220091 ADD             X22, X22, #8
+0x100004fd4 bf2a00f1 CMP             X21, #0xA
+0x100004fd8 a2030054 B.CS            loc_10000504C
+0x100004fdc c00240f9 LDR             X0, [X22]; char *
+0x100004fe0 e1a30291 ADD             X1, SP, #0x20E0+__s2; char *
+0x100004fe4 92000094 BL              _realpath$DARWIN_EXTSN
+0x100004fe8 20ffffb4 CBZ             X0, loc_100004FCC
+0x100004fec e0074091 ADD             X0, SP, #0x20E0+var_20DF,LSL#12
+0x100004ff0 00a00291 ADD             X0, X0, #0xA8; __s1
+0x100004ff4 e1a30291 ADD             X1, SP, #0x20E0+__s2; __s2
+0x100004ff8 a2000094 BL              _strcmp
+0x100004ffc 80feff35 CBNZ            W0, loc_100004FCC
+0x100005000 e0a30291 ADD             X0, SP, #0x20E0+__s2; char *
+0x100005004 e1630091 ADD             X1, SP, #0x20E0+var_20C8; stat *
+0x100005008 9b000094 BL              _stat
+0x10000500c 00feff35 CBNZ            W0, loc_100004FCC
+0x100005010 e83b4079 LDRH            W8, [SP,#0x20E0+var_20C8.st_mode]
+0x100005014 0801170a AND             W8, W8, W23
+0x100005018 1f214071 CMP             W8, #8,LSL#12
+0x10000501c 81fdff54 B.NE            loc_100004FCC
+0x100005020 e82b40b9 LDR             W8, [SP,#0x20E0+var_20C8.st_uid]
+0x100005024 48fdff35 CBNZ            W8, loc_100004FCC
+0x100005028 e00313aa MOV             X0, X19; pid
+0x10000502c 21028052 MOV             W1, #0x11; flavor
+0x100005030 020080d2 MOV             X2, #0; arg
+0x100005034 e30314aa MOV             X3, X20; buffer
+0x100005038 04078052 MOV             W4, #0x38 ; '8'; buffersize
+0x10000503c 67000094 BL              _proc_pidinfo
+0x100005040 1fe00071 CMP             W0, #0x38 ; '8'
+0x100005044 e0179f1a CSET            W0, EQ
+0x100005048 0b000014 B               loc_100005074
+0x10000504c 080000f0 ADRP            X8, #___stderrp_ptr@PAGE
+0x100005050 081140f9 LDR             X8, [X8,#___stderrp_ptr@PAGEOFF]; ___stderrp
+0x100005054 000140f9 LDR             X0, [X8]; FILE *
+0x100005058 e8074091 ADD             X8, SP, #0x20E0+var_20DF,LSL#12
+0x10000505c 08a10291 ADD             X8, X8, #0xA8
+0x100005060 f32300a9 STP             X19, X8, [SP]
+0x100005064 0100009021182191 ADRL            X1, aExecjitRejecti; "EXECJIT rejecting peer %d path=%s\n"
+0x10000506c 31000094 BL              _fprintf
+0x100005070 00008052 MOV             W0, #0
+0x100005074 a8835cf8 LDUR            X8, [X29,#var_38]
+0x100005078 090000f0 ADRP            X9, #___stack_chk_guard_ptr@PAGE
+0x10000507c 290d40f9 LDR             X9, [X9,#___stack_chk_guard_ptr@PAGEOFF]; ___stack_chk_guard
+0x100005080 290140f9 LDR             X9, [X9]
+0x100005084 3f0108eb CMP             X9, X8
+0x100005088 01010054 B.NE            loc_1000050A8
+0x10000508c ff0b4091 ADD             SP, SP, #2,LSL#12
+0x100005090 ffc30291 ADD             SP, SP, #0xB0
+0x100005094 fd7b43a9 LDP             X29, X30, [SP,#0x30+var_s0]
+0x100005098 f44f42a9 LDP             X20, X19, [SP,#0x30+var_10]
+0x10000509c f65741a9 LDP             X22, X21, [SP,#0x30+var_20]
+0x1000050a0 f85fc4a8 LDP             X24, X23, [SP+0x30+var_30],#0x40
+0x1000050a4 c0035fd6 RET
+0x1000050a8 04000094 BL              ___stack_chk_fail

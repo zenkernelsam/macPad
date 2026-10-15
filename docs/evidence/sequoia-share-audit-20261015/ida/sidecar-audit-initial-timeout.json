@@ -1,0 +1,5 @@
+{
+  "result": "",
+  "stdout": "",
+  "stderr": "Traceback (most recent call last):\n  File \"/Users/ciscohe/.idapro/plugins/ida_mcp/api_python.py\", line 254, in py_exec_file\n    exec(compile(code, file_path, \"exec\"), exec_globals)\n  File \"/Users/ciscohe/Desktop/macPad/docs/evidence/sequoia-share-audit-20261015/ida/verify_sidecar_semantics.py\", line 141, in <module>\n    results = [audit(0), audit(1)]\n               ^^^^^^^^\n  File \"/Users/ciscohe/Desktop/macPad/docs/evidence/sequoia-share-audit-20261015/ida/verify_sidecar_semantics.py\", line 122, in audit\n    if len(result['examples']) < 12 and (binding or not auth):\n       ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/ciscohe/.idapro/plugins/ida_mcp/sync.py\", line 233, in profilefunc\n    raise IDASyncError(f\"Tool timed out after {timeout:.2f}s\")\nida_mcp.sync.IDASyncError: Tool timed out after 60.00s\n"
+}

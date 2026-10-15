@@ -1,0 +1,64 @@
+0x100004b10 ffc302d1 SUB             SP, SP, #0xB0
+0x100004b14 f65708a9 STP             X22, X21, [SP,#0xA0+var_20]
+0x100004b18 f44f09a9 STP             X20, X19, [SP,#0xA0+var_10]
+0x100004b1c fd7b0aa9 STP             X29, X30, [SP,#0xA0+var_s0]
+0x100004b20 fd830291 ADD             X29, SP, #0xA0
+0x100004b24 f30301aa MOV             X19, X1
+0x100004b28 f40300aa MOV             X20, X0
+0x100004b2c 28000090 ADRP            X8, #___stack_chk_guard_ptr@PAGE
+0x100004b30 080d40f9 LDR             X8, [X8,#___stack_chk_guard_ptr@PAGEOFF]; ___stack_chk_guard
+0x100004b34 080140f9 LDR             X8, [X8]
+0x100004b38 a8831df8 STUR            X8, [X29,#var_28]
+0x100004b3c e3e30091 ADD             X3, SP, #0xA0+buffer; buffer
+0x100004b40 a1018052 MOV             W1, #0xD; flavor
+0x100004b44 020080d2 MOV             X2, #0; arg
+0x100004b48 04088052 MOV             W4, #0x40 ; '@'; buffersize
+0x100004b4c a3010094 BL              _proc_pidinfo
+0x100004b50 e84740b9 LDR             W8, [SP,#0xA0+var_5C]
+0x100004b54 1f000171 CMP             W0, #0x40 ; '@'
+0x100004b58 0009447a CCMP            W8, #4, #0, EQ
+0x100004b5c 60000054 B.EQ            loc_100004B68
+0x100004b60 00008052 MOV             W0, #0
+0x100004b64 1f000014 B               loc_100004BE0
+0x100004b68 ff3700b9 STR             WZR, [SP,#0xA0+target_task]
+0x100004b6c 88018052 MOV             W8, #0xC
+0x100004b70 e80300b9 STR             W8, [SP,#0xA0+var_A0]
+0x100004b74 35000090 ADRP            X21, #_mach_task_self__ptr@PAGE
+0x100004b78 b56640f9 LDR             X21, [X21,#_mach_task_self__ptr@PAGEOFF]; _mach_task_self_
+0x100004b7c a00240b9 LDR             W0, [X21]; target_tport
+0x100004b80 e2d30091 ADD             X2, SP, #0xA0+target_task; t
+0x100004b84 e10314aa MOV             X1, X20; pid
+0x100004b88 c1010094 BL              _task_for_pid
+0x100004b8c e80300aa MOV             X8, X0
+0x100004b90 00008052 MOV             W0, #0
+0x100004b94 68020035 CBNZ            W8, loc_100004BE0
+0x100004b98 e03740b9 LDR             W0, [SP,#0xA0+target_task]; target_task
+0x100004b9c e2130091 ADD             X2, SP, #0xA0+task_info_out; task_info_out
+0x100004ba0 e3030091 MOV             X3, SP; task_info_outCnt
+0x100004ba4 81028052 MOV             W1, #0x14; flavor
+0x100004ba8 bc010094 BL              _task_info
+0x100004bac f40300aa MOV             X20, X0
+0x100004bb0 a00240b9 LDR             W0, [X21]; task
+0x100004bb4 e13740b9 LDR             W1, [SP,#0xA0+target_task]; name
+0x100004bb8 79010094 BL              _mach_port_deallocate
+0x100004bbc 00008052 MOV             W0, #0
+0x100004bc0 14010035 CBNZ            W20, loc_100004BE0
+0x100004bc4 e83340b9 LDR             W8, [SP,#0xA0+var_70]
+0x100004bc8 1f050071 CMP             W8, #1
+0x100004bcc ab000054 B.LT            loc_100004BE0
+0x100004bd0 730000b4 CBZ             X19, loc_100004BDC
+0x100004bd4 e83f40b9 LDR             W8, [SP,#0xA0+var_64]
+0x100004bd8 680200b9 STR             W8, [X19]
+0x100004bdc 20008052 MOV             W0, #1
+0x100004be0 a8835df8 LDUR            X8, [X29,#var_28]
+0x100004be4 29000090 ADRP            X9, #___stack_chk_guard_ptr@PAGE
+0x100004be8 290d40f9 LDR             X9, [X9,#___stack_chk_guard_ptr@PAGEOFF]; ___stack_chk_guard
+0x100004bec 290140f9 LDR             X9, [X9]
+0x100004bf0 3f0108eb CMP             X9, X8
+0x100004bf4 c1000054 B.NE            loc_100004C0C
+0x100004bf8 fd7b4aa9 LDP             X29, X30, [SP,#0xA0+var_s0]
+0x100004bfc f44f49a9 LDP             X20, X19, [SP,#0xA0+var_10]
+0x100004c00 f65748a9 LDP             X22, X21, [SP,#0xA0+var_20]
+0x100004c04 ffc30291 ADD             SP, SP, #0xB0
+0x100004c08 c0035fd6 RET
+0x100004c0c 2b010094 BL              ___stack_chk_fail
