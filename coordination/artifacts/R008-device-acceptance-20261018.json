@@ -9,7 +9,7 @@
     "jailbreak": "Dopamine rootless",
     "rootfs": "macOS 13.4.1 / 22F82",
     "address": "<transient LAN address, not persisted>",
-    "note": "User-supplied 192.168.68.62 was unreachable; the coordination relay's updated address 192.168.68.63 responded. Credentials stayed in transient environment only."
+    "note": "The user-supplied address was unreachable; the coordination relay's updated <device> address responded. Credentials stayed in transient environment only and are not persisted."
   },
   "coherence_warning": "While this packet ran, the other worker committed 64539fb (their AppInput/provider changes) on top of 6e70353. The accepted package was built in a clean worktree at 6e70353 + the R008 patch and deliberately excludes 64539fb. This delivery commit 8e470ba therefore contains both trees, but the device evidence is scoped to the R008 diff plus the 6e70353 libmachook; a rebuild and acceptance on the combined HEAD is still required before claiming 8e470ba as a device-accepted candidate.",
   "thermal": {
@@ -133,7 +133,7 @@
     "dpkg -i final clean package": 0,
     "cold_start --no-vnc": 0,
     "preflight": 0,
-    "postmin": 0 (probe executed; SLS rc 1002)",
+    "postmin": "0 (probe executed; SLS rc 1002)",
     "recovery": 0,
     "stop": 0,
     "full local test suite": "710 tests, 14 failures / 5 errors / 14 skipped (known hardware/Metal and in-progress AppInput/provider baseline; tccd lifecycle module 27/27 passes)",
