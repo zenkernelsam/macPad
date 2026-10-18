@@ -1,6 +1,6 @@
 # macPad 项目时间线与当前结论
 
-更新：2026-10-15。本页合并项目历程入口；详细 Sequoia 复盘见 [分享包研究](sequoia-24G90-share-review-20261015.md)，当前设备动作以 [coordination](../../coordination/REVIEWER_STATE.md) 为准。原 10-13 版本已[存档](../Archive/20261015-pre-consolidation/PROJECT-ARCHAEOLOGY.md)。
+更新：2026-10-18。本页合并项目历程入口；详细Sequoia复盘见[分享包研究](sequoia-24G90-share-review-20261015.md)，当前设备动作以[coordination](../../coordination/REVIEWER_STATE.md)及[最新SYNC](../../coordination/_relay/SYNC.md)为准。原10-13版本已[存档](../Archive/20261015-pre-consolidation/PROJECT-ARCHAEOLOGY.md)。
 
 ## 三条资料线
 
@@ -40,7 +40,7 @@
 - [R006](../evidence/r006-tcc-producer-20261015.md)：原始 trace 确认 system-tccd transport 无效，1 是默认结果。
 - [R007](../evidence/r007-system-tccd-20261015.md)：真实 Ventura system-tccd 的 dictionary reply 到达；bool accessor 为 0，但尚未区分缺字段／类型错误／显式 false。
 - [R008](../evidence/r008-tccd-transport-repro-20261015.md)：候选生命周期／准入／探针进入源码和 fixture；reviewer 另外保存六项边界问题，设备验收未完成。
-- `6d1b7f6`：用户要求停机并暂停。本文和资料整理不改变该状态。
+- `6d1b7f6`：10-15用户要求停机并暂停；10-18人工恢复见后续SYNC，不能把历史暂停视为当前状态。
 
 ## 10-15：分享包带来的新研究对象
 
@@ -51,3 +51,11 @@
 同日 IDA 补充已完成：Instance1 身份与所需 dyld 完全吻合；实际代码确认高地址保留、format12 sidecar 消费者、eager v5/PAC 与 exec 代际准入。两个 sidecar 的 24,508 页／22,818,485 个指针静态语义比较通过。helper 在 13338 未就绪时用同一 IDA Pro 批处理分析。M1 的实际 text fault／CLI／GUI 验收仍未进行，详见 [机器码证据](../evidence/sequoia-share-audit-20261015/ida/README.md)。
 
 后续 Instance2 已由用户加载正确 exec helper 并完成交互式身份／指令复核。实际角色审计还确认分享包 WS 的 arm64 hook 含 TCC 恒真 override，而当前 Ventura 已将其移除；该静态安装路径没有分享设备的运行落钩见证。分享包的 macOS13 ElleKit 与当前 scaffold 的能力差异，以及本地复现的符号解析／method-hook 缺口，见 [角色证据](../evidence/sequoia-share-audit-20261015/roles/README.md)。这些比“entitlement 是否一样”的表面对照更能指导下一轮，但不构成恢复权限绕过或整包替换 provider 的理由。
+
+## 10-18：Ventura恢复与分享材料增补
+
+`3c4d581`已离线修复provider的LINKEDIT换算、exact-class method hook，并收敛AppInput exact PID/window契约。主机对照与构建通过；没有设备输入验收，完整测试套件也非全绿。见[修复记录](../evidence/provider-and-appinput-route-contract-20261018.md)。最新SYNC记录人工恢复并绑定现有前后端worker，本轮资料审计没有改写交接或向worker发消息。
+
+更新发布包的37项校验与476,371路径扫描通过。相对第一版新增1,106、删除5、574记录改变；dyld／双cache／sidecars沿用相同文件，主要新增GPU事件／ANE、资源／服务、设置与会话恢复。新版arm64库仍有TCC恒真hook安装路径；本机不复制。
+
+另一个10-17现场提取包虽名`.partial`，gzip完整读取、压缩hash与附带记录一致；tar返回1及live采集、ACL／xattr缺口仍限制恢复可信度。它还有晚于10-16发布包的运行脚本变化，不能视为同一版本或直接混装。新增经验与证据已并入[原复盘§7](sequoia-24G90-share-review-20261015.md#7-2026-10-18新增材料对第一版结论的补充)和[Ventura建议§5](ventura-22F82-evening-handoff-20261015.md#5-10-18补充更新包怎样帮助当前13)。所有iCloud来源只读，解压／IDA材料留在`/tmp`。

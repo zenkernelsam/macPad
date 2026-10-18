@@ -1,0 +1,110 @@
+--- curated/macos_gui.sh
++++ raw/macos_gui.sh
+@@ -830,6 +830,7 @@
+ # a permanently dead CGS session.  Tear down only WS-dependent clients, wait for
+ # launchd's replacement WS to stay alive for two samples, then reconnect them.
+ stop_ws_dependents() {
++    /var/jb/usr/bin/python3 /var/jb/usr/macOS/bin/macws_windowmanagement15.py stop || true
+     # WallpaperAgent and provider hold CGS connections to this WindowServer.
+     stop_native15_wallpaper
+     # LaunchServices, IconServices, named-data and SharedFileList are session
+@@ -2898,6 +2899,10 @@
+ </plist>
+ PLIST
+
++    # 24G90 IconCacheService::listener:shouldAcceptNewConnection: rejects
++    # UID >=501 when ISProcessIsRoot is true (entry 0x10000209c). Run the
++    # per-login agent as UID501/GID20; preserve Apple's original acceptance
++    # checks and the existing private bootstrap endpoint.
+     cat > "$ICONSERVICESAGENT_PLIST" <<PLIST
+ <?xml version="1.0" encoding="UTF-8"?>
+ <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+@@ -2907,9 +2912,8 @@
+     <key>POSIXSpawnType</key><string>Adaptive</string>
+     <key>ProgramArguments</key>
+     <array>
+-        <string>${CHROOTEXEC}</string><string>0</string><string>0</string>
++        <string>${CHROOTEXEC}</string><string>501</string><string>20</string>
+         <string>${ROOTFS}</string><string>${ICONSERVICESAGENT_BIN}</string>
+-        <string>runAsRoot</string>
+     </array>
+     <key>MachServices</key>
+     <dict><key>com.apple.macosbooter.iconservices</key><true/></dict>
+@@ -3498,6 +3502,28 @@
+             environment['MACWS_PRIVATE_CACHE_LIFECYCLE'] = '1'
+             environment['MACWS_PRIVATE_CACHE_DIR'] = '/System/Library/dyld'
+             environment['MACWS_CHROOT_HOST_ROOT'] = root
++        # 24G90 ISDefaults.cacheURL uses confstr(USER_CACHE_DIR). Native
++        # 20C65 returns EIO; supply the same qualified user-directory contract
++        # already used by the native15 Settings carriers. Do not invent a URL
++        # or suppress fetchCacheConfigurationWithReply's original validation.
++        if job.get('Label') == 'com.macwsguide.iconservicesagent':
++            expected = ['/var/jb/usr/macOS/bin/launchdchrootexec-sequoia-main-20261005',
++                        '501', '20', root, '/System/Library/CoreServices/iconservicesagent']
++            if arguments != expected:
++                raise SystemExit('Unexpected native15 icon agent arguments')
++            for key, suffix in [('MACWS_SESSION_CACHE_DIR', 'C'),
++                                ('MACWS_SESSION_TEMP_DIR', 'T'),
++                                ('MACWS_SESSION_USER_DIR', '0')]:
++                relative = '/var/folders/zz/macws_uid501/' + suffix + '/'
++                directory = root + relative
++                if not os.path.exists(directory):
++                    os.makedirs(directory, mode=0o700)
++                    os.chown(directory, 501, 20)
++                status = os.lstat(directory.rstrip('/'))
++                if not os.path.isdir(directory) or os.path.islink(directory.rstrip('/')) or status.st_uid != 501 or status.st_mode & 0o077:
++                    raise SystemExit('Unqualified native15 icon cache directory: ' + directory)
++                environment[key] = relative
++            environment['TMPDIR'] = environment['MACWS_SESSION_TEMP_DIR']
+         if job.get('Label') == 'com.macwsguide.dock':
+             expected = ['/var/jb/usr/macOS/bin/launchdchrootexec-sequoia-main-20261005', '0', '0', root, '/System/Library/CoreServices/Dock.app/Contents/MacOS/Dock']
+             if arguments != expected:
+@@ -3570,6 +3596,7 @@
+         os.chmod(temporary, os.stat(path).st_mode)
+     os.replace(temporary, path)
+ MACWS_VERSION_PROFILE
++    /var/jb/usr/bin/python3 /var/jb/usr/macOS/bin/macws_windowmanagement15.py prepare || return 1
+ }
+
+ # Tear down every macOS GUI service we may have started.  Idempotent: unloading a
+@@ -4054,6 +4081,7 @@
+
+ cleanup_macos() {
+     log "Cleaning up previous macOS GUI services..."
++    /var/jb/usr/bin/python3 /var/jb/usr/macOS/bin/macws_windowmanagement15.py stop || true
+     stop_native15_wallpaper
+     stop_native15_exec_jitd
+     stop_watchdogs
+@@ -4579,10 +4607,16 @@
+     WORKSPACE_WALLPAPER_READY=0
+     if apply_workspace_wallpaper; then
+         WORKSPACE_WALLPAPER_READY=1
++        if [ -f "$NATIVE15_MANIFEST" ]; then
++            start_native15_wallpaper arm || log "WARNING: wallpaper recovery guard could not be armed."
++        fi
+         return 0
+     fi
+     if [ -f "$NATIVE15_MANIFEST" ]; then
+         log "WARNING: fixed blue iMac wallpaper could not be applied; preserving the Aqua session."
++        # Retry only a missing copied provider after startup is no longer busy.
++        # The guard shares our transaction lock and retires with WindowServer.
++        start_native15_wallpaper arm || log "WARNING: wallpaper recovery guard could not be armed."
+         return 0
+     fi
+     return 1
+@@ -4985,6 +5019,7 @@
+     log "TIMING desktop-repair stage=icons-nameddata seconds=$((SECONDS - stage_started)) total=$((SECONDS - repair_started))"
+     stage_started=$SECONDS
+
++    /var/jb/usr/bin/python3 /var/jb/usr/macOS/bin/macws_windowmanagement15.py start || return 1
+     : > "$composite_marker" || return 1
+
+     # Finder owns desktop items but may have live user windows.  Keep that
+@@ -5662,6 +5697,7 @@
+     }
+     log "Dock menu presentation helper registered for on-demand XPC activation."
+
++    /var/jb/usr/bin/python3 /var/jb/usr/macOS/bin/macws_windowmanagement15.py start || return 1
+     log "Starting the real macOS Aqua workspace agents (Finder, Dock, SystemUIServer, ControlCenter)..."
+     for workspace_log in finder-desktop dock systemuiserver controlcenter; do
+         rm -f "$LOGDIR/$workspace_log.log"

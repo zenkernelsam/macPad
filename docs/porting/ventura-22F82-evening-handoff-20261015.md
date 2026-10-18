@@ -2,11 +2,11 @@
 
 日期：2026-10-15；资料核对完成于10-16。目标仍是 **iPad13,11／20D47 上的 macOS 13.4.1／22F82 复现**。本文是可交给隔壁 Agent 的建议包，没有向任何 Agent 派发任务，没有启动设备。15.6.1 继续冻结，待 Ventura 完成后另行恢复。
 
-当前工程状态以 [coordination/PAUSE_REQUEST.md](../../coordination/PAUSE_REQUEST.md)、[REVIEWER_STATE.md](../../coordination/REVIEWER_STATE.md) 和后续交接为准；它们与 `_RELAY SYNC` 类文件保持原位。不能将本文视为用户已经返回或同意重启。
+**2026-10-18更新：**人工已恢复Ventura工作，见最新[relay SYNC](../../coordination/_relay/SYNC.md)与[REVIEWER_STATE](../../coordination/REVIEWER_STATE.md)；10-15暂停记录是历史状态。本文是离线研究交付，不控制当前worker或设备。新增分享包经验见[§5](#5-10-18补充更新包怎样帮助当前13)，接续前先读本段；15仍待13完成后研究。所有coordination／relay文件保持原位，本轮未改写或向Agent发消息。
 
 ## 1. 接续的真实位置
 
-源码基线：`529c412` 为 R008 candidate；`6d1b7f6` 记录 10-15 07:38 的人工要求停机。R008 尚未形成完整设备验收，reviewer 另有未处理的边界失败。
+10-15历史基线：`529c412` 为 R008 candidate；`6d1b7f6` 记录当日人工要求停机。下表保留该时点的证据边界，不能替代10-18的工作进度。`3c4d581` 已离线推进provider和AppInput契约；R008最新状态以其证据与当前owner为准。
 
 | 已有证据 | 能证明什么 | 仍未证明什么 |
 | --- | --- | --- |
@@ -71,9 +71,9 @@ com.apple.private.tcc.manager.check-by-audit-token:
 
 今晚最有信息量的是在 **WS 的真实 sender/audit 上下文**内捕捉完整 request/reply、字段是否存在及类型、responsible process 和实际 peer identity。独立 `macwstccdprobe preflight` 可以验证传输和打印自身身份，但它不是 WS 原始请求的等价替身。
 
-### C2. 当前 provider 仍不是作者完整 runtime 的等价替代
+### C2. Provider缺口已离线修复，仍需实际加载验收
 
-后续审计及本地探针确认，当前 scaffold 的 `MSHookMessageEx` 不安装 replacement；`MSFindSymbol` 还存在 LINKEDIT 地址换算缺口，本地同一局部符号可被正确参考实现找到，却被 scaffold 返回 NULL。`MSHookFunction` 仍只允许预登记目标。这些是基础能力边界，不等于已经证明某个新的设备故障由它们引起。
+10-15审计及本地探针确认过method hook no-op和LINKEDIT换算缺口。**`3c4d581`已修复这两项**：exact-class replacement保留original IMP，符号按LINKEDIT vmaddr/fileoff换算；新增exact PID/window契约。五项focused主机测试通过并完成两架构离线编译，但provider仅编译对象，未完成设备打包／加载验收；完整708项套件有14 failures、5 errors、14 skips，不能称全绿。见[10-18证据](../evidence/provider-and-appinput-route-contract-20261018.md)。`MSHookFunction`许可表、PAC、实际加载及原调用仍需按目标核对，不能由这次离线成功推定设备输入已经通过。
 
 分享包提供了一份声明 macOS 13.0 的 arm64/arm64e ElleKit/CydiaSubstrate，可以作为**离线兼容审计候选**；不是可以直接覆盖安装的成品。替换 provider 可能激活旧的未审查 hook，必须先排除 TCC 恒真等 override。R008 的真实回复排查继续推进；在再添加生产 hooks 之前，另立 provider 能力、符号解析和类方法 hook 的有限时验证工单。见 [本地行为证据](../evidence/sequoia-share-audit-20261015/roles/README.md)。
 
@@ -112,7 +112,7 @@ Cryptex 资源路径、WebKit 多实例 XPC proxies、RunningBoard 身份、Netw
 
 | 经验／来源 | 当前 13 的处理 | 有限时验收与禁止误判 |
 | --- | --- | --- |
-| 实际 provider 能力，见 [角色审计](../evidence/sequoia-share-audit-20261015/roles/README.md) | **新增离线基础工作**：验证局部符号、实例／类方法 hook、原函数调用和许可表；当前 scaffold 不完整 | 用真实 fixture 证明 replacement 执行及 original 可调用，再确认具体目标的装载身份；不以 `INSTALL` 日志过关，不直接换入整份 ElleKit |
+| 实际 provider 能力，见 [角色审计](../evidence/sequoia-share-audit-20261015/roles/README.md) | **已有离线修复`3c4d581`**：局部符号、实例／类方法和original契约已有主机对照；待设备闭环 | 先核对source/build/deployed身份，再验证replacement执行、original可调用；不以`INSTALL`日志过关，不重复实现或直接换入整份ElleKit |
 | [冷启动 HIServices 缺信任](../../analysis/MacWSBootingGuide/docs/maps-cold-location-and-space-create-20260809.md) | **复用已有工具**：[启动脚本](../../layout/usr/macOS/bin/macos_gui.sh)、[trust helper](../../layout/usr/macOS/bin/macws_boot_trust.py)；与 R008 service readiness 同步检查 | shell/WS 能启动不足以证明同步调用的 XPC helper 可执行；检查真实依赖 CDHash、job domain、请求与回复，避免把阻塞归为触摸坐标错误 |
 | [LaunchServices 记录失去 mounted 状态](../../analysis/MacWSBootingGuide/docs/cold-start-stability-20260807.md) | **保留后续恢复检查**：数据库存在、seed 完成与可解析 App 路径分别验证 | 真正应用 URL／ASN／窗口证据；不要反复 `kill/seed` 或只延长等待。作者早期和后续 Space/Dock 顺序有演进，当前 build 的运行记录优先 |
 | [Carbon 菜单嵌套循环](../../analysis/MacWSBootingGuide/docs/evidence/input-unification-20260731/host-native/multilayer-carbon-runtime.md) | **已有输入实现**：[AppInputBridge](../../libmachook/AppInputBridge.m)；先定位它实际使用的 route | 正常主线程异步队列不保证在菜单 tracking 中被处理；验收 submenu、Escape、完整 down/up/cancel，不能以 socket send 成功代替 |
@@ -126,6 +126,8 @@ Cryptex 资源路径、WebKit 多实例 XPC proxies、RunningBoard 身份、Netw
 | 15 的 reserve／format12 sidecar／exec 准入、G14 和 Safari 配套 | **留给 15 恢复，今晚不移植** | exact cache UUID、全部 segment/sidecar、PAC 语义、正确 exec generation 和应用终点缺一不可；M2 报告不构成 M1 接受 |
 
 ## 3. 今晚建议的工作顺序
+
+以下保留10-15排查阶梯；10-18已由worker继续推进，先核对最新owner记录与部署身份，已完成项直接使用其证据，不按此旧清单重复修复／部署。
 
 ### P0：先处理已保存的 R008 reviewer 边界问题
 
@@ -144,7 +146,7 @@ Cryptex 资源路径、WebKit 多实例 XPC proxies、RunningBoard 身份、Netw
 
 ### P1：完成受控部署与真正回复语义
 
-用户明确返回后，按现有项目 pipeline 验证 source/build/deployed hash、macOS platform、arm64／arm64e 两个 thin libmachook、fresh inode、trust 和 native iOS 健康。全流程前先读取热状态。
+按最新coordination的授权与owner串行管理，用现有项目pipeline验证source/build/deployed hash、macOS platform、arm64／arm64e两个thin libmachook、fresh inode、trust和native iOS健康。全流程前先读取热状态；本轮文档审计不操作设备。
 
 然后在一次新的 WS generation 上，用最小 `postmin` 请求复现，保存：
 
@@ -163,8 +165,26 @@ Cryptex 资源路径、WebKit 多实例 XPC proxies、RunningBoard 身份、Netw
 
 ## 4. 可直接交给隔壁 Agent 的提示
 
-以下两段一起交给接续 Agent；恢复运行前仍以用户届时的指示和最新 coordination 状态为准。
+以下为10-18更新后的接续提示；按最新coordination认领与当前证据执行，不重复派工。
 
-> 继续当前 22F82 Ventura 复现，不恢复或部署 15.6.1。先读 docs/README.md、当前 coordination/PAUSE_REQUEST.md 和 REVIEWER_STATE.md；本文不解除暂停，只有用户明确返回后才能做设备操作。源码 candidate 是 529c412，停机记录是 6d1b7f6。先处理 coordination/artifacts/R008-review-edge-repro.py/json 中的六项未通过边界，不以已有 55 项通过替代它们。随后按项目 pipeline 做部署身份和有限时 cold/recovery 验证，在真正 WS sender/audit 上下文捕捉 TCC 完整 request/reply；get_bool(result)=0 不等于显式 false。分享包同样使用 -virtualonly，其相关 TCC entitlement 列表与我们相同，但实际 libmachook 仍有试图将 audit_token_check_tcc_access 恒返1的 override；其运行落钩未证明，不能恢复这种绕过，也不能把双方权限策略当作一致。复用现有 exact PID/window AppInput 与唯一系统指针 owner，分别验收 Terminal 内容输入、Dock/菜单、drag/cancel；不能把局部 AppKit 成功算全局输入已修复。不要复制 24G90/M2 的 dyld、sidecar、G14 ABI 或检查绕过。每个结论附同一 generation 的原始证据，最后确认新帧、实际界面变化、原生 iOS 健康及清理。详细研究见 docs/porting/sequoia-24G90-share-review-20261015.md。
+> 继续22F82 Ventura，先读docs/README.md、coordination/_relay/SYNC.md、REVIEWER_STATE.md及当前owner交接。人工已于10-18恢复，旧暂停文档仅作历史；15仍不部署。核对R008六项reviewer边界是否已由当前worker处理，按最新源码和证据接续，不从旧candidate覆盖回来。在实际WS sender/audit上下文记录完整TCC request/reply及字段类型；accessor零不等于显式false。分享包新arm64 libmachook仍有TCC恒真hook静态安装路径，不能复制。复用exact PID/window AppInput和唯一系统指针owner，分别验收Terminal内容、Dock/菜单及drag/cancel，用同generation的新帧和可见结果闭环。
 
-> 还要核对 provider 的真实能力：当前 misc/cydiasubstrate_macos.m 的 MSHookMessageEx 为 no-op，局部符号 LINKEDIT 换算缺口已由本地行为探针复现。一个 MSHookFunction 成功不能证明所有继承 hooks 生效。分享包的 macOS13 arm64/arm64e ElleKit 可作离线审计候选；先检查会被激活的 hook 集合、PAC／线程与失败契约，不能直接替换后恢复旧 TCC／assert 绕过。按本文§H十二项复用矩阵，优先确认现有实现为何没有在正确角色／切片／进程中生效，避免重新开发已有输入或渲染框架。
+> provider的method hook／LINKEDIT和exact输入契约已在3c4d581离线修复，先读docs/evidence/provider-and-appinput-route-contract-20261018.md；未做设备验收，不要重复开发或假定已部署。更新分享包新增经验在本文§5：查人工帧等待是否阻塞真实服务消息；应用复用要求本次reopen回应和新generation，窗口旧metrics不足；会话恢复只清理精确归属客户端，保留无回应但有文稿的进程；签名缓存变更或观察失败返回真实验证。GPU按生产者ABI和实际读回像素验证，HEIC按真实RGBA／provider／系统截图分层。24G90/G14/ANE/RBS偏移均不可抄到22F82，当前TCC/输入闭环优先，其他优化按实际瓶颈排期。
+
+## 5. 10-18补充：更新包怎样帮助当前13
+
+新增材料及文件核验见[15复盘§7](sequoia-24G90-share-review-20261015.md#7-2026-10-18新增材料对第一版结论的补充)和[本轮证据](../evidence/sequoia-share-update-20261018/README.md)。以下是工作方法和候选方向，**不是已证明本机故障原因，也不是要求今晚全部实现**。
+
+| 优先级／触发条件 | 新经验 | 22F82可采取的下一步与验收 |
+| --- | --- | --- |
+| P0，当前provider／输入闭环 | 源码有hook不等于实际进程用了正确provider | 对`3c4d581`做实际装载身份、replacement／original探针与exact输入终点验证；TCC仍按真实回复处理，不能恒返通过 |
+| P0，WS恢复后应用假成功／无响应 | hostd新增普通AppKit真实reopen＋fresh metrics；旧Visible可跨WS存活 | 给本次请求、应用PID／generation、endpoint和新metrics建立关联；有窗口无回应就报错保留进程，不能按名字批杀或“复用旧窗口=成功” |
+| P1，服务慢且主线程在人工pacing等待 | 新源码只读监听原server port set，提前让出帧等待 | 先保存服务请求→排队→主线程wait→原dispatch→回复时序，证明有该瓶颈再适配22F82；验收延迟、idle CPU、frame sequence，不另起receiver消费消息 |
+| P1，cold/recovery依赖或签名异常 | 完整内容／metadata／xattr／boot绑定的真实验证缓存，unknown回原验证 | 沿现有trust helper修正失效键和错误语义；对cache hit、同boot替换、重启、查询错误分别检查，不能拿socket存在或marker替代mandatory准入 |
+| P1，IconServices或应用helper拒绝／缓存URL异常 | 现场脚本为iconservicesagent恢复UID501/GID20及专用cache/temp/user目录；注入RBS adapter单独恢复trust | 先在22F82记录真实daemon uid、HOME／confstr结果、目录owner和被注入库CDHash；不把一律UID0／扩大权限当修复，也不盲改当前正确身份 |
+| P2，AGX／视频色错或后续帧失败 | 私有event request/reply、padding与资源容量逐项适配；NV12 status4仍可错 | 在实际G13二进制定位生产者，记录有语义字段和长度；测试同帧Y/UV、GPU读回及系统输出，不复制G14 selector／packet／ANE策略 |
+| P2，墙纸／设置黑屏或颜色异常 | HEIC惰性对象可能非空但无像素，黄／紫也可能是provider错误层 | guest/native同文件真实RGBA A/B→原13 provider／Dock→WS最终合成→系统截图；保留当前静态图基线，不照搬15 WallpaperAgent链 |
+| P2，已定位为拥有的可选组件偶发失联 | 现场墙纸guard绑定WS代际、与GUI事务互斥、有宽限／冷却／次数预算 | 借鉴有界恢复合同；更先修根因，停止时撤销guard，不能常驻轮询／重启掩盖输入或GPU故障；源码presence不算恢复成功 |
+| P2，网络／扩展服务问题 | 原函数解析可能递归到replacement；guest/native origin与实例激活语义重要 | 先查真实owner image、trampoline、PID domain／audit及原始错误；TLS、RBS和bundle containment仍由真实实现决定，不改成singleton或放宽全部权限 |
+
+新资料最能加速的是：**避免在已经坏掉的观测／生命周期基础上继续补末端症状。** 它没有证明我们的真实tccd修复是走错路，也没有给出当前1002的替代根因。更详细的Safari／墙纸源码保留在分享目录，只作离线参考；其中节选不是可独立构建单元，来源方原始日志／截图未交付。

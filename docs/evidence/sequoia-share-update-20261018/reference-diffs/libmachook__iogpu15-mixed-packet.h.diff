@@ -1,0 +1,24 @@
+--- first/reference-source/sequoia-hook-source/libmachook/iogpu15-mixed-packet.h
++++ updated/reference-source/sequoia-hook-source/libmachook/iogpu15-mixed-packet.h
+@@ -1,7 +1,8 @@
+ #pragma once
+ #include <stdlib.h>
+ // Isolated 24G90 ->20C65 diagnostic. Bounded vendor render/compute records
+-// plus genuine event signal3/wait4 commands. Event bytes and order survive.
++// plus shared signal3/wait4 and private signal5/wait6/10 commands.
++// Ghidra15/16 encoders use the same24B layout; bytes/order are preserved.
+ // RE IOGPU15 StorageBegin/EndKernelCommands1a1f9e52c/680 vs16 1ee8cff88/010f8:
+ // control chunks contain token8,count/flags8, then uint32 start/end pairs.
+ // The measured event encoders both allocate24B and put event payload at+8.
+@@ -35,9 +36,9 @@
+    if(subtype==1&&body==0x870&&span>=0x8c0)size=span-0xa0;
+    else if(subtype==3&&body==0x1f0&&span>=0x218)size=0x1e0+(payload?8+payload:0);
+    else return 0;
+-  }else if(type==3||type==4){
++  }else if(type==3||type==4||type==5||type==6||type==10){
+    if(span!=24||!iogpu15_packet_u32(r,8)||
+-      (type==3&&iogpu15_packet_u32(r,12))||
++      ((type==3||type==5)&&iogpu15_packet_u32(r,12))||
+       (type==4&&iogpu15_packet_u32(r,12)!=5))return 0;
+   }else return 0;
+   starts[records]=at;outputs[records]=newCmd;spans[records]=span;sizes[records]=size;types[records]=type;records++;at+=span;newCmd+=size;

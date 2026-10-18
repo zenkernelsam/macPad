@@ -1,0 +1,27 @@
+[
+  {
+    "path": "rootfs/private/var/db/macws/metalfx-ane-policy-v1",
+    "sha256": "a8829d41d66274ed2b5db5de6f8a1f34e6e6da1abfd89887886c3d4f01ac495d",
+    "matches": true
+  },
+  {
+    "path": "rootfs/private/var/db/macws/native15-installed-20261005.json",
+    "sha256": "cc070b1ccbfc8e608473018fccb9b6cd6911cecd729968eacc6588d9795e46ca",
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/libmachook.dylib",
+    "sha256": "71641d7bd3557314887c6cf85b027a52f2aaf9d2f0186d40bbefa89340e35c7b",
+    "matches": true
+  },
+  {
+    "path": "rootfs/usr/local/lib/libmachook_arm64.dylib",
+    "sha256": "d047ce94aebfa9898298a5de6d67a9d51db013784af2004b5dea0925c70b8c69",
+    "matches": true
+  },
+  {
+    "path": "host-overlay/var/jb/usr/local/libexec/main15-exec-jitd-dock-reopen-20261010",
+    "sha256": "fc30f01564d8eb23a5b4772d1a63533437e1d56fd03bfc719f869ee33942695a",
+    "matches": true
+  }
+]

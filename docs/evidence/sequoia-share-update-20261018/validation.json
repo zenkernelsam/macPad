@@ -1,0 +1,25 @@
+{
+  "date": "2026-10-18",
+  "markdown_files": [
+    "docs/README.md",
+    "docs/porting/PROJECT-ARCHAEOLOGY.md",
+    "docs/porting/sequoia-24G90-share-review-20261015.md",
+    "docs/porting/ventura-22F82-evening-handoff-20261015.md",
+    "docs/evidence/sequoia-share-update-20261018/README.md"
+  ],
+  "local_links_checked": 136,
+  "link_errors": [],
+  "json_files_parsed": 18,
+  "audit_python_syntax": true,
+  "supplied_python_syntax_only": 13,
+  "supplied_shell_bash_n_only": 4,
+  "checksums_matched": 37,
+  "curated_regular_file_hashes_matched": 276587,
+  "raw_gzip_crc_and_hash_verified": true,
+  "raw_cache_hardlink_target_hashes_matched": 2,
+  "ipad_accessed": false,
+  "supplied_code_executed": false,
+  "icloud_source_written": false,
+  "runtime_tests_rerun": false,
+  "staged_diff_whitespace_check": "passed"
+}

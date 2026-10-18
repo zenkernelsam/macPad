@@ -1,0 +1,215 @@
+--- first/reference-source/sequoia-hook-source/libmachook/mac_hooks.m
++++ updated/reference-source/sequoia-hook-source/libmachook/mac_hooks.m
+@@ -1,3 +1,4 @@
++#include "Compatibility/MacWSANEPolicy.h"
+ #include "macws_private_trust_route.h"
+ #include "macpad-headless-scope.h"
+ @import CoreServices;
+@@ -35,6 +36,7 @@
+ #import <sys/socket.h>
+ #import <sys/un.h>
+ #import <poll.h>
++#import <sys/event.h>
+ #include <execinfo.h>
+ #import "macws_host_protocol.h"
+ #include "macws_keyboard_state.h"
+@@ -1692,6 +1694,7 @@
+ // this to translate physical-panel SwapEnd into SwapCancel while leaving the
+ // rest of Apple's kern_SwapEnd cleanup intact.
+ static _Atomic int g_macws_iomfb_coexist_swap_cancel = 0;
++static _Atomic mach_port_t g_macws_coexist_service_set = MACH_PORT_NULL;
+ static _Atomic(const struct MacPadIOMFBABI *) g_macpad_iomfb_abi;
+ static void macws_install_iomfb15_registration_observer(const struct mach_header *header);
+ static void macws_install_quartzcore_frame_info_hook(
+@@ -12164,6 +12167,26 @@
+     return descriptor;
+ }
+
++// Ghidra24G90 CGXRunOneServicesPass1868b4b88: the no-pending-reply
++// receive returns1868b4f00 with _gServiceSet in receive_name. Observe that
++// existing right; never move, receive or replace any server message here.
++static void macws_coexist_observe_service_set(mach_port_name_t name,
++                                            mach_msg_option_t options,
++                                            const void *caller) {
++    if(!name || !(options&MACH_RCV_MSG) || !pthread_main_np() ||
++       !atomic_load(&g_macws_iomfb_coexist_swap_cancel) ||
++       atomic_load(&g_macws_coexist_service_set)==name)return;
++    caller=ptrauth_strip((void *)caller,ptrauth_key_return_address);
++    static const uint8_t uuid[16]={0x4e,0x05,0x28,0x46,0x80,0xc2,0x38,0xaf,
++        0x85,0xbf,0x14,0x82,0xe0,0x70,0xa3,0x2b};
++    Dl_info image={0};mach_port_type_t type=0;
++    if(!dladdr(caller,&image) || !image.dli_fbase ||
++       (uintptr_t)caller-(uintptr_t)image.dli_fbase!=0x405f00 ||
++       !macws_macho_uuid_matches(image.dli_fbase,uuid) ||
++       mach_port_type(mach_task_self(),name,&type)!=KERN_SUCCESS ||
++       !(type&MACH_PORT_TYPE_PORT_SET))return;
++    atomic_store(&g_macws_coexist_service_set,name);
++}
+ mach_msg_return_t mach_msg_new(mach_msg_header_t *message,
+                                mach_msg_option_t option,
+                                mach_msg_size_t send_size,
+@@ -12171,6 +12194,8 @@
+                                mach_port_name_t receive_name,
+                                mach_msg_timeout_t timeout,
+                                mach_port_name_t notify) {
++    macws_coexist_observe_service_set(receive_name, option,
++                                     __builtin_return_address(0));
+     bool machTraceEnabled = macws_mach_msg_trace_enabled();
+     if (machTraceEnabled)
+         macws_trace_core_services_session_send(message, option, send_size);
+@@ -23359,6 +23384,26 @@
+         fprintf(stderr,"IOSURFACE15_CREATE real reply2664->3176 id=%u unprotected nonplanar selector=%#x\n",*(uint32_t *)(native+0x18),selector);
+         return status;
+ }
++// Ghidra:24G90 IOGPUMTLEvent constructor1a1fb27e4, call return1987c;
++// native20C65 constructor1ee8e00b0. Only this measured host/caller ABI.
++static BOOL macws_iogpu15_private_event_caller(const void *caller) {
++    caller=ptrauth_strip((void *)caller,ptrauth_key_return_address);
++    static const uint8_t uuid[16]={0x68,0xb7,0x0e,0x83,0xbb,0xda,0x34,0x11,
++        0xa4,0x87,0xe5,0x27,0x97,0x17,0x45,0x18};
++    Dl_info image={0};
++    if(!dladdr(caller,&image) || !image.dli_fbase ||
++       (uintptr_t)caller-(uintptr_t)image.dli_fbase!=0x1987c ||
++       !macws_macho_uuid_matches(image.dli_fbase,uuid))return NO;
++    static dispatch_once_t once;static BOOL hostReady=NO;
++    dispatch_once(&once,^{
++        char build[32]={0},model[32]={0};size_t bs=sizeof(build),ms=sizeof(model);
++        hostReady=macws_real_sysctlbyname("kern.osversion",build,&bs,NULL,0)==0 &&
++          bs>0 && bs<sizeof(build) && !strcmp(build,"20C65") &&
++          macws_real_sysctlbyname("hw.machine",model,&ms,NULL,0)==0 &&
++          ms>0 && ms<sizeof(model) && !strcmp(model,"iPad14,4");
++    });
++    return hostReady;
++}
+ IOReturn IOConnectCallMethod_new(io_connect_t client, uint32_t selector, const uint64_t *in, uint32_t inCnt, const void *inStruct, size_t inStructCnt, uint64_t *out, uint32_t *outCnt, void *outStruct, size_t *outStructCnt) {
+     BOOL fastSubmit=g_macws_iogpu15_fast_submit && selector==0x1e &&
+         in && inCnt==4 && in[1]==0 && in[2]==1 && in[3]==0x38 &&
+@@ -23454,6 +23499,29 @@
+         if(count!=3)return kIOReturnBadArgument;
+         memcpy(out,native,sizeof(native));out[3]=0;*outCnt=4;
+         macws_iosurface15_trace("event-info-native",surfaceTraceCaller,client,selector,in,1,0,out,4,4,4,status);
++        return status;
++    }
++    // Private event15: selector18/options0/struct24 -> native14/no input/
++    // two scalar outputs. Keep the framework's original constructor/lifetime.
++    // Third15 result is rollback capability; native16 exposes none, hence0.
++    if(selector==0x18 && in && inCnt==1 && in[0]==0 && !inStruct &&
++       !inStructCnt && !out && !outCnt && outStruct && outStructCnt &&
++       *outStructCnt==24 && IOConnectIsIOGPU(client) &&
++       macws_iogpu15_private_event_caller(__builtin_return_address(0))) {
++        uint64_t native[2]={0};uint32_t count=2;
++        IOReturn status=IOConnectCallMethod(client,0x14,NULL,0,NULL,0,
++                                          native,&count,NULL,NULL);
++        if(status!=KERN_SUCCESS)return status;
++        if(count!=2 || !((uint32_t)native[0])) {
++            uint64_t id=(uint32_t)native[0];
++            if(id)IOConnectCallMethod(client,0x15,&id,1,NULL,0,NULL,NULL,NULL,NULL);
++            return kIOReturnBadArgument;
++        }
++        uint64_t guest[3]={native[0],native[1],0};
++        memcpy(outStruct,guest,sizeof(guest));*outStructCnt=sizeof(guest);
++        if(macws_runtime_diagnostics_enabled())
++            fprintf(stderr,"IOGPU15_PRIVATE_EVENT native14->struct24 id=%u real_result=%#x\n",
++                    (uint32_t)native[0],status);
+         return status;
+     }
+     uint32_t orig = selector;
+@@ -24837,6 +24905,28 @@
+             (uint64_t)effective_interval_us * 1000u;
+         uint64_t now_ns = start_ns;
+         int wake_fd = macws_coexist_interaction_wake_socket();
++        static int service_kqueue=-1;
++        static mach_port_t watched_service_set=MACH_PORT_NULL;
++        mach_port_t service_set=pthread_main_np()
++            ? atomic_load(&g_macws_coexist_service_set) : MACH_PORT_NULL;
++        if(service_set && service_set!=watched_service_set) {
++            if(service_kqueue>=0)close(service_kqueue);
++            service_kqueue=kqueue();watched_service_set=MACH_PORT_NULL;
++            if(service_kqueue>=0) {
++                (void)fcntl(service_kqueue,F_SETFD,FD_CLOEXEC);
++                struct kevent64_s changes[2]={0};
++                EV_SET64(&changes[0],service_set,EVFILT_MACHPORT,EV_ADD,0,0,0,0,0);
++                int count=1;
++                if(wake_fd>=0) {
++                    EV_SET64(&changes[1],wake_fd,EVFILT_READ,EV_ADD,0,0,0,0,0);
++                    count=2;
++                }
++                if(kevent64(service_kqueue,changes,count,NULL,0,0,NULL)==0) {
++                    watched_service_set=service_set;
++                    fprintf(stderr,"COEXIST service-wake registered set=%u; pending messages remain for SkyLight\n",service_set);
++                } else {close(service_kqueue);service_kqueue=-1;}
++            }
++        }
+
+         while (target_ns > now_ns) {
+             uint64_t remaining_ns = target_ns - now_ns;
+@@ -24844,7 +24934,28 @@
+                 NSEC_PER_MSEC;
+             if (remaining_ms > INT_MAX) remaining_ms = INT_MAX;
+             bool interaction_wake = false;
+-            if (wake_fd >= 0) {
++            if(service_set && service_kqueue>=0 && watched_service_set==service_set) {
++                struct kevent64_s events[2]={0};
++                struct timespec timeout={.tv_sec=remaining_ns/NSEC_PER_SEC,
++                    .tv_nsec=remaining_ns%NSEC_PER_SEC};
++                int count;
++                do {count=kevent64(service_kqueue,NULL,0,events,2,0,&timeout);}
++                while(count<0 && errno==EINTR);
++                BOOL service_pending=NO,failed=count<0;
++                for(int i=0;i<count;i++) {
++                    if(events[i].flags&EV_ERROR)failed=YES;
++                    else if(events[i].filter==EVFILT_MACHPORT && events[i].ident==service_set)
++                        service_pending=YES;
++                    else if(events[i].filter==EVFILT_READ && (int)events[i].ident==wake_fd) {
++                        macws_coexist_drain_interaction_wake(wake_fd);
++                        interaction_wake=true;
++                    }
++                }
++                if(failed) {close(service_kqueue);service_kqueue=-1;watched_service_set=MACH_PORT_NULL;}
++                // fflags0 is readiness-only. Yield artificial pacing so the
++                // unchanged server loop can receive and answer its real IPC.
++                if(service_pending)break;
++            } else if (wake_fd >= 0) {
+                 struct pollfd descriptor = {
+                     .fd = wake_fd,
+                     .events = POLLIN,
+@@ -25115,11 +25226,38 @@
+         fprintf(stderr, "#### AGXIOC Struct sel=0x%x->0x%x inSC=%zu outSC=%zu -> 0x%x\n", orig, selector, inStructCnt, outStructCnt?*outStructCnt:0, r);
+     return r;
+ }
++#include "Compatibility/MacWSANEEvents.h"
+ IOReturn IOConnectCallAsyncMethod_new(io_connect_t client, uint32_t selector, mach_port_t wake_port, uint64_t *ref, uint32_t refCnt, const uint64_t *in, uint32_t inCnt, const void *inStruct, size_t inStructCnt, uint64_t *out, uint32_t *outCnt, void *outStruct, size_t *outStructCnt) {
+     uint32_t orig = selector;
++    if(selector==2 && inStructCnt==0x948){Dl_info observed={0};dladdr(__builtin_return_address(0),&observed);fprintf(stderr,"ANE_EVENT_ENTRY env=%s scalar=%u caller=%s name=%s\n",getenv("MACWS_ANE_EVENT_WIRE_CANDIDATE")?:"nil",inCnt,observed.dli_fname?:"nil",observed.dli_sname?:"nil");}
+     selector = IOConnectTranslateSelector(client, selector);
+     size_t avdRequested=outStructCnt?*outStructCnt:0;
+-    IOReturn r = IOConnectCallAsyncMethod(client, selector, wake_port, ref, refCnt, in, inCnt, inStruct, inStructCnt, out, outCnt, outStruct, outStructCnt);
++    uint8_t anePacket[0x948], aneEvents[0x1408];
++    const void *wireInput=inStruct;
++    BOOL aneTranslated=NO;
++    static __thread BOOL aneWireActive;
++    if (!aneWireActive && (getenv("MACWS_ANE_EVENT_WIRE_CANDIDATE") || MacWSMetalFXANELegacyEnabled()) && selector==2 &&
++        inStructCnt==sizeof(anePacket) && inStruct && inCnt==1) {
++        Dl_info caller={0};
++        if(dladdr(__builtin_return_address(0),&caller) && caller.dli_fname &&
++           caller.dli_sname &&
++           ((strstr(caller.dli_fname,"ANEServices.framework/") &&
++             strstr(caller.dli_sname,"ANE_ProgramSendRequest")) ||
++            (strstr(caller.dli_fname,"/libmachook_") || strstr(caller.dli_fname,"/libmachook.dylib")))) {
++            uintptr_t address=0;memcpy(&address,(const uint8_t*)inStruct+0x930,8);
++            if(address && !(address&7) && MacWSANECopyLegacyEvents((void*)address,aneEvents)) {
++                memcpy(anePacket,inStruct,sizeof(anePacket));
++                uintptr_t replacement=(uintptr_t)aneEvents;
++                memcpy(anePacket+0x930,&replacement,8);wireInput=anePacket;aneTranslated=YES;
++            }
++            fprintf(stderr,"ANE_EVENT_WIRE candidate translated=%d shared=%p\n",aneTranslated,(void*)address);
++        }
++    }
++    BOOL savedANEWireActive=aneWireActive;
++    if(aneTranslated)aneWireActive=YES;
++    IOReturn r = IOConnectCallAsyncMethod(client, selector, wake_port, ref, refCnt, in, inCnt, wireInput, inStructCnt, out, outCnt, outStruct, outStructCnt);
++    aneWireActive=savedANEWireActive;
++    if(aneTranslated)fprintf(stderr,"ANE_EVENT_WIRE kernel=%x\n",r);
+     macws_avd_trace("async",client,selector,inStruct,inStructCnt,inCnt,refCnt,avdRequested,outStructCnt?*outStructCnt:0,r,__builtin_return_address(0));
+     if(IOConnectIsIOGPU(client) && macws_runtime_diagnostics_enabled())
+         fprintf(stderr, "#### AGXIOC AsyncMethod sel=0x%x->0x%x inCnt=%u inSC=%zu outSC=%zu -> 0x%x\n", orig, selector, inCnt, inStructCnt, outStructCnt?*outStructCnt:0, r);

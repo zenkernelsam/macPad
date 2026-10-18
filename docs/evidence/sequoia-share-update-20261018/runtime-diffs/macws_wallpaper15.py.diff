@@ -1,0 +1,238 @@
+--- curated/macws_wallpaper15.py
++++ raw/macws_wallpaper15.py
+@@ -132,7 +132,9 @@
+     return {'active': limits.active, 'inactive': limits.inactive}
+
+
+-def stop():
++def stop(keep_guard=False):
++    if not keep_guard:
++        disarm_guard()
+     # Stop the client owner before its decoder/admission prerequisites.
+     labels = [SPECS[2][1], OLD_LABELS[0]]
+     for label in labels:
+@@ -310,10 +312,211 @@
+         time.sleep(0.25)
+
+
++
++GUARD_LABEL = 'com.macpad.native15.wallpaper-guard'
++GUARD_PLIST = CONFIG / 'guard.plist'
++CONTROLLER = Path('/var/jb/usr/macOS/bin/macws_wallpaper15.py')
++GUI_LOCK = Path('/tmp/.macos_gui.transaction')
++GUARD_STATE = CONFIG / 'guard-state.json'
++WS_IMAGE = ROOT / 'System/Library/PrivateFrameworks/SkyLight.framework/Resources/WindowServer'
++
++
++def server_generation():
++    pids = exact_pids(WS_IMAGE)
++    if len(pids) != 1:
++        return None
++    pid = pids[0]
++    env = dict(os.environ, TZ='UTC')
++    result = subprocess.run(['/bin/ps', '-p', str(pid), '-o', 'lstart='],
++                            env=env, capture_output=True, text=True, timeout=5)
++    started = result.stdout.strip()
++    if result.returncode or not started:
++        return None
++    return {'pid': pid, 'path': process_path(pid), 'started_utc': started}
++
++
++def guard_owned(j):
++    if not j:
++        return False
++    return str(CONTROLLER) in j['text'] and 'watch' in j['text']
++
++
++def disarm_guard():
++    j = job(GUARD_LABEL)
++    if j:
++        if not guard_owned(j):
++            raise RuntimeError('wallpaper guard label belongs to an unexpected command')
++        run(LAUNCHCTL, 'bootout', DOMAIN + '/' + GUARD_LABEL, check=True)
++        print('WALLPAPER15 guard stopped', flush=True)
++
++
++def arm_guard():
++    check_environment()
++    verify_files()
++    generation = server_generation()
++    if not generation:
++        raise RuntimeError('wallpaper guard requires one qualified WindowServer')
++    j = job(GUARD_LABEL)
++    if j:
++        if not guard_owned(j):
++            raise RuntimeError('wallpaper guard label belongs to an unexpected command')
++        expected = plistlib.loads(GUARD_PLIST.read_bytes()).get('ProgramArguments', [])
++        if (j['pid'] and process_path(j['pid']) == os.path.realpath('/var/jb/usr/bin/python3')
++                and expected[-1:] == [json.dumps(generation, sort_keys=True)]):
++            print('WALLPAPER15 guard already armed pid=' + str(j['pid']), flush=True)
++            return
++        disarm_guard()
++    data = {'Label': GUARD_LABEL, 'ProgramArguments': ['/var/jb/usr/bin/python3',
++            str(CONTROLLER), 'watch', json.dumps(generation, sort_keys=True)],
++            'RunAtLoad': True, 'KeepAlive': False, 'EnablePressuredExit': False,
++            'StandardOutPath': '/var/jb/var/mobile/native15-wallpaper-guard.log',
++            'StandardErrorPath': '/var/jb/var/mobile/native15-wallpaper-guard.log',
++            'EnvironmentVariables': {'PATH': '/var/jb/usr/bin:/var/jb/bin:/usr/bin:/bin'}}
++    temporary = GUARD_PLIST.with_suffix('.new')
++    temporary.write_bytes(plistlib.dumps(data)); os.chown(temporary, 0, 0)
++    os.chmod(temporary, 0o644); os.replace(temporary, GUARD_PLIST)
++    result = run(LAUNCHCTL, 'bootstrap', DOMAIN, str(GUARD_PLIST))
++    if result.returncode:
++        raise RuntimeError('wallpaper guard bootstrap: ' + result.stderr.strip())
++    for _ in range(20):
++        j = job(GUARD_LABEL)
++        if j and j['pid'] and process_path(j['pid']) == os.path.realpath('/var/jb/usr/bin/python3'):
++            print('WALLPAPER15 guard armed pid=' + str(j['pid']) +
++                  ' windowserver=' + str(generation['pid']), flush=True)
++            return
++        time.sleep(.1)
++    raise RuntimeError('wallpaper guard did not reach its native Python process')
++
++
++def recovery_lease():
++    # Participate in the GUI script's atomic transaction protocol. Never
++    # remove someone else's lock, including a stale or incomplete lock.
++    GUI_LOCK.mkdir()
++    try:
++        (GUI_LOCK / 'pid').write_text(str(os.getpid()) + '\n')
++    except BaseException:
++        GUI_LOCK.rmdir()
++        raise
++
++
++def release_recovery_lease():
++    p = GUI_LOCK / 'pid'
++    try:
++        if p.read_text().strip() == str(os.getpid()):
++            p.unlink(); GUI_LOCK.rmdir()
++    except OSError:
++        pass
++
++
++def write_guard_state(generation, attempts, outcome):
++    data = {'generation': generation, 'attempts': attempts, 'outcome': outcome,
++            'updated_at': time.time()}
++    temporary = GUARD_STATE.with_suffix('.new')
++    temporary.write_text(json.dumps(data, sort_keys=True) + '\n')
++    os.chown(temporary, 0, 0); os.chmod(temporary, 0o600)
++    os.replace(temporary, GUARD_STATE)
++
++
++def watch_wallpaper(generation):
++    check_environment()
++    verify_files()
++    if generation != server_generation():
++        raise RuntimeError('wallpaper guard generation no longer matches')
++    attempts = []
++    if GUARD_STATE.is_file():
++        prior = json.loads(GUARD_STATE.read_text())
++        if prior.get('generation') == generation:
++            attempts = prior.get('attempts', [])
++    def interrupted(signum, frame):
++        raise SystemExit(128 + signum)
++    signal.signal(signal.SIGTERM, interrupted)
++    signal.signal(signal.SIGINT, interrupted)
++    print('WALLPAPER15 guard observing windowserver=' + str(generation['pid']) +
++          ' interval=15s missing-grace=45s max-recoveries=2/600s', flush=True)
++    missing_since = None
++    last_outcome = None
++    while generation == server_generation():
++        time.sleep(15)
++        if generation != server_generation():
++            break
++        # No repair while the GUI startup/stop/repair transaction is active.
++        if GUI_LOCK.exists():
++            missing_since = None
++            continue
++        chosen = selection()
++        if not chosen or chosen['provider'] != 'com.apple.wallpaper.choice.image' or not chosen['files']:
++            missing_since = None
++            continue
++        state = status()
++        providers = state['image_pids']
++        healthy = (all(state[n]['running'] for n, _, _, _ in SPECS) and
++                   len(providers) == 1 and provider_frame_ready(providers[0], chosen['files']))
++        if healthy:
++            missing_since = None
++            if last_outcome != 'provider-ready':
++                print('WALLPAPER15 guard provider-ready pid=' + str(providers[0]), flush=True)
++                write_guard_state(generation, attempts, 'provider-ready')
++            last_outcome = 'provider-ready'
++            continue
++        now = time.time()
++        if missing_since is None:
++            missing_since = now
++            print('WALLPAPER15 guard provider/frame missing; waiting for natural recovery', flush=True)
++            continue
++        if now - missing_since < 45:
++            continue
++        attempts = [t for t in attempts if 0 <= now - t < 600]
++        if len(attempts) >= 2 or (attempts and now - attempts[-1] < 120):
++            if last_outcome != 'cooldown':
++                print('WALLPAPER15 guard cooldown; preserving desktop and applications', flush=True)
++            last_outcome = 'cooldown'
++            continue
++        try:
++            recovery_lease()
++        except FileExistsError:
++            continue
++        try:
++            lock = Path('/var/jb/var/run/macws-wallpaper15.lock')
++            with lock.open('a') as stream:
++                try:
++                    fcntl.flock(stream, fcntl.LOCK_EX | fcntl.LOCK_NB)
++                except BlockingIOError:
++                    continue
++                if generation != server_generation() or selection() != chosen:
++                    continue
++                attempts.append(now)
++                write_guard_state(generation, attempts, 'recovering')
++                print('WALLPAPER15 guard recovering missing provider; keeping WindowServer and apps', flush=True)
++                try:
++                    stop(keep_guard=True)
++                    restore()
++                    if generation != server_generation():
++                        raise RuntimeError('WindowServer changed during guard recovery')
++                    write_guard_state(generation, attempts, 'recovered')
++                    print('WALLPAPER15 guard recovered', flush=True)
++                    last_outcome = 'recovered'
++                except (OSError, RuntimeError, ValueError, subprocess.SubprocessError) as e:
++                    write_guard_state(generation, attempts, 'failed: ' + str(e))
++                    print('WALLPAPER15 guard recovery failed: ' + str(e), flush=True)
++                    last_outcome = 'failed'
++                missing_since = None
++        finally:
++            release_recovery_lease()
++    print('WALLPAPER15 guard retired with its WindowServer generation', flush=True)
++
++
+ def main():
++    if len(sys.argv) == 3 and sys.argv[1] == 'watch':
++        if os.geteuid() != 0:
++            raise RuntimeError('wallpaper guard requires root')
++        try:
++            watch_wallpaper(json.loads(sys.argv[2]))
++        finally:
++            release_recovery_lease()
++        return 0
+     command = sys.argv[1] if len(sys.argv) == 2 else ''
+-    if command not in ('start', 'stop', 'restart', 'restore', 'status', 'selection'):
+-        raise ValueError('usage: python3 macws_wallpaper15.py start|stop|restart|restore|status|selection')
++    if command not in ('start', 'stop', 'restart', 'restore', 'status', 'selection', 'arm', 'disarm'):
++        raise ValueError('usage: python3 macws_wallpaper15.py start|stop|restart|restore|status|selection|arm|disarm')
+     if command == 'status':
+         result = status()
+         print(json.dumps(result, sort_keys=True))
+@@ -336,6 +539,10 @@
+                 if time.monotonic() >= deadline:
+                     raise RuntimeError('wallpaper lifecycle transaction is busy')
+                 time.sleep(0.1)
++        if command == 'arm':
++            arm_guard()
++        if command == 'disarm':
++            disarm_guard()
+         if command in ('stop', 'restart'):
+             stop()
+         if command in ('start', 'restart'):

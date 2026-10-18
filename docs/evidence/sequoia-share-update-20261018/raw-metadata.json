@@ -1,0 +1,61 @@
+{
+  "lines": 582406,
+  "types": {
+    "header": 1,
+    "scope": 118,
+    "entry": 582284,
+    "excluded": 2,
+    "summary": 1
+  },
+  "entry_count": 582284,
+  "error_entries": 582177,
+  "operations": {
+    "acl": 582177
+  },
+  "errnos": {
+    "2": 582177
+  },
+  "uncompressed_sha256": "efe65826754d32fd2b9b365ce0a642ddd2daf9fa7934f55f0cb7beafe1519d31",
+  "summary": {
+    "type": "summary",
+    "scan_finished": true,
+    "stopped": null,
+    "counts": {
+      "paths": 582284,
+      "errors": 582177,
+      "excluded_subtrees": 2
+    },
+    "error_codes": {
+      "2": 582177
+    },
+    "finished_epoch": 1792247935.6191292,
+    "no_detected_collection_errors": false
+  },
+  "supplier_result": {
+    "ssh_exit": 0,
+    "local_error": null,
+    "remote_summary": {
+      "type": "summary",
+      "scan_finished": true,
+      "stopped": null,
+      "counts": {
+        "paths": 582284,
+        "errors": 582177,
+        "excluded_subtrees": 2
+      },
+      "error_codes": {
+        "2": 582177
+      },
+      "finished_epoch": 1792247935.6191292,
+      "no_detected_collection_errors": false
+    },
+    "json_bytes": 289304895,
+    "metadata_sha256": "7f8c04c25bd9a455b02bff00bb8efbb24dd9901067beb570afa3a782107d6854",
+    "footer_received": true,
+    "gzip_read_ok": true,
+    "prior_archive_sha256_reported": "abb990272ca58cba521523def93eee0994c1cfba934ff1b9e9605bcf4fa81475",
+    "warning": "Metadata captured later than archive. Original archive unchanged. Restore and iCloud sync not verified."
+  },
+  "gzip_eof": true,
+  "compressed_sha256": "7f8c04c25bd9a455b02bff00bb8efbb24dd9901067beb570afa3a782107d6854"
+}

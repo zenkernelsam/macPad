@@ -1,0 +1,145 @@
+--- first/reference-source/sequoia-hook-source/libmachook/Compatibility/MacWSG14Empty.m
++++ updated/reference-source/sequoia-hook-source/libmachook/Compatibility/MacWSG14Empty.m
+@@ -4,11 +4,13 @@
+ #import <objc/message.h>
+ #import <objc/runtime.h>
+ #include <string.h>
++#include <dlfcn.h>
+ #include <stdlib.h>
+ #include <unistd.h>
+ #include <stdio.h>
+ #include <mach/mach.h>
+ #include "macws_nocopy_abi.h"
++#include "MacWSANEPolicy.h"
+ #include "../iogpu15-compute-packet.h"
+ #include "../iogpu15-render-packet.h"
+ #include "../iogpu15-mixed-packet.h"
+@@ -62,7 +64,9 @@
+ static void(*originalSubmit)(id,SEL,id*,unsigned long);
+ static void submit(id self,SEL s,id*buffers,unsigned long n){if(n<=32)for(unsigned long j=0;j<n;j++){fixG14Work(buffers[j]);fixEmpty(buffers[j]);}originalSubmit(self,s,buffers,n);}
+ static void installG14NoCopy(void);
+-void macws_install_g14_empty(void){static dispatch_once_t once;dispatch_once(&once,^{installG14NoCopy();Class q=objc_getClass("IOGPUMetalCommandQueue");Method m=class_getInstanceMethod(q,sel_registerName("submitCommandBuffers:count:"));if(m)originalSubmit=(void*)method_setImplementation(m,(IMP)submit);});}
++static void installG14Event(void);
++static void installMetalFXANEDataPath(void);
++void macws_install_g14_empty(void){static dispatch_once_t once;dispatch_once(&once,^{installG14NoCopy();installG14Event();installMetalFXANEDataPath();Class q=objc_getClass("IOGPUMetalCommandQueue");Method m=class_getInstanceMethod(q,sel_registerName("submitCommandBuffers:count:"));if(m)originalSubmit=(void*)method_setImplementation(m,(IMP)submit);});}
+
+ // Scope only the public M2 NoCopy call. The wire translator independently
+ // checks all pointer/length fields before removing the measured alignment slot.
+@@ -70,10 +74,36 @@
+                               void (^)(void *, NSUInteger));
+ static id g14NoCopy(id self, SEL sel, void *bytes, NSUInteger length,
+                    MTLResourceOptions options, void (^deallocator)(void *, NSUInteger)) {
+-    if (!MacWSNoCopySpanValid((uintptr_t)bytes, length, vm_page_size))
++    // Ghidra/Xcode: MPSGraph encodeConstantOp (24G90, 0x1e4e69484)
++    // uses private option 0x100000 with a non-page-aligned constant allocation.
++    // Preserve the two identical CPU pointers and size in the measured
++    // 104->96 byte request. The generic legacy path cleared both pointers.
++    // Real-device CPU->GPU, GPU->CPU and deallocator tests passed; never
++    // substitute a copied allocation or invoke its deallocator early.
++    BOOL unaligned = options == 0x100000 && bytes && length &&
++        length <= UINTPTR_MAX - (uintptr_t)bytes;
++    // Xcode15 TensorToMemrefOpHandler::encodeOp at 0x1e4e90840
++    // passes an aligned pointer, logical (not page-rounded) size and options0.
++    // Actual device witness: pointer%16384=0, length20480, resultnil.
++    // Admit only this measured producer to the existing bounded request
++    // translation; retain the original allocation and deallocator.
++    if (!unaligned && options == 0 && bytes && length && vm_page_size &&
++        (uintptr_t)bytes % vm_page_size == 0 &&
++        length % vm_page_size != 0 &&
++        length <= UINTPTR_MAX - (uintptr_t)bytes) {
++        Dl_info caller = {0};
++        if (dladdr(__builtin_return_address(0), &caller) &&
++            caller.dli_fname && caller.dli_sname &&
++            strstr(caller.dli_fname, "MetalPerformanceShadersGraph.framework/") &&
++            strstr(caller.dli_sname, "TensorToMemrefOpHandler")) {
++            unaligned = YES;
++        }
++    }
++    if (!unaligned &&
++        !MacWSNoCopySpanValid((uintptr_t)bytes, length, vm_page_size))
+         return g14NoCopyOriginal(self, sel, bytes, length, options, deallocator);
+     struct MacWSNoCopyScope scope = {(uintptr_t)bytes, length, vm_page_size,
+-                                     g_macws_nocopy_scope};
++                                     g_macws_nocopy_scope, unaligned};
+     g_macws_nocopy_scope = &scope;
+     @try {
+         return g14NoCopyOriginal(self, sel, bytes, length, options, deallocator);
+@@ -89,3 +119,78 @@
+         method_setImplementation(class_getInstanceMethod(cls, sel), (IMP)g14NoCopy);
+     fprintf(stderr, "G14_NOCOPY public allocation scope installed\n");
+ }
++
++// Ghidra IOGPU newEvent 0x1a1fa4234 selects a private event by config bit.
++// Its initWithDeviceRef:options: (0x1a1fb27e4) returns nil on selector24 failure.
++// Xcode Metal 0x18b95e92c/0x18b95e9cc: base newEvent/newSharedEvent allocate
++// the same class. Preserve successful private events; use a real shared event
++// only when allocation fails on this adapted G14 device. No signals skipped.
++static id (*g14EventOriginal)(id, SEL);
++static id g14Event(id self, SEL sel) {
++    id event = g14EventOriginal(self, sel);
++    return event ?: [(id<MTLDevice>)self newSharedEvent];
++}
++static void installG14Event(void) {
++    Class cls = objc_getClass("AGXG14GDevice");
++    SEL sel = sel_registerName("newEvent");
++    Method method = class_getInstanceMethod(cls, sel);
++    if (!method) return;
++    g14EventOriginal = (void *)method_getImplementation(method);
++    if (!class_addMethod(cls, sel, (IMP)g14Event, method_getTypeEncoding(method)))
++        method_setImplementation(class_getInstanceMethod(cls, sel), (IMP)g14Event);
++}
++
++static id(*originalArray)(id,SEL,id,id);
++static id arrayWithSurface(id self,SEL sel,id<MTLBuffer>buffer,id descriptor){
++ Dl_info caller={0};SEL surfaceSel=sel_registerName("iosurface");
++ BOOL target=dladdr(__builtin_return_address(0),&caller)&&caller.dli_fname&&caller.dli_sname&&strstr(caller.dli_fname,"MetalPerformanceShadersGraph.framework/")&&strstr(caller.dli_sname,"TensorToMemrefOpHandler");
++ IOSurfaceRef existing=[buffer respondsToSelector:surfaceSel]?((IOSurfaceRef(*)(id,SEL))objc_msgSend)(buffer,surfaceSel):NULL;
++ if(!target||!buffer||existing||!buffer.contents||!buffer.length)return originalArray(self,sel,buffer,descriptor);
++ id<MTLDevice>device=buffer.device;SEL create=sel_registerName("newBufferWithIOSurface:");
++ if(![device respondsToSelector:create])return originalArray(self,sel,buffer,descriptor);
++ IOSurfaceRef surface=IOSurfaceCreate((CFDictionaryRef)@{@"IOSurfaceAllocSize":@(buffer.length),@"IOSurfaceBytesPerElement":@1,@"IOSurfaceName":@"macPad ANE memref"});
++ id<MTLBuffer>shared=nil;
++ if(surface&&IOSurfaceLock(surface,0,NULL)==0){void*dst=IOSurfaceGetBaseAddress(surface);size_t n=IOSurfaceGetAllocSize(surface);if(dst&&n>=buffer.length){memcpy(dst,buffer.contents,buffer.length);shared=((id(*)(id,SEL,IOSurfaceRef))objc_msgSend)(device,create,surface);}IOSurfaceUnlock(surface,0,NULL);}
++ id result=originalArray(self,sel,shared?:buffer,descriptor);
++ fprintf(stderr,"ANE_INPUT_SURFACE bytes=%lu old=%p shared=%p surface=%p array=%p\n",(unsigned long)buffer.length,buffer,shared,surface,result);
++ [shared release];if(surface)CFRelease(surface);return result;
++}
++
++static void (*oldScheduledSignal)(id,SEL,id,uint64_t);
++static void legacyScheduledSignal(id cmd,SEL sel,id event,uint64_t value){
++ Dl_info producer={0};dladdr(__builtin_return_address(0),&producer);
++ if(!producer.dli_fname||!strstr(producer.dli_fname,"MetalPerformanceShadersGraph.framework/")){oldScheduledSignal(cmd,sel,event,value);return;}
++ if(![event respondsToSelector:@selector(setSignaledValue:)]||![event respondsToSelector:@selector(signaledValue)]){oldScheduledSignal(cmd,sel,event,value);return;}
++ // Preserve a real scheduling notification. Never signal before commit or
++ // use a fabricated successful command completion.
++ [(id<MTLCommandBuffer>)cmd addScheduledHandler:^(id<MTLCommandBuffer>actual){
++   if(actual.status==MTLCommandBufferStatusScheduled||actual.status==MTLCommandBufferStatusCompleted){
++    uint64_t before=[(id<MTLSharedEvent>)event signaledValue];
++    if(before<value)[(id<MTLSharedEvent>)event setSignaledValue:value];
++    fprintf(stderr,"LEGACY_SCHEDULED_SIGNAL cmd=%p status=%lu value=%llu before=%llu after=%llu\n",actual,(unsigned long)actual.status,value,before,[(id<MTLSharedEvent>)event signaledValue]);
++   }else fprintf(stderr,"LEGACY_SCHEDULED_SIGNAL rejected_status=%lu\n",(unsigned long)actual.status);
++ }];
++}
++
++static void(*oldAgentSignal)(id,SEL,id,uint64_t,uint64_t);
++static void legacyAgentSignal(id cmd,SEL sel,id event,uint64_t value,uint64_t mask){
++ Dl_info producer={0};dladdr(__builtin_return_address(0),&producer);
++ if(mask!=8||!producer.dli_fname||!strstr(producer.dli_fname,"MetalFX.framework/")||![event respondsToSelector:@selector(setSignaledValue:)]){oldAgentSignal(cmd,sel,event,value,mask);return;}
++ Dl_info origin={0};dladdr(__builtin_return_address(0),&origin);
++ fprintf(stderr,"LEGACY_AGENT_SIGNAL mask=%llu value=%llu caller=%s symbol=%s\n",mask,value,origin.dli_fname?:"nil",origin.dli_sname?:"nil");
++ // Legacy shared-event signaling publishes the exact same timeline value.
++ // It broadcasts to legacy waiters instead of selecting newer agent bits.
++ [(id<MTLCommandBuffer>)cmd encodeSignalEvent:event value:value];
++}
++
++static void installMetalFXANEDataPath(void){
++ if(!MacWSMetalFXANELegacyEnabled())return;
++ Class c=objc_getClass("AGXG14GFamilyCommandBuffer"),array=objc_getClass("MPSNDArray");
++ SEL a=sel_registerName("encodeSignalEventScheduled:value:"),b=sel_registerName("encodeSignalEvent:value:agentMask:"),d=sel_registerName("initWithBuffer:descriptor:");
++ Method am=class_getInstanceMethod(c,a),bm=class_getInstanceMethod(c,b),dm=class_getInstanceMethod(array,d);
++ if(!am||!bm||!dm||strcmp(method_getTypeEncoding(am),"v32@0:8@16Q24")||strcmp(method_getTypeEncoding(bm),"v40@0:8@16Q24Q32")||strcmp(method_getTypeEncoding(dm),"@32@0:8@16@24"))return;
++ oldScheduledSignal=(void*)method_getImplementation(am);if(!class_addMethod(c,a,(IMP)legacyScheduledSignal,method_getTypeEncoding(am)))method_setImplementation(class_getInstanceMethod(c,a),(IMP)legacyScheduledSignal);
++ oldAgentSignal=(void*)method_getImplementation(bm);if(!class_addMethod(c,b,(IMP)legacyAgentSignal,method_getTypeEncoding(bm)))method_setImplementation(class_getInstanceMethod(c,b),(IMP)legacyAgentSignal);
++ originalArray=(void*)method_setImplementation(dm,(IMP)arrayWithSurface);
++ fprintf(stderr,"METALFX_ANE integrated-opt-in data-path installed\n");
++}

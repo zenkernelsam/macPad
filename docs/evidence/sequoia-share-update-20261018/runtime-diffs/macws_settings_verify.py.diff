@@ -1,0 +1,21 @@
+--- curated/macws_settings_verify.py
++++ raw/macws_settings_verify.py
+@@ -115,15 +115,15 @@
+             marker = stream.read(1024).strip().split('|')
+         if len(marker) != 9 or marker[0] != SCHEMA:
+             raise ValueError('invalid Settings runtime marker: ' + identifier)
+-        if identifier in ('com.apple.Desktop-Settings.extension', 'com.apple.Wallpaper-Settings.extension', 'com.apple.Appearance-Settings.extension'):
++        if identifier in pane_hooks.SPECS:
+             pane_hooks.verify_composition(bundle)
+-            if identifier == "com.apple.Appearance-Settings.extension":
++            if identifier in ("com.apple.Appearance-Settings.extension", "com.apple.systempreferences.GeneralSettings", "com.apple.SystemProfiler.AboutExtension"):
+                 import macws_settings_pane_rights as pane_rights
+                 pane_rights.check(bundle)
+             for extra in ('CydiaSubstrate', 'pane-rbs15.dylib'):
+                 path = frameworks + '/' + extra
+                 if not os.path.isfile(path):
+-                    raise ValueError('missing native15 Desktop dependency: ' + path)
++                    raise ValueError('missing qualified native15 pane dependency: ' + path)
+                 paths.append(path)
+         paths.extend(dependencies)
+         panes.append((identifier, dependencies, marker))

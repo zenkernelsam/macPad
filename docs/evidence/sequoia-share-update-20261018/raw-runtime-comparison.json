@@ -1,0 +1,477 @@
+{
+  "rows": [
+    {
+      "path": "rootfs/usr/local/lib/libmachook_arm64.dylib",
+      "sha256": "dfc3e7b263a428a0badaacbf92d7092614767bc4b96d7029ed2e9eb7480df236",
+      "curated_sha256": "d047ce94aebfa9898298a5de6d67a9d51db013784af2004b5dea0925c70b8c69",
+      "same_as_curated": false
+    },
+    {
+      "path": "rootfs/usr/local/lib/libmachook.dylib",
+      "sha256": "86cad3b09a25c6aeeade4c55f9dd0ba7be6bbafb6a8281fffc44351462e7b2fb",
+      "curated_sha256": "71641d7bd3557314887c6cf85b027a52f2aaf9d2f0186d40bbefa89340e35c7b",
+      "same_as_curated": false
+    },
+    {
+      "path": "rootfs/usr/local/share/macpad-pager15/enable",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "curated_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "same_as_curated": true
+    },
+    {
+      "path": "rootfs/usr/local/share/macpad-pager15/sources.json",
+      "sha256": "ee7fdeb4c803568f46c9a7c28de8a2a6ba5712663f94b39c56005f528b71e857",
+      "curated_sha256": "ee7fdeb4c803568f46c9a7c28de8a2a6ba5712663f94b39c56005f528b71e857",
+      "same_as_curated": true
+    },
+    {
+      "path": "rootfs/usr/local/share/macpad-pager15/sidecar0.dylib",
+      "sha256": "d8ebc418afdb17ba1328204773777d37e9597b686f779eaa9f1b9370ba74e3c3",
+      "curated_sha256": "d8ebc418afdb17ba1328204773777d37e9597b686f779eaa9f1b9370ba74e3c3",
+      "same_as_curated": true
+    },
+    {
+      "path": "rootfs/usr/local/share/macpad-pager15/sidecar1.dylib",
+      "sha256": "41a822550bcd0b1b6ac79c752c200f16c9e24ebc08b095a035c0219e20bcf386",
+      "curated_sha256": "41a822550bcd0b1b6ac79c752c200f16c9e24ebc08b095a035c0219e20bcf386",
+      "same_as_curated": true
+    },
+    {
+      "path": "rootfs/usr/local/share/macpad-pager15/cache_guard.py",
+      "sha256": "16e52df68cf7ffbf81b623c2722992175d90527a46127c441ef47b8017e02349",
+      "curated_sha256": "16e52df68cf7ffbf81b623c2722992175d90527a46127c441ef47b8017e02349",
+      "same_as_curated": true
+    },
+    {
+      "path": "rootfs/usr/lib/dyld",
+      "sha256": "c224a96532e354cf4397569ee83272d81492ad8a08943e2d467a5e4e2dc0e170",
+      "curated_sha256": "c224a96532e354cf4397569ee83272d81492ad8a08943e2d467a5e4e2dc0e170",
+      "same_as_curated": true
+    },
+    {
+      "path": "host-overlay/var/jb/usr/macOS/bin/macpad-usb-volumes-20261012.py",
+      "sha256": "d449df87534d8b47d4130c4a20a7f95ab7a79ca6c97979e40e244c11173bb53b",
+      "curated_sha256": "d449df87534d8b47d4130c4a20a7f95ab7a79ca6c97979e40e244c11173bb53b",
+      "same_as_curated": true
+    },
+    {
+      "path": "host-overlay/var/jb/usr/macOS/bin/prepare_ventura_windowserver.py",
+      "sha256": "80422741f09f8185a8322e56de27447e5c62d24844f9a7509871ca074e623206",
+      "curated_sha256": "80422741f09f8185a8322e56de27447e5c62d24844f9a7509871ca074e623206",
+      "same_as_curated": true
+    },
+    {
+      "path": "host-overlay/var/jb/usr/macOS/bin/ensure_macos15_standalone_dylibs.sh",
+      "sha256": "e604ce9b5b71500a4764a80fd05e54c8b049cfba5d16f4d08ad4001f4341a211",
+      "curated_sha256": "e604ce9b5b71500a4764a80fd05e54c8b049cfba5d16f4d08ad4001f4341a211",
+      "same_as_curated": true
+    },
+    {
+      "path": "host-overlay/var/jb/usr/macOS/bin/run_bash.sh",
+      "sha256": "ffb50230e87270fff498e9d1b85ed16d1c5193687f9f58d749e50aa7396e0762",
+      "curated_sha256": "ffb50230e87270fff498e9d1b85ed16d1c5193687f9f58d749e50aa7396e0762",
+      "same_as_curated": true
+    },
+    {
+      "path": "host-overlay/var/jb/usr/macOS/bin/macws_settings_carriers.py",
+      "sha256": "09fa516ec8b650c291082dd99b4ac378c0727ddcdcd15ffbaf91e5fbcf0cc7ae",
+      "curated_sha256": "09fa516ec8b650c291082dd99b4ac378c0727ddcdcd15ffbaf91e5fbcf0cc7ae",
+      "same_as_curated": true
+    },
+    {
+      "path": "host-overlay/var/jb/usr/macOS/bin/macos_gui-stage15.sh",
+      "sha256": "1517befda09945402fc9ef1d2b846ca2b17ca700b714914750ffecfb39a9891f",
+      "curated_sha256": "1517befda09945402fc9ef1d2b846ca2b17ca700b714914750ffecfb39a9891f",
+      "same_as_curated": true
+    },
+    {
+      "path": "host-overlay/var/jb/usr/macOS/bin/native15_chroot_probe.sh",
+      "sha256": "2d4897c2762eccbf5c1de619387dfdf1b12c27d0a2ac2a557ac749bf432e7aed",
+      "curated_sha256": "2d4897c2762eccbf5c1de619387dfdf1b12c27d0a2ac2a557ac749bf432e7aed",
+      "same_as_curated": true
+    },
+    {
+      "path": "host-overlay/var/jb/usr/macOS/bin/macws_settings_verify.py",
+      "sha256": "651f2a0551737128ad0cc7ca3413a7725fccbbd5e22ab3978978f87dadcd7caa",
+      "curated_sha256": "6bf2ed3ca956ef443e1d0873e27776a52e4427c1a77c236ad0bd92e0983eff4a",
+      "same_as_curated": false
+    },
+    {
+      "path": "host-overlay/var/jb/usr/macOS/bin/macpad_dmg_broker.py",
+      "sha256": "2f174d31c0128db32724367c666be15ebf75937deff1b41dbab8970371da7e14",
+      "curated_sha256": "2f174d31c0128db32724367c666be15ebf75937deff1b41dbab8970371da7e14",
+      "same_as_curated": true
+    },
+    {
+      "path": "host-overlay/var/jb/usr/macOS/bin/macws_installed_app_prepare.py",
+      "sha256": "f0ba654642568b980b4703deee8ef5fffc8f090e9f525e4bcd82f5a2899e4eec",
+      "curated_sha256": "f0ba654642568b980b4703deee8ef5fffc8f090e9f525e4bcd82f5a2899e4eec",
+      "same_as_curated": true
+    },
+    {
+      "path": "host-overlay/var/jb/usr/macOS/bin/run_bash-stage15.sh",
+      "sha256": "e2b9633c5e46eaa1cd076e8df19183d352c334ac415e405d14b818e2390f01af",
+      "curated_sha256": "e2b9633c5e46eaa1cd076e8df19183d352c334ac415e405d14b818e2390f01af",
+      "same_as_curated": true
+    },
+    {
+      "path": "host-overlay/var/jb/usr/macOS/bin/macws_settings_hook.py",
+      "sha256": "f459818e530acf75a3f0a6c016de0c473a795ca4e400657e147375dafdbbac2d",
+      "curated_sha256": "78bc04b17923584daa657b608c5f0089e1258a5f8e70acf0935f231c63f467fa",
+      "same_as_curated": false
+    },
+    {
+      "path": "host-overlay/var/jb/usr/macOS/bin/sequoia_metal_verification_key.py",
+      "sha256": "e13588ad54772880313e4d75a1275a8fb1fba483292a5d026397718e8e73b516",
+      "curated_sha256": "e13588ad54772880313e4d75a1275a8fb1fba483292a5d026397718e8e73b516",
+      "same_as_curated": true
+    },
+    {
+      "path": "host-overlay/var/jb/usr/macOS/bin/run_steam_live.sh",
+      "sha256": "72e822b4deed5a5bc44e2986a5f3815e9c81809f66a761e0beb89503f2a65f88",
+      "curated_sha256": "72e822b4deed5a5bc44e2986a5f3815e9c81809f66a761e0beb89503f2a65f88",
+      "same_as_curated": true
+    },
+    {
+      "path": "host-overlay/var/jb/usr/macOS/bin/macwshostd",
+      "sha256": "152bf36abde29580c95b0637fa71ed08a3d5e9d4e8e9ebf4be2aa58a183a02ea",
+      "curated_sha256": "105043b06a6bc0d7af28fbbd7b33efc8e0f23b885863b690857972ccf24a7e1d",
+      "same_as_curated": false
+    },
+    {
+      "path": "host-overlay/var/jb/usr/macOS/bin/macws_boot_trust.py",
+      "sha256": "2c727c302a55b15470f9bc1cf4ec8c45e87091e8b448974d866e8ca1dd955135",
+      "curated_sha256": "2c727c302a55b15470f9bc1cf4ec8c45e87091e8b448974d866e8ca1dd955135",
+      "same_as_curated": true
+    },
+    {
+      "path": "host-overlay/var/jb/usr/macOS/bin/ensure_metal2metal_compat.sh",
+      "sha256": "38f5a2ff63fe709a1c0bc826dc0b1521bb49e467c57a61612a58a5e62f28775c",
+      "curated_sha256": "38f5a2ff63fe709a1c0bc826dc0b1521bb49e467c57a61612a58a5e62f28775c",
+      "same_as_curated": true
+    },
+    {
+      "path": "host-overlay/var/jb/usr/macOS/bin/refresh_steam_inventory.py",
+      "sha256": "7614fc57802f2b23e5b2ba07bccf84d0520d9b1a839a9b8d40cfa6fc5fe6f2af",
+      "curated_sha256": "7614fc57802f2b23e5b2ba07bccf84d0520d9b1a839a9b8d40cfa6fc5fe6f2af",
+      "same_as_curated": true
+    },
+    {
+      "path": "host-overlay/var/jb/usr/macOS/bin/macws_macho_dependencies.py",
+      "sha256": "e7bb82137f6eaea202e8170d4c39665ae06a8a4db189ea39d712058fb59e1e65",
+      "curated_sha256": "e7bb82137f6eaea202e8170d4c39665ae06a8a4db189ea39d712058fb59e1e65",
+      "same_as_curated": true
+    },
+    {
+      "path": "host-overlay/var/jb/usr/macOS/bin/macos_gui.sh",
+      "sha256": "778e05ef4def5fe2d46ceb907abbd42ea80e4c444895fcf193dd2a8254d4d677",
+      "curated_sha256": "7d77cc2f111f3590ef047212a07b26a9297e9181fe448211537036f13abfdde3",
+      "same_as_curated": false
+    },
+    {
+      "path": "host-overlay/var/jb/usr/macOS/bin/ensure_office_metal2metal.py",
+      "sha256": "d97849c2ec639f13eaa2d8512c51bc0dd9c29c73c8a18a7d4bd9739a0038ac99",
+      "curated_sha256": "d97849c2ec639f13eaa2d8512c51bc0dd9c29c73c8a18a7d4bd9739a0038ac99",
+      "same_as_curated": true
+    },
+    {
+      "path": "host-overlay/var/jb/usr/macOS/bin/macws_verify_workspace_bundle15.py",
+      "sha256": "0e520a9e6231e256674013e4b6df6732f9a71f7eb978419a281279d598125dfa",
+      "curated_sha256": "0e520a9e6231e256674013e4b6df6732f9a71f7eb978419a281279d598125dfa",
+      "same_as_curated": true
+    },
+    {
+      "path": "host-overlay/var/jb/usr/macOS/bin/macws_wallpaper15.py",
+      "sha256": "f8de5f6ec4076d2d4a2e189f11ebda915de18bdac749beeccd376e02fa632592",
+      "curated_sha256": "3d7ee2a31568a9b327f2afe62c6edbf51d8770ffc51496e764cb712be160642e",
+      "same_as_curated": false
+    },
+    {
+      "path": "host-overlay/var/jb/usr/macOS/bin/macws_retire_legacy_boot_jobs.py",
+      "sha256": "6c084daf5e56b76b68837c6c54223a3334bcbfb5736bb13dd296d710ee6e9511",
+      "curated_sha256": "6c084daf5e56b76b68837c6c54223a3334bcbfb5736bb13dd296d710ee6e9511",
+      "same_as_curated": true
+    },
+    {
+      "path": "host-overlay/var/jb/usr/macOS/bin/add_macho_load_dylib.py",
+      "sha256": "2aff31bc17d35a3f880de69c5eff11fd262cf61be297db1f3bebee4b457a551a",
+      "curated_sha256": "2aff31bc17d35a3f880de69c5eff11fd262cf61be297db1f3bebee4b457a551a",
+      "same_as_curated": true
+    },
+    {
+      "path": "host-overlay/var/jb/usr/macOS/bin/ensure_macpad_install_runtime.py",
+      "sha256": "f526c296abdcf25d73f2c73510660a239a9c8dbefe0c6dec5cd661c9d835236b",
+      "curated_sha256": "f526c296abdcf25d73f2c73510660a239a9c8dbefe0c6dec5cd661c9d835236b",
+      "same_as_curated": true
+    },
+    {
+      "path": "host-overlay/var/jb/usr/macOS/bin/ensure_macos15_compat_baseline.sh",
+      "sha256": "14fa0508e5002855c2470a674c0fde5d6c467a041c59a53f3b0fbed6f182ae98",
+      "curated_sha256": "14fa0508e5002855c2470a674c0fde5d6c467a041c59a53f3b0fbed6f182ae98",
+      "same_as_curated": true
+    },
+    {
+      "path": "host-overlay/var/jb/usr/macOS/bin/ensure_objc_trampolines_arm64.py",
+      "sha256": "1fa321b2ce90454c152e853cfd824de8b1e2e89eab9220eb141851ec02836024",
+      "curated_sha256": "1fa321b2ce90454c152e853cfd824de8b1e2e89eab9220eb141851ec02836024",
+      "same_as_curated": true
+    },
+    {
+      "path": "host-overlay/var/jb/usr/macOS/bin/metal2metal_manifest.py",
+      "sha256": "3a4e04924e8859500fd6ccea1106f647d8cbd0301eb0050978be396d07261614",
+      "curated_sha256": "3a4e04924e8859500fd6ccea1106f647d8cbd0301eb0050978be396d07261614",
+      "same_as_curated": true
+    },
+    {
+      "path": "host-overlay/var/jb/usr/macOS/bin/patch_steam_cef126_pa_ios_va.py",
+      "sha256": "44634559f510458c28e7ac5da4a4b20f96d77ff3ecf14e6b028ed319e2b4e664",
+      "curated_sha256": "44634559f510458c28e7ac5da4a4b20f96d77ff3ecf14e6b028ed319e2b4e664",
+      "same_as_curated": true
+    },
+    {
+      "path": "host-overlay/var/jb/usr/macOS/bin/ensure_quartzcore_compat.sh",
+      "sha256": "42666f4b456243fe744d123fc0db825c587bd0fd75e1bc651e56652aa5c9adea",
+      "curated_sha256": "42666f4b456243fe744d123fc0db825c587bd0fd75e1bc651e56652aa5c9adea",
+      "same_as_curated": true
+    },
+    {
+      "path": "host-overlay/var/jb/usr/macOS/bin/macws_metal_cache_migration.py",
+      "sha256": "9caf8a10e5643e94486b5f62af3e458c855f760a6123b0d6a508ce973e37c362",
+      "curated_sha256": "9caf8a10e5643e94486b5f62af3e458c855f760a6123b0d6a508ce973e37c362",
+      "same_as_curated": true
+    },
+    {
+      "path": "host-overlay/var/jb/usr/macOS/bin/postinst.sh",
+      "sha256": "f4f7cb344ee4b48b2dd96cc12c6ce5707ac59dedcab6daf29ab2fe864cd2a326",
+      "curated_sha256": "f4f7cb344ee4b48b2dd96cc12c6ce5707ac59dedcab6daf29ab2fe864cd2a326",
+      "same_as_curated": true
+    },
+    {
+      "path": "host-overlay/var/jb/usr/macOS/bin/macws_settings_sign.py",
+      "sha256": "ffd2cf1a6bd11c57abe3ade6eace3791013deb79f9726bd6012134f970a378eb",
+      "curated_sha256": "1631008807d0324276f22c8130a61f2396786677bed155064b8898490d76e71a",
+      "same_as_curated": false
+    },
+    {
+      "path": "host-overlay/var/jb/usr/macOS/bin/ensure_native15_volume_layout.py",
+      "sha256": "9172bc44700007842cb223e6c9352f724a63b7c5c4d1867206f89cb0b8b6ef4b",
+      "curated_sha256": "9172bc44700007842cb223e6c9352f724a63b7c5c4d1867206f89cb0b8b6ef4b",
+      "same_as_curated": true
+    },
+    {
+      "path": "host-overlay/var/jb/usr/macOS/bin/repack_metallib_macabi.py",
+      "sha256": "42f7909f870f532ce16e9e1eff326eb01bc00e0d3042d5a4bef4a00bb3389b5f",
+      "curated_sha256": "42f7909f870f532ce16e9e1eff326eb01bc00e0d3042d5a4bef4a00bb3389b5f",
+      "same_as_curated": true
+    },
+    {
+      "path": "host-overlay/var/jb/usr/macOS/bin/ensure_settings_extensions_runtime.sh",
+      "sha256": "c91aa715de2ba3fa451a52d273d67fc9346da82b32baef599c7b1bad620999a6",
+      "curated_sha256": "478c6e90a067c95563ee50291bb725ac5211362595797e77d5195da11d4612ae",
+      "same_as_curated": false
+    },
+    {
+      "path": "host-overlay/var/jb/usr/macOS/bin/macws_diagnostic_flags.sh",
+      "sha256": "8d61460f79e436e180a488bc071ec4a390f5761cc787cb452d0ec33113c42e0a",
+      "curated_sha256": "8d61460f79e436e180a488bc071ec4a390f5761cc787cb452d0ec33113c42e0a",
+      "same_as_curated": true
+    },
+    {
+      "path": "host-overlay/var/jb/usr/macOS/bin/sign_installed.sh",
+      "sha256": "6b4415a339c38e4641018e9814e1623f651525649478ae55ae42f9c2c7dd7d4b",
+      "curated_sha256": "6b4415a339c38e4641018e9814e1623f651525649478ae55ae42f9c2c7dd7d4b",
+      "same_as_curated": true
+    },
+    {
+      "path": "host-overlay/var/jb/usr/macOS/bin/macws_system_app_prepare.py",
+      "sha256": "ece56d3ff22898b318b2e90ab794825d25f988747e57c5ae3ff6bb97708ada7a",
+      "curated_sha256": "8e5e9178c3bd601568bca94faa970e7c5ff76e44cb2acd22d6a3b81d9284bacc",
+      "same_as_curated": false
+    },
+    {
+      "path": "host-overlay/var/jb/usr/macOS/bin/configure_terminal_cli.sh",
+      "sha256": "ea9cfe8822129c1971c9993a8d2c78952d4c473ca4a3109ee014902f0da118d1",
+      "curated_sha256": "ea9cfe8822129c1971c9993a8d2c78952d4c473ca4a3109ee014902f0da118d1",
+      "same_as_curated": true
+    },
+    {
+      "path": "host-overlay/var/jb/usr/macOS/bin/metal2metal_profiles.py",
+      "sha256": "c64b2b0b875e16c917f47286894502f1933e3225f3d5cffbe42eede4c75ec772",
+      "curated_sha256": "c64b2b0b875e16c917f47286894502f1933e3225f3d5cffbe42eede4c75ec772",
+      "same_as_curated": true
+    },
+    {
+      "path": "host-overlay/var/jb/usr/macOS/bin/ensure_appearance_runtime.sh",
+      "sha256": "f40c45ce260e2008c19a995b401b8a21f177b1db81e8712051698b0f524b1971",
+      "curated_sha256": "f40c45ce260e2008c19a995b401b8a21f177b1db81e8712051698b0f524b1971",
+      "same_as_curated": true
+    },
+    {
+      "path": "host-overlay/var/jb/usr/macOS/bin/ensure_steam_trust.sh",
+      "sha256": "aeceb971777cf1c3f7aaaac23f8f20fc62aff06200becb7da8a384c51c264af5",
+      "curated_sha256": "aeceb971777cf1c3f7aaaac23f8f20fc62aff06200becb7da8a384c51c264af5",
+      "same_as_curated": true
+    },
+    {
+      "path": "host-overlay/var/jb/usr/macOS/bin/macws_macho_identity.py",
+      "sha256": "0fd26798b62dffadfb4a100c68b9316fffed763d5b2de279998db17c564e5ab3",
+      "curated_sha256": "0fd26798b62dffadfb4a100c68b9316fffed763d5b2de279998db17c564e5ab3",
+      "same_as_curated": true
+    },
+    {
+      "path": "host-overlay/var/jb/usr/macOS/bin/macos_gui.render-diagnostic.sh",
+      "sha256": "7f5bca1995d6cce6dcbf933a4bd4d3558b941dab2c9b1afcb5f5d39227b3e254",
+      "curated_sha256": "7f5bca1995d6cce6dcbf933a4bd4d3558b941dab2c9b1afcb5f5d39227b3e254",
+      "same_as_curated": true
+    },
+    {
+      "path": "host-overlay/var/jb/usr/macOS/bin/metal2metal.py",
+      "sha256": "23742a879cb9a7d74e6b5cb1eb7e75742e6654ed011ed28e9848a018a0b92f17",
+      "curated_sha256": "23742a879cb9a7d74e6b5cb1eb7e75742e6654ed011ed28e9848a018a0b92f17",
+      "same_as_curated": true
+    },
+    {
+      "path": "host-overlay/var/jb/usr/macOS/bin/macws_ensure_workspace_bundle15.py",
+      "sha256": "81b5fcf1d0d2755a7eed18d0ccf380562cc6211ca4a538bba82726fb8030ea5a",
+      "curated_sha256": "81b5fcf1d0d2755a7eed18d0ccf380562cc6211ca4a538bba82726fb8030ea5a",
+      "same_as_curated": true
+    },
+    {
+      "path": "host-overlay/var/jb/usr/macOS/bin/install_stray_exact_metallib.py",
+      "sha256": "ab53c23c26447d881743921c012a1dc1ae326bdbaa08d3a07fb6052ce27714de",
+      "curated_sha256": "ab53c23c26447d881743921c012a1dc1ae326bdbaa08d3a07fb6052ce27714de",
+      "same_as_curated": true
+    },
+    {
+      "path": "host-overlay/var/jb/usr/macOS/bin/macws_dense_grid.sh",
+      "sha256": "54fbc533274bc8bb12aa4a3d8db7b32bebea4c6c1551cf21d542c0dfea52e103",
+      "curated_sha256": "54fbc533274bc8bb12aa4a3d8db7b32bebea4c6c1551cf21d542c0dfea52e103",
+      "same_as_curated": true
+    },
+    {
+      "path": "host-overlay/var/jb/usr/macOS/bin/macws_settings_pane_rights.py",
+      "sha256": "455eff0d9b21477a8cc700877569863fe251061a5f70e6f0dbbc858cfdf7d1e9",
+      "curated_sha256": "326ef2c559cf87dc44a333e57f5049e14a9bc17b8bee96be44c0d7874db25441",
+      "same_as_curated": false
+    },
+    {
+      "path": "host-overlay/var/jb/usr/macOS/bin/merge_third_party_entitlements.py",
+      "sha256": "f92986144c612ca53a9c508872938e76593cd3762e7151560f3738b2df262c60",
+      "curated_sha256": "f92986144c612ca53a9c508872938e76593cd3762e7151560f3738b2df262c60",
+      "same_as_curated": true
+    },
+    {
+      "path": "host-overlay/var/jb/usr/macOS/bin/patch_electron_pa_ios_va.py",
+      "sha256": "f65e276827d316fd19e634d90d9ac9906d4cf4f45f9249aa0e7c5be0c7f942b4",
+      "curated_sha256": "f65e276827d316fd19e634d90d9ac9906d4cf4f45f9249aa0e7c5be0c7f942b4",
+      "same_as_curated": true
+    },
+    {
+      "path": "host-overlay/var/jb/usr/macOS/bin/set_macos_version.py",
+      "sha256": "9e66eb977a5d9f086a5cbbf524053b06cf389ffb720bb1b2bbbd28431e7c16ca",
+      "curated_sha256": "9e66eb977a5d9f086a5cbbf524053b06cf389ffb720bb1b2bbbd28431e7c16ca",
+      "same_as_curated": true
+    },
+    {
+      "path": "host-overlay/var/jb/usr/macOS/bin/native15_dmg_run.py",
+      "sha256": "0f4531cb4fa82249edfff23d823df4dd7c8bf8a9e2f4276b94fe15d8f108c840",
+      "curated_sha256": "0f4531cb4fa82249edfff23d823df4dd7c8bf8a9e2f4276b94fe15d8f108c840",
+      "same_as_curated": true
+    },
+    {
+      "path": "host-overlay/var/jb/usr/macOS/bin/restart_autosignd.sh",
+      "sha256": "bb037aeee90fcc8285e60e151827cafd2373dc033e6e943a5a8540cd8473d4dc",
+      "curated_sha256": "bb037aeee90fcc8285e60e151827cafd2373dc033e6e943a5a8540cd8473d4dc",
+      "same_as_curated": true
+    },
+    {
+      "path": "host-overlay/var/jb/usr/macOS/bin/ensure_jb_usr_bind.sh",
+      "sha256": "9d49a1c2f3a233af8c64f68263ad53de4569d66086cd99661c0da0167c62afbb",
+      "curated_sha256": "9d49a1c2f3a233af8c64f68263ad53de4569d66086cd99661c0da0167c62afbb",
+      "same_as_curated": true
+    },
+    {
+      "path": "host-overlay/var/jb/usr/macOS/bin/macos_gui.texture-diagnostic.sh",
+      "sha256": "7ffcf7e1e76616d9ea909cbf42a42551e77236c348f984887ab082996b72c09d",
+      "curated_sha256": "7ffcf7e1e76616d9ea909cbf42a42551e77236c348f984887ab082996b72c09d",
+      "same_as_curated": true
+    },
+    {
+      "path": "host-overlay/var/jb/usr/macOS/bin/usb_media_inventory.py",
+      "sha256": "7923230bb156f4db9e776e7c5ce9fefbf02593a9418243c9f8583015d7b7194b",
+      "curated_sha256": "7923230bb156f4db9e776e7c5ce9fefbf02593a9418243c9f8583015d7b7194b",
+      "same_as_curated": true
+    },
+    {
+      "path": "host-overlay/var/jb/usr/macOS/bin/native15_run.py",
+      "sha256": "5bf0342756036f82ab0d3c8b198442195285bac75923b1c4e777f3096495bed7",
+      "curated_sha256": "5bf0342756036f82ab0d3c8b198442195285bac75923b1c4e777f3096495bed7",
+      "same_as_curated": true
+    },
+    {
+      "path": "host-overlay/var/jb/usr/macOS/bin/macos_gui.wallpaper-diagnostic-20261012.sh",
+      "sha256": "a2873db343c72c3ad89cea7506d79a92fe31796c11f29937662ff69a1bdcd05c",
+      "curated_sha256": "a2873db343c72c3ad89cea7506d79a92fe31796c11f29937662ff69a1bdcd05c",
+      "same_as_curated": true
+    },
+    {
+      "path": "host-overlay/var/jb/usr/macOS/bin/macws_refresh_managed_job.py",
+      "sha256": "83e0c79e3c66263f5379a1f4ab071e9654564afa2f5b3fa27574c31d8cc4e2a1",
+      "curated_sha256": "83e0c79e3c66263f5379a1f4ab071e9654564afa2f5b3fa27574c31d8cc4e2a1",
+      "same_as_curated": true
+    },
+    {
+      "path": "host-overlay/var/jb/usr/macOS/bin/ensure_native15_tools_trust.sh",
+      "sha256": "8b71751f4e5251bf5425585093b5c3ac7da1d8a7751079e11be640e6ce9e7a0c",
+      "curated_sha256": "8b71751f4e5251bf5425585093b5c3ac7da1d8a7751079e11be640e6ce9e7a0c",
+      "same_as_curated": true
+    },
+    {
+      "path": "host-overlay/var/jb/usr/macOS/bin/prepare_weather_app.py",
+      "sha256": "d774e6eeebcf0f6b4521e8d3cb4c70dcfe90f24fe2d38b5503dbe93298f1fd13",
+      "curated_sha256": "d774e6eeebcf0f6b4521e8d3cb4c70dcfe90f24fe2d38b5503dbe93298f1fd13",
+      "same_as_curated": true
+    },
+    {
+      "path": "host-overlay/var/jb/usr/macOS/bin/write_code_requirement.py",
+      "sha256": "e1d8622579a7103c384a55bb75d0aa66dd75fac5879fe7d2d1ab06b2da2c6141",
+      "curated_sha256": "e1d8622579a7103c384a55bb75d0aa66dd75fac5879fe7d2d1ab06b2da2c6141",
+      "same_as_curated": true
+    },
+    {
+      "path": "host-overlay/var/jb/usr/macOS/bin/prepare_steam_runtime.sh",
+      "sha256": "a8d8ae50ebf3d3ddd80494af24fa2b45923116a730305e0e943796075642da2c",
+      "curated_sha256": "a8d8ae50ebf3d3ddd80494af24fa2b45923116a730305e0e943796075642da2c",
+      "same_as_curated": true
+    },
+    {
+      "path": "host-overlay/var/jb/usr/macOS/bin/cleanup_browser15.py",
+      "sha256": "0d6bbf9b3a417d17986cebc4ee94e2b58a042d04b93f36c6dc57822d77cbe426",
+      "curated_sha256": "0d6bbf9b3a417d17986cebc4ee94e2b58a042d04b93f36c6dc57822d77cbe426",
+      "same_as_curated": true
+    },
+    {
+      "path": "host-overlay/var/jb/usr/local/libexec/main15-exec-jitd-dock-reopen-20261010",
+      "sha256": "efb34cfd740373097560e33dd35a557f090d5cb90c848cfa47c42ac1ab664182",
+      "curated_sha256": "fc30f01564d8eb23a5b4772d1a63533437e1d56fd03bfc719f869ee33942695a",
+      "same_as_curated": false
+    }
+  ],
+  "hardlinks": [
+    {
+      "path": "rootfs/System/Library/dyld/dyld_shared_cache_arm64e.01",
+      "target": "var/mnt/rootfs/usr/lib/macws-sequoia15.6-original/preboot-layout-20261006/Cryptexes/OS/System/Library/dyld/dyld_shared_cache_arm64e.01"
+    },
+    {
+      "path": "rootfs/System/Library/dyld/dyld_shared_cache_arm64e",
+      "target": "var/mnt/rootfs/usr/lib/macws-sequoia15.6-original/preboot-layout-20261006/Cryptexes/OS/System/Library/dyld/dyld_shared_cache_arm64e"
+    }
+  ],
+  "missing": [],
+  "scope": "Selected implementation/runtime only. No user documents or raw logs.",
+  "counts": {
+    "regular": 76,
+    "same": 64,
+    "different": 12
+  }
+}

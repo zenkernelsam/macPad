@@ -1,0 +1,71 @@
+--- first/reference-source/sequoia-hook-source/libmachook/Compatibility/MacWSANEHWX.h
++++ updated/reference-source/sequoia-hook-source/libmachook/Compatibility/MacWSANEHWX.h
+@@ -0,0 +1,68 @@
++#ifndef MACWS_ANE_HWX_H
++#define MACWS_ANE_HWX_H
++#include <stdint.h>
++#include <stddef.h>
++#include <stdlib.h>
++#include <string.h>
++
++/* Evidence: Ghidra ev_91c38aa524acb0187678e8e2fdc5be521a3398081e83136b2a3a7c1ef8b1940f,
++ * ANECompiler15 ZinComputeProgramMakeFvmlibsHelper 0x1de54adf4;
++ * native16 helper 0x1e6365d10; Xcode disassembly corroborates both layouts.
++ * This only converts the bounded FVMLIB representation. It does not certify
++ * other commands, instruction payloads, model semantics, or hardware support.
++ * Caller owns the returned copy. Source bytes are never changed. */
++typedef enum {
++    MacWSANEHWXOK = 0,
++    MacWSANEHWXInvalid = 1,
++    MacWSANEHWXAddressOverflow = 2,
++    MacWSANEHWXNoMemory = 3
++} MacWSANEHWXResult;
++
++static inline uint32_t MacWSANEHWXRead32(const uint8_t *p) {
++    return (uint32_t)p[0] | ((uint32_t)p[1]<<8) |
++           ((uint32_t)p[2]<<16) | ((uint32_t)p[3]<<24);
++}
++
++static inline MacWSANEHWXResult MacWSANEHWXCopyForNative16(
++    const void *source, size_t length, void **output, size_t *converted) {
++    if (!output || !converted) return MacWSANEHWXInvalid;
++    *output = NULL;
++    *converted = 0;
++    if (!source || length < 32) return MacWSANEHWXInvalid;
++    const uint8_t *b = (const uint8_t *)source;
++    uint32_t count = MacWSANEHWXRead32(b+16);
++    uint32_t bytes = MacWSANEHWXRead32(b+20);
++    if (MacWSANEHWXRead32(b) != 0xbeefface ||
++        bytes > length-32 || count > bytes/8) return MacWSANEHWXInvalid;
++    size_t end = 32+(size_t)bytes, offset=32, changes=0;
++    for (uint32_t i=0; i<count; ++i) {
++        if (end-offset < 8) return MacWSANEHWXInvalid;
++        uint32_t cmd=MacWSANEHWXRead32(b+offset);
++        uint32_t size=MacWSANEHWXRead32(b+offset+4);
++        if (size<8 || size%8 || size>end-offset) return MacWSANEHWXInvalid;
++        if (cmd==0x40) {
++            if (size<24) return MacWSANEHWXInvalid;
++            uint32_t name=MacWSANEHWXRead32(b+offset+8);
++            if (name<24 || name>=size ||
++                !memchr(b+offset+name,0,size-name)) return MacWSANEHWXInvalid;
++            if (MacWSANEHWXRead32(b+offset+20)) return MacWSANEHWXAddressOverflow;
++            ++changes;
++        }
++        offset+=size;
++    }
++    if (offset!=end) return MacWSANEHWXInvalid;
++    uint8_t *copy=(uint8_t *)malloc(length);
++    if (!copy) return MacWSANEHWXNoMemory;
++    memcpy(copy,b,length);
++    offset=32;
++    for (uint32_t i=0; i<count; ++i) {
++        if (MacWSANEHWXRead32(copy+offset)==0x40) {
++            copy[offset]=6; copy[offset+1]=0; copy[offset+2]=0; copy[offset+3]=0;
++        }
++        offset+=MacWSANEHWXRead32(copy+offset+4);
++    }
++    *output=copy;
++    *converted=changes;
++    return MacWSANEHWXOK;
++}
++#endif

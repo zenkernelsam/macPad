@@ -1,0 +1,32 @@
+--- first/reference-source/sequoia-hook-source/libmachook/Compatibility/MacWSANEEvents.h
++++ updated/reference-source/sequoia-hook-source/libmachook/Compatibility/MacWSANEEvents.h
+@@ -0,0 +1,29 @@
++#ifndef MACWS_ANE_EVENTS_H
++#define MACWS_ANE_EVENTS_H
++#include <stdint.h>
++#include <stdbool.h>
++#include <string.h>
++#include <stdio.h>
++// ANEServices15 Direct: Ghidra ev_f9e02d71c95fe45c7c469f21e40ebe1fc81f5302d838b042bf4766f4d2e15bd6.
++// Native16 Direct: ev_d9fffbb5b4e0f184a9e7fbd68ebbf7bcea510c1dbf2efaee4f55deca780e19f1.
++// External method2 retains its 0x948-byte packet; its +0x930 pointer names
++// a new 0x1808-byte event structure (64+64 entries, stride48), whereas native16
++// consumes 0x1408 bytes (stride40). Common fields: port,type,value,symbolIndex; preserve remaining in-range bytes opaquely.
++// Only the measured zero-extension case is representable here. Reject added
++// semantics instead of silently discarding them. Caller scopes the producer.
++static inline bool MacWSANECopyLegacyEvents(const void*source,
++                                            uint8_t destination[0x1408]) {
++ if(!source)return false;
++ uint32_t count[2];memcpy(count,source,8);
++ if(count[0]>64||count[1]>64)return false;
++ const uint8_t*s=source;
++ for(unsigned a=0;a<2;a++)for(uint32_t i=0;i<count[a];i++){
++  const uint8_t*e=s+8+a*64*48+i*48;
++  for(unsigned j=40;j<48;j++)if(e[j]){dprintf(2,"ANE_EVENT_EXTENSION array=%u index=%u offset=%u byte=%u\n",a,i,j,e[j]);return false;}
++ }
++ memset(destination,0,0x1408);memcpy(destination,source,8);
++ for(unsigned a=0;a<2;a++)for(uint32_t i=0;i<count[a];i++)
++  memcpy(destination+8+a*64*40+i*40,s+8+a*64*48+i*48,40);
++ return true;
++}
++#endif

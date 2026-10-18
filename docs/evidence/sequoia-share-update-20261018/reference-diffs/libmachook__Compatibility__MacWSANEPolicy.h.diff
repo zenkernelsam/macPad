@@ -1,0 +1,9 @@
+--- first/reference-source/sequoia-hook-source/libmachook/Compatibility/MacWSANEPolicy.h
++++ updated/reference-source/sequoia-hook-source/libmachook/Compatibility/MacWSANEPolicy.h
+@@ -0,0 +1,6 @@
++#pragma once
++// Project policy is visible only inside the macPad rootfs. Native iPadOS
++// has no file at this path. Explicit per-process 0 remains an A/B override.
++#define MACWS_ANE_POLICY_PATH "/var/db/macws/metalfx-ane-policy-v1"
++#define MACWS_ANE_POLICY_CONTENT "build=24G90\nlegacy-ane=1\n"
++int MacWSMetalFXANELegacyEnabled(void);

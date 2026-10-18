@@ -1,0 +1,23 @@
+--- first/reference-source/sequoia-hook-source/include/macws_nocopy_abi.h
++++ updated/reference-source/sequoia-hook-source/include/macws_nocopy_abi.h
+@@ -16,6 +16,8 @@
+     size_t length;
+     size_t page_size;
+     struct MacWSNoCopyScope *previous;
++    // Exact private unaligned NoCopy option verified with MPSGraph 24G90.
++    bool allow_unaligned;
+ };
+
+ #ifdef __cplusplus
+@@ -47,7 +49,10 @@
+         void *destination, size_t destination_capacity) {
+     if (!scope || !source || !destination || source_size != 104 ||
+         destination_capacity < 96 ||
+-        !MacWSNoCopySpanValid(scope->bytes, scope->length, scope->page_size))
++        !(scope->allow_unaligned
++            ? scope->bytes && scope->length &&
++              scope->length <= UINTPTR_MAX - scope->bytes
++            : MacWSNoCopySpanValid(scope->bytes, scope->length, scope->page_size)))
+         return false;
+     // The original macOS record remains live after the kernel call. Reject
+     // overlaps instead of silently altering it through an aliased destination.

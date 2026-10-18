@@ -1,0 +1,37 @@
+--- curated/macws_settings_sign.py
++++ raw/macws_settings_sign.py
+@@ -185,6 +185,15 @@
+                 return {'status': 'already-current', 'panes': len(values)}
+         except (OSError, ValueError, RuntimeError, AssertionError):
+             pass
++    import macws_settings_hook as pane_hooks
++    composition_before = {}
++    for bundle, ident, _ in panes(APP):
++        if ident == 'com.apple.systempreferences.GeneralSettings':
++            f, sig = pane_hooks.context(bundle)
++            state_path = pane_hooks.state_path(f, ident)
++            if state_path.exists():
++                pane_hooks.verify_composition(bundle)
++                composition_before[state_path] = state_path.read_bytes()
+     before = inventory(APP)
+     work = Path(tempfile.mkdtemp(prefix='signing-', dir=DB))
+     os.chmod(work, 0o700)
+@@ -259,6 +268,9 @@
+         assert marker_data(APP) == values
+         (DB/'signed-app.json').write_text(json.dumps({'schema': 1, 'rollback': str(work),
+             'executable_sha256': digest(APP/'Contents/MacOS/System Settings')}))
++        for bundle, ident, _ in panes(APP):
++            if ident == 'com.apple.systempreferences.GeneralSettings' and composition_before:
++                pane_hooks.adopt_native_signature(bundle, backup/'Contents/PlugIns/GeneralSettings.appex/Contents/Frameworks/libmachook.dylib')
+         state['status'] = 'installed-and-verified'
+     except BaseException as error:
+         state['error'] = repr(error)
+@@ -281,6 +293,8 @@
+                     path.unlink()
+             for name, data in old_markers.items():
+                 (MARKERS/name).write_bytes(data)
++            for path, data in composition_before.items():
++                path.write_bytes(data)
+             assert inventory(APP) == before
+             state['status'] = 'rolled-back'
+         else:

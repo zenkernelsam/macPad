@@ -1,0 +1,7 @@
+{
+  "engine": "IDA Pro 9.3 batch + Hex-Rays",
+  "sha256": "d047ce94aebfa9898298a5de6d67a9d51db013784af2004b5dea0925c70b8c69",
+  "imagebase": "0x0",
+  "hexrays_ready": true,
+  "input_basename": "libmachook_arm64.dylib"
+}

@@ -1,0 +1,7 @@
+{
+  "engine": "IDA Pro 9.3 batch + Hex-Rays",
+  "sha256": "fc30f01564d8eb23a5b4772d1a63533437e1d56fd03bfc719f869ee33942695a",
+  "imagebase": "0x100000000",
+  "hexrays_ready": true,
+  "input_basename": "main15-exec-jitd-dock-reopen-20261010"
+}

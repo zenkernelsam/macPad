@@ -1,0 +1,17 @@
+[
+  {
+    "path": "var/mnt/rootfs/usr/lib/macws-sequoia15.6-original/preboot-layout-20261006/Cryptexes/OS/System/Library/dyld/dyld_shared_cache_arm64e.01",
+    "sha256": "e6a7e6c0697560a0afee3865d1f85c8b0c30fb79f8ec0743fb62250926a1b040",
+    "size": 2203500544
+  },
+  {
+    "path": "var/mnt/rootfs/usr/lib/macws-sequoia15.6-original/preboot-layout-20261006/Cryptexes/OS/System/Library/dyld/dyld_shared_cache_arm64e",
+    "sha256": "c2ef6966687b008ffbc29ee5f4899bc3df0b1e5afeb59fe122dd5b928ff0c5b3",
+    "size": 2712764416
+  },
+  {
+    "path": "var/jb/usr/macOS/bin/macws_windowmanagement15.py",
+    "sha256": "84da73cf249419099c0a9ca32f2b67a53af52829cfd62b1d55c86f67b97b0c3f",
+    "size": 4607
+  }
+]

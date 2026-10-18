@@ -1,0 +1,243 @@
+--- first/reference-source/sequoia-hook-source/libmachook/Compatibility/MacWSMetalFXANE.m
++++ updated/reference-source/sequoia-hook-source/libmachook/Compatibility/MacWSMetalFXANE.m
+@@ -0,0 +1,240 @@
++// macOS15 compiler/native16 backend. Scoped to generated ANECIR models.
++// Rootfs project policy enables the bridge across normal launch and XPC paths.
++// No native iPadOS binary or kernel changes.
++#import <Foundation/Foundation.h>
++#import <objc/runtime.h>
++#import <objc/message.h>
++#include <dlfcn.h>
++#include "MacWSANEHWX.h"
++#include <stdlib.h>
++#include <sys/stat.h>
++#include <errno.h>
++#include <fcntl.h>
++#include <unistd.h>
++#include <pthread.h>
++#include <string.h>
++#include "MacWSANEPolicy.h"
++static pthread_once_t policyOnce=PTHREAD_ONCE_INIT;
++static int projectPolicyEnabled;
++static void readProjectPolicy(void){
++ int fd=open(MACWS_ANE_POLICY_PATH,O_RDONLY|O_NOFOLLOW|O_CLOEXEC);
++ if(fd<0)return;
++ struct stat st={0};char contents[sizeof(MACWS_ANE_POLICY_CONTENT)]={0};
++ if(!fstat(fd,&st)&&S_ISREG(st.st_mode)&&st.st_uid==0&&!(st.st_mode&022)&&st.st_size==sizeof(MACWS_ANE_POLICY_CONTENT)-1){
++  ssize_t n=read(fd,contents,sizeof(contents));
++  projectPolicyEnabled=n==sizeof(MACWS_ANE_POLICY_CONTENT)-1&&!memcmp(contents,MACWS_ANE_POLICY_CONTENT,sizeof(MACWS_ANE_POLICY_CONTENT)-1);
++ }
++ close(fd);
++}
++int MacWSMetalFXANELegacyEnabled(void){
++ const char*override=getenv("MACWS_METALFX_ANE_LEGACY");
++ if(override)return !strcmp(override,"1");
++ pthread_once(&policyOnce,readProjectPolicy);
++ return projectPolicyEnabled;
++}
++@interface NSObject (ANECompilerProbe)
++- (NSURL*)modelURL;
++- (id)key;
++- (id)modelAttributes;
++@end
++typedef void(^CompileReply)(BOOL,NSDictionary*,NSString*,NSError*);
++typedef void(^LoadReply)(BOOL,NSDictionary*,uint64_t,uint64_t,char,NSString*,NSError*);
++typedef void(^UnloadReply)(BOOL,NSError*);
++typedef void(*CompileIMP)(id,SEL,id,id,id,uint32_t,CompileReply);
++typedef void(*LoadIMP)(id,SEL,id,id,id,uint32_t,LoadReply);
++typedef void(*UnloadIMP)(id,SEL,id,id,uint32_t,UnloadReply);
++static CompileIMP oldCompile;static LoadIMP oldLoad;static UnloadIMP oldUnload;static char contextKey;
++static NSError*failure(NSString*s){return [NSError errorWithDomain:@"com.macpad.ane15.compiler" code:1 userInfo:@{NSLocalizedDescriptionKey:s}];}
++static NSString *const cacheParent=@"/private/var/db/macws/ane15-compiled-models";
++static BOOL removeOwnedCache(NSString*directory,NSString*token,dev_t device,ino_t inode,NSError**error){
++ if(![directory.stringByDeletingLastPathComponent isEqual:cacheParent]||![[NSUUID alloc] initWithUUIDString:directory.lastPathComponent]){if(error)*error=failure(@"Refusing an unowned cache path");return NO;}
++ struct stat st={0};if(lstat(directory.fileSystemRepresentation,&st)){
++  if(errno==ENOENT)return YES;if(error)*error=[NSError errorWithDomain:NSPOSIXErrorDomain code:errno userInfo:nil];return NO;
++ }
++ NSString*marker=[NSString stringWithContentsOfFile:[directory stringByAppendingPathComponent:@".macpad-owned-cache"] encoding:NSUTF8StringEncoding error:nil];
++ if(!S_ISDIR(st.st_mode)||st.st_dev!=device||st.st_ino!=inode||![marker isEqual:token]){if(error)*error=failure(@"Cache ownership changed; preserving its contents");return NO;}
++ return [[NSFileManager defaultManager] removeItemAtPath:directory error:error];
++}
++@interface MacWSANECompiledContext:NSObject
++@property(nonatomic,strong) id wire;
++@property(nonatomic,copy) NSString*sandbox;
++@property(nonatomic,copy) NSString*directory;
++@property(nonatomic,copy) NSString*token;
++@property(nonatomic,strong) id connection;
++@property(nonatomic) uint32_t qos;
++@property(nonatomic) dev_t device;
++@property(nonatomic) ino_t inode;
++@property(nonatomic) BOOL loaded;
++@property(nonatomic) BOOL busy;
++@property(nonatomic) BOOL purged;
++@end
++@implementation MacWSANECompiledContext
++- (void)dealloc {
++ // Retain the external compiled cache while the original model is alive:
++ // Ghidra15 doUnloadModel0x19c96bbdc and purgeCompiledModel0x19c96c7f4
++ // are separate operations. Snapshot without capturing a deallocating self.
++ NSString*directory=_directory,*token=_token;dev_t device=_device;ino_t inode=_inode;
++ if(!directory)return;
++ if(_loaded&&_connection&&_wire&&oldUnload){
++  id wire=_wire,connection=_connection;uint32_t qos=_qos;
++  oldUnload(connection,sel_registerName("unloadModel:options:qos:withReply:"),wire,@{@"kANEFInMemoryModelIsCachedKey":@YES,@"kANEFEnableLateLatchKey":@NO},qos,^(BOOL ok,NSError*error){
++   NSError*cleanup=nil;BOOL removed=ok&&removeOwnedCache(directory,token,device,inode,&cleanup);
++   fprintf(stderr,"COMPILER15_CHAIN dispose-unload=%d owned-cache-cleanup=%d error=%s\n",ok,removed,(error?:cleanup).description.UTF8String?:"none");
++  });
++ }else{
++  NSError*error=nil;BOOL removed=removeOwnedCache(directory,token,device,inode,&error);
++  fprintf(stderr,"COMPILER15_CHAIN dispose owned-cache-cleanup=%d error=%s\n",removed,error.description.UTF8String?:"none");
++ }
++}
++@end
++typedef void(*ExistsIMP)(id,SEL,id,void(^)(BOOL,NSString*,NSError*));
++typedef void(*PurgeIMP)(id,SEL,id,void(^)(BOOL,NSError*));
++static ExistsIMP oldExists;static PurgeIMP oldPurge;
++static BOOL ownedCacheExists(MacWSANECompiledContext*ctx){
++ if(!ctx||ctx.purged)return NO;struct stat dir={0},file={0};
++ if(lstat(ctx.directory.fileSystemRepresentation,&dir)||!S_ISDIR(dir.st_mode)||dir.st_dev!=ctx.device||dir.st_ino!=ctx.inode)return NO;
++ NSString*marker=[NSString stringWithContentsOfFile:[ctx.directory stringByAppendingPathComponent:@".macpad-owned-cache"] encoding:NSUTF8StringEncoding error:nil];
++ return [marker isEqual:ctx.token]&&!lstat([ctx.directory stringByAppendingPathComponent:@"native16.hwx"].fileSystemRepresentation,&file)&&S_ISREG(file.st_mode)&&file.st_size>0;
++}
++static void exists15(id c,SEL sel,id model,void(^reply)(BOOL,NSString*,NSError*)){
++ MacWSANECompiledContext*ctx=objc_getAssociatedObject(model,&contextKey);
++ if(!ctx){oldExists(c,sel,model,reply);return;}
++ // Actual15 reply at0x19c96c660 accepts a nil cacheURLIdentifier. This is
++ // an external cached-file model, not an invented native daemon cache ID.
++ reply(ownedCacheExists(ctx),nil,nil);
++}
++static void purge15(id c,SEL sel,id model,void(^reply)(BOOL,NSError*)){
++ MacWSANECompiledContext*ctx=objc_getAssociatedObject(model,&contextKey);
++ if(!ctx){oldPurge(c,sel,model,reply);return;}
++ BOOL busy;@synchronized(ctx){busy=ctx.busy;if(!busy)ctx.busy=YES;}
++ if(busy){reply(NO,failure(@"A model lifecycle operation is in progress"));return;}
++ NSError*error=nil;BOOL removed=removeOwnedCache(ctx.directory,ctx.token,ctx.device,ctx.inode,&error);
++ @synchronized(ctx){ctx.busy=NO;if(removed)ctx.purged=YES;}
++ // Purge changes cache availability, not the loaded program/handle. Active
++ // evaluation and purge-while-loaded are separately qualified on device.
++ fprintf(stderr,"COMPILER15_CHAIN purge=%d loaded=%d error=%s\n",removed,ctx.loaded,error.description.UTF8String?:"none");reply(removed,error);
++}
++static void compile15(id connection,SEL sel,id model,id sandbox,id options,uint32_t qos,CompileReply reply){
++ NSURL*source=[model modelURL];NSString*filename=[options isKindOfClass:NSDictionary.class]?options[@"kANEFNetPlistFilenameKey"]:nil;
++ if(qos!=33||![options isKindOfClass:NSDictionary.class]||![options[@"kANEFModelType"] isEqual:@"kANEFModelANECIR"]||![source isKindOfClass:NSURL.class]||!source.hasDirectoryPath||![filename isKindOfClass:NSString.class]||![filename isEqual:filename.lastPathComponent]||![sandbox isKindOfClass:NSString.class]){oldCompile(connection,sel,model,sandbox,options,qos,reply);return;}
++ MacWSANECompiledContext*prior=objc_getAssociatedObject(model,&contextKey);BOOL priorBusy=NO;
++ if(prior){@synchronized(prior){priorBusy=prior.loaded||prior.busy;}}
++ if(priorBusy){reply(NO,nil,nil,failure(@"Unload the active model before replacing its compiled cache"));return;}
++ NSString*host=[[sandbox componentsSeparatedByString:@";"] lastObject];NSString*root=@"/private/var/mnt/rootfs";
++ if(![host hasPrefix:[root stringByAppendingString:@"/"]]){oldCompile(connection,sel,model,sandbox,options,qos,reply);return;}
++ NSString*visible=[host substringFromIndex:root.length];
++ if(![source.URLByResolvingSymlinksInPath.path isEqual:[NSURL fileURLWithPath:visible isDirectory:YES].URLByResolvingSymlinksInPath.path]){reply(NO,nil,nil,failure(@"Token/source directory mismatch"));return;}
++ void*h=dlopen("/System/Library/PrivateFrameworks/ANECompiler.framework/Versions/A/ANECompiler",RTLD_NOW);
++ int(*compiler)(CFDictionaryRef,CFDictionaryRef,void(^)(int,CFDictionaryRef))=h?dlsym(h,"ANECCompile"):NULL;
++ if(!compiler){reply(NO,nil,nil,failure(@"ANECompiler15 unavailable"));return;}
++ NSString*dir=[@"/private/var/db/macws/ane15-compiled-models" stringByAppendingPathComponent:NSUUID.UUID.UUIDString];NSError*error=nil;
++ if(![[NSFileManager defaultManager] createDirectoryAtPath:dir withIntermediateDirectories:NO attributes:nil error:&error]){reply(NO,nil,nil,error);return;}
++ MacWSANECompiledContext*ctx=[MacWSANECompiledContext new];ctx.directory=dir;ctx.token=NSUUID.UUID.UUIDString;
++ struct stat directoryStat={0};
++ if(lstat(dir.fileSystemRepresentation,&directoryStat)||!S_ISDIR(directoryStat.st_mode)){reply(NO,nil,nil,failure(@"New cache directory is unavailable"));return;}
++ ctx.device=directoryStat.st_dev;ctx.inode=directoryStat.st_ino;
++ if(![ctx.token writeToFile:[dir stringByAppendingPathComponent:@".macpad-owned-cache"] atomically:YES encoding:NSUTF8StringEncoding error:&error]){reply(NO,nil,nil,error);return;}
++ NSDictionary*input=@{@"InputNetworks":@[@{@"NetworkSourceFileName":filename,@"NetworkSourcePath":[source.path stringByAppendingString:@"/"]}],@"OutputFileName":@"original.hwx",@"OutputFilePath":[dir stringByAppendingString:@"/"]};
++ __block NSDictionary*report=nil;__block int callback=-1;
++ int status=compiler((__bridge CFDictionaryRef)input,(__bridge CFDictionaryRef)@{@"TargetArchitecture":@"h14g"},^(int s,CFDictionaryRef r){callback=s;report=[(__bridge NSDictionary*)r copy];});
++ fprintf(stderr,"COMPILER15_CHAIN status=%d callback=%d\n",status,callback);
++ if(status||callback||![report[@"NetworkStatusList"] count]||[report[@"ErrorList"] count]){reply(NO,report,nil,failure(@"ANECompiler15 failed"));return;}
++ NSData*d=[NSData dataWithContentsOfFile:[dir stringByAppendingPathComponent:@"original.hwx"]];void*bytes=NULL;size_t changes=0;
++ MacWSANEHWXResult converted=MacWSANEHWXCopyForNative16(d.bytes,d.length,&bytes,&changes);
++ if(converted){reply(NO,report,nil,failure([NSString stringWithFormat:@"HWX conversion rejected: %d",converted]));return;}
++ NSData*data=[NSData dataWithBytesNoCopy:bytes length:d.length freeWhenDone:YES];NSString*path=[dir stringByAppendingPathComponent:@"native16.hwx"];
++ if(![data writeToFile:path options:NSDataWritingAtomic error:&error]){reply(NO,report,nil,error);return;}
++ NSURL *compiledURL=[NSURL fileURLWithPath:path isDirectory:NO];
++ id compiledModel=((id(*)(id,SEL,id,id,id))objc_msgSend)(object_getClass(model),sel_registerName("modelAtURL:key:modelAttributes:"),compiledURL,[model key],report);
++ Class helper=objc_getClass("_ANESandboxingHelper");SEL issue=sel_registerName("issueSandboxExtensionForModel:error:");
++ if(!compiledModel||![helper respondsToSelector:issue]){reply(NO,report,nil,failure(@"Sandbox helper unavailable"));return;}
++ id compiledToken=((id(*)(id,SEL,id,NSError**))objc_msgSend)(helper,issue,compiledModel,&error);
++ NSString *compiledHost=[compiledToken isKindOfClass:NSString.class]?[[compiledToken componentsSeparatedByString:@";"] lastObject]:nil;
++ if(![compiledHost hasPrefix:[root stringByAppendingString:@"/"]]||![[NSURL fileURLWithPath:[compiledHost substringFromIndex:root.length] isDirectory:YES].URLByResolvingSymlinksInPath.path isEqual:compiledURL.URLByDeletingLastPathComponent.URLByResolvingSymlinksInPath.path]){reply(NO,report,nil,error?:failure(@"Compiled token mismatch"));return;}
++ NSString*native=[compiledHost stringByAppendingPathComponent:@"native16.hwx"];
++ id wire=((id(*)(id,SEL,id,id,id))objc_msgSend)(object_getClass(model),sel_registerName("modelAtURL:key:modelAttributes:"),[NSURL fileURLWithPath:native isDirectory:NO],[model key],report);
++ if(!wire){reply(NO,report,nil,failure(@"Wire model factory failed"));return;}
++ ctx.wire=wire;ctx.sandbox=compiledToken;ctx.connection=connection;ctx.qos=qos;
++ objc_setAssociatedObject(model,&contextKey,ctx,OBJC_ASSOCIATION_RETAIN_NONATOMIC);
++ fprintf(stderr,"COMPILER15_CHAIN compiled=%s converted=%zu\n",native.UTF8String,changes);
++ reply(YES,report,nil,nil);
++}
++static NSDictionary*cachedOptions(id options){NSMutableDictionary*d=[options isKindOfClass:NSDictionary.class]?[options mutableCopy]:[NSMutableDictionary new];[d removeObjectForKey:@"kANEFModelHasCacheURLIdentifierKey"];d[@"kANEFInMemoryModelIsCachedKey"]=@YES;d[@"kANEFEnableLateLatchKey"]=@NO;fprintf(stderr,"ANE_NO_LATE_CANDIDATE scope=load-unload\n");return d;}
++static void load15(id c,SEL sel,id model,id sandbox,id opts,uint32_t qos,LoadReply reply){
++ MacWSANECompiledContext*ctx=objc_getAssociatedObject(model,&contextKey);id wire=ctx.wire;
++ if(!wire){oldLoad(c,sel,model,sandbox,opts,qos,reply);return;}
++ BOOL busy;@synchronized(ctx){busy=ctx.busy;if(!busy)ctx.busy=YES;}
++ if(busy){reply(NO,nil,0,0,0,nil,failure(@"A model lifecycle operation is in progress"));return;}
++ if(!ownedCacheExists(ctx)){@synchronized(ctx){ctx.busy=NO;}reply(NO,nil,0,0,0,nil,failure(@"The compiled cache was purged or changed"));return;}
++ oldLoad(c,sel,wire,ctx.sandbox,cachedOptions(opts),qos,^(BOOL ok,NSDictionary*attrs,uint64_t program,uint64_t intermediate,char depth,NSString*cache,NSError*error){
++  @synchronized(ctx){ctx.busy=NO;if(ok){ctx.loaded=YES;ctx.connection=c;ctx.qos=qos;}}
++  if(ok)((void(*)(id,SEL,id,NSUInteger,uint64_t,uint64_t,char))objc_msgSend)(wire,sel_registerName("updateModelAttributes:state:programHandle:intermediateBufferHandle:queueDepth:"),attrs,3,program,intermediate,depth);
++  NSDictionary*clientAttrs=attrs;
++  if(ok){
++   NSDictionary*description=attrs[@"ANEFModelDescription"];
++   NSArray*inputs=description[@"kANEFModelInputSymbolsArrayKey"],*outputs=description[@"kANEFModelOutputSymbolsArrayKey"];
++   if([description isKindOfClass:NSDictionary.class]&&[inputs isKindOfClass:NSArray.class]&&[outputs isKindOfClass:NSArray.class]){
++    NSMutableDictionary*desc=[description mutableCopy];
++    // Conservative allocation contract for the native16 16KB-page IOSurface
++    // path: require whole-page alignment for every external tensor. This is
++    // a client allocation constraint, not invented firmware metadata.
++    if(!desc[@"ANEFModelInput16KAlignmentArray"]){NSMutableArray*a=[NSMutableArray new];for(id unused in inputs){(void)unused;[a addObject:@YES];}desc[@"ANEFModelInput16KAlignmentArray"]=a;}
++    if(!desc[@"ANEFModelOutput16KAlignmentArray"]){NSMutableArray*a=[NSMutableArray new];for(id unused in outputs){(void)unused;[a addObject:@YES];}desc[@"ANEFModelOutput16KAlignmentArray"]=a;}
++    NSMutableDictionary*updated=[attrs mutableCopy];updated[@"ANEFModelDescription"]=desc;clientAttrs=updated;
++    fprintf(stderr,"COMPILER15_LEGACY_ALIGNMENT inputs=%lu outputs=%lu bytes=16384\n",(unsigned long)inputs.count,(unsigned long)outputs.count);
++   }
++  }
++  fprintf(stderr,"COMPILER15_CHAIN load=%d program=%llu\n",ok,(unsigned long long)program);reply(ok,clientAttrs,program,intermediate,depth,cache,error);
++ });
++}
++static void unload15(id c,SEL sel,id model,id opts,uint32_t qos,UnloadReply reply){
++ MacWSANECompiledContext*ctx=objc_getAssociatedObject(model,&contextKey);id wire=ctx.wire;
++ if(!wire){oldUnload(c,sel,model,opts,qos,reply);return;}
++ BOOL busy;@synchronized(ctx){busy=ctx.busy;if(!busy)ctx.busy=YES;}
++ if(busy){reply(NO,failure(@"A model lifecycle operation is in progress"));return;}
++ oldUnload(c,sel,wire,cachedOptions(opts),qos,^(BOOL ok,NSError*error){fprintf(stderr,"COMPILER15_CHAIN unload=%d\n",ok);
++  @synchronized(ctx){ctx.busy=NO;if(ok){ctx.loaded=NO;((void(*)(id,SEL))objc_msgSend)(wire,sel_registerName("resetOnUnload"));}}
++  fprintf(stderr,"COMPILER15_CHAIN cache-retained-after-unload=%d\n",ownedCacheExists(ctx));
++  reply(ok,error);});
++}
++static unsigned long long acceptedEvaluations,completedEvaluations,failedEvaluations;
++unsigned long long MacWSMetalFXANEAccepted(void){return __atomic_load_n(&acceptedEvaluations,__ATOMIC_RELAXED);}
++unsigned long long MacWSMetalFXANECompleted(void){return __atomic_load_n(&completedEvaluations,__ATOMIC_RELAXED);}
++unsigned long long MacWSMetalFXANEFailed(void){return __atomic_load_n(&failedEvaluations,__ATOMIC_RELAXED);}
++static char completionKey;
++static BOOL(*oldEvaluate)(id,SEL,id,id,id,uint32_t,NSError**);
++static BOOL evaluateLegacy(id self,SEL sel,id model,id options,id request,uint32_t qos,NSError**error){
++ if(!objc_getAssociatedObject(model,&contextKey))return oldEvaluate(self,sel,model,options,request,qos,error);
++ NSMutableDictionary*d=[options isKindOfClass:NSDictionary.class]?[options mutableCopy]:[NSMutableDictionary new];d[@"kANEFEnableLateLatchKey"]=@NO;
++ SEL get=sel_registerName("completionHandler"),set=sel_registerName("setCompletionHandler:");
++ if(!objc_getAssociatedObject(request,&completionKey)&&[request respondsToSelector:get]&&[request respondsToSelector:set]){
++  void(^original)(BOOL,NSError*)=((id(*)(id,SEL))objc_msgSend)(request,get);
++  if(original){
++   objc_setAssociatedObject(request,&completionKey,@YES,OBJC_ASSOCIATION_RETAIN_NONATOMIC);
++   ((void(*)(id,SEL,id))objc_msgSend)(request,set,^(BOOL success,NSError*completionError){
++    if(success&&!completionError)__atomic_fetch_add(&completedEvaluations,1,__ATOMIC_RELAXED);
++    else __atomic_fetch_add(&failedEvaluations,1,__ATOMIC_RELAXED);
++    original(success,completionError);
++   });
++  }
++ }
++ BOOL ok=oldEvaluate(self,sel,model,d,request,qos,error);
++ if(ok)__atomic_fetch_add(&acceptedEvaluations,1,__ATOMIC_RELAXED);else __atomic_fetch_add(&failedEvaluations,1,__ATOMIC_RELAXED);
++ return ok;
++}
++void MacWSMetalFXANEInstallCompiler(void){
++ static BOOL installed;
++ if(installed||!MacWSMetalFXANELegacyEnabled())return;
++ Class c=objc_getClass("_ANEDaemonConnection");if(!c)return;
++ @synchronized(c){if(installed)return;
++ Method cm=class_getInstanceMethod(c,sel_registerName("compileModel:sandboxExtension:options:qos:withReply:")),lm=class_getInstanceMethod(c,sel_registerName("loadModel:sandboxExtension:options:qos:withReply:")),um=class_getInstanceMethod(c,sel_registerName("unloadModel:options:qos:withReply:"));
++ Method em=class_getInstanceMethod(objc_getClass("_ANEClient"),sel_registerName("doEvaluateDirectWithModel:options:request:qos:error:"));
++ Method xm=class_getInstanceMethod(c,sel_registerName("compiledModelExistsFor:withReply:")),pm=class_getInstanceMethod(c,sel_registerName("purgeCompiledModel:withReply:"));
++ if(!cm||!lm||!um||!em||!xm||!pm||strcmp(method_getTypeEncoding(xm),"v32@0:8@16@?24")||strcmp(method_getTypeEncoding(pm),"v32@0:8@16@?24")||strcmp(method_getTypeEncoding(em),"B52@0:8@16@24@32I40^@44"))return;
++ if(strcmp(method_getTypeEncoding(cm),"v52@0:8@16@24@32I40@?44")||strcmp(method_getTypeEncoding(lm),"v52@0:8@16@24@32I40@?44")||strcmp(method_getTypeEncoding(um),"v44@0:8@16@24I32@?36")){fprintf(stderr,"COMPILER15_CHAIN ABI rejected %s\n",method_getTypeEncoding(um));return;}
++ installed=YES;oldCompile=(CompileIMP)method_setImplementation(cm,(IMP)compile15);oldLoad=(LoadIMP)method_setImplementation(lm,(IMP)load15);oldUnload=(UnloadIMP)method_setImplementation(um,(IMP)unload15);
++ oldEvaluate=(void*)method_setImplementation(em,(IMP)evaluateLegacy);
++ oldExists=(void*)method_setImplementation(xm,(IMP)exists15);oldPurge=(void*)method_setImplementation(pm,(IMP)purge15);
++ fprintf(stderr,"COMPILER15_CHAIN integrated-policy installed\n");
++ }
++}

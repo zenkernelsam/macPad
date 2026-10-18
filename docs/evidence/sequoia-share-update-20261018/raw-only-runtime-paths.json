@@ -1,0 +1,5 @@
+[
+  "host-overlay/var/jb/usr/macOS/bin/ensure_macpad_install_runtime.before-stock-ui-20261012.py",
+  "host-overlay/var/jb/usr/macOS/bin/macpad_dmg_broker.before-mount-20261012.py",
+  "host-overlay/var/jb/usr/macOS/bin/macws_windowmanagement15.py"
+]

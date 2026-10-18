@@ -1,0 +1,74 @@
+[
+  {
+    "index": 0,
+    "pointer_address": "0x100008198",
+    "target": "0x1000053f5",
+    "path": "/var/jb/Applications/MacWSSettingsExtension-com.apple.Appearance-Settings.extension.app/SettingsExtensionProxy"
+  },
+  {
+    "index": 1,
+    "pointer_address": "0x1000081a0",
+    "target": "0x100005464",
+    "path": "/var/jb/Applications/MacWSSettingsExtension-com.apple.Wallpaper-Settings.extension.app/SettingsExtensionProxy"
+  },
+  {
+    "index": 2,
+    "pointer_address": "0x1000081a8",
+    "target": "0x1000054d2",
+    "path": "/var/jb/usr/macOS/Frameworks/Dock.framework/Versions/A/XPCServices/DockHelperProxy.xpc/DockHelperProxy"
+  },
+  {
+    "index": 3,
+    "pointer_address": "0x1000081b0",
+    "target": "0x100005539",
+    "path": "/var/jb/Applications/MacWSSettingsExtension-com.apple.Desktop-Settings.extension.app/SettingsExtensionProxy"
+  },
+  {
+    "index": 4,
+    "pointer_address": "0x1000081b8",
+    "target": "0x1000055a5",
+    "path": "/var/jb/usr/macOS/bin/launchdchrootexec-sequoia-main-20261005"
+  },
+  {
+    "index": 5,
+    "pointer_address": "0x1000081c0",
+    "target": "0x1000055e3",
+    "path": "/var/jb/usr/macOS/bin/launchdchrootexec-dock-reopen-20261010"
+  },
+  {
+    "index": 6,
+    "pointer_address": "0x1000081c8",
+    "target": "0x100005620",
+    "path": "/var/jb/usr/macOS/Frameworks/WebKit.framework/Versions/A/XPCServices/WebContentProxy.xpc/WebContentProxy"
+  },
+  {
+    "index": 7,
+    "pointer_address": "0x1000081d0",
+    "target": "0x100005689",
+    "path": "/var/jb/usr/macOS/Frameworks/WebKit.framework/Versions/A/XPCServices/WebNetworkingProxy.xpc/WebNetworkingProxy"
+  },
+  {
+    "index": 8,
+    "pointer_address": "0x1000081d8",
+    "target": "0x1000056f8",
+    "path": "/var/jb/usr/macOS/Frameworks/WebKit.framework/Versions/A/XPCServices/WebGPUProxy.xpc/WebGPUProxy"
+  },
+  {
+    "index": 9,
+    "pointer_address": "0x1000081e0",
+    "target": "0x100005759",
+    "path": "/var/jb/usr/macOS/Frameworks/WebKit.framework/Versions/A/XPCServices/VideoDecoderProxy.xpc/VideoDecoderProxy"
+  },
+  {
+    "index": 10,
+    "pointer_address": "0x1000081e8",
+    "target": "0x1000057c6",
+    "path": "/var/jb/usr/macOS/Frameworks/ExtensionFoundation.framework/Versions/A/XPCServices/SettingsServiceProxy.xpc/SettingsServiceProxy"
+  },
+  {
+    "index": 11,
+    "pointer_address": "0x1000081f0",
+    "target": "0x100005846",
+    "path": "/var/jb/usr/macOS/Frameworks/WebKit.framework/Versions/A/XPCServices/SafariSandboxProxy.xpc/SafariSandboxProxy"
+  }
+]

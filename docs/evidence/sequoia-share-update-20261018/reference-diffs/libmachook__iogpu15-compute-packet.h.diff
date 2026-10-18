@@ -1,0 +1,65 @@
+--- first/reference-source/sequoia-hook-source/libmachook/iogpu15-compute-packet.h
++++ updated/reference-source/sequoia-hook-source/libmachook/iogpu15-compute-packet.h
+@@ -2,6 +2,12 @@
+ #include <stdint.h>
+ #include <stddef.h>
+ #include <string.h>
++// G14 macOS15 beginComputePass (0x268b64..0x268b88) initializes
++// header through +0x23 and body from +0x28. Header +0x24..27 is
++// alignment padding, observed nonzero on reused second-frame packets.
++// Do not require it to be zero; active fields/body guards remain intact.
++// Evidence: ane15-protocol-20261014/xcode-g14-beginCompute.txt and
++// temporal-padding-candidate-signed.log (8 frames, internal status checked).
+ // EXPERIMENTAL single-compute profile, not a general15 command protocol.
+ // Captures: compute15-macws_submit_{kcmd_1_0_pre,segment_1_0}.bin versus
+ // native16-{kcmd,segment}-14076.bin. Real producer RE confirms body sizes
+@@ -32,8 +38,7 @@
+  if(iogpu15_packet_u32(r,0)!=0x10000||iogpu15_packet_u32(r,4)!=(oneExplicitResource?0x240:0x218)||
+     iogpu15_packet_u32(r,8)!=4||!iogpu15_packet_zero(r,0xc,0xc)||
+     iogpu15_packet_u32(r,0x18)!=(oneExplicitResource?0x18:0)||
+-    iogpu15_packet_u32(r,0x1c)!=0x1f0||iogpu15_packet_u32(r,0x20)!=3||
+-    iogpu15_packet_u32(r,0x24)!=0)return 0;
++    iogpu15_packet_u32(r,0x1c)!=0x1f0||iogpu15_packet_u32(r,0x20)!=3)return 0;
+  // Conservatively admit only inactive newly introduced fields. These broad
+  // zero intervals also make uncertain placement within padding irrelevant.
+  if(!iogpu15_packet_zero(body,0xac,0xc)||!iogpu15_packet_zero(body,0xc8,0x10)||
+@@ -92,10 +97,15 @@
+ // and indirect count0; other flag meanings/indirect tables are unsupported.
+ static int iogpu15_compute_batch_candidate(unsigned char *cmd,size_t *cmdSize,
+  unsigned char *list,size_t *listSize) {
+- enum { maxRecords=8,maxExplicit=8,maxResources=64 };
++ // MetalFX native GPU initialization uses nine explicit resources (PID85946).
++ // The former eight-entry cap was a probe capacity, not a wire-format limit.
++ // Bound all storage from one capacity and retain count/length validation.
++ enum { maxRecords=8,maxExplicit=16,maxResources=64,
++        maxInputSpan=0x228+maxExplicit*0x18,
++        maxOutputSpan=0x1e8+maxExplicit*0x18 };
+  if(!cmd||!cmdSize||!list||!listSize||*cmdSize<0x2c4||*listSize<0x88)return 0;
+  uint32_t count=iogpu15_packet_u32(list,0x20);
+- if(!count||count>maxRecords||*cmdSize>0xac+(size_t)count*0x2e8||
++ if(!count||count>maxRecords||*cmdSize>0xac+(size_t)count*maxInputSpan||
+     *listSize>0x28+(size_t)count*0x2e0)return 0;
+  size_t nativeListSize=*listSize-0x18;
+  if(iogpu15_packet_u32(cmd,0)!=15||iogpu15_packet_u32(cmd,4)!=0xac||
+@@ -109,10 +119,10 @@
+   if(recordCursor>*cmdSize||*cmdSize-recordCursor<0x218)return 0;
+   const unsigned char *r=cmd+recordCursor,*body=r+0x28;
+   size_t span=iogpu15_packet_u32(r,4),payload=iogpu15_packet_u32(r,0x18);
+-  if(span<0x218||span>0x2e8||span>*cmdSize-recordCursor||payload>maxExplicit*0x18||payload%0x18)return 0;
++  if(span<0x218||span>maxInputSpan||span>*cmdSize-recordCursor||payload>maxExplicit*0x18||payload%0x18)return 0;
+   if(iogpu15_packet_u32(r,0)!=0x10000||iogpu15_packet_u32(r,8)!=(i?0u:4u)||
+      !iogpu15_packet_zero(r,0xc,0xc)||iogpu15_packet_u32(r,0x1c)!=0x1f0||
+-     iogpu15_packet_u32(r,0x20)!=3||iogpu15_packet_u32(r,0x24))return 0;
++     iogpu15_packet_u32(r,0x20)!=3)return 0;
+   if(!iogpu15_packet_zero(body,0xac,0xc)||!iogpu15_packet_zero(body,0xc8,0x10)||
+      !iogpu15_packet_zero(body,0x146,0x4a)||!iogpu15_packet_zero(body,0x192,0x46)||
+      iogpu15_packet_u32(body,0x1e0)!=UINT32_MAX||iogpu15_packet_u32(body,0x1e4)!=UINT32_MAX||
+@@ -147,7 +157,7 @@
+  // Entire batch validated before mutation, including all later records.
+  for(uint32_t i=0;i<count;i++) {
+   const unsigned char *r=cmd+records[i],*body=r+0x28;
+-  size_t payload=iogpu15_packet_u32(r,0x18);unsigned char converted[0x2a8]={0};
++  size_t payload=iogpu15_packet_u32(r,0x18);unsigned char converted[maxOutputSpan]={0};
+   memcpy(converted,r,0x18);iogpu15_packet_put32(converted,4,(uint32_t)lengths[i]);
+   iogpu15_packet_put32(converted,0x24,(uint32_t)payload);iogpu15_packet_put32(converted,0x28,0x1d8);
+   iogpu15_packet_put32(converted,0x2c,0x1a8);iogpu15_packet_put32(converted,0x30,0x30);

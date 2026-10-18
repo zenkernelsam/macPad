@@ -1,0 +1,18 @@
+{
+  "members": 582178,
+  "types": {
+    "directory": 198676,
+    "file": 341444,
+    "link": 42058
+  },
+  "compressed_bytes": 31985354592,
+  "compressed_sha256": "abb990272ca58cba521523def93eee0994c1cfba934ff1b9e9605bcf4fa81475",
+  "uncompressed_bytes": 69159198720,
+  "error": null,
+  "gzip_eof": true,
+  "trailing_bytes_after_tar": 10240,
+  "trailing_nonzero": false,
+  "selected_project_source_paths": [],
+  "restore_tested": false,
+  "atomic_snapshot": false
+}

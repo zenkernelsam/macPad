@@ -1,0 +1,120 @@
+--- first/reference-source/sequoia-hook-source/libmachook/Compatibility/MacWSAppleNeuralEngine.m
++++ updated/reference-source/sequoia-hook-source/libmachook/Compatibility/MacWSAppleNeuralEngine.m
+@@ -106,6 +106,19 @@
+                               withReply:(void (^)(BOOL, NSError *))reply;
+ @end
+
++// Actual 24G90 _ANEDaemonProtocol adds these three selectors. They must
++// remain present for _commonInitialization's setClasses calls. Preserve their
++// original client signatures; this does not claim iOS16 implements them.
++@protocol MacWSANESequoiaIOSWire <MacWSANEDaemonIOSWire>
++- (void)loadModelNewInstance:(id)model options:(id)options
++            modelInstParams:(id)params qos:(uint32_t)qos
++                  withReply:(MacWSANELoadMacReply)reply;
++- (void)prepareChainingWithModel:(id)model options:(id)options
++                    chainingReq:(id)request qos:(uint32_t)qos
++                      withReply:(void (^)(BOOL, NSError *))reply;
++- (void)reportTelemetryToPPS:(id)name playload:(id)payload;
++@end
++
+ static pthread_mutex_t MacWSANEInstallLock = PTHREAD_MUTEX_INITIALIZER;
+ static pthread_mutex_t MacWSANEMPSGraphInstallLock =
+     PTHREAD_MUTEX_INITIALIZER;
+@@ -345,12 +358,29 @@
+     }
+     NSURL *sourceURL = ((id (*)(id, SEL))objc_msgSend)(
+         model, sel_registerName("modelURL"));
+-    if (![sourceURL isKindOfClass:[NSURL class]] || !sourceURL.isFileURL ||
+-        ![sourceURL.lastPathComponent
+-            isEqualToString:hostModelDirectory.lastPathComponent]) {
++    if (![sourceURL isKindOfClass:[NSURL class]] || !sourceURL.isFileURL) {
+         return nil;
+     }
+
++    // A cached HWX file receives a sandbox token for its parent directory.
++    // Device A/B: mac15-chain-diagnostic failed before rebasing, while
++    // mac15-filepath-evaluate loaded, evaluated and unloaded successfully.
++    // Preserve the file URL; a trailing slash changes the native model path.
++    if (!sourceURL.hasDirectoryPath) {
++        NSString *root = @"/private/var/mnt/rootfs";
++        NSString *visibleDirectory =
++            [hostModelDirectory substringFromIndex:root.length];
++        NSString *sourceParent = sourceURL.URLByDeletingLastPathComponent
++            .URLByResolvingSymlinksInPath.path;
++        NSString *tokenParent = [NSURL fileURLWithPath:visibleDirectory
++            isDirectory:YES].URLByResolvingSymlinksInPath.path;
++        if (![sourceParent isEqualToString:tokenParent]) return nil;
++        return [NSURL fileURLWithPath:[hostModelDirectory
++            stringByAppendingPathComponent:sourceURL.lastPathComponent]
++            isDirectory:NO];
++    }
++    if (![sourceURL.lastPathComponent
++            isEqualToString:hostModelDirectory.lastPathComponent]) return nil;
+     return [NSURL fileURLWithPath:hostModelDirectory isDirectory:YES];
+ }
+
+@@ -606,6 +636,34 @@
+     return MacWSANEConnectionHooksInstalled;
+ }
+
++typedef void (^MacWSANEExistsMacReply)(BOOL, NSString *, NSError *);
++static void (*MacWSANEOriginalExists)(id,SEL,id,MacWSANEExistsMacReply);
++static void MacWSANEExists(id connection,SEL selector,id model,MacWSANEExistsMacReply reply) {
++    NSXPCConnection *daemon=MacWSANEDaemonConnection(connection);
++    if(!daemon){MacWSANEOriginalExists(connection,selector,model,reply);return;}
++    id<MacWSANEDaemonIOSWire> proxy=[daemon synchronousRemoteObjectProxyWithErrorHandler:^(NSError *error){
++        MacWSANELog(@"exists transport error=%@",error);
++        if(reply)reply(NO,nil,error);
++    }];
++    [proxy compiledModelExistsFor:model withReply:^(BOOL exists,NSError *error){
++        // iOS16 supplies no cache-URL string. Preserve that absence, along
++        // with the actual daemon boolean/error, rather than inventing a URL.
++        MacWSANELog(@"exists daemon reply exists=%d error=%@",exists,error);
++        if(reply)reply(exists,nil,error);
++    }];
++}
++static BOOL MacWSANEInstallSequoiaExists(void) {
++    static BOOL installed; static dispatch_once_t once;
++    dispatch_once(&once,^{
++        Method m=class_getInstanceMethod(objc_getClass("_ANEDaemonConnection"),sel_registerName("compiledModelExistsFor:withReply:"));
++        if(m && !strcmp(method_getTypeEncoding(m),"v32@0:8@16@?24")) {
++            MacWSANEOriginalExists=(void*)method_setImplementation(m,(IMP)MacWSANEExists);
++            installed=MacWSANEOriginalExists!=NULL;
++        }
++    });return installed;
++}
++
++extern void MacWSMetalFXANEInstallCompiler(void);
+ static id MacWSANEInterfaceWithProtocol(id receiver, SEL selector,
+                                         Protocol *protocol) {
+     id interface = MacWSANEOriginalInterfaceFactory(
+@@ -630,15 +688,27 @@
+                     compileSignature, loadSignature);
+         return interface;
+     }
++    BOOL sequoia=protocol_getMethodDescription(protocol,
++        sel_registerName("loadModelNewInstance:options:modelInstParams:qos:withReply:"),YES,YES).name!=NULL;
++    if(sequoia) {
++        NSString *existsReply=[interface replyBlockSignatureForSelector:sel_registerName("compiledModelExistsFor:withReply:")];
++        if(![existsReply isEqualToString:@"v@?B@\"NSString\"@\"NSError\""])return interface;
++        Method existsMethod=class_getInstanceMethod(objc_getClass("_ANEDaemonConnection"),sel_registerName("compiledModelExistsFor:withReply:"));
++        if(!existsMethod || strcmp(method_getTypeEncoding(existsMethod),"v32@0:8@16@?24"))return interface;
++    }
+     if (!MacWSANEInstallConnectionHooks()) return interface;
++    if(sequoia && !MacWSANEInstallSequoiaExists())return interface;
++    if(sequoia)MacWSMetalFXANEInstallCompiler();
+
+     // NSXPCInterface's private setter is a no-op once protocol metadata has
+     // populated _methodInfo (runtime-confirmed by ane_protocol_probe). Ask the
+     // original factory for a clang-emitted shadow protocol instead; clang's
+     // extended block type metadata describes the real iOS 16 reply ABI while
+-    // preserving the complete seven-selector surface.
++    // preserving the seven-selector Ventura surface. Sequoia also retains
++    // its three client selectors so its stock class whitelist can initialize;
++    // presence here does not claim the iOS16 daemon supports those messages.
+     id wireInterface = MacWSANEOriginalInterfaceFactory(
+-        receiver, selector, @protocol(MacWSANEDaemonIOSWire));
++        receiver, selector, sequoia ? @protocol(MacWSANESequoiaIOSWire) : @protocol(MacWSANEDaemonIOSWire));
+     NSString *wireCompile =
+         [wireInterface replyBlockSignatureForSelector:compileSelector];
+     NSString *wireLoad =

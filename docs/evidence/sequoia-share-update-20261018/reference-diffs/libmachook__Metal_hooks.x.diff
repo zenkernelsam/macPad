@@ -1,0 +1,72 @@
+--- first/reference-source/sequoia-hook-source/libmachook/Metal_hooks.x
++++ updated/reference-source/sequoia-hook-source/libmachook/Metal_hooks.x
+@@ -2173,8 +2173,41 @@
+ static int macws_lp_statfs_namespace_compat(const char *path,
+                                            struct statfs *buffer) {
+     int result = statfs(path, buffer);
++    int savedError = errno;
++    // 24G90 CarbonCore prewarms two *distinct* mount identities. The App
++    // Cryptex projection is a regular directory on the logical root's fsid,
++    // not a second mounted volume. Real iPad traces in appearance-xcode-volume-3
++    // observe the same (16777225,26) twice, followed by the duplicate-device
++    // abort. REA ev_b6a70beb5c2a5027a70eb5a3bee930fd9646ed48abbd0309dcc52f584aa25988
++    // and ev_739b98a4d36c18e359409ade38537621a2381c9433458ac7ffc24b6f78ade05b
++    // establish that failure of this one optional statfs skips only Preboot
++    // cache insertion. Retain all real mounts and every other caller/result;
++    // keep the Cryptex aliases and files accessible at their original paths.
++    if (result == 0 && buffer && path &&
++        strcmp(path, "/System/Volumes/Preboot/") == 0 &&
++        macws_chroot_root_mount_needs_rebase &&
++        buffer->f_fsid.val[0] == macws_chroot_root_fsid.val[0] &&
++        buffer->f_fsid.val[1] == macws_chroot_root_fsid.val[1]) {
++        Dl_info caller = {};
++        const void *returnAddress = __builtin_return_address(0);
++        static const uint8_t carbon24G90[16] = {
++            0x18,0x08,0x44,0x80,0xb1,0x9d,0x31,0x42,
++            0xad,0xbe,0x40,0xf2,0xaa,0x32,0x89,0x77};
++        if (dladdr(returnAddress, &caller) && caller.dli_fbase &&
++            caller.dli_fname && strstr(caller.dli_fname, "/CarbonCore.framework/") &&
++            (uintptr_t)returnAddress - (uintptr_t)caller.dli_fbase == 0x45604 &&
++            macws_macho_has_uuid((const struct mach_header *)caller.dli_fbase,
++                                 carbon24G90)) {
++            fprintf(stderr,
++                    "MACPAD_CARBON15 optional Preboot is an alias on root fsid=(%d,%d); distinct mount cache entry omitted\n",
++                    buffer->f_fsid.val[0], buffer->f_fsid.val[1]);
++            errno = ENOENT;
++            return -1;
++        }
++    }
+     if (result == 0 && buffer)
+         macws_rebase_application_mount_namespace(path, buffer);
++    errno = savedError;
+     return result;
+ }
+
+@@ -13418,6 +13451,12 @@
+         static Class g14;static dispatch_once_t once;
+         dispatch_once(&once,^{
+             dlopen("/System/Library/PrivateFrameworks/IOGPU.framework/IOGPU",RTLD_GLOBAL|RTLD_NOW);
++            // Optional qualified Settings adapter consumes its exact driver-file
++            // executable extension after application sandbox initialization and
++            // immediately before this first plugin mapping. No authorization
++            // result is forged; other processes have no such callback.
++            void (*authorizeSettingsGPU)(void)=dlsym(RTLD_DEFAULT,"MacWSSettingsConsumeGPUExecutableToken");
++            if(authorizeSettingsGPU)authorizeSettingsGPU();
+             NSBundle *bundle=[NSBundle bundleWithPath:@"/System/Library/Extensions/AGXMetalG14G.bundle"];
+             NSError *error=nil;
+             if([bundle loadAndReturnError:&error]) {g14=objc_getClass("AGXG14GDevice");macws_install_g14_empty();installG14VideoTexture(g14);
+@@ -20999,6 +21038,14 @@
+                     "functions=%lu\n", (void *)library,
+                     (unsigned long)observed.count);
+             }
++            // Both complete matches were checked against an immutable
++            // function-name set and the once-loaded route table. Preserve
++            // the refusal, but do not rescan thousands of names for every
++            // function request from this same library. A later exact Data
++            // or URL attribution still takes precedence over this marker.
++            objc_setAssociatedObject(
++                library, kMacWSMetal2MetalRouteCheckedKey, keys->checkedMarker,
++                OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+             return nil;
+         }
+         match = route;

@@ -1,0 +1,11 @@
+--- first/reference-source/sequoia-hook-source/libmachook/Makefile
++++ updated/reference-source/sequoia-hook-source/libmachook/Makefile
+@@ -18,6 +18,8 @@
+ libmachook_FILES += Compatibility/MacWSOfficeMultiplyFilter.m
+ libmachook_FILES += Compatibility/MacWSSendfile.c
+ libmachook_FILES += Compatibility/MacWSG14Empty.m
++libmachook_FILES += Compatibility/MacWSMetalFXANE.m
++Compatibility/MacWSMetalFXANE.m_CFLAGS = -fobjc-arc
+ libmachook_FILES += Compatibility/MacWSSecureTransportKey.c
+ libmachook_FILES += Compatibility/MacWSElectronPageAllocator.c
+ libmachook_FRAMEWORKS = Security AudioToolbox CoreGraphics CoreImage ImageIO IOKit IOSurface Metal

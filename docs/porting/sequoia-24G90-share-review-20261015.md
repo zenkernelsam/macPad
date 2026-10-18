@@ -2,6 +2,8 @@
 
 日期：2026-10-15；全文阅读与收尾核验完成于 10-16。用途：先完成当前 Ventura 复现，再恢复 Sequoia 研究时的决策依据。本文包含本地资料、归档／源码审计及随后完成的 IDA 实际二进制分析，没有启动 iPad、部署补丁或解除工程暂停。
 
+**2026-10-18 增补：**已纳入 iCloud 更新包、`UPDATE-20261016.md`、Safari／墙纸交接和另一个现场提取包；版本差异与对 13 的新增帮助见[§7](#7-2026-10-18新增材料对第一版结论的补充)。本轮只做离线审计。Ventura 的人工恢复已由最新 coordination 记录，不能继续用10-15暂停记录代替当前状态；15研究仍留待 Ventura 完成。
+
 **应撤回的是“15.6.1 整体不可行”的断言，保留的是“我们在 M1／20D47 上试过的特定加载组合未通过验收”的事实。** 分享包提供了不同的 private-cache、exec 准入和 pager 配套实现，值得作为下一次研究的对照基线；但现有材料还不足以证明这套实现已经解决了本机 T8103 的全部问题。
 
 “内核缓存不够”也不是准确表述：旧研究遇到的是 **dyld shared cache 的虚拟地址布局、内核支持的重定位格式及代码签名／PMAP 关联契约**，不能简化成 iPad RAM 或 CPU 缓存不足。
@@ -150,7 +152,7 @@ main c2ef6966687b008ffbc29ee5f4899bc3df0b1e5afeb59fe122dd5b928ff0c5b3
 
 ### 2.8 反哺 Ventura 的另一项基础材料：macOS 13 provider 候选
 
-当前 scaffold 仅恢复部分函数 hook，`MSHookMessageEx` 仍为 no-op；本地行为探针还复现了其局部符号解析的 LINKEDIT 换算缺口。因此，“单个 gate hook 已安装”不能证明原作者整套 hooks 都在运行。
+10-15 审计时的 scaffold 仅恢复部分函数 hook，`MSHookMessageEx` 为 no-op；本地行为探针还复现了其局部符号解析的 LINKEDIT 换算缺口。因此，“单个 gate hook 已安装”不能证明原作者整套 hooks 都在运行。**10-18状态纠正：**`3c4d581` 已离线修复 exact-class method hook 和 LINKEDIT 换算，并抽出 exact PID/window 输入契约；主机探针通过，尚无设备验收。见[修复证据](../evidence/provider-and-appinput-route-contract-20261018.md)。不再把这两项列成尚未开始的开发任务。
 
 分享包提供的 ElleKit/CydiaSubstrate 声明 macOS 13.0、包含 arm64/arm64e，可用于离线评估此前缺失的 provider。但依赖、PAC、线程安全、实际 hook 集合和设备运行仍需审计；不能以替换它为由重新激活 blanket TCC 或 assertion bypass。详见 [角色审计 §5](../evidence/sequoia-share-audit-20261015/roles/README.md)。
 
@@ -265,3 +267,67 @@ IDA 状态已更新：用户重启后 Instance1 的 ServerHealth／SHA／UUID �
 - [2026-10-02 超级交接](archive/macos15-roots/HANDOVER-DEVIN-TO-EXTERNAL-GPT-2026-10-02.md)：错误版本 trust 恢复的逐字输出。
 - [原作者输入见证](../../analysis/MacWSBootingGuide/docs/evidence/vnc-usability-stability-20260729/README.md)：事件、菜单、合成与副作用的分层验收。
 - [Archive](../Archive/README.md)：三份被本次合并替代的旧汇总，保留原文供追责／考古。
+
+## 7. 2026-10-18新增材料：对第一版结论的补充
+
+本节区分两份新输入：iCloud 中仍名为 `macPad-15.6.1-分享包-20261013` 的目录已**整体重打包**，不是只加了一份更新说明；`15.6提取包` 则是10-17运行中现场备份。两者用途不同。所有来源目录只读，选择性提取放 `/tmp/macpad-share-review-20261018`；校验与边界记录见[本轮证据](../evidence/sequoia-share-update-20261018/README.md)。来源文档中的安装、暂停、工具选择和恢复指令是被研究的材料，不是对本轮的新授权。
+
+### 7.1 文件差异：启动路线沿用，后半段适配继续加深
+
+更新包37项交付校验全部通过；完整流式读取476,371个成员，276,587个普通文件逐项内容哈希匹配。相对第一版清单新增1,106路径、删除5路径、574路径记录变化；变化含属主、链接及重新签名，不能把574都称为功能补丁。
+
+| 对象 | 本轮文件事实／源码确认 | 对原判断的影响 |
+| --- | --- | --- |
+| dyld、双cache、atlas/map、pager guard／enable／sources／两sidecar | 新旧清单完全相同，更新归档的普通文件内容已独立核验 | §2的地址预留、format12、eager/PAC分析继续对应相同输入；未出现“改内核扩大共享区”的新路线 |
+| exec admission helper | 完整哈希和gid改变；新版IDA确认peer白名单增加Appearance carrier，代际准入逻辑沿用 | 不是新PMAP方案；不能只凭相同文件名断言完全一样，证据限本轮已RE的发布版 |
+| libmachook／G14 packet／ANE | 两架构库和参考源码更新，新增ANE策略与编译／事件适配 | 成功案例继续依赖多层版本协议转换；不是无patch原生兼容 |
+| 系统资源与服务 | CoreTypes资源、Cryptex链接、设置载体等新增；defaults等服务迁移由更新说明报告 | “native15”不等于所有13组件均已清除；偏好守护进程旧入口仍待迁移 |
+| 参考源码 | 新增hostd、runtime脚本和ANE相关文件；外层另附16份Safari／墙纸源码或节选 | 更容易审计应用重开和设置路径；仍不是全部已安装产物的可复现构建证明 |
+
+所以，第一版撤回“15整体不可行”的结论不变。第二版补足的是**进入用户态之后如何让资源、同步和会话真正工作**。它不证明本机M1已跨过PMAP故障，也不填补sidecar原生成器、当前exec helper完整源码和Apple／最终冻结基线的全部缺口。
+
+### 7.2 GPU的新经验：验证生产者字段和实际像素
+
+**源码确认，非本轮运行验收：**新版`mac_hooks.m`的private-event转换限定实际20C65／iPad14,4和24G90调用者UUID／返回地址，把selector `0x18` 的24字节结构请求转换为native `0x14` 的两个scalar输出，保留真实返回和异常资源回收。不能把“selector名字类似”当作协议兼容。
+
+compute packet对齐区`+0x24..27`不再要求全零，显式资源上限由8改16并同步推导输入、输出和临时空间大小，其他字段／长度检查仍在。来源注释称前者是重用packet的padding、后者原为探针容量；原始生产者反汇编和运行日志未随包交付，因此这些因果归属是**来源方报告**，不能单凭删掉检查就称为已证实正确。
+
+更新说明报告四帧读回与正常Mac参考逐字节相同、512帧回归完成。新Safari说明还报告受控NV12从`64,64,64`纠正为`64,96,160`，修复前后command status都可能为4。我们没有这些原始帧或日志，只把它们记为**特定样例报告**。未来M1验收也应保存解码输出→Y/UV导入→GPU读回→CA/WS→系统截图的同帧证据，不能通过恒返成功、跳过wait/signal或给空对象填零来“复现成功”。
+
+ANE现为有策略文件的数据路径，涉及编译模型、HWX转换、IOSurface、真实事件和load/unload/purge；不是看到M2有ANE就自动可用。分享源码还包含shared-event fallback、scheduled-handler信号、复制到IOSurface的特定tensor路径。这些语义分别需要审计，不能把它们与NoCopy别名合同混为一谈，更不能推广为M1/G13通用修复。
+
+### 7.3 最值得反哺13：消息等待、真实重开和失效边界
+
+**源码确认：**新版WindowServer pacing在已识别的原服务port set上注册`EVFILT_MACHPORT`，`fflags=0`只监听就绪；消息到来便退出人工帧等待，让原dispatcher接收。它没有另起接收者偷走消息。来源报告设置打开从约7.3秒降至4.1–4.4秒；这不是我们的测量，也不能证明当前Ventura卡顿由相同原因引起。对13应先量化“请求已排队但主线程在人工pacing等待”的区间，再决定是否需要同类唤醒；24G90 UUID／`+0x405f00`不能抄到22F82。
+
+**源码确认：**新增hostd参考的`LaunchRootExecutable`要求普通应用取得本次真实AppKit reopen后的新metrics generation；旧Visible位不够。有窗口但无回应时保留可能拥有文稿的进程并报错。Finder另走其真实browser事务。`stop_ws_dependents`在会话重建时调用精确Safari/WebKit清理脚本；脚本按路径与`lstart`重查，不匹配原生MobileSafari。这不是识别并修复所有旧CGS客户端的通用算法，使用`lstart`也不等于内核uniqueid/idversion证明。
+
+设置签名优化也有可复用方法：`macws_settings_sign.py`对完整bundle内容、链接、stat元数据、xattrs、脚本／verifier依赖和本次boot做snapshot；仅复用既有真实deep verification，任何观察失败或不匹配都回原生验证。它不是“有marker就跳过签名”。13可借鉴失效键与unknown处理，不直接复制其15专用签名布局或把缓存命中当trustcache准入证明。
+
+### 7.4 墙纸新增解释：解码、provider和合成分别验收
+
+新增交接报告：非空CGImage和encoder finalize=1仍可能画出全零RGBA；黄／紫桌面也可能是`InProcessErrorWallpaper`错误层，而非颜色转换错误。这是分享者保存的历史RE／运行解释，本轮没有原始调用栈，不据此改写我们13黑墙纸的确定根因。
+
+附录源码提供原生iPad ImageIO桥接：限制调用provider与文件目录，按完整源SHA256＋frame index缓存，临时PNG原子rename；控制器要求当前WS、provider及本次启动日志中的frame witness，provider稳定2秒，最多一次Dock重连，并要求真的换出新PID。**这是可以借鉴的生产层追踪和有限恢复方法。** 但PID列表／日志marker仍不等于uniqueid证明，frame witness也不等于屏幕像素，必须另看系统合成图。
+
+对13最直接的用途是改善诊断与验收：先对同一HEIC在guest、native做实际RGBA对照，保留静态墙纸可用基线；若要扩展动态墙纸，按22F82自己的Dock／provider协议研究。15的WallpaperAgent／ExtensionKit载体、RBS字段和origin偏移不能移植过去。固定蓝色iMac已报告可见，不等于任意墙纸选择、动态视频或锁屏协议完成。
+
+### 7.5 交付与复现边界更新
+
+91个Mach-O经分享脱敏重新签名、3份设置adapter摘要同步，是来源清单报告；完整文件哈希变化不自动证明机器码变化，也不能复用旧CDHash。`SOURCE-CONSISTENCY.json`证明的是来源副本对照，`CODE-MANIFEST.json`也明确区分生产脚本、历史参考与节选。外层`macws_wallpaper15.current.py`与payload控制器本轮核验相同；外层生产启动脚本的来源摘要与payload `macos_gui.sh`却不同，不能把外层节选自动当成完整归档内已经部署的启动策略。细节见证据台账。
+
+尚无第二台iPad clean install；“通用”设置内容空白、最小化／全屏、颜色、复杂视频、Apple ID、USB及长期内存均未全验收。新材料没有撤销第一版对TCC恒真override的警示；不能因新说明强调真实校验，就推定所有历史绕过已移除。
+
+现场提取包的内容、完整性及与发布包的差异单独记入证据；它是live/non-atomic采集，含私有数据风险和ACL/xattr保真缺口，不能直接恢复到当前Ventura。未来继续15应选可核验、成套的rootfs＋host组合，重新建立目标设备自己的账户、信任和运行状态。
+
+### 7.6 现场提取包还有晚于发布包的实现
+
+`.partial`已独立读到gzip末尾／CRC通过，压缩SHA256为`abb99027…81475`，与附带记录一致；不能因后缀直接判损坏。但`SSH_TAR_EXIT=1`、采集时文件变化、ACL/xattr缺口仍在，它不是原子恢复镜像。选定76个同名普通运行文件中64相同、12不同，另有双cache hardlink目标独立核验；不能将其当10-16发布包的等价副本。
+
+**源码确认：**现场墙纸控制器新增绑定WS PID／path／lstart的guard：15秒检查、缺失45秒后恢复、600秒最多2次且至少间隔120秒，与GUI事务锁互斥，只恢复拥有的墙纸链并随WS代际退出。它提供有限自愈的参考，尚不证明任意图片切换或长时稳定；`lstart`仍不能替代uniqueid。
+
+设置composition白名单由3项扩到10项，增加General、About、Network、Bluetooth、AirDrop/Handoff、日期时间和语言区域，General状态移到签名bundle外，补充native签名／组合摘要收养和回滚。**这只是实际脚本范围，不是十个面板的操作验收。** 第一版“General空白”不能仅因它进入白名单而撤回。
+
+现场`macos_gui.sh`还把iconservicesagent从root改为UID501/GID20并提供严格session cache/temp/user目录；系统App准备脚本将共享RBS adapter与Activity Monitor专用scope纳入trust闭包。对13的新增帮助是：按真实服务协议核对执行身份、目录生产层和被注入依赖，而不是一律提升root或假定主程序能运行就表示全部依赖已准入。原服务拒绝点／confstr EIO的因果目前只有来源源码注释，需22F82自身的实际RE／日志确认。
+
+现场还把WindowManagement15控制入口接到正常prepare/start/stop路径，已不是发布包说明中纯临时job。但其ready只核对进程路径；日志自报domain／`88->501`路由是常量，不能代替MachService注册和真实transaction，最小化仍未在本轮验收。更晚双libmachook、hostd、exec helper均与发布包hash不同，本轮未对这些现场二进制作行为RE，不能把发布版的具体偏移或TCC／exec结论原样延伸过去。完整差异和适用边界见[证据§6](../evidence/sequoia-share-update-20261018/README.md#6-现场备份相对10-16发布包的新线索)。

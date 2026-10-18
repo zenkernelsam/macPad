@@ -1,0 +1,115 @@
+--- curated/macws_settings_hook.py
++++ raw/macws_settings_hook.py
+@@ -1,6 +1,6 @@
+ """Compose current project hook with the retained, qualified per-pane adapter.
+
+-Only the two existing native15 pane deployments are accepted. Original Apple
++Only qualified native15 pane deployments are accepted. Original Apple
+ executables, native iPadOS, and the retained adapters are never rewritten here.
+ """
+ from pathlib import Path
+@@ -8,11 +8,18 @@
+ ROOT=Path('/var/mnt/rootfs')
+ BASE=Path('/var/jb/usr/macOS/lib/libmachook.dylib')
+ SPECS={
+- 'com.apple.Appearance-Settings.extension':('Appearance.appex','82ea2e5a7cacef7d20dbe7a7482755e4fb8430728d3ea4792d3804e82e22be78'),
+- 'com.apple.Desktop-Settings.extension':('DesktopSettings.appex','b6e8cdd1bd969c221341b80d624e138779377d941420f4a4f5fa35f5e50dd1bb'),
+- 'com.apple.Wallpaper-Settings.extension':('Wallpaper.appex','1ac50e661cc3d6929e4e39b94bce39344ebbd434d3685c3965955dd1a60ae4f1'),
++ 'com.apple.SystemProfiler.AboutExtension':('AboutExtension.appex','a1f1eeeac6410d60ced7a3c3702b51b1f0beef6c36595c2caff8f7ffa81c791a'),
++ 'com.apple.systempreferences.GeneralSettings':('GeneralSettings.appex','c9308ce78bc00cad4b017acf20806073cf25495b7003ad82e18bff1e6383da77'),
++ 'com.apple.Appearance-Settings.extension':('Appearance.appex','e69cc9f8ab34fe167c09a7565e32d19cebafcaf1fa833b5c3e3a49ac0fe48094'),
++ 'com.apple.Desktop-Settings.extension':('DesktopSettings.appex','fd33897ee1b64127ab7e33d023e71e0a93a34154ccec2196eebb2dbcbe78ed63'),
++ 'com.apple.Wallpaper-Settings.extension':('Wallpaper.appex','a5f7e22cca4af3e13f4f370b8d6492109c8184322b9a01b09605b3ead929a7ed'),
++ 'com.apple.Network-Settings.extension':('Network.appex','8fcad8f8c0ef1e5f3366430b901d71f1ff56b9514b64f882bff43e01da549740'),
++ 'com.apple.BluetoothSettings':('Bluetooth.appex','223e5d4187bd5040562ffb5a95a3dc701710d8c8abda2c090081c7e4449ab909'),
++ 'com.apple.AirDrop-Handoff-Settings.extension':('AirDropHandoffExtension.appex','4497d835762de89a5877fd92bf0557234f17c4b4c661395569a8112cc335d472'),
++ 'com.apple.Date-Time-Settings.extension':('DateAndTime Extension.appex','d5cde88c13592bc463cf6891ee18250699ef94f29732bab9625b5849cc0ad6bd'),
++ 'com.apple.Localization-Settings.extension':('Localization.appex','93b54b147bc9325111554a352183778baf3ce655948dbee50d8dad923486c896'),
+ }
+-NATIVE_CARRIERS={'com.apple.Desktop-Settings.extension': '28e35e6c3aae7a803cd7fa9a3815058d434538308f569310c5c3c2aef889215a', 'com.apple.Wallpaper-Settings.extension': '4f613a92caaa1313b11c60ea36a935792492f5136d3fb64b1dd5a8120fe16530', 'com.apple.Appearance-Settings.extension': '0eda7bc754a921e85bc84d836fd1c3bc8ae05f54b29ded10921229205ef80f5e'}
++NATIVE_CARRIERS={'com.apple.SystemProfiler.AboutExtension': 'b05ab22fd5c88b5d994cb830d12497b094ffaaf4d73b8aa9938916d0c51d0c45', 'com.apple.Desktop-Settings.extension': '28e35e6c3aae7a803cd7fa9a3815058d434538308f569310c5c3c2aef889215a', 'com.apple.Wallpaper-Settings.extension': '4f613a92caaa1313b11c60ea36a935792492f5136d3fb64b1dd5a8120fe16530', 'com.apple.Appearance-Settings.extension': '0eda7bc754a921e85bc84d836fd1c3bc8ae05f54b29ded10921229205ef80f5e', 'com.apple.systempreferences.GeneralSettings': 'e0b618f040f12a8a90867ce85941b66119b6d09077c4edc961e15b13fd967da2', 'com.apple.Network-Settings.extension': 'b8699594e19a0b6fc6bb571f2d12845dbb01ba443ce0bf687e9d6fd7fa832064', 'com.apple.BluetoothSettings': 'd0861b9b75b599989b16e2400daf870806bda82e12bf5c01da2bbe6ca3005a89', 'com.apple.AirDrop-Handoff-Settings.extension': '163740801e4602d1ae263c40968ad5ea14b868e05acd44d14d21af5e33ecb19a', 'com.apple.Date-Time-Settings.extension': 'c560c13ee9d4834f9f1dbbea0287fa54d7936a40325080264d37c44efcc0e2d8', 'com.apple.Localization-Settings.extension': '8f5b3d672bedae233a95e23db08d6d5219eb9820109ad56cbe27cf13165e690c'}
+ def carrier_source(identifier):
+  if identifier not in NATIVE_CARRIERS:return Path('/var/jb/Applications/SettingsExtensionProxy.app/SettingsExtensionProxy')
+  p=Path('/var/jb/usr/macOS/libexec/settings-carriers-native15')/identifier
+@@ -31,7 +38,7 @@
+  with (b/'Contents/Info.plist').open('rb') as f:identifier=plistlib.load(f).get('CFBundleIdentifier')
+  if identifier not in SPECS:raise ValueError('pane has no qualified composition specification')
+  name,expected=SPECS[identifier]
+- wanted=ROOT/'System/Library/ExtensionKit/Extensions'/name
++ wanted=(ROOT/'System/Applications/System Settings.app/Contents/PlugIns'/name if identifier=='com.apple.systempreferences.GeneralSettings' else ROOT/'System/Library/ExtensionKit/Extensions'/name)
+  if b.resolve()!=wanted.resolve() or not b.is_dir():raise ValueError('unexpected pane path')
+  f=b/'Contents/Frameworks';adapter=f/'pane-rbs15.dylib';substrate=f/'CydiaSubstrate'
+  for p in [BASE,adapter,substrate]:
+@@ -40,8 +47,19 @@
+  if digest(adapter)!=expected:raise ValueError('unqualified pane adapter changed: '+str(adapter))
+  signature={'schema':1,'identifier':identifier,'base_sha256':digest(BASE),'adapter_sha256':expected,'substrate_sha256':digest(substrate)}
+  return f,signature
++def state_path(frameworks,identifier):
++ if identifier=='com.apple.systempreferences.GeneralSettings':
++  return ROOT/'var/db/macws/settings-runtime/compositions'/ (identifier+'.json')
++ return frameworks/'.macpad-hook-composition-v1.json'
++def sign_general_hook(candidate):
++ from macws_settings_sign import code_identity
++ before=code_identity(candidate.read_bytes())
++ if not before or any(x['entitlements'] for x in before):raise ValueError('unexpected General hook code or library rights')
++ logical='/'+str(candidate.resolve().relative_to(ROOT.resolve()))
++ run('/var/jb/usr/bin/python3','/var/jb/usr/macOS/bin/native15_run.py','0','0',str(ROOT),'/usr/bin/codesign','--force','--sign','-',logical)
++ if code_identity(candidate.read_bytes())!=before:raise ValueError('native signing changed General hook code/dependencies/rights')
+ def verify_composition(bundle):
+- f,signature=context(bundle);hook=f/'libmachook.dylib';state=f/'.macpad-hook-composition-v1.json'
++ f,signature=context(bundle);hook=f/'libmachook.dylib';state=state_path(f,signature['identifier'])
+  recorded=json.loads(state.read_text())
+  if any(recorded.get(k)!=v for k,v in signature.items()) or recorded.get('hook_sha256')!=digest(hook):raise ValueError('pane hook composition identity changed')
+  deps=dependencies(hook)
+@@ -49,8 +67,31 @@
+  if '/Library/Frameworks/CydiaSubstrate.framework/CydiaSubstrate' in deps:raise ValueError('pane hook still has sandbox-inaccessible global substrate edge')
+  return recorded
+
++def adopt_native_signature(bundle,before_hook):
++ from macws_settings_sign import code_identity
++ f,signature=context(bundle)
++ if signature['identifier']!='com.apple.systempreferences.GeneralSettings':raise ValueError('native signature adoption is only qualified for General')
++ old=Path(before_hook);relative=old.resolve().relative_to((ROOT/'private/var/db/macws/settings-runtime').resolve())
++ if not relative.parts[0].startswith('signing-') or relative.parts[1:]!=('before.app','Contents','PlugIns','GeneralSettings.appex','Contents','Frameworks','libmachook.dylib'):raise ValueError('not an owned General pre-signing backup')
++ st=old.lstat()
++ if not stat.S_ISREG(st.st_mode) or st.st_uid!=0 or st.st_mode&0o022:raise ValueError('unowned signing backup')
++ state=state_path(f,signature['identifier']);recorded=json.loads(state.read_text());hook=f/'libmachook.dylib'
++ if any(recorded.get(k)!=v for k,v in signature.items()) or recorded.get('hook_sha256')!=digest(old):raise ValueError('pre-signing composition does not match qualified state')
++ a=code_identity(old.read_bytes());z=code_identity(hook.read_bytes())
++ if not a or a!=z:raise ValueError('signing changed General code, UUID, dependencies or rights')
++ run('/var/jb/usr/bin/python3','/var/jb/usr/macOS/bin/native15_run.py','0','0',str(ROOT),'/usr/bin/codesign','--verify','--strict','/'+str(hook.resolve().relative_to(ROOT.resolve())))
++ recorded['hook_sha256']=digest(hook)
++ recorded['cdhashes']=re.findall(r'^CDHash=(\w+)',run('/var/jb/usr/bin/ldid','-h',str(hook)),re.M)
++ if not recorded['cdhashes']:raise ValueError('native signed hook has no CDHash')
++ for h in recorded['cdhashes']:run('/var/jb/usr/bin/jbctl','trustcache','add',h)
++ tmp=state.with_name(state.name+'.signature-new');tmp.write_text(json.dumps(recorded,indent=2)+'\n');os.chown(tmp,0,0);os.chmod(tmp,0o644);os.replace(tmp,state)
++ verify_composition(bundle);print('SETTINGS-HOOK native signature adopted; code/dependencies/rights identical')
+ def compose(bundle):
+  f,signature=context(bundle)
++ for dependency in (f/'pane-rbs15.dylib',f/'CydiaSubstrate'):
++  hashes=re.findall(r'^CDHash=(\w+)',run('/var/jb/usr/bin/ldid','-h',str(dependency)),re.M)
++  if not hashes:raise ValueError('qualified pane dependency has no CodeDirectory hash')
++  for h in hashes:run('/var/jb/usr/bin/jbctl','trustcache','add',h)
+  try:
+   state=verify_composition(bundle);print('SETTINGS-HOOK composition current '+signature['identifier']);return state
+  except (OSError,ValueError,KeyError,json.JSONDecodeError):pass
+@@ -62,7 +103,9 @@
+   if old in deps:run('/var/jb/usr/bin/install_name_tool','-change',old,SUBSTRATE,str(candidate))
+   elif SUBSTRATE not in deps:raise ValueError('unknown substrate dependency')
+   run('/var/jb/usr/bin/python3','/var/jb/usr/macOS/bin/add_macho_load_dylib.py',str(candidate),ADAPTER)
+-  for _ in range(2):run('/var/jb/usr/bin/ldid','-S','-M',str(candidate))
++  if signature['identifier']=='com.apple.systempreferences.GeneralSettings':sign_general_hook(candidate)
++  else:
++   for _ in range(2):run('/var/jb/usr/bin/ldid','-S','-M',str(candidate))
+   deps=dependencies(candidate)
+   if deps.count(ADAPTER)!=1 or deps.count(SUBSTRATE)!=1:raise ValueError('composition failed its actual Mach-O dependency check')
+   hashes=re.findall(r'^CDHash=(\w+)',run('/var/jb/usr/bin/ldid','-h',str(candidate)),re.M)
+@@ -70,7 +113,7 @@
+   for h in hashes:run('/var/jb/usr/bin/jbctl','trustcache','add',h)
+   signature.update(hook_sha256=digest(candidate),cdhashes=hashes)
+   os.replace(candidate,f/'libmachook.dylib')
+-  temporary=f/'.macpad-hook-composition-v1.json.new';temporary.write_text(json.dumps(signature,indent=2)+'\n');os.chown(temporary,0,0);os.chmod(temporary,0o644);os.replace(temporary,f/'.macpad-hook-composition-v1.json')
++  state=state_path(f,signature['identifier']);state.parent.mkdir(parents=True,exist_ok=True);temporary=state.with_name(state.name+'.new');temporary.write_text(json.dumps(signature,indent=2)+'\n');os.chown(temporary,0,0);os.chmod(temporary,0o644);os.replace(temporary,state)
+   verify_composition(bundle)
+   print('SETTINGS-HOOK composed '+signature['identifier']+' cdhash='+','.join(hashes));return signature
+  finally:

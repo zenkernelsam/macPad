@@ -1,0 +1,17 @@
+--- first/reference-source/sequoia-hook-source/libmachook/iogpu15-render-packet.h
++++ updated/reference-source/sequoia-hook-source/libmachook/iogpu15-render-packet.h
+@@ -46,8 +46,13 @@
+  // unchanged to the native layout, as for the existing 0x48/0x100 pair.
+  // Admit both observed pairs; preserve the full allocator word as above.
+  // 4f4/native47c semantic name is unresolved; retain its captured value.
++// 24G90 MetalFX spatial scaler on iPad14,4 emits 4/0x100. Its two
++ // render records pass every other field/resource check. Process-scoped
++ // translation preserves both words and passes exact red/green pixel
++ // readback (2026-10-14 spatial-adapted15.log); stock iPadOS control also
++ // completes status4. This admits that pair without dropping any fields.
+  uint32_t allocation=iogpu15_packet_u32(body,0x3b0),raster=iogpu15_packet_u32(body,0x4f4);
+- if(!((allocation==0&&raster==0&&iogpu15_packet_u32(body,0x4f0)==0)||(allocation==4&&raster==0x300)||(allocation==0x48&&(raster==0x100||raster==0x300))||((allocation==8||allocation==0x88)&&(raster==0x100||raster==0x300))))return 0;
++ if(!((allocation==0&&raster==0&&iogpu15_packet_u32(body,0x4f0)==0)||(allocation==4&&(raster==0x100||raster==0x300))||(allocation==0x48&&(raster==0x100||raster==0x300))||((allocation==8||allocation==0x88)&&(raster==0x100||raster==0x300))))return 0;
+  // RE15 begin2abd60/64 andend2a944c/50 duplicate the temporary-attachment
+  // mode at1d8 and640. Native begin20c922808/80c andend20c921f54/58
+  // duplicate that same mode at1a8 and5ab. It is a moved byte, not5b0.

@@ -1,0 +1,80 @@
+[
+  {
+    "path": "include/macws_nocopy_abi.h",
+    "old_sha256": "f558303f3c2ea2c693338ebeb0029b3f7bcff0e7cc49d0a612f0d761f98a8fac",
+    "new_sha256": "7e95935c786d5085b8f61ede3976955d65b44b29f8b15bea7e40f83611b2e73e",
+    "diff": "reference-diffs/include__macws_nocopy_abi.h.diff"
+  },
+  {
+    "path": "libmachook/Compatibility/MacWSANEEvents.h",
+    "old_sha256": null,
+    "new_sha256": "59c4426faf711e3ba28b1ffb224edc140ac965f847dc765da70fa50b57258b27",
+    "diff": "reference-diffs/libmachook__Compatibility__MacWSANEEvents.h.diff"
+  },
+  {
+    "path": "libmachook/Compatibility/MacWSANEHWX.h",
+    "old_sha256": null,
+    "new_sha256": "c3204249a20596a9cd08d9041820b1d5b97acb6ac01495a375e833eb90170738",
+    "diff": "reference-diffs/libmachook__Compatibility__MacWSANEHWX.h.diff"
+  },
+  {
+    "path": "libmachook/Compatibility/MacWSANEPolicy.h",
+    "old_sha256": null,
+    "new_sha256": "5dc531340df7cbc7e193a056acc5aaeae3ccc726738c94167ad29b20ff568148",
+    "diff": "reference-diffs/libmachook__Compatibility__MacWSANEPolicy.h.diff"
+  },
+  {
+    "path": "libmachook/Compatibility/MacWSAppleNeuralEngine.m",
+    "old_sha256": "3a36353cfcdf542a35964cecf4904436e6f83f485aafd7df6e668dac066172f5",
+    "new_sha256": "9d8a2688e60b5b75ba21468b9e50959fbb3bab14e483a455814b2a3e38692098",
+    "diff": "reference-diffs/libmachook__Compatibility__MacWSAppleNeuralEngine.m.diff"
+  },
+  {
+    "path": "libmachook/Compatibility/MacWSG14Empty.m",
+    "old_sha256": "d11602127cae08f6537cc2393b005b90a1f08c3b964fbb508e8674caffd3aced",
+    "new_sha256": "83f4b51cb8b0f093a8725eb876cb0a1da9e2825afd2853881ab0a8a4050ff8b1",
+    "diff": "reference-diffs/libmachook__Compatibility__MacWSG14Empty.m.diff"
+  },
+  {
+    "path": "libmachook/Compatibility/MacWSMetalFXANE.m",
+    "old_sha256": null,
+    "new_sha256": "dc442fbd47718e0ece96d47234bcfe506f486adfa12169b1d627c01efb9ad238",
+    "diff": "reference-diffs/libmachook__Compatibility__MacWSMetalFXANE.m.diff"
+  },
+  {
+    "path": "libmachook/Makefile",
+    "old_sha256": "676f06485f9474b827ecb6c9795512b57dd57a50187353d02cf25b22eda5b492",
+    "new_sha256": "c9ab0559f49eebab50d2ab7cc51c4bedd7ecef6a5c7436e81df5f3bcd83abdf7",
+    "diff": "reference-diffs/libmachook__Makefile.diff"
+  },
+  {
+    "path": "libmachook/Metal_hooks.x",
+    "old_sha256": "46bc3ac7d7ae5207c5b91d38ec51d5f6b4808dee34855bfdc10ac625b8405397",
+    "new_sha256": "aed9987bf5516dc25fdeb4a2422fffe6faace34be717e9bc45170b2f36845d84",
+    "diff": "reference-diffs/libmachook__Metal_hooks.x.diff"
+  },
+  {
+    "path": "libmachook/iogpu15-compute-packet.h",
+    "old_sha256": "1bc4770b5300a36f33004f750cdcc42949ec5e6f89dc3531e2c987822c0a4f66",
+    "new_sha256": "292f460a4821debd3b5cc2efda55942e47656d09a258d817432302653a63bc40",
+    "diff": "reference-diffs/libmachook__iogpu15-compute-packet.h.diff"
+  },
+  {
+    "path": "libmachook/iogpu15-mixed-packet.h",
+    "old_sha256": "d2e7c844d8ab3217fb9c1cc1b3327a378c285e5e1a7ae8aab55f13a78248ee59",
+    "new_sha256": "358e3a80a0205a79468ebeb5c63745dc303cc4a25193517ba5394664bb0a553e",
+    "diff": "reference-diffs/libmachook__iogpu15-mixed-packet.h.diff"
+  },
+  {
+    "path": "libmachook/iogpu15-render-packet.h",
+    "old_sha256": "76e645f816c2fe44e8eb817c901ee42c8fcbf8037297737e2e40bc9785a31a0f",
+    "new_sha256": "0f4c16c396878acae1255e38bfc0de54319d48fd4c6170796663cb44a74ec315",
+    "diff": "reference-diffs/libmachook__iogpu15-render-packet.h.diff"
+  },
+  {
+    "path": "libmachook/mac_hooks.m",
+    "old_sha256": "d65872402d4dd31b54732c3b45666c4fbc6d99e9b79a9085c7615feb84aa6e84",
+    "new_sha256": "e5623106926e6b0e8103ab9b267433a68a5bd0dfa34fc85d131cab0391567f93",
+    "diff": "reference-diffs/libmachook__mac_hooks.m.diff"
+  }
+]

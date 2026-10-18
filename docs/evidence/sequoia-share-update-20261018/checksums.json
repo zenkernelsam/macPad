@@ -1,0 +1,224 @@
+[
+  {
+    "path": "AGENTS.md",
+    "expected": "0fab9a8cafe4ca0a335e96797509bd41d886040e79fa23a75424e851ed2c8943",
+    "actual": "0fab9a8cafe4ca0a335e96797509bd41d886040e79fa23a75424e851ed2c8943",
+    "matches": true
+  },
+  {
+    "path": "ARCHIVE-VERIFICATION.json",
+    "expected": "8530a40f28ae38e10bc91f797beb44040427177c1ff6ae34c4eaf868e89f2c16",
+    "actual": "8530a40f28ae38e10bc91f797beb44040427177c1ff6ae34c4eaf868e89f2c16",
+    "matches": true
+  },
+  {
+    "path": "PACKAGE-INFO.json",
+    "expected": "88a412b549e8d3eda35f501bec26bdb86cacc2133755a48f243a35aa157134cd",
+    "actual": "88a412b549e8d3eda35f501bec26bdb86cacc2133755a48f243a35aa157134cd",
+    "matches": true
+  },
+  {
+    "path": "PRIVACY-REPORT.json",
+    "expected": "a497e79350418cba69be50659416a53055bcdf3670d0aa1f3a597bf1ddc0f543",
+    "actual": "a497e79350418cba69be50659416a53055bcdf3670d0aa1f3a597bf1ddc0f543",
+    "matches": true
+  },
+  {
+    "path": "README.md",
+    "expected": "56c442e9ba50d17671d001e534ab52bef522776e7661897bf2b496d828bb7003",
+    "actual": "56c442e9ba50d17671d001e534ab52bef522776e7661897bf2b496d828bb7003",
+    "matches": true
+  },
+  {
+    "path": "UPDATE-20261013.md",
+    "expected": "7d9224f3ecc0e53b2378a0111c51b866bfef1529b436d88fc5c86c8f6718cbf5",
+    "actual": "7d9224f3ecc0e53b2378a0111c51b866bfef1529b436d88fc5c86c8f6718cbf5",
+    "matches": true
+  },
+  {
+    "path": "UPDATE-20261016.md",
+    "expected": "1b552b07a87af31d4d505088a2e0e1570875470b0eba24a7616bdf8fa6fcc455",
+    "actual": "1b552b07a87af31d4d505088a2e0e1570875470b0eba24a7616bdf8fa6fcc455",
+    "matches": true
+  },
+  {
+    "path": "docs/ADAPTATION.md",
+    "expected": "a580e72e37ec3d09952602f93c04143e37169a4f1126fa47fa1737e5ae75ef68",
+    "actual": "a580e72e37ec3d09952602f93c04143e37169a4f1126fa47fa1737e5ae75ef68",
+    "matches": true
+  },
+  {
+    "path": "docs/AI修复Safari与设置墙纸.md",
+    "expected": "ba448d87aac23a473ca79eca3e6d2ae2baf69efd25a2b69f3076d5e3d55f4f56",
+    "actual": "ba448d87aac23a473ca79eca3e6d2ae2baf69efd25a2b69f3076d5e3d55f4f56",
+    "matches": true
+  },
+  {
+    "path": "docs/AI修复参考代码/CODE-MANIFEST.json",
+    "expected": "bfb3d1e726d6927d5280928f77ec2170124db6f28cf8ffac461d14e56ea007a8",
+    "actual": "bfb3d1e726d6927d5280928f77ec2170124db6f28cf8ffac461d14e56ea007a8",
+    "matches": true
+  },
+  {
+    "path": "docs/AI修复参考代码/agent-rbs15-endpoint-origin.m",
+    "expected": "c035360eee63e06c5ef4f13ad38d9562e29efc6dda79119981986ac1f0d983c4",
+    "actual": "c035360eee63e06c5ef4f13ad38d9562e29efc6dda79119981986ac1f0d983c4",
+    "matches": true
+  },
+  {
+    "path": "docs/AI修复参考代码/audio-queue-bridge.m",
+    "expected": "2b669365167b6d49da459ac4e52d3536d5c81dfa84c9a800b944fb19b64e5276",
+    "actual": "2b669365167b6d49da459ac4e52d3536d5c81dfa84c9a800b944fb19b64e5276",
+    "matches": true
+  },
+  {
+    "path": "docs/AI修复参考代码/build-normalized-device.sh",
+    "expected": "ec88b28ae372531217023daec96753708bcea758afdc05ec33ccf7d95666abf3",
+    "actual": "ec88b28ae372531217023daec96753708bcea758afdc05ec33ccf7d95666abf3",
+    "matches": true
+  },
+  {
+    "path": "docs/AI修复参考代码/g14-nv12.excerpt.x",
+    "expected": "0f1ca9a04d80636c2e4e5d987d8471fea488c205ab33e289530037ba2853791d",
+    "actual": "0f1ca9a04d80636c2e4e5d987d8471fea488c205ab33e289530037ba2853791d",
+    "matches": true
+  },
+  {
+    "path": "docs/AI修复参考代码/macos_gui-wallpaper.excerpt.sh",
+    "expected": "61b55af2edc7e42240f9bc380a7f5618b97905338c57873c164cb72dc03efc6a",
+    "actual": "61b55af2edc7e42240f9bc380a7f5618b97905338c57873c164cb72dc03efc6a",
+    "matches": true
+  },
+  {
+    "path": "docs/AI修复参考代码/macws_audio_bridge.h",
+    "expected": "9c25dfe8ff6413db5eab2224e4b5761574188fd9de261697227f5265cbf0a419",
+    "actual": "9c25dfe8ff6413db5eab2224e4b5761574188fd9de261697227f5265cbf0a419",
+    "matches": true
+  },
+  {
+    "path": "docs/AI修复参考代码/macws_wallpaper15.current.py",
+    "expected": "3d7ee2a31568a9b327f2afe62c6edbf51d8770ffc51496e764cb712be160642e",
+    "actual": "3d7ee2a31568a9b327f2afe62c6edbf51d8770ffc51496e764cb712be160642e",
+    "matches": true
+  },
+  {
+    "path": "docs/AI修复参考代码/pane-wallpaper-native-preview.m",
+    "expected": "6203c6cbbeffb74fa4a6351f9bf087f4372e8db1ba330585103e7f0c01261fb8",
+    "actual": "6203c6cbbeffb74fa4a6351f9bf087f4372e8db1ba330585103e7f0c01261fb8",
+    "matches": true
+  },
+  {
+    "path": "docs/AI修复参考代码/pane-wallpaper-runtime-decoder.m",
+    "expected": "b97cb82bd5e01913e9b1987b8366b28489203d09da27169e40f35de06107d560",
+    "actual": "b97cb82bd5e01913e9b1987b8366b28489203d09da27169e40f35de06107d560",
+    "matches": true
+  },
+  {
+    "path": "docs/AI修复参考代码/rbs15-webcontent-adapter.m",
+    "expected": "85ac945d6e96cfbfe4b6a42497206c05b2ed8e0e875b15fb691f9fe65171e225",
+    "actual": "85ac945d6e96cfbfe4b6a42497206c05b2ed8e0e875b15fb691f9fe65171e225",
+    "matches": true
+  },
+  {
+    "path": "docs/AI修复参考代码/safari-network-xpc.excerpt.m",
+    "expected": "d591aca6c4b5c5b7705d8a50541929f76765279b6b7eb84d718c819ee3c0f997",
+    "actual": "d591aca6c4b5c5b7705d8a50541929f76765279b6b7eb84d718c819ee3c0f997",
+    "matches": true
+  },
+  {
+    "path": "docs/AI修复参考代码/wallpaper-agent-production.m",
+    "expected": "39987d444b880464f77e33a73d1c1d5999300abe8785cc46080df955ff42e1dd",
+    "actual": "39987d444b880464f77e33a73d1c1d5999300abe8785cc46080df955ff42e1dd",
+    "matches": true
+  },
+  {
+    "path": "docs/AI修复参考代码/wallpaper-image-native-frames.m",
+    "expected": "db4b08fdd6ea57e822bef2a84dbd51b0fe1278d21562d3db2a2c366b80da5192",
+    "actual": "db4b08fdd6ea57e822bef2a84dbd51b0fe1278d21562d3db2a2c366b80da5192",
+    "matches": true
+  },
+  {
+    "path": "docs/AI修复参考代码/wallpaper-image-runtime.m",
+    "expected": "2c2499461bc6e3eaf1a085a240fff14531cf30fe16673db3d1bcdb3130ae9d80",
+    "actual": "2c2499461bc6e3eaf1a085a240fff14531cf30fe16673db3d1bcdb3130ae9d80",
+    "matches": true
+  },
+  {
+    "path": "docs/AI修复参考代码/wallpaper-native-image-server.c",
+    "expected": "d467620244384a5e5acf527d825feb2c5e6e88289586617f81d2358055a51636",
+    "actual": "d467620244384a5e5acf527d825feb2c5e6e88289586617f81d2358055a51636",
+    "matches": true
+  },
+  {
+    "path": "docs/AI修复参考代码/wallpaper-origin-preload.c",
+    "expected": "f20e91b04406e434597e94add8a95d92303f6736d21172254dca4b10fdc4c33e",
+    "actual": "f20e91b04406e434597e94add8a95d92303f6736d21172254dca4b10fdc4c33e",
+    "matches": true
+  },
+  {
+    "path": "docs/DEPENDENCY-VERSIONS.tsv",
+    "expected": "dd64da297489b463620246f68aecbefd3312e9567682127efbf20234d9cf9e02",
+    "actual": "dd64da297489b463620246f68aecbefd3312e9567682127efbf20234d9cf9e02",
+    "matches": true
+  },
+  {
+    "path": "docs/FACTORY-RESOURCE-REVIEW.json",
+    "expected": "01d5e9ac1b09898c6ce414696f035f907bb3a1cb0541f2c7962c4346e28f2827",
+    "actual": "01d5e9ac1b09898c6ce414696f035f907bb3a1cb0541f2c7962c4346e28f2827",
+    "matches": true
+  },
+  {
+    "path": "docs/PRIVACY.md",
+    "expected": "6c6eb228fffe24a47cf0cc14201724dd0b7a2ab48e46f86245505015cd304f52",
+    "actual": "6c6eb228fffe24a47cf0cc14201724dd0b7a2ab48e46f86245505015cd304f52",
+    "matches": true
+  },
+  {
+    "path": "docs/RUNTIME-FILES.json",
+    "expected": "e0f93b2005186d8c9c94933f74d17d471f43ebb2280e66ecfde91c69dc69d35b",
+    "actual": "e0f93b2005186d8c9c94933f74d17d471f43ebb2280e66ecfde91c69dc69d35b",
+    "matches": true
+  },
+  {
+    "path": "docs/SOURCE-CONSISTENCY.json",
+    "expected": "7dec61b519be877818bcdaccdb006c2bd9c7a53d64ce4f32a1653050a5fe5496",
+    "actual": "7dec61b519be877818bcdaccdb006c2bd9c7a53d64ce4f32a1653050a5fe5496",
+    "matches": true
+  },
+  {
+    "path": "docs/ai安装适配提示.md",
+    "expected": "c6e1db89af881799257813ef5ecd29ddb3707c4c2445eaf44ecdc8c29c6f814d",
+    "actual": "c6e1db89af881799257813ef5ecd29ddb3707c4c2445eaf44ecdc8c29c6f814d",
+    "matches": true
+  },
+  {
+    "path": "inventory.jsonl",
+    "expected": "502c6cf17127c108265aa1f5a5cbe0455b8dd99c9c1a56ffdeaadb7e1e89c63c",
+    "actual": "502c6cf17127c108265aa1f5a5cbe0455b8dd99c9c1a56ffdeaadb7e1e89c63c",
+    "matches": true
+  },
+  {
+    "path": "payload.tar.zst",
+    "expected": "40b3a6cd6b01564fdac790a586ef46be9b3c3af24621f593b9ba56764d5888e5",
+    "actual": "40b3a6cd6b01564fdac790a586ef46be9b3c3af24621f593b9ba56764d5888e5",
+    "matches": true
+  },
+  {
+    "path": "privacy-binary-changes.json",
+    "expected": "ab3d0eaea90cd2392f32b23ae24b70321bfbca5a388e12eec34f54a12ad4ec5b",
+    "actual": "ab3d0eaea90cd2392f32b23ae24b70321bfbca5a388e12eec34f54a12ad4ec5b",
+    "matches": true
+  },
+  {
+    "path": "tools/restore-metadata.py",
+    "expected": "ce926c0d64d393cc7c956ceb908fe00b0a569d5fb58d1a7f5b62274de7f90f37",
+    "actual": "ce926c0d64d393cc7c956ceb908fe00b0a569d5fb58d1a7f5b62274de7f90f37",
+    "matches": true
+  },
+  {
+    "path": "tools/verify-payload.py",
+    "expected": "b48769e1dc6a9ff5100d309ff34efc6ff9f4f3fc983fbe297b3de276831d9ca8",
+    "actual": "b48769e1dc6a9ff5100d309ff34efc6ff9f4f3fc983fbe297b3de276831d9ca8",
+    "matches": true
+  }
+]

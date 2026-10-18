@@ -1,0 +1,29 @@
+--- curated/ensure_settings_extensions_runtime.sh
++++ raw/ensure_settings_extensions_runtime.sh
+@@ -65,7 +65,7 @@
+ prepare_hook_copy() {
+     local hook_bundle="$1" hook_id="$2" hook_frameworks="$3"
+     case "$hook_id" in
+-        com.apple.Desktop-Settings.extension|com.apple.Wallpaper-Settings.extension|com.apple.Appearance-Settings.extension)
++        com.apple.Desktop-Settings.extension|com.apple.Wallpaper-Settings.extension|com.apple.Appearance-Settings.extension|com.apple.systempreferences.GeneralSettings|com.apple.SystemProfiler.AboutExtension|com.apple.Network-Settings.extension|com.apple.BluetoothSettings|com.apple.AirDrop-Handoff-Settings.extension|com.apple.Date-Time-Settings.extension|com.apple.Localization-Settings.extension)
+             /var/jb/usr/bin/python3 /var/jb/usr/macOS/bin/macws_settings_hook.py "$hook_bundle"
+             ;;
+         *) fresh_copy_if_changed "$LIBMACHOOK" "$hook_frameworks/libmachook.dylib" ;;
+@@ -399,7 +399,7 @@
+         fi
+     done
+
+-    if [ "$identifier" = com.apple.Appearance-Settings.extension ]; then
++    if { [ "$identifier" = com.apple.Appearance-Settings.extension ] || [ "$identifier" = com.apple.systempreferences.GeneralSettings ] || [ "$identifier" = com.apple.SystemProfiler.AboutExtension ]; }; then
+             /var/jb/usr/bin/python3 /var/jb/usr/macOS/bin/macws_settings_pane_rights.py --ensure "$bundle" || return 1
+         fi
+     entitlements=$($LDID -e "$executable" 2>/dev/null || true)
+@@ -593,7 +593,7 @@
+             local_substrate_hash="$marker_substrate"
+         fi
+
+-        if [ "$identifier" = com.apple.Appearance-Settings.extension ]; then
++        if { [ "$identifier" = com.apple.Appearance-Settings.extension ] || [ "$identifier" = com.apple.systempreferences.GeneralSettings ] || [ "$identifier" = com.apple.SystemProfiler.AboutExtension ]; }; then
+             /var/jb/usr/bin/python3 /var/jb/usr/macOS/bin/macws_settings_pane_rights.py --ensure "$bundle" || return 1
+         fi
+         marker_executable=$(selected_cdhash "$executable")
