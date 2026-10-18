@@ -11,9 +11,14 @@
 //
 // Status: SCAFFOLD, not a fix.
 //   * MSGetImageByName: real implementation (dyld image-name walk).
-//   * MSFindSymbol: real implementation — LC_DYLD_INFO export-trie walk
-//     (dyld-4 shared-cache images carry no usable LC_SYMTAB), with LC_SYMTAB
-//     fallback and strict bounds checks.
+//   * MSFindSymbol: real implementation — LC_DYLD_INFO/LC_DYLD_EXPORTS_TRIE
+//     walk, with an LC_SYMTAB fallback for local (non-exported) symbols.
+//     Both paths convert the linker's FILE offset through the live
+//     __LINKEDIT mapping (`slide + LINKEDIT.vmaddr + (off - fileoff)`).
+//     That distinction is load-bearing for dyld shared-cache images, where
+//     `slide + fileoff` addresses unrelated memory; it is also what lets
+//     local N_SECT symbols (e.g. SkyLight's _audit_token_check_tcc_access)
+//     resolve at all.
 //   * MSHookFunction: minimal trampoline implementation PLUS an
 //     explicit permit whitelist (R003-F02 containment).  A patch is
 //     installed only for targets pre-registered via MACWSHookPermit()
@@ -26,7 +31,13 @@
 //     behavior.  This is NOT presented as a general substrate repair:
 //     no relocation fixups, no thread-quiescence protocol, atomicity is
 //     limited to caller-chosen quiescent scope (ctor/add-image time).
-//   * MSHookMessageEx: NO-OP stub (method-swizzle not implemented).
+//   * MSHookMessageEx: real exact-class method swizzle via libobjc's
+//     class_replaceMethod; returns the previously invoked IMP. Methods that
+//     are only inherited are overridden on the requested class, so a
+//     superclass implementation is never mutated. Missing class/selector/
+//     replacement fails closed and installs nothing. No thread-quiescence
+//     protocol beyond libobjc's own method-cache flush. See the
+//     implementation for the precise contract and its limits.
 
 #include <dlfcn.h>
 #include <mach-o/dyld.h>
@@ -121,6 +132,29 @@ static const char *image_path_for_header(const void *header) {
     return NULL;
 }
 
+// Convert a Mach-O LINKER FILE offset (LC_SYMTAB symoff/stroff, export-trie
+// dataoff, ...) to the live address inside this image's mapped __LINKEDIT.
+//
+// dyld maps a segment at `slide + segment.vmaddr`, while the linker stores
+// every file-backed offset relative to the segment's `fileoff`. Those two
+// coordinate systems coincide only when `vmaddr - fileoff` is constant
+// across segments, which is not true for images inside a dyld shared
+// cache. Using `slide + fileoff` there reads unrelated cache bytes, so a
+// local symbol resolves to NULL even though the Mach-O data is present.
+// Everything reachable through this helper is bounded by `filesize` (not
+// `vmsize`): the tail of LINKEDIT is zero-fill and must never be walked.
+static const uint8_t *linkedit_file_ptr(
+        const struct segment_command_64 *linkedit, uintptr_t slide,
+        uint64_t file_offset, uint64_t size) {
+    if (!linkedit || !size) return NULL;
+    if (file_offset < linkedit->fileoff) return NULL;
+    uint64_t delta = file_offset - linkedit->fileoff;
+    if (delta > linkedit->filesize ||
+        size > (uint64_t)linkedit->filesize - delta)
+        return NULL;
+    return (const uint8_t *)(slide + (uintptr_t)linkedit->vmaddr + delta);
+}
+
 static void *find_sym_in_image(const struct mach_header_64 *mh,
                                const char *name) {
     if (!mh || !name || !*name) return NULL;
@@ -129,7 +163,8 @@ static void *find_sym_in_image(const struct mach_header_64 *mh,
 
     // Preferred path: let dyld itself resolve the export. dlopen with
     // RTLD_NOLOAD returns the already-loaded image without side effects,
-    // and dlsym walks its real export trie inside libdyld.
+    // and dlsym walks its real export trie inside libdyld. Local symbols
+    // are not exported, so they fall through to the manual walk below.
     const char *path = image_path_for_header(mh);
     if (path) {
         void *handle = dlopen(path, RTLD_NOLOAD | RTLD_LAZY);
@@ -141,8 +176,9 @@ static void *find_sym_in_image(const struct mach_header_64 *mh,
         }
     }
 
-    uintptr_t slide = 0;
-    uintptr_t le_lo = 0, le_hi = 0;
+    uintptr_t text_vmaddr = 0;
+    int have_text = 0;
+    const struct segment_command_64 *linkedit = NULL;
     const struct dyld_info_command *dyldinfo = NULL;
     const struct linkedit_data_command *exports_trie = NULL;
     const struct symtab_command *symtab = NULL;
@@ -157,12 +193,14 @@ static void *find_sym_in_image(const struct mach_header_64 *mh,
         if (cmd->cmd == LC_SEGMENT_64) {
             const struct segment_command_64 *seg =
                 (const struct segment_command_64 *)lc;
-            uintptr_t seg_slide = (uintptr_t)mh - (uintptr_t)seg->vmaddr;
-            if (!strncmp(seg->segname, "__TEXT", 7))
-                slide = seg_slide;
-            if (!strncmp(seg->segname, "__LINKEDIT", 11)) {
-                le_lo = (uintptr_t)seg->vmaddr + seg_slide;
-                le_hi = le_lo + (uintptr_t)seg->vmsize;
+            // segname is a fixed 16-byte, NUL-padded field; comparing all
+            // 16 bytes keeps "__TEXT" from also matching "__TEXT_EXEC".
+            if (!have_text && !strncmp(seg->segname, "__TEXT", 16)) {
+                text_vmaddr = (uintptr_t)seg->vmaddr;
+                have_text = 1;
+            } else if (!linkedit &&
+                       !strncmp(seg->segname, "__LINKEDIT", 16)) {
+                linkedit = seg;
             }
         } else if (cmd->cmd == LC_DYLD_INFO ||
                    cmd->cmd == LC_DYLD_INFO_ONLY) {
@@ -175,42 +213,52 @@ static void *find_sym_in_image(const struct mach_header_64 *mh,
         lc += cmd->cmdsize;
     }
 
-    // Prefer the export trie — shared-cache images have no usable symtab.
+    // The slide is defined by __TEXT only. Any image without a real
+    // __LINKEDIT (or whose header is not mapped at/above its vmaddr) fails
+    // closed rather than guessing an address.
+    if (!have_text || text_vmaddr > (uintptr_t)mh) return NULL;
+    uintptr_t slide = (uintptr_t)mh - text_vmaddr;
+    if (!linkedit) return NULL;
+
+    // Export trie first — it covers exported symbols of cache images.
     uint32_t trie_off = exports_trie ? exports_trie->dataoff
                                      : (dyldinfo ? dyldinfo->export_off : 0);
     uint32_t trie_size = exports_trie ? exports_trie->datasize
                                       : (dyldinfo ? dyldinfo->export_size : 0);
-    if (trie_off && trie_size) {
-        const uint8_t *trie = (const uint8_t *)(slide + trie_off);
+    const uint8_t *trie = linkedit_file_ptr(
+        linkedit, slide, trie_off, trie_size);
+    if (trie) {
         const uint8_t *trie_end = trie + trie_size;
-        // Only walk when the whole region lies inside the image's own
-        // mapped __LINKEDIT; anything else is a malformed foreign header.
-        if (le_lo && (uintptr_t)trie >= le_lo &&
-            (uintptr_t)trie_end <= le_hi && trie_end > trie) {
-            char acc[1024];
-            acc[0] = '\0';
-            const uint8_t *off = trie_find_addr(
-                trie, trie, trie_end, name, acc, 0, sizeof(acc), 0);
-            if (off)
-                return (void *)((uintptr_t)mh + (uintptr_t)off);
-        }
+        char acc[1024];
+        acc[0] = '\0';
+        const uint8_t *off = trie_find_addr(
+            trie, trie, trie_end, name, acc, 0, sizeof(acc), 0);
+        if (off)
+            return (void *)((uintptr_t)mh + (uintptr_t)off);
     }
 
-    // LC_SYMTAB fallback (non-cache images).
-    if (symtab) {
-        const struct nlist_64 *nl =
-            (const struct nlist_64 *)(slide + symtab->symoff);
-        const char *strtab = (const char *)(slide + symtab->stroff);
-        const char *str_end = strtab + symtab->strsize;
-        if (!le_lo || (uintptr_t)nl < le_lo ||
-            (uintptr_t)(nl + symtab->nsyms) > le_hi ||
-            (uintptr_t)strtab < le_lo || (uintptr_t)str_end > le_hi)
-            return NULL;
+    // LC_SYMTAB fallback: the only path to local (non-exported) symbols.
+    // N_TYPE == N_SECT accepts both external and local defined symbols;
+    // the reference provider likewise does not require N_EXT.
+    if (symtab && symtab->nsyms) {
+        const struct nlist_64 *nl = (const struct nlist_64 *)
+            linkedit_file_ptr(linkedit, slide, symtab->symoff,
+                              (uint64_t)symtab->nsyms * sizeof(*nl));
+        const char *strtab = (const char *)
+            linkedit_file_ptr(linkedit, slide, symtab->stroff,
+                              symtab->strsize);
+        if (!nl || !strtab) return NULL;
+        // Linked images store the symbol's UNSLID vmaddr in n_value; the
+        // __TEXT slide is therefore the correct runtime adjustment.
         for (uint32_t i = 0; i < symtab->nsyms; i++) {
-            const char *sname = strtab + nl[i].n_un.n_strx;
-            if (sname < strtab || sname >= str_end) continue;
-            if (!strcmp(sname, name) && (nl[i].n_type & N_TYPE) == N_SECT)
-                return (void *)(slide + nl[i].n_value);
+            uint32_t strx = nl[i].n_un.n_strx;
+            if (strx == 0 || strx >= symtab->strsize) continue;
+            const char *sname = strtab + strx;
+            size_t remain = (size_t)symtab->strsize - strx;
+            if (!memchr(sname, '\0', remain)) continue;
+            if (!strcmp(sname, name) &&
+                (nl[i].n_type & N_TYPE) == N_SECT)
+                return (void *)(slide + (uintptr_t)nl[i].n_value);
         }
     }
     return NULL;
@@ -489,8 +537,46 @@ void MSHookFunction(void *symbol, void *replace, void **result) {
 #endif
 }
 
+// Exact-class method swizzle with the classic substrate callable contract.
+//
+//   * Lookup uses class_getInstanceMethod, so a metaclass argument hooks
+//     class methods as well as an ordinary class hooks instance methods.
+//   * class_replaceMethod installs the replacement on the REQUESTED class.
+//     When the selector is only inherited, libobjc adds an override to that
+//     class instead of mutating the superclass; instances of the superclass
+//     therefore keep their original behavior.
+//   * The previously invoked IMP is published through *result BEFORE the
+//     replacement is installed, so a replacement that forwards through
+//     *result never observes an uninitialized dependency.
+//   * Missing class/selector/replacement fails closed: nothing is added
+//     with a fabricated type encoding and *result stays NULL. This is the
+//     method-level equivalent of MSHookFunction's refusal contract.
+//
+// Limits, stated rather than hidden:
+//   * There is no target-identity permit here. Objective-C methods carry no
+//     stable prologue to pin, so callers remain responsible for verifying
+//     the class name and framework version they hook.
+//   * libobjc performs its own method-cache flush inside
+//     class_replaceMethod; this provider adds no thread-quiescence protocol
+//     for calls already in flight (same limitation as MSHookFunction).
+//   * The replacement must have a compatible ABI; type encodings are
+//     validated for presence, not for signature equality.
 void MSHookMessageEx(Class _class, SEL sel, IMP imp, IMP *result) {
-    Method m = class_getInstanceMethod(_class, sel);
-    if (result) *result = m ? method_getImplementation(m) : NULL;
-    (void)imp;
+    IMP original = NULL;
+    const char *types = NULL;
+    if (_class && sel) {
+        Method m = class_getInstanceMethod(_class, sel);
+        if (m) {
+            original = method_getImplementation(m);
+            types = method_getTypeEncoding(m);
+        }
+    }
+    if (result) *result = original;
+    if (!_class || !sel || !imp || !original || !types) {
+        macws_hook_log(!_class || !sel || !imp
+            ? "MACWSHook: MSG-REFUSED bad args\n"
+            : "MACWSHook: MSG-REFUSED missing method/encoding\n");
+        return;
+    }
+    class_replaceMethod(_class, sel, imp, types);
 }

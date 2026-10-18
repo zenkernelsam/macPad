@@ -33,6 +33,7 @@
 #import <xpc/xpc.h>
 #import <notify.h>
 
+#import "macws_app_input_route.h"
 #import "macws_control_protocol.h"
 #import "macws_dock_expose_notify.h"
 #import "macws_host_protocol.h"
@@ -5103,37 +5104,29 @@ static BOOL MacWSCancelActiveMenuForEscape(id application,
 }
 
 static BOOL MacWSInputRecordIsValid(const MacWSInputRecord *record) {
-    if (record->magic != MACWS_INPUT_MAGIC ||
-        !MacWSInputVersionSupportsKind(record->version, record->kind) ||
-        record->targetPID != getpid() ||
-        record->frameWidth == 0 || record->frameHeight == 0 ||
-        record->source > MacWSInputSourceMax ||
-        !isfinite(record->x) || !isfinite(record->y) ||
-        !isfinite(record->altitude) || !isfinite(record->azimuth) ||
-        !isfinite(record->tiltX) || !isfinite(record->tiltY) ||
-        record->tiltX < -1.0f || record->tiltX > 1.0f ||
-        record->tiltY < -1.0f || record->tiltY > 1.0f) return NO;
+    // Identity/envelope invariants live in the shared pure contract so the
+    // exact-PID/exact-window/global-surface rules can be exercised without
+    // AppKit or a device. Kind-specific payload checks follow below.
+    int route = MacWSAppInputRouteClassify(
+        record, (int32_t)getpid(),
+        MacWSAppInputIsDockEndpoint() != NO, NULL);
+    if (!MacWSAppInputRouteAccepted(route)) return NO;
     if (record->kind == MacWSInputKindConfigureWindow) {
-        return MacWSInputWindowIDForScene(record->sceneID) != 0 &&
-            record->x >= 64.0f && record->y >= 64.0f &&
+        return record->x >= 64.0f && record->y >= 64.0f &&
             record->x <= MACWS_STREAM_MAX_DIMENSION &&
             record->y <= MACWS_STREAM_MAX_DIMENSION &&
             isfinite(record->pressure) &&
             record->pressure >= 0.5f && record->pressure <= 4.0f;
     }
-    if (record->kind == MacWSInputKindCloseWindow) {
-        return MacWSInputWindowIDForScene(record->sceneID) != 0;
-    }
+    if (record->kind == MacWSInputKindCloseWindow) return YES;
     if (record->kind == MacWSInputKindCreateInitialWindow) return YES;
     if (record->kind == MacWSInputKindReopenApplication) return YES;
     if (record->kind == MacWSInputKindOpenDocuments)
         return record->sceneID != 0;
     if (record->kind == MacWSInputKindPerformQuit) return YES;
     if (record->kind == MacWSInputKindRelativePointer) {
-        return MacWSInputWindowIDForScene(record->sceneID) != 0 &&
-            (record->source == MacWSInputSourceIndirectPointer ||
-             record->source == MacWSInputSourceFinger) &&
-            (record->flags & MacWSInputFlagGlobalSystemSurface) == 0 &&
+        return (record->source == MacWSInputSourceIndirectPointer ||
+                record->source == MacWSInputSourceFinger) &&
             isfinite(record->pressure) && isfinite(record->altitude) &&
             fabsf(record->pressure) <= 4096.0f &&
             fabsf(record->altitude) <= 4096.0f &&
@@ -5168,9 +5161,7 @@ static BOOL MacWSInputRecordIsValid(const MacWSInputRecord *record) {
         uint16_t phase = record->flags &
             (MacWSInputFlagGestureBegan | MacWSInputFlagGestureChanged |
              MacWSInputFlagGestureEnded | MacWSInputFlagGestureCancelled);
-        if (!MacWSAppInputIsDockEndpoint() ||
-            (record->flags & MacWSInputFlagGlobalSystemSurface) == 0 ||
-            (record->buttons != MacWSSystemGestureAxisHorizontal &&
+        if ((record->buttons != MacWSSystemGestureAxisHorizontal &&
              record->buttons != MacWSSystemGestureAxisVertical) ||
             record->contactID == 0 || !isfinite(record->pressure) ||
             fabsf(record->pressure) > 2.0f ||
