@@ -170,9 +170,20 @@ $ git diff --check                                                       # exit 
 失败，原因是 `mac_hooks.m` 中的适配器文本与断言不一致；本轮未修改
 `mac_hooks.m`，属**既有基线失败**，不计入本轮回归。
 
-完整 `misc/test_*.py` 套件在本机后台运行，日志为 `/tmp/macws_full_suite.log`；
-期间已观察到与本轮文件无关的既有失败（缺失 fixture、C 片段未声明 `BOOL` 等）。
-未把该套件称为 green。
+完整 `misc/test_*.py` 套件：
+
+```text
+Ran 708 tests in 324.412s
+FAILED (failures=14, errors=5, skipped=14)
+exit 1
+```
+
+失败/错误集中在既有主机 MetalTexel/NoCopy/IOSurface 探针
+（`test_texture_sampling_probe`、`test_texture_stride_probe_contract`、
+`test_iosurface_protection_contract`、`test_nocopy_abi`）、
+`test_vscode_webview_lifecycle` 的 webview 并发用例、`test_metal_diagnostic_hot_path`
+以及上文 `test_atomic_pointer_click` 基线。本轮新增的两个测试与所有 AppInput/
+provider 相关测试均通过；未把该套件称为 green。
 
 ## 5. 未完成/限制
 

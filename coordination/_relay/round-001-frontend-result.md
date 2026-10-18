@@ -63,9 +63,11 @@ Provider control (same synthetic cache-layout fixture):
   (`__LINKEDIT.fileoff 0x4753c1` vs `vmaddr 0x22193c000`; local symbols
   `_CGXSenderCanSynthesizeEvents` / `_audit_token_check_tcc_access`), which
   confirms the conversion gap but is not runtime acceptance.
-- Full `misc/test_*.py` suite was started in the background; observed failures
-  are baseline/environmental (missing fixture, generated C fragment without
-  `BOOL` typedef) and unrelated to these files. It is not claimed green.
+- Full `misc/test_*.py` suite: `Ran 708 tests in 324.412s`,
+  `FAILED (failures=14, errors=5, skipped=14)`, exit 1. Failure families are
+  pre-existing host MetalTexel/NoCopy/IOSurface probes, webview-lifecycle
+  concurrency, Metal diagnostic hot path, and the atomic-pointer baseline;
+  none touches the files in this packet. Not claimed green.
 - `test_atomic_pointer_click` proxy-string failure is pre-existing: its target
   file `libmachook/mac_hooks.m` was not modified by this packet.
 
