@@ -479,8 +479,19 @@ done
 # the same invariant for later workspace starts.
 trust_installed_macho "$ROOTFS/usr/lib/dyld"
 trust_installed_macho "$ROOTFS/usr/lib/libobjc-trampolines.dylib"
-trust_installed_macho \
-    "$ROOTFS/System/Library/Frameworks/CydiaSubstrate.framework/CydiaSubstrate"
+# Publish the package-built macOS provider before admitting the chroot copy.
+# The native /var/jb/Library substrate below is a different owner and is only
+# trusted, never written. A missing rootfs keeps the historical no-rootfs
+# install path; once mounted, a missing framework directory must fail closed
+# instead of creating a shadow tree under the mount point.
+if [ -d "$ROOTFS/System/Library" ]; then
+    bash /var/jb/usr/macOS/bin/macws_publish_substrate.sh || {
+        echo 'macOS Host install failed: cannot publish the CydiaSubstrate provider.' >&2
+        exit 1
+    }
+    trust_installed_macho \
+        "$ROOTFS/System/Library/Frameworks/CydiaSubstrate.framework/CydiaSubstrate" 1 || exit 1
+fi
 trust_installed_macho \
     /var/jb/Library/Frameworks/CydiaSubstrate.framework/CydiaSubstrate
 trust_installed_macho "$ROOTFS/usr/bin/codesign"

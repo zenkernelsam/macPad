@@ -8,7 +8,7 @@ include $(THEOS)/makefiles/common.mk
 SUBPROJECTS += MTLCompilerBypassOSCheck MacWSWindowing MacWSCatalystLaunch MTLSimDriverHost launchdchrootexec autosignd macwsallocd macwshostd macwscontrolprobe macwskeychaind macwsthermal macwslocationd macwsaudiooutd mountdevfs ViewBridgeChrootProxy HIServicesChrootProxy OpenAndSavePanelChrootProxy QuickLookUIServiceChrootProxy DockHelperChrootProxy ExtensionKitChrootProxy SettingsExtensionChrootProxy FileCoordinationChrootProxy FileCoordinationMachBridge GeodChrootProxy WriteConfigChrootProxy LocationdChrootProxy mtl_keepalive MacWSHost MacWSCatalystLauncher SettingsExtensionMetadata misc/PingMTLCompilerService
 SUBPROJECTS += macwsairtools
 # macOS subprojects
-SUBPROJECTS += launchservicesd libmachook macwsinputd macwsdisplayd macwsinteropd macwsworkspacectl macwsneofetch macwstccdprobe
+SUBPROJECTS += launchservicesd libmachook CydiaSubstrateProvider macwsinputd macwsdisplayd macwsinteropd macwsworkspacectl macwsneofetch macwstccdprobe
 
 include $(THEOS_MAKE_PATH)/aggregate.mk
 
@@ -71,7 +71,20 @@ after-stage::
 	@install -m 0644 misc/install_stray_exact_metallib.py \
 		$(THEOS_STAGING_DIR)/usr/macOS/bin/install_stray_exact_metallib.py
 	@install -m 0644 misc/add_macho_load_dylib.py \
-		$(THEOS_STAGING_DIR)/usr/macOS/bin/add_macho_load_dylib.py
+		misc/macws_provider_contract.py \
+		$(THEOS_STAGING_DIR)/usr/macOS/bin/
+	@provider="$(THEOS_OBJ_DIR)/macosx/CydiaSubstrate"; \
+		if [ ! -f "$$provider" ]; then \
+			provider="$(THEOS_PROJECT_DIR)/CydiaSubstrateProvider/.theos/obj/macosx/CydiaSubstrate"; \
+		fi; \
+		test -f "$$provider" || { \
+			echo 'ERROR: staged provider build is missing (CydiaSubstrateProvider).' >&2; \
+			exit 1; \
+		}; \
+		python3 "$(THEOS_PROJECT_DIR)/misc/macws_provider_contract.py" stage \
+			--binary "$$provider" \
+			--destination "$(THEOS_STAGING_DIR)/usr/macOS/Frameworks/CydiaSubstrate.framework" \
+			--lipo lipo
 	@install -m 0644 layout/usr/macOS/bin/prepare_ventura_windowserver.py \
 		$(THEOS_STAGING_DIR)/usr/macOS/bin/prepare_ventura_windowserver.py
 	@install -m 0644 misc/patch_electron_pa_ios_va.py \

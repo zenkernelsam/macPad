@@ -4,11 +4,17 @@ from pathlib import Path
 import plistlib
 import shutil
 import subprocess
+import sys
 import tempfile
 import unittest
 from unittest import mock
 
+HERE = Path(__file__).resolve().parent
+if str(HERE) not in sys.path:
+    sys.path.insert(0, str(HERE))
+
 import macws_artifact_contract as contract
+import provider_test_fixtures as fixtures
 
 
 class ArtifactContract(unittest.TestCase):
@@ -112,6 +118,8 @@ class ArtifactContract(unittest.TestCase):
     def package(self, omitted=None):
         staging = self.root / 'staging'
         for name in contract.ARCHIVE_PATHS:
+            if name.startswith(contract.SUBSTRATE_DIR + '/'):
+                continue
             path = staging / name
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_bytes(plistlib.dumps({'EnvironmentVariables': {'MACWS_TEST': '1'}},
@@ -119,6 +127,7 @@ class ArtifactContract(unittest.TestCase):
                              if name.endswith('.plist') else
                              self.binary.read_bytes() if name == contract.WINDOWING_PATH
                              else name.encode())
+        fixtures.write_bundle(staging / contract.SUBSTRATE_DIR)
         (staging / 'DEBIAN').mkdir()
         (staging / 'DEBIAN/postinst').write_text('true\n')
         (staging / 'DEBIAN/postinst').chmod(0o755)
@@ -159,6 +168,13 @@ class ArtifactContract(unittest.TestCase):
     @unittest.skipUnless(shutil.which('dpkg-deb'), 'dpkg-deb required')
     def test_missing_audio_job_stops_installation(self):
         name = 'var/jb/usr/macOS/gui-launchd/com.macwsguide.audio-output.plist'
+        package, staging = self.package(omitted=name)
+        with self.assertRaisesRegex(ValueError, 'missing runtime payload'):
+            contract.verify_package(package, staging, self.binary)
+
+    @unittest.skipUnless(shutil.which('dpkg-deb'), 'dpkg-deb required')
+    def test_missing_provider_companion_stops_installation(self):
+        name = contract.SUBSTRATE_ARM64E_PATH
         package, staging = self.package(omitted=name)
         with self.assertRaisesRegex(ValueError, 'missing runtime payload'):
             contract.verify_package(package, staging, self.binary)

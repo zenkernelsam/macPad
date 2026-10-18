@@ -94,6 +94,7 @@ MACHO_PATCHER="/var/jb/usr/macOS/bin/set_macos_version.py"
 OBJC_TRAMPOLINE_PATCHER="/var/jb/usr/macOS/bin/ensure_objc_trampolines_arm64.py"
 LIBMACHOOK="/var/jb/usr/macOS/lib/libmachook.dylib"
 LIBMACHOOK_ARM64="/var/jb/usr/macOS/lib/libmachook_arm64.dylib"
+PROVIDER_TARGET="$ROOTFS/System/Library/Frameworks/CydiaSubstrate.framework/CydiaSubstrate"
 LIPO="/var/jb/usr/bin/lipo"
 
 # Keep App-driven repair self-contained. Package installation normally fixes
@@ -138,6 +139,16 @@ for lib in "$LIBMACHOOK" "$LIBMACHOOK_ARM64"; do
         /var/jb/usr/bin/ldid -S"$ENT" -M "$lib" || exit 1
     fi
 done
+
+# Publish the same package-owned provider the package installed, before the
+# trustcache snapshot below. The publisher reconstructs the fat image from the
+# two thin companions, signs with the existing project contract, atomically
+# replaces the chroot file on a fresh inode, and verifies live admission of
+# both arm slices. Never fall back to the native /var/jb/Library substrate.
+bash /var/jb/usr/macOS/bin/macws_publish_substrate.sh || {
+    echo '[ERROR] cannot publish the CydiaSubstrate provider' >&2
+    exit 1
+}
 
 # ─── Trustcache optimization: cache existing hashes ─────────────────────────
 # Dump trustcache once at startup to avoid repeated jbctl calls
@@ -189,6 +200,21 @@ trust_cdhash() {
     # Add to cache so we don't re-add duplicates within this run
     echo "$cdhash" >> "$TRUSTCACHE_FILE"
 }
+
+# Mandatory provider admission: a missing CodeDirectory or a genuinely failed
+# trustcache add must stop the repair rather than leave a broken chroot image.
+for provider_arch in arm64 arm64e; do
+    provider_hash=$(ldid -arch "$provider_arch" -h "$PROVIDER_TARGET" 2>/dev/null \
+        | grep CDHash= | cut -c8-)
+    [ -n "$provider_hash" ] || {
+        echo "[ERROR] provider has no $provider_arch CodeDirectory: $PROVIDER_TARGET" >&2
+        exit 1
+    }
+    trust_cdhash "$provider_hash" "$PROVIDER_TARGET" "$provider_arch" || {
+        echo "[ERROR] provider trust admission failed ($provider_arch)" >&2
+        exit 1
+    }
+done
 
 # Sign a binary with the project entitlements AND register all its CDHashes.
 # Optimized: skip re-signing if all per-arch hashes are already trusted.

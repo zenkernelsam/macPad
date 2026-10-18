@@ -16,6 +16,8 @@ import subprocess
 import sys
 import tarfile
 
+import macws_provider_contract as provider_contract
+
 
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMA = 1
@@ -36,6 +38,11 @@ PACKAGE_PATHS = (
     'var/jb/usr/macOS/bin/macws_metal_cache_migration.py',
     'var/jb/usr/macOS/bin/macws_refresh_managed_job.py',
     'var/jb/usr/macOS/bin/ensure_settings_extensions_runtime.sh',
+    'var/jb/usr/macOS/bin/macws_provider_contract.py',
+    'var/jb/usr/macOS/bin/macws_publish_substrate.sh',
+    'var/jb/usr/macOS/Frameworks/CydiaSubstrate.framework/CydiaSubstrate',
+    'var/jb/usr/macOS/Frameworks/CydiaSubstrate.framework/CydiaSubstrate.arm64',
+    'var/jb/usr/macOS/Frameworks/CydiaSubstrate.framework/CydiaSubstrate.arm64e',
     'var/jb/usr/macOS/gui-launchd/com.macwsguide.coreaudiod.plist',
     'var/jb/usr/macOS/gui-launchd/com.macwsguide.audiocomponentregistrar.plist',
     'var/jb/usr/macOS/gui-launchd/com.macwsguide.audio-output.plist',
@@ -61,6 +68,10 @@ SOURCE_PAYLOADS = {
         'layout/usr/macOS/bin/macws_refresh_managed_job.py',
     'var/jb/usr/macOS/bin/ensure_settings_extensions_runtime.sh':
         'layout/usr/macOS/bin/ensure_settings_extensions_runtime.sh',
+    'var/jb/usr/macOS/bin/macws_provider_contract.py':
+        'misc/macws_provider_contract.py',
+    'var/jb/usr/macOS/bin/macws_publish_substrate.sh':
+        'layout/usr/macOS/bin/macws_publish_substrate.sh',
     'var/jb/usr/macOS/bin/ensure_metal2metal_compat.sh':
         'layout/usr/macOS/bin/ensure_metal2metal_compat.sh',
     'var/jb/usr/macOS/bin/ensure_office_metal2metal.py':
@@ -171,8 +182,19 @@ def verify(root: Path, binary: Path, manifest_path: Path) -> None:
                          + ', '.join(changed))
 
 
+SUBSTRATE_DIR = 'var/jb/usr/macOS/Frameworks/CydiaSubstrate.framework'
+SUBSTRATE_PATH = SUBSTRATE_DIR + '/CydiaSubstrate'
+SUBSTRATE_ARM64_PATH = SUBSTRATE_DIR + '/CydiaSubstrate.arm64'
+SUBSTRATE_ARM64E_PATH = SUBSTRATE_DIR + '/CydiaSubstrate.arm64e'
+
+
 def verify_package(package: Path, staging: Path, binary: Path,
                    root: Path | None = None) -> None:
+    # The provider is a load-bearing libmachook dependency. Reject a staged
+    # bundle before hashing the archive so a missing slice, wrong platform or
+    # wrong LC_ID_DYLIB cannot be masked by a self-consistent package.
+    provider_contract.verify_bundle(staging / SUBSTRATE_DIR,
+                                    strict_slice_hashes=True)
     expected = {name: sha256(staging / name) for name in ARCHIVE_PATHS}
     if root is not None:
         for name, source in SOURCE_PAYLOADS.items():

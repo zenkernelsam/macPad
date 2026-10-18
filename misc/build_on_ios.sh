@@ -74,6 +74,7 @@ if [ "$FAST" = "1" ] && [ "$FAST_FORCE" != "1" ]; then
                      SettingsExtensionMetadata misc/PingMTLCompilerService \
                      macwsinputd macwsdisplayd macwsinteropd \
                      macwsworkspacectl macwsneofetch launchservicesd \
+                     CydiaSubstrateProvider misc/cydiasubstrate_macos.m \
                      Makefile control layout include config \
                      -type f -newer "$MARKER" 2>/dev/null \
                 | grep -v '/\._' | head -3)
