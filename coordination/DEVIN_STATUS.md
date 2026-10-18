@@ -816,3 +816,87 @@ trustcache readd: `{"added":7,"files":6,"hashes":7}`.
   remains 1000 (registry lookup miss).
 - MSHookMessageEx still no-op; no generic hook engine planned.
 - WS currently running (PID ~45786) for continued bounded experiments.
+
+# R008 delivery — 2026-10-18 (backend)
+
+Candidate = `HEAD 6e7035351b77d97537cb7d228ab36bb7a1f6af53` + the R008
+patch committed with this delivery. The shared working tree also held
+another worker's uncommitted AppInput/provider changes; they were
+excluded from the accepted package by building in a clean worktree at
+HEAD. The commit contains only the files listed below.
+
+## Changed files and source hashes
+
+- `layout/usr/macOS/bin/macos_gui.sh` `471fc752ed72d0a376ef747d834530607c484839b1d2af2585a4eb3fab6ebc9d`
+- `layout/DEBIAN/postinst` `c45c1d366070966b3b1ac57cca3379d07c4589b3857dda3f9d759dbe07c3b202`
+- `layout/usr/macOS/bin/postinst.sh` `ed42f4782563e1110f0d86fc0d0a279b48eeee9b4c7cb4013e15d58948fe2df1`
+- `misc/test_tccd_lifecycle_contract.py` `11dd30f3c225b1c9fbc12bde53184ad387a1a57c85bdf1f56d39473b0420f8dc`
+- `MTLCompilerBypassOSCheck/Tweak.x` `d1b7bc89a058e9925cf894134c2ea4dbbe7e16fa62e1e45ed48944aab0446fcc`
+- `docs/evidence/r008-tccd-transport-repro-20261015.md`,
+  `coordination/DEVIN_STATUS.md`, `coordination/artifacts/R008-*`.
+
+## What the six edge fixes now do
+
+`tccd_transport_state` is tri-state (0 ready / 1 observed-broken /
+2 unknown). The exact `<domain>/<label> = {` header must match, the
+endpoint token is searched only inside the job's own `services`/
+`endpoints` block, and four definite "Could not find service" answers
+are required to call a job absent. An unknown observation never
+unloads/removes a live job. The cold-trust fast path requires every
+supplied path to exist, every manifest entry to have a non-empty valid
+CodeDirectory set, and `jbctl trustcache info` to exit 0 before its
+stdout counts as membership. `trust_installed_macho <path> 1` proves
+live admission, and both postinst entry points propagate a failed
+query/missing CDHash. The tccd merge now applies the project profile
+last, so the reviewed union survives; an array-scoped parser
+distinguishes `com.apple.private.tcc.allow` from
+`check-by-audit-token`.
+
+Verification: reviewer `R008-review-edge-repro.py` six cases all exit 1;
+`test_tccd_lifecycle_contract.py` 27/27; full suite 710 tests,
+14 failures / 5 errors / 14 skipped (known hardware/Metal and the other
+worker's in-progress tests; not a green-suite claim).
+
+## Build / deploy
+
+- Host cross-build (on-device Theos absent): Apple ld64, Xcode 26.2 SDK,
+  `MacWSWindowing` artifact `d416dffe…` (253 auth __cfstring, 0 plain,
+  rootless `@rpath/CydiaSubstrate`). `MTLCompilerBypassOSCheck/Tweak.x`
+  got a portability include fix (`<stdatomic.h>`, real `<xpc/xpc.h>`).
+- Package `e1370e00e0680f2650026a07417cf3d1917526be5f1bbf6751aedc6cd4669e21`
+  (6,024,166 bytes), PACKAGE-VERIFY-OK 29 payloads, device
+  `dpkg-deb -I` exit 0, `dpkg -i` + postinst exit 0.
+- Deployed thin libmachook: arm64e `9a511953…`, arm64 `151a2175…`
+  (both `/var/jb/usr/macOS/lib` and rootfs copies identical);
+  `macwstccdprobe` `430e3925…`; scripts match the source hashes above.
+- `odcctools` (declared dependency, provides `lipo`) was installed with
+  `--force-depends`; its `llvm-dev`/`libtapi` deep deps were not
+  installed because the extracted `lipo` is standalone. Recorded.
+
+## Actual runtime evidence (iPad13,11 / 20D47 / 22F82)
+
+- Cold start `start coexist --no-vnc` exit 0 in 54 s: tccd protocol
+  round-trip ready, endpoint ready (pid 42661), WS stable (42862).
+- Attributable preflight (probe context): caller pid 43148 uid 0, audit
+  `ffffffff…13fd7`, connection `com.apple.macosbooter.tccd.system`,
+  7-key request, reply is a genuine **empty dictionary** (`count=0`,
+  no result/preflight_unknown/restricted/do_not_cache). SPI result 1.
+  This is a missing-key default, not an explicit policy denial.
+- Recovery: kill WS 42862 → replacement 43210; watchdog reconnects,
+  tccd 42661 is retired (absent for ~25 s) and republished as 43545
+  with a new round-trip. F1 ordering proven on the real path.
+- Input remains unaccepted: `SLSPostEventRecord -> rc=1002` before and
+  after recovery; no visible change.
+- Final state: stop exit 0, no chroot WS/tccd/VNC/debugger/probe; both
+  diagnostic marker namespaces absent; native tccd 883 / SpringBoard 872
+  / backboardd 905 alive; thermal nominal 35.50 C.
+
+## Open limits
+
+- VNC-enabled cold start (`MACWS_VNC_SHARE=1`) stalls after the AGX
+  probes through 90 s and 300 s with the same package; `--no-vnc` is the
+  accepted path. This is a separate open issue, not R008 transport.
+- No WS-sender reply dictionary: production preflight rejects
+  `MACWS_LSXPC_TRACE` in the WS plist and no on-device debugger exists.
+- No final-composite pixel witness in `--no-vnc` mode.
+- Push authentication remains unavailable; commit is local only.

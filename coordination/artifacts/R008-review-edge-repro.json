@@ -1,0 +1,50 @@
+{
+  "method": "Candidate functions; only absolute external-tool paths redirected to fixture executables. No device use.",
+  "gui_sha256": "471fc752ed72d0a376ef747d834530607c484839b1d2af2585a4eb3fab6ebc9d",
+  "pkg_sha256": "c45c1d366070966b3b1ac57cca3379d07c4589b3857dda3f9d759dbe07c3b202",
+  "results": [
+    {
+      "case": "endpoint_token_only_in_environment",
+      "actual_exit": 1,
+      "stdout": "LOG Starting macOS system tccd (private endpoint)...\nLOG ERROR: macOS system tccd transport is not ready.\n",
+      "stderr": "",
+      "launchctl_calls": "list com.macwsguide.tccd-system\nprint system/com.macwsguide.tccd-system\nprint user/501/com.macwsguide.tccd-system\nunload /fixture/tccd.plist\nremove com.macwsguide.tccd-system\nload /fixture/tccd.plist\nlist com.macwsguide.tccd-system\nprint system/com.macwsguide.tccd-system\nprint user/501/com.macwsguide.tccd-system\n"
+    },
+    {
+      "case": "observation_error_still_unloads_job",
+      "actual_exit": 1,
+      "stdout": "LOG ERROR: macOS system tccd state could not be observed; leaving the existing job untouched.\n",
+      "stderr": "",
+      "launchctl_calls": "list com.macwsguide.tccd-system\nprint system/com.macwsguide.tccd-system\nprint user/501/com.macwsguide.tccd-system\nprint user/0/com.macwsguide.tccd-system\nprint gui/501/com.macwsguide.tccd-system\n"
+    },
+    {
+      "case": "missing_mandatory_path",
+      "expected_exit": "nonzero",
+      "actual_exit": 1,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "mandatory_target_empty_codes",
+      "expected_exit": "nonzero",
+      "actual_exit": 1,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "trust_query_nonzero_with_partial_stdout",
+      "expected_exit": "nonzero",
+      "actual_exit": 1,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "mandatory_signature_trust_failure_swallowed",
+      "expected_exit": "nonzero",
+      "actual_exit": 1,
+      "stdout": "",
+      "stderr": "/var/folders/h7/w566mw3j7339g6mrhs47tw180000gn/T/r008-review-akzcbmju/sign-fixture.sh: line 110: tcc_allow_contains: command not found\nERROR: trustcache membership query failed for /var/folders/h7/w566mw3j7339g6mrhs47tw180000gn/T/r008-review-akzcbmju/rootfs/System/Library/PrivateFrameworks/TCC.framework/Support/tccd.macws-new.22773\n",
+      "notes": "Fake ldid supplies only the two marker keys; fake jbctl always fails."
+    }
+  ]
+}

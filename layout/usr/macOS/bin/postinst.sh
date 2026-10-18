@@ -151,16 +151,41 @@ is_trusted() {
     grep -qi "$cdhash" "$TRUSTCACHE_FILE" 2>/dev/null
 }
 
+# True only when the named service is inside the top-level
+# com.apple.private.tcc.allow array.  The same name also appears in
+# com.apple.private.tcc.manager.check-by-audit-token, which is a different
+# capability, so a plain grep cannot prove the union contract (R008).
+tcc_allow_contains() {
+    awk -v want="$1" '
+        /<key>com\.apple\.private\.tcc\.allow<\/key>/ { inblk = 1; next }
+        inblk {
+            if (index($0, "<string>" want "</string>")) found = 1
+            if ($0 ~ /<\/array>/) inblk = 0
+        }
+        END { exit(found ? 0 : 1) }
+    '
+}
+
 trust_cdhash() {
     local cdhash="$1"
     local path="$2"
     local arch="$3"
+    local live_info=""
     if is_trusted "$cdhash"; then
         echo "[SKIP] $path [$arch]: $cdhash (already trusted)"
         return 0
     fi
     echo "[ADD]  $path [$arch]: $cdhash"
-    jbctl trustcache add "$cdhash"
+    if ! jbctl trustcache add "$cdhash"; then
+        # A backend may report an already-present hash as a failure.  Only
+        # accept that case after observing live membership; never record a
+        # genuinely failed admission as trusted for the rest of this run.
+        live_info=$(jbctl trustcache info 2>/dev/null) || live_info=""
+        if ! printf '%s\n' "$live_info" | grep -qi "$cdhash"; then
+            echo "[FAIL] $path [$arch]: $cdhash (jbctl trustcache add failed)" >&2
+            return 1
+        fi
+    fi
     # Add to cache so we don't re-add duplicates within this run
     echo "$cdhash" >> "$TRUSTCACHE_FILE"
 }
@@ -391,6 +416,7 @@ sign_and_trustcache_merging_native_entitlements() {
     local identifier="$4"
     local explicit_requirement="${5:-0}"
     local strip_keys="${6:-}"
+    local final_entitlements="${7:-}"
     [ -f "$path" ] || return 0
     [ -f "$native_entitlements" ] || return 1
 
@@ -406,6 +432,11 @@ sign_and_trustcache_merging_native_entitlements() {
             dominated=0
         fi
     done
+    if [ -n "$final_entitlements" ] &&
+       ! printf '%s\n' "$current_entitlements" |
+            tcc_allow_contains 'kTCCServiceListenEvent'; then
+        dominated=0
+    fi
     if [ "$explicit_requirement" -eq 1 ]; then
         ldid -q "$path" 2>/dev/null | strings |
             grep -Fqx "$identifier" || requirement_valid=0
@@ -486,6 +517,13 @@ PYEOF
         }
         rm -f "$merged_ent"
     fi
+    # Optional final admission profile for a service whose reviewed contract
+    # is the project/native UNION.  The native passes above set overlapping
+    # arrays to the native value; this last -M merge restores the project
+    # entries (e.g. kTCCServiceListenEvent) while preserving native-only keys.
+    if [ -n "$final_entitlements" ]; then
+        ldid -I"$identifier" -S"$final_entitlements" -M "$path" || return 1
+    fi
     current_entitlements=$(ldid -e "$path" 2>/dev/null || true)
     printf '%s\n' "$current_entitlements" |
         grep -Fq '<key>com.apple.private.graphics-restart-no-kill</key>' || return 1
@@ -500,7 +538,8 @@ PYEOF
     fi
     for arch in arm64 arm64e x86_64; do
         h=$(ldid -arch "$arch" -h "$path" 2>/dev/null | grep CDHash= | cut -c8-)
-        [ -n "$h" ] && trust_cdhash "$h" "$path" "$arch"
+        [ -n "$h" ] || continue
+        trust_cdhash "$h" "$path" "$arch" || return 1
     done
     return 0
 }
@@ -1460,12 +1499,15 @@ if [ -f "$tccd_target" ]; then
            grep -Fq '<key>com.apple.private.graphics-restart-no-kill</key>' &&
        printf '%s\n' "$tccd_current" |
            grep -Fq '<key>com.apple.private.notificationcenterui.tcc</key>' &&
+       printf '%s\n' "$tccd_current" |
+           tcc_allow_contains 'kTCCServiceListenEvent' &&
        ldid -h "$tccd_target" 2>/dev/null |
            grep -Fqx 'Identifier=com.apple.tccd'; then
         for tccd_arch in arm64 arm64e x86_64; do
             tccd_h=$(ldid -arch "$tccd_arch" -h "$tccd_target" 2>/dev/null |
                 grep CDHash= | cut -c8-)
-            [ -n "$tccd_h" ] && trust_cdhash "$tccd_h" "$tccd_target" "$tccd_arch"
+            [ -n "$tccd_h" ] || continue
+            trust_cdhash "$tccd_h" "$tccd_target" "$tccd_arch" || exit 1
         done
     else
         [ -e "${tccd_target}.macws-original" ] ||
@@ -1476,7 +1518,16 @@ if [ -f "$tccd_target" ]; then
             "$tccd_temporary" \
             "$TCCD_NATIVE_ENT" \
             '<key>com.apple.private.notificationcenterui.tcc</key>' \
-            'com.apple.tccd' || {
+            'com.apple.tccd' \
+            0 '' "$ENT" || {
+            rm -f "$tccd_temporary"
+            exit 1
+        }
+        # The reviewed tccd contract is the project/native UNION: the final
+        # project pass must have restored ListenEvent beside the native
+        # SystemPolicyAllFiles entry.
+        ldid -e "$tccd_temporary" 2>/dev/null |
+            tcc_allow_contains 'kTCCServiceListenEvent' || {
             rm -f "$tccd_temporary"
             exit 1
         }

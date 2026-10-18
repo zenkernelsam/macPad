@@ -242,3 +242,93 @@ every device mutation/observation below is queued, not skipped:
   closed (no duplicate manager risk, at the cost of a reported start
   failure rather than silent reuse — matching the existing fail-closed
   convention).
+
+## 2026-10-18 — reviewer edge closure (local, no device mutation)
+
+Re-ran the unmodified reviewer script
+`coordination/artifacts/R008-review-edge-repro.py` (candidate functions,
+fake OS tools only). All six saved defects now fail closed:
+
+| Case | Before | After | What changed |
+| --- | ---: | ---: | --- |
+| `endpoint_token_only_in_environment` | 0 | **1** | Endpoint token is searched only inside the job's own `services`/`endpoints` block; the `environment` block is excluded. |
+| `observation_error_still_unloads_job` | 1 | **1** | `tccd_transport_state` returns 0 ready / 1 observed-broken / 2 unknown. Warm path unloads only on 1; a failed lookup (2) leaves the job untouched. |
+| `missing_mandatory_path` | 0 | **1** | Every supplied prerequisite path must be an existing file or directory; an unknown path-shaped argument fails the fast path. |
+| `mandatory_target_empty_codes` | 0 | **1** | A manifest entry with no usable, non-empty CodeDirectory set cannot satisfy coverage. |
+| `trust_query_nonzero_with_partial_stdout` | 0 | **1** | `jbctl trustcache info` must exit 0 before its stdout is treated as a complete membership answer. |
+| `mandatory_signature_trust_failure_swallowed` | 0 | **1** | `trust_installed_macho <path> 1` verifies live membership after admission; `ensure_tccd_system_signature` and every native service propagate a failed query/missing CDHash. The deep postinst's `trust_cdhash` no longer records a failed `jbctl add` as trusted. |
+
+Readiness details: `launchctl print` must start with the exact
+`<domain>/<label> = {` header; four definite "Could not find service"
+answers are required to call a job absent. Cold-path reload is still
+allowed for an observed-but-broken job (matching
+`test_warm_no_endpoint_is_not_ready`), while an observation error is
+neither success nor permission to destroy the job.
+
+Manifest fast path: the optional `$ROOTFS$VNC_BIN`, `$ROOTFS/tmp/GlassDemo`
+and `$ROOTFS/opt/local/libexec/macws-cursor` are only supplied when
+present; the mandatory tccd/WindowServer/dyld/packaged targets remain
+unconditional.
+
+Local verification (host):
+
+- `python3 misc/test_tccd_lifecycle_contract.py` — **27/27 pass**,
+  including new fixtures for the environment false-ready, the
+  observation-error no-restart invariant, the three trust-manifest
+  edges, the strict-trust positive control and the array-scoped
+  `tcc.allow` parser.
+- Full `misc/test_*.py` suite: 710 tests, **14 failures / 5 errors /
+  14 skipped**. The failures are the previously known hardware/Metal
+  probes and in-progress AppInput/provider tests in the shared working
+  tree; the tccd lifecycle module passes inside the suite. This is a
+  recorded baseline, not a green-suite claim.
+- Final source hashes: `macos_gui.sh`
+  `471fc752ed72d0a376ef747d834530607c484839b1d2af2585a4eb3fab6ebc9d`,
+  `layout/DEBIAN/postinst`
+  `c45c1d366070966b3b1ac57cca3379d07c4589b3857dda3f9d759dbe07c3b202`,
+  `layout/usr/macOS/bin/postinst.sh`
+  `ed42f4782563e1110f0d86fc0d0a279b48eeee9b4c7cb4013e15d58948fe2df1`,
+  `misc/test_tccd_lifecycle_contract.py`
+  `11dd30f3c225b1c9fbc12bde53184ad387a1a57c85bdf1f56d39473b0420f8dc`,
+  `MTLCompilerBypassOSCheck/Tweak.x`
+  `d1b7bc89a058e9925cf894134c2ea4dbbe7e16fa62e1e45ed48944aab0446fcc`.
+- Host build portability (not a runtime change): the host Theos resolves
+  `latest` to Xcode's iPhoneOS 26.2 SDK. `MTLCompilerBypassOSCheck/Tweak.x`
+  now includes `<stdatomic.h>` and uses the real `<xpc/xpc.h>` when
+  present, falling back to the existing `void *` ABI declarations on the
+  old SDK. Behavior and call sites are unchanged.
+
+Device validation, cold/recovery, reply capture and input acceptance for
+this candidate are recorded in
+`coordination/artifacts/R008-device-acceptance-20261018.json`. Summary:
+
+- Package built from a clean `HEAD` worktree + this patch (the shared tree
+  also held another worker's uncommitted AppInput/provider changes, which
+  were excluded), `dpkg -i` and full postinst exit 0, both thin
+  libmachook slices and the Apple-ld64 MacWSWindowing artifact verified.
+- Cold start `start coexist --no-vnc` exit 0: tccd protocol round-trip
+  ready, endpoint in `user/501`, WS stable. The VNC-enabled
+  (`MACWS_VNC_SHARE=1`) start stalls after the AGX probes and is recorded
+  as a separate open issue, not acceptance.
+- Attributable preflight: caller pid/uid/audit token, connection
+  `com.apple.macosbooter.tccd.system`, a 7-key request and a genuine
+  **empty dictionary reply** (`count=0`, no `result`/`preflight_unknown`/
+  `restricted`/`do_not_cache` key), SPI result 1. This is a missing-key
+  default, **not** an explicit policy refusal.
+- Recovery: killing WS 42862 produced replacement 43210; the dependent
+  stop removed tccd and the repair path republished it as PID 43545 with
+  a new protocol round-trip — F1 ordering witnessed on the real path.
+- Input still returns `SLSPostEventRecord -> rc=1002`; no visible input
+  is claimed. WS-sender reply capture remains unavailable: the production
+  preflight rejects `MACWS_LSXPC_TRACE` in the WS plist and no on-device
+  debugger is installed, so only the probe-context schema is asserted.
+
+Union correction from the device run: the package's original merge order
+(project → native → native) silently dropped `kTCCServiceListenEvent`
+from `com.apple.private.tcc.allow`; the final native pass replaced the
+array. The fix applies the project profile once more, last, through
+`ensure_chroot_native_service_signature`'s optional final profile and the
+deep-repair helper's seventh argument. The deployed tccd now reports 124
+keys with `allow = [kTCCServiceListenEvent,
+kTCCServiceSystemPolicyAllFiles]` and the native
+`notificationcenterui.tcc` key, identifier `com.apple.tccd`.

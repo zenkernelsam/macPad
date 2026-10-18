@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-18T15:26:55.449912+08:00",
+  "finished": "2026-10-18T15:27:41.760943+08:00",
+  "command": "export PATH=/var/jb/usr/bin:/var/jb/usr/sbin:/usr/bin:/usr/sbin:/bin:/sbin; sha256sum /var/tmp/macws-r008-final.deb; export DEBIAN_FRONTEND=noninteractive; MACWS_POSTINST_NO_RESPRING=1 /var/jb/usr/bin/dpkg -i /var/tmp/macws-r008-final.deb 2>&1 | grep -E \"Setting up|Synchronized|ERROR|error\"; echo FINAL_INSTALL_RC=$?; for f in /var/jb/usr/macOS/lib/libmachook.dylib /var/jb/usr/macOS/lib/libmachook_arm64.dylib; do lipo -info \"$f\"; sha256sum \"$f\"; done",
+  "command_sha256": "246c8c69f825c0916ac5f964414868e58bf9a336ff060cc2a4c8d0debdb01e8e",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "e1370e00e0680f2650026a07417cf3d1917526be5f1bbf6751aedc6cd4669e21  /var/tmp/macws-r008-final.deb\nSetting up com.kdt.macosbooter (0.3.4) ...\nSynchronized package runtime into the mounted macOS rootfs.\nFINAL_INSTALL_RC=0\nNon-fat file: /var/jb/usr/macOS/lib/libmachook.dylib is architecture: arm64e\n9a5119534d3dd40c3353efa8cbf888392b3a020c63785377a498cc466c572819  /var/jb/usr/macOS/lib/libmachook.dylib\nNon-fat file: /var/jb/usr/macOS/lib/libmachook_arm64.dylib is architecture: arm64\n151a2175c0b9bacb571cd9798c7204e4cd17922ed875823dc014593dd332bced  /var/jb/usr/macOS/lib/libmachook_arm64.dylib\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

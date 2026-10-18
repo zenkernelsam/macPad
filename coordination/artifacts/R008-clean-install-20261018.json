@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-18T15:00:20.182945+08:00",
+  "finished": "2026-10-18T15:01:13.006733+08:00",
+  "command": "export PATH=/var/jb/usr/bin:/var/jb/usr/sbin:/usr/bin:/usr/sbin:/bin:/sbin; sha256sum /var/tmp/macws-r008-clean.deb; export DEBIAN_FRONTEND=noninteractive; MACWS_POSTINST_NO_RESPRING=1 /var/jb/usr/bin/dpkg -i /var/tmp/macws-r008-clean.deb 2>&1 | grep -E \"Setting up|tccd|ERROR|error|Synchronized|DPKG\"; echo CLEAN_INSTALL_RC=$?",
+  "command_sha256": "5bc94fe2abb57e1925051f325f307be90f3c461112ed19fb081685c8a09ab8df",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "e1370e00e0680f2650026a07417cf3d1917526be5f1bbf6751aedc6cd4669e21  /var/tmp/macws-r008-clean.deb\nSetting up com.kdt.macosbooter (0.3.4) ...\nSynchronized package runtime into the mounted macOS rootfs.\nCLEAN_INSTALL_RC=0\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-18T15:29:47.306410+08:00",
+  "finished": "2026-10-18T15:29:59.795776+08:00",
+  "command": "export PATH=/var/jb/usr/bin:/var/jb/usr/sbin:/usr/bin:/usr/sbin:/bin:/sbin; bash /var/jb/usr/macOS/bin/macos_gui.sh stop 2>&1 | tail -4; echo STOP_RC=$?; sleep 2; D=/var/mobile/macws_r008_cleanup_20261018; [ -e /var/tmp/macws-r008-final.deb ] && mv /var/tmp/macws-r008-final.deb \"$D/scratch/\"; cp -p /var/mobile/macws_r008_preinstall_20261018/WindowServer.package.plist /var/jb/usr/macOS/LaunchDaemons/com.apple.WindowServer.plist; echo \"=== procs\"; ps -axo pid,command | grep -E \"WindowServer|tccd system|OSXvnc|launchdchrootexec|lldb|debugserver|tmux|macos_ws_event|macwstccdprobe\" | grep -v grep; echo \"=== markers\"; ls -ld /tmp/macws_runtime_diagnostics /var/mnt/rootfs/tmp/macws_runtime_diagnostics 2>&1; echo \"=== plist\"; sha256sum /var/jb/usr/macOS/LaunchDaemons/com.apple.WindowServer.plist; echo \"=== native\"; ps -p 883 -o pid=; ps -p 872 -o pid=; ps -p 905 -o pid=; /var/jb/usr/macOS/bin/macwsthermal",
+  "command_sha256": "3ae70b9bad350ee07bc916e3806081f1f13b522d3252a860b6c7fce9b92f5821",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "[macos_gui] Cleaning up previous macOS GUI services...\n[macos_gui] Cleanup done.\n[macos_gui] Restoring iOS (SpringBoard / backboardd)...\n[macos_gui] Stopped. The iPad is back on iOS.\nSTOP_RC=0\n=== procs\n=== markers\nls: cannot access '/tmp/macws_runtime_diagnostics': No such file or directory\nls: cannot access '/var/mnt/rootfs/tmp/macws_runtime_diagnostics': No such file or directory\n=== plist\ncac6829f727db3780f99c39527464fdfe25f8cf8edd5c6318ff679c24fc82bbb  /var/jb/usr/macOS/LaunchDaemons/com.apple.WindowServer.plist\n=== native\n  883\n  872\n  905\nthermal-state=nominal raw=0 low-power=no battery-temp-centic=3550 virtual-temp-centic=3550 effective-temp-centic=3550 uptime=48246.297\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

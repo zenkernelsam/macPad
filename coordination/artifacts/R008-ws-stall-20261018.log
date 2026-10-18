@@ -1,0 +1,24 @@
+MACPAD_SSH_EXIT=0 timeout=0
+[launchdchrootexec] target=/System/Library/PrivateFrameworks/SkyLight.framework/Resources/WindowServer arch=arm64 insert=/usr/local/lib/libmachook_arm64.dylib
+launchd service = UIKitApplication:com.macwsguide.windowserver
+#### MACWS-CTOR-CANARY InitStuff entered
+MACWSHook: REFUSED no permit for target
+MACWSHook: REFUSED no permit for target
+MACWSHook: REFUSED no permit for target
+MACWSHook: REFUSED no permit for target
+MACWSHook: REFUSED no permit for target
+MACWSHook: REFUSED no permit for target
+MACWSHook: REFUSED no permit for target
+MACWSHook: REFUSED no permit for target
+MACWSHook: REFUSED no permit for target
+MACWSHook: REFUSED no permit for target
+MACWSHook: REFUSED no permit for target
+MACWSHook: REFUSED no permit for target
+#### MACWS-CTOR-CANARY InitStuff done
+MACWSHook: REFUSED no permit for target
+MACWSHook: REFUSED no permit for target
+MACWSHook: REFUSED no permit for target
+MACWSHook: REFUSED no permit for target
+#### AGX device-info ABI probe conn=70407 requested=0x78 actual=0x78 result=0xe00002c2 fallback=0x70 actual=0x70 result=0 selected=legacy-0x70
+#### AGX device-info ABI probe conn=80899 requested=0x78 actual=0x78 result=0xe00002c2 fallback=0x70 actual=0x70 result=0 selected=legacy-0x70
+---ENV---

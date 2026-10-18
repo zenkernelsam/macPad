@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-18T15:26:43.863678+08:00",
+  "finished": "2026-10-18T15:26:44.587295+08:00",
+  "command": "echo \"=== plist\"; sha256sum /var/jb/usr/macOS/LaunchDaemons/com.apple.WindowServer.plist /var/mobile/macws_r008_preinstall_20261018/WindowServer.package.plist; echo \"=== markers\"; ls -ld /tmp/macws_runtime_diagnostics /var/mnt/rootfs/tmp/macws_runtime_diagnostics 2>&1; echo \"=== procs\"; ps -axo pid,command | grep -E \"WindowServer|tccd system|OSXvnc|launchdchrootexec|lldb|debugserver|tmux|macos_ws_event|macwstccdprobe\" | grep -v grep; echo \"=== native\"; ps -p 883 -o pid=,etime=,command=; ps -p 872 -o pid=,etime=,command=; ps -p 905 -o pid=,etime=,command=; /var/jb/usr/macOS/bin/macwsthermal; echo \"=== dpkg\"; /var/jb/usr/bin/dpkg -s com.kdt.macosbooter 2>/dev/null | grep -E \"Status|Version\"; /var/jb/usr/bin/dpkg -s odcctools 2>/dev/null | grep -E \"Status|Version\"; echo \"=== crashes\"; ls -t /var/mobile/Library/Logs/CrashReporter/ | grep -c WindowServer; ls -t /var/mobile/Library/Logs/CrashReporter/ | head -3",
+  "command_sha256": "852d1ee4d6e70f03259045db011c9e0f8d2b299476548266354dee6b17655558",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "=== plist\ncac6829f727db3780f99c39527464fdfe25f8cf8edd5c6318ff679c24fc82bbb  /var/jb/usr/macOS/LaunchDaemons/com.apple.WindowServer.plist\ncac6829f727db3780f99c39527464fdfe25f8cf8edd5c6318ff679c24fc82bbb  /var/mobile/macws_r008_preinstall_20261018/WindowServer.package.plist\n=== markers\nls: cannot access '/tmp/macws_runtime_diagnostics': No such file or directory\nls: cannot access '/var/mnt/rootfs/tmp/macws_runtime_diagnostics': No such file or directory\n=== procs\n=== native\n  883 02:59:56 /System/Library/PrivateFrameworks/TCC.framework/Support/tccd\n  872 02:59:56 /System/Library/CoreServices/SpringBoard.app/SpringBoard\n  905 02:59:56 /usr/libexec/backboardd\nthermal-state=nominal raw=0 low-power=no battery-temp-centic=3500 virtual-temp-centic=3500 effective-temp-centic=3500 uptime=48050.941\n=== dpkg\nStatus: install ok installed\nVersion: 0.3.4\nStatus: install ok installed\nVersion: 1010.6-1\n=== crashes\n27\nReportCrash-2026-10-18-152602.ips\nMTLCompilerService-2026-10-18-152601.000.ips\nMTLCompilerService-2026-10-18-152601.ips\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

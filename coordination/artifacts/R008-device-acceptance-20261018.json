@@ -1,0 +1,149 @@
+{
+  "packet": "R008 backend device acceptance",
+  "date": "2026-10-18",
+  "device": {
+    "model": "iPad13,11",
+    "soc": "T8103 (M1)",
+    "os": "iPadOS 16.3 / 20D47",
+    "kernel": "Darwin 22.3.0 xnu-8792.82.2",
+    "jailbreak": "Dopamine rootless",
+    "rootfs": "macOS 13.4.1 / 22F82",
+    "address": "<transient LAN address, not persisted>",
+    "note": "User-supplied 192.168.68.62 was unreachable; the coordination relay's updated address 192.168.68.63 responded. Credentials stayed in transient environment only."
+  },
+  "thermal": {
+    "before": "thermal-state=nominal raw=0 battery-temp-centic=3489 (34.89 C), macwsthermal exit 0",
+    "after": "thermal-state=nominal raw=0 battery-temp-centic=3550 (35.50 C), macwsthermal exit 0"
+  },
+  "source_hashes": {
+    "layout/usr/macOS/bin/macos_gui.sh": "471fc752ed72d0a376ef747d834530607c484839b1d2af2585a4eb3fab6ebc9d",
+    "layout/DEBIAN/postinst": "c45c1d366070966b3b1ac57cca3379d07c4589b3857dda3f9d759dbe07c3b202",
+    "layout/usr/macOS/bin/postinst.sh": "ed42f4782563e1110f0d86fc0d0a279b48eeee9b4c7cb4013e15d58948fe2df1",
+    "misc/test_tccd_lifecycle_contract.py": "11dd30f3c225b1c9fbc12bde53184ad387a1a57c85bdf1f56d39473b0420f8dc",
+    "MTLCompilerBypassOSCheck/Tweak.x": "d1b7bc89a058e9925cf894134c2ea4dbbe7e16fa62e1e45ed48944aab0446fcc"
+  },
+  "build": {
+    "candidate_base": "git HEAD 6e7035351b77d97537cb7d228ab36bb7a1f6af53 + R008 patch in a clean worktree (/tmp/macpad-r008-clean); the shared tree also contained another worker's uncommitted AppInput/provider changes, which were deliberately excluded from the accepted package",
+    "host_toolchain": "Xcode 26.2 clang + Apple ld64; Theos at ~/theos; host GNU make 3.81 invoked through a gmake shim; dm.pl with a local lzma wrapper (host has no xz/lzma)",
+    "on_device_theos": "absent (/var/jb/var/mobile/theos missing), so the package was cross-built on the host; this is the deviation from the on-device build entry point",
+    "sdk_compat_fix": "MTLCompilerBypassOSCheck/Tweak.x includes <stdatomic.h> and uses the real <xpc/xpc.h> when present; behavior and call sites unchanged",
+    "macwswindowing_artifact": {
+      "sha256": "d416dffe77debf10f2e38044eea4a69604f392deb1afedff345e6b40dd9a829c",
+      "fixups": "arm64e __cfstring auth-bind/key=DA=253, plain-bind=0",
+      "load_commands": "no /Library paths; @rpath/CydiaSubstrate.framework/CydiaSubstrate present",
+      "installed_sha256": "d416dffe77debf10f2e38044eea4a69604f392deb1afedff345e6b40dd9a829c"
+    },
+    "package": {
+      "path": "packages/com.kdt.macosbooter_0.3.4_iphoneos-arm64.deb",
+      "sha256": "e1370e00e0680f2650026a07417cf3d1917526be5f1bbf6751aedc6cd4669e21",
+      "bytes": 6024166,
+      "verify": "PACKAGE-VERIFY-OK payloads=29 against the clean worktree staging; control gzip + data lzma; device dpkg-deb -I exit 0",
+      "install": "dpkg -i exit 0; postinst exit 0; 'Synchronized package runtime into the mounted macOS rootfs.'"
+    },
+    "dependency_note": "dpkg refused configuration until odcctools (declared Depends, provides lipo) was installed. Only odcctools 1010.6-1 was installed with --force-depends; its llvm-dev/libtapi deep deps were not installed because the extracted lipo is standalone. This is recorded, not hidden."
+  },
+  "deployed": {
+    "macos_gui.sh": "471fc752ed72d0a376ef747d834530607c484839b1d2af2585a4eb3fab6ebc9d",
+    "postinst.sh (deep repair)": "ed42f4782563e1110f0d86fc0d0a279b48eeee9b4c7cb4013e15d58948fe2df1",
+    "libmachook.dylib": "9a5119534d3dd40c3353efa8cbf888392b3a020c63785377a498cc466c572819 (thin arm64e; identical at /var/jb/usr/macOS/lib and rootfs /usr/local/lib)",
+    "libmachook_arm64.dylib": "151a2175c0b9bacb571cd9798c7204e4cd17922ed875823dc014593dd332bced (thin arm64; identical at both paths)",
+    "macwstccdprobe": "430e3925da9054864f263dcd6a31029e50a4b4b7b7df49d07c9ce308f28201b4",
+    "MTLCompilerBypassOSCheck.dylib": "9f07ed3c966c79ebb1aa9024a545307699b937cd825824f20993c9ee98ea9324",
+    "tccd": {
+      "sha256": "42c388e875f5a479402a3a8318aa9c866101c1162d042ba0daafbf5d996c828d",
+      "identifier": "com.apple.tccd",
+      "arm64e_cdhash": "1a32fd7ee14553cc453c111e84d15bbfd04267a4",
+      "keys": 124,
+      "com.apple.private.tcc.allow": ["kTCCServiceListenEvent", "kTCCServiceSystemPolicyAllFiles"],
+      "com.apple.private.notificationcenterui.tcc": true,
+      "pristine_backup": "/var/mnt/rootfs/System/Library/PrivateFrameworks/TCC.framework/Support/tccd.macws-original (sha256 8e2dc54c8475953339ab0c749f27b07f4e4d5f5828ab88cb157dbd97f45a164d)",
+      "slice_limit": "ldid -arch arm64 -e returns 0 bytes; only the executing arm64e slice's per-key values could be extracted on-device."
+    }
+  },
+  "cold_start": {
+    "command": "bash /var/jb/usr/macOS/bin/macos_gui.sh start coexist --no-vnc",
+    "exit": 0,
+    "duration_seconds": 54,
+    "tccd_ready_line": "macOS system tccd endpoint ready (pid=42661).",
+    "tccd_protocol_line": "macOS system tccd protocol round-trip ready.",
+    "windowserver_line": "WindowServer process ready (pid=42862, stable for 8s; graphics not yet witnessed).",
+    "job_and_endpoint": "user/501/com.macwsguide.tccd-system state=running, exact com.apple.macosbooter.tccd.system endpoint present",
+    "mode_note": "--no-vnc is the mode the pre-existing live generation used (localhost pointer proxy only). With VNC enabled (MACWS_VNC_SHARE=1) the same package stalls: WindowServer stays alive after the two AGX device-info probes with no graphics-ready witness through 90 s and 300 s; that remains a separate open issue and is not counted as acceptance.",
+    "graphics_limit": "In --no-vnc mode the script accepts process readiness; macws_final_composite.state was 'missing' (displayd-start), so no final-composite pixel witness was obtained in this round."
+  },
+  "tcc_reply_capture": {
+    "method": "MACWS_LSXPC_TRACE=1 launchdchrootexec 0 0 /var/mnt/rootfs /usr/local/bin/macwstccdprobe preflight kTCCServicePostEvent",
+    "caller": "pid=43148 uid=0 audit=ffffffff000000000000000000000000000000000000a88c0000000000013fd7",
+    "connection": "com.apple.macosbooter.tccd.system",
+    "request": {
+      "count": 7,
+      "require_purpose": "null",
+      "service": "kTCCServicePostEvent",
+      "function": "TCCAccessRequest",
+      "preflight": true,
+      "target_token": "32 bytes",
+      "TCCD_MSG_ID": "43148.1",
+      "background_session": false
+    },
+    "reply": {
+      "type": "OS_xpc_dictionary",
+      "count": 0,
+      "keys": [],
+      "result_key_present": false,
+      "preflight_unknown_present": false,
+      "restricted_present": false,
+      "do_not_cache_present": false,
+      "error_present": false
+    },
+    "spi_result": 1,
+    "interpretation": "A real daemon-produced, empty dictionary. Accessor-zero is a missing-key/default outcome, not an explicit result=false policy denial. This corrects the R007 ambiguity instead of inventing a denial cause.",
+    "limits": "The captured caller is the injected probe, not WindowServer. WS-sender dictionary capture via MACWS_LSXPC_TRACE was blocked by macos_gui.sh production_preflight (diagnostic env deny-list); no debugger/lldb is installed on the device for exact callsite reads. No WS-sender reply schema is claimed."
+  },
+  "input": {
+    "command": "launchdchrootexec 0 0 /var/mnt/rootfs /usr/local/bin/macos_ws_event_probe postmin",
+    "cid": 119067,
+    "sls_post_event_record_rc": 1002,
+    "visible_change": "none observed / not claimed",
+    "verdict": "Input remains unaccepted: the global event post is still rejected at the WS gate with 1002 after cold start and after recovery. No AppKit exact-route or Dock/menu witness was produced in this no-vnc generation."
+  },
+  "recovery": {
+    "trigger": "SIGTERM to the live WindowServer PID 42862",
+    "replacement_ws": 43210,
+    "watchdog_lines": [
+      "watchdog: reconnecting GUI clients to replacement WindowServer 43210",
+      "Starting macOS system tccd (private endpoint)...",
+      "macOS system tccd protocol round-trip ready.",
+      "macOS system tccd endpoint ready (pid=43545)."
+    ],
+    "tccd_generation": "42661 -> removed (launchctl list empty at T+15..35 s) -> 43545",
+    "endpoint_after": "user/501/com.macwsguide.tccd-system running, com.apple.macosbooter.tccd.system present",
+    "verdict": "F1 ordering proven on the real recovery path: dependent stop retires tccd, recovery republishes it with a new PID and a real protocol round-trip before declaring ready."
+  },
+  "cleanup": {
+    "stop": "macos_gui.sh stop exit 0; no WindowServer/chroot tccd/OSXvnc/launchdchrootexec/debugger/probe processes remained",
+    "plist": "installed WindowServer.plist restored to package content sha256 cac6829f727db3780f99c39527464fdfe25f8cf8edd5c6318ff679c24fc82bbb",
+    "markers": "both /tmp/macws_runtime_diagnostics and /var/mnt/rootfs/tmp/macws_runtime_diagnostics absent",
+    "archived": "/var/mobile/macws_r008_cleanup_20261018/r007-diagnostics/{tccd_nosig,tccd_adhoc} and /var/mobile/macws_r008_cleanup_20261018/scratch/{diag300 script, SDK-16.5 A/B dylib, uploaded debs, odcctools extract}",
+    "native_health": "com.apple.tccd 883, SpringBoard 872, backboardd 905 alive; dpkg com.kdt.macosbooter 0.3.4 installed",
+    "final_thermal": "nominal 35.50 C"
+  },
+  "commands_and_exits": {
+    "upload_final_package": 0,
+    "dpkg -i final clean package": 0,
+    "cold_start --no-vnc": 0,
+    "preflight": 0,
+    "postmin": 0 (probe executed; SLS rc 1002)",
+    "recovery": 0,
+    "stop": 0,
+    "full local test suite": "710 tests, 14 failures / 5 errors / 14 skipped (known hardware/Metal and in-progress AppInput/provider baseline; tccd lifecycle module 27/27 passes)",
+    "reviewer edge repro": "all six cases exit 1 (fail closed) with final source hashes"
+  },
+  "open_limits": [
+    "No WS-sender TCC reply dictionary; production policy blocks diagnostic env and no on-device debugger exists.",
+    "Input remains 1002; no visible input acceptance.",
+    "VNC-enabled cold start stalls with the same package; --no-vnc is the accepted path this round.",
+    "No final-composite pixel witness in --no-vnc mode.",
+    "Host cross-build, not the on-device Theos entry point; odcctools deep deps were bypassed after its standalone lipo was verified.",
+    "The shared tree contained another worker's uncommitted changes; they were excluded from the accepted package by building from a clean HEAD worktree."
+  ]
+}

@@ -251,12 +251,44 @@ done
 
 trust_installed_macho() {
     path="$1"
-    [ -f "$path" ] || return 0
+    # strict=1: the caller treats this image as a mandatory launch target.
+    # Admission must then be proven, not attempted: a missing file, an
+    # image with no arm-family CodeDirectory, a failed trustcache query or
+    # a CDHash that is not live all fail closed instead of returning 0.
+    strict="${2:-0}"
+    if [ ! -f "$path" ]; then
+        [ "$strict" = 0 ] && return 0
+        echo "ERROR: mandatory trust target is missing: $path" >&2
+        return 1
+    fi
+    found=0
     for arch in arm64 arm64e; do
         hash=$(/var/jb/usr/bin/ldid -arch "$arch" -h "$path" 2>/dev/null \
             | grep CDHash= | cut -c8-)
-        [ -n "$hash" ] && \
+        if [ -n "$hash" ]; then
+            found=1
             /var/jb/usr/bin/jbctl trustcache add "$hash" 2>/dev/null || true
+        fi
+    done
+    [ "$strict" = 0 ] && return 0
+    if [ "$found" -ne 1 ]; then
+        echo "ERROR: mandatory trust target has no arm64/arm64e CodeDirectory: $path" >&2
+        return 1
+    fi
+    # Verify live membership rather than interpreting `trustcache add`'s
+    # exit status (already-present sequences differ across backends).
+    trustcache_info=$(/var/jb/usr/bin/jbctl trustcache info 2>/dev/null) || {
+        echo "ERROR: trustcache membership query failed for $path" >&2
+        return 1
+    }
+    for arch in arm64 arm64e; do
+        hash=$(/var/jb/usr/bin/ldid -arch "$arch" -h "$path" 2>/dev/null \
+            | grep CDHash= | cut -c8-)
+        [ -n "$hash" ] || continue
+        printf '%s\n' "$trustcache_info" | grep -Fqi "$hash" || {
+            echo "ERROR: CDHash is not live in the trustcache for $path [$arch]: $hash" >&2
+            return 1
+        }
     done
 }
 
@@ -607,12 +639,35 @@ ensure_chroot_appearance_signature() {
     trust_installed_macho "$path"
 }
 
+# True only when the named service is inside the top-level
+# com.apple.private.tcc.allow array.  A plain grep would also match the
+# same name in com.apple.private.tcc.manager.check-by-audit-token, which is
+# a different capability (R008 union check).
+tcc_allow_contains() {
+    awk -v want="$1" '
+        /<key>com\.apple\.private\.tcc\.allow<\/key>/ { inblk = 1; next }
+        inblk {
+            if (index($0, "<string>" want "</string>")) found = 1
+            if ($0 ~ /<\/array>/) inblk = 0
+        }
+        END { exit(found ? 0 : 1) }
+    '
+}
+
 ensure_chroot_native_service_signature() {
     path="$1"
     native_entitlements="$2"
     native_marker="$3"
     identifier="$4"
-    [ -f "$path" ] || return 0
+    # Optional final admission profile.  The two native passes above set
+    # overlapping arrays to the native value; a service whose reviewed
+    # contract is the project/native UNION can apply the project profile
+    # one last time (ldid -M preserves every native-only key).
+    final_entitlements="${5:-}"
+    if [ ! -f "$path" ]; then
+        echo "ERROR: mandatory native service image is missing: $path" >&2
+        return 1
+    fi
     [ -f "$native_entitlements" ] || return 1
     entitlements=$(/var/jb/usr/bin/ldid -e "$path" 2>/dev/null || true)
     needs_signature=0
@@ -623,6 +678,11 @@ ensure_chroot_native_service_signature() {
         needs_signature=1
     /var/jb/usr/bin/ldid -h "$path" 2>/dev/null |
         grep -q "^Identifier=$identifier$" || needs_signature=1
+    if [ -n "$final_entitlements" ] &&
+       ! printf '%s\n' "$entitlements" |
+            tcc_allow_contains 'kTCCServiceListenEvent'; then
+        needs_signature=1
+    fi
     if [ "$needs_signature" -eq 1 ]; then
         /var/jb/usr/bin/ldid -I"$identifier" -S"$ENTITLEMENTS" -M "$path" ||
             return 1
@@ -630,8 +690,12 @@ ensure_chroot_native_service_signature() {
             return 1
         /var/jb/usr/bin/ldid -I"$identifier" -S"$native_entitlements" -M "$path" ||
             return 1
+        if [ -n "$final_entitlements" ]; then
+            /var/jb/usr/bin/ldid -I"$identifier" -S"$final_entitlements" -M "$path" ||
+                return 1
+        fi
     fi
-    trust_installed_macho "$path"
+    trust_installed_macho "$path" 1 || return 1
 }
 
 # Fresh-inode variant of ensure_chroot_native_service_signature for the
@@ -644,19 +708,26 @@ ensure_tccd_system_signature() {
     target="$ROOTFS/System/Library/PrivateFrameworks/TCC.framework/Support/tccd"
     backup="${target}.macws-original"
     temporary="${target}.macws-new.$$"
-    [ -f "$target" ] || return 0
+    if [ ! -f "$target" ]; then
+        echo "ERROR: mandatory Ventura system tccd is missing: $target" >&2
+        return 1
+    fi
     [ -f "$TCCD_NATIVE_ENTITLEMENTS" ] || return 1
 
     # Same fast path as the generic contract: skip the staging entirely
-    # when the merged signature is already in place.
+    # when the merged signature is already in place — but still prove
+    # current-boot trust admission (R008: a swallowed jbctl failure used to
+    # report success here).
     entitlements=$(/var/jb/usr/bin/ldid -e "$target" 2>/dev/null || true)
     if printf '%s\n' "$entitlements" |
             grep -q '<key>com.apple.private.graphics-restart-no-kill</key>' &&
        printf '%s\n' "$entitlements" |
             grep -Fq '<key>com.apple.private.notificationcenterui.tcc</key>' &&
+       printf '%s\n' "$entitlements" |
+            tcc_allow_contains 'kTCCServiceListenEvent' &&
        /var/jb/usr/bin/ldid -h "$target" 2>/dev/null |
             grep -q '^Identifier=com.apple.tccd$'; then
-        trust_installed_macho "$target"
+        trust_installed_macho "$target" 1 || return 1
         return 0
     fi
 
@@ -667,7 +738,8 @@ ensure_tccd_system_signature() {
         "$temporary" \
         "$TCCD_NATIVE_ENTITLEMENTS" \
         '<key>com.apple.private.notificationcenterui.tcc</key>' \
-        'com.apple.tccd' || {
+        'com.apple.tccd' \
+        "$ENTITLEMENTS" || {
         rm -f "$temporary"
         return 1
     }
@@ -685,6 +757,19 @@ ensure_tccd_system_signature() {
         rm -f "$temporary"
         return 1
     }
+    # The reviewed tccd contract is the project/native UNION:
+    # com.apple.private.tcc.allow must carry both the project ListenEvent
+    # and the native SystemPolicyAllFiles entries after the final pass.
+    printf '%s\n' "$verify" |
+        tcc_allow_contains 'kTCCServiceListenEvent' || {
+        rm -f "$temporary"
+        return 1
+    }
+    printf '%s\n' "$verify" |
+        tcc_allow_contains 'kTCCServiceSystemPolicyAllFiles' || {
+        rm -f "$temporary"
+        return 1
+    }
     /var/jb/usr/bin/ldid -h "$temporary" 2>/dev/null |
         grep -q '^Identifier=com.apple.tccd$' || {
         rm -f "$temporary"
@@ -696,7 +781,7 @@ ensure_tccd_system_signature() {
         return 1
     }
     mv -f "$temporary" "$target" || return 1
-    trust_installed_macho "$target"
+    trust_installed_macho "$target" 1 || return 1
     echo 'Prepared Ventura system tccd for chroot launch; preserved the stock executable.'
 }
 

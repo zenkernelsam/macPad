@@ -2,6 +2,7 @@
 @import Foundation;
 @import Darwin;
 #include <stdarg.h>
+#include <stdatomic.h>
 #include <time.h>
 #include <syslog.h>
 #include <mach-o/dyld.h>
@@ -17,10 +18,17 @@
 #include "../include/macws_code_pointer.h"
 
 // The rootless iOS 16 Theos SDK used by this project omits xpc/xpc.h.  This
-// is the exact public C ABI needed by the UUID-locked reply observer.
-extern void *xpc_data_create(const void *bytes, size_t length);
-extern void xpc_dictionary_set_string(void *dictionary, const char *key,
+// is the exact public C ABI needed by the UUID-locked reply observer.  Newer
+// Xcode SDKs do ship the real header (where xpc objects are ObjC pointers
+// under ARC), so prefer it instead of redeclaring the API.
+#if __has_include(<xpc/xpc.h>)
+#include <xpc/xpc.h>
+#else
+typedef void *xpc_object_t;
+extern xpc_object_t xpc_data_create(const void *bytes, size_t length);
+extern void xpc_dictionary_set_string(xpc_object_t dictionary, const char *key,
                                       const char *value);
+#endif
 
 // Diagnostics are explicitly opt-in for the current boot.  They must never
 // survive as configuration under a persistent mobile or rootless directory.
@@ -765,7 +773,7 @@ static void DumpRawCompilerRequest(uint32_t sequence, uintptr_t discriminator,
 // compiler result bytes and length. The adapter redirects only that BL here,
 // records the returned container verbatim, then calls the real XPC API. No
 // result bytes or status are changed.
-static void *MacWSCompilerReplyDataCreate(const void *bytes, size_t length) {
+static xpc_object_t MacWSCompilerReplyDataCreate(const void *bytes, size_t length) {
     if (!MacWSCompilerDiagnosticsEnabled()) return xpc_data_create(bytes, length);
     static _Atomic uint32_t replySequence = 0;
     uint32_t sequence = atomic_fetch_add(&replySequence, 1) + 1;
@@ -819,7 +827,7 @@ static void *MacWSCompilerReplyDataCreate(const void *bytes, size_t length) {
 // BLs here instead of xpc_dictionary_set_string under diagnostics, records
 // the error code/message verbatim, then calls the real XPC API. Nothing about
 // the reply contents is changed.
-static void MacWSCompilerErrorStringSet(void *dictionary, const char *key,
+static void MacWSCompilerErrorStringSet(xpc_object_t dictionary, const char *key,
                                         const char *value) {
     if (!MacWSCompilerDiagnosticsEnabled())
         return xpc_dictionary_set_string(dictionary, key, value);

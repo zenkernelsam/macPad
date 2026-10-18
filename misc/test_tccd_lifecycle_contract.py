@@ -56,8 +56,8 @@ def _extract_function(source, name):
 
 
 FUNCTIONS = '\n'.join(_extract_function(GUI, name) for name in (
-    'launchd_job_pid', 'probe_tccd_transport', 'tccd_transport_ready',
-    'start_tccd_system'))
+    'launchd_job_pid', 'probe_tccd_transport', 'tccd_service_table',
+    'tccd_transport_state', 'tccd_transport_ready', 'start_tccd_system'))
 
 PREFIX = r'''
 TCCD_SYSTEM_LABEL=com.macwsguide.tccd-system
@@ -298,6 +298,53 @@ launchctl() {
         self.assertEqual(result.returncode, 0,
                          'on-demand job answering a real dictionary is ready')
 
+    def test_endpoint_token_in_environment_is_not_registration(self):
+        # R008 reviewer edge: the same string inside the job's environment
+        # block is not a registered service table entry.
+        env_print = '''user/501/com.macwsguide.tccd-system = {
+\tpid = 4242
+\tenvironment = { NOTE = com.apple.macosbooter.tccd.system }
+\tendpoints = { }
+}
+'''
+        body = '''
+launchctl() {
+    echo "$*" >> "$CALLS"
+    case "$1 $2" in
+        "list $TCCD_SYSTEM_LABEL") printf '%b' ''' + repr(LIST_RUNNING) + '''; return 0 ;;
+        "print "*) printf '%b' ''' + repr(env_print) + '''; return 0 ;;
+    esac
+    return 0
+}
+'''
+        result, _ = self._run(body)
+        self.assertNotEqual(
+            result.returncode, 0,
+            'an environment string must not prove endpoint registration')
+
+    def test_observation_error_does_not_unload_existing_job(self):
+        # R008 reviewer edge: a failed lookup is UNKNOWN, not "job broken".
+        # The existing job must survive untouched.
+        body = '''
+launchctl() {
+    echo "$*" >> "$CALLS"
+    case "$1 $2" in
+        "list $TCCD_SYSTEM_LABEL") printf '%b' ''' + repr(LIST_RUNNING) + '''; return 0 ;;
+        "print "*) return 75 ;;
+    esac
+    return 0
+}
+'''
+        result, calls = self._run(body)
+        self.assertNotEqual(result.returncode, 0,
+                            'an unobservable job is not ready')
+        self.assertNotIn('unload ', calls,
+                         'an observation failure must not unload the job')
+        self.assertNotIn('remove ', calls,
+                         'an observation failure must not remove the job')
+        self.assertNotIn('load ', calls,
+                         'an observation failure must not reload the job')
+
 
 class TccdOrderingContracts(unittest.TestCase):
     """Static ordering: tccd is a checked prerequisite on every path that
@@ -376,7 +423,9 @@ class TccdTrustManifestContracts(unittest.TestCase):
             fake_bin.mkdir()
             jbctl = fake_bin / 'jbctl'
             live_hash = 'a' * 40
-            jbctl.write_text(f'#!/bin/sh\necho "hash {live_hash}"\n')
+            jbctl.write_text(
+                f'#!/bin/sh\necho "hash {live_hash}"\n'
+                'exit "${FAKE_TRUST_EXIT:-0}"\n')
             os.chmod(jbctl, 0o755)
 
             manifest_dir = td / 'manifest-dir'
@@ -418,10 +467,12 @@ class TccdTrustManifestContracts(unittest.TestCase):
             script.write_text(py)
             manifest_path = td / 'hashes.json'
 
-            def run_probe(entries, paths):
+            def run_probe(entries, paths, extra_env=None):
                 manifest_path.write_text(json.dumps(entries))
                 env = dict(os.environ)
                 env['PATH'] = str(fake_bin) + os.pathsep + env['PATH']
+                if extra_env:
+                    env.update(extra_env)
                 return subprocess.run(
                     ['python3', str(script), str(manifest_path)] + paths,
                     capture_output=True, text=True, env=env,
@@ -474,6 +525,26 @@ class TccdTrustManifestContracts(unittest.TestCase):
                 run_probe(full, [str(target), str(other),
                                  '--hash=' + 'd' * 40]),
                 0, 'the --hash=<v> spelling must be checked the same way')
+            # R008 reviewer edges: every supplied prerequisite path is
+            # mandatory for the fast path, an entry with no usable
+            # CodeDirectory proves nothing, and a failed trust query with
+            # partial stdout is not a complete membership answer.
+            self.assertNotEqual(
+                run_probe(full, [str(target), str(td / 'missing-tccd')]), 0,
+                'a missing mandatory path must force the walk')
+            empty_codes = manifest({
+                str(target): {'identity': [1, 2, 3, 4, 5], 'codes': []},
+                str(other): {'identity': [1, 2, 3, 4, 5],
+                             'codes': [{'arch': 'arm64', 'type': 1,
+                                        'hash': live_hash}]},
+            })
+            self.assertNotEqual(
+                run_probe(empty_codes, [str(target), str(other)]), 0,
+                'a mandatory target with empty codes must force the walk')
+            self.assertNotEqual(
+                run_probe(full, [str(target), str(other)],
+                          extra_env={'FAKE_TRUST_EXIT': '75'}), 0,
+                'a nonzero trust query with partial stdout must force the walk')
 
 
 class TccdAdmissionContracts(unittest.TestCase):
@@ -503,6 +574,107 @@ class TccdAdmissionContracts(unittest.TestCase):
         # verify-before-swap on the staged file
         self.assertIn('ldid -e "$temporary"', fn)
         self.assertIn('ldid -h "$temporary"', fn)
+
+    def test_required_signature_trust_failure_is_not_swallowed(self):
+        """The mandatory tccd stage must fail closed when jbctl cannot
+        prove live admission (R008 reviewer edge)."""
+        with tempfile.TemporaryDirectory(prefix='tccd-sign-') as td:
+            td = Path(td)
+            rootfs = td / 'rootfs'
+            target = (rootfs / 'System/Library/PrivateFrameworks/'
+                      'TCC.framework/Support/tccd')
+            target.parent.mkdir(parents=True)
+            target.write_text('untouched fixture executable')
+            native = td / 'native.plist'
+            native.write_text('<plist/>')
+            ldid = td / 'ldid'
+            ldid.write_text('''#!/bin/sh
+case "$*" in
+ *-e*) printf '%s\n' '<key>com.apple.private.graphics-restart-no-kill</key>' '<true/>' '<key>com.apple.private.notificationcenterui.tcc</key>' '<true/>' '<key>com.apple.private.tcc.allow</key>' '<array>' '<string>kTCCServiceListenEvent</string>' '<string>kTCCServiceSystemPolicyAllFiles</string>' '</array>';;
+ *) printf '%s\n' 'Identifier=com.apple.tccd' 'CDHash=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';;
+esac
+''')
+            ldid.chmod(0o755)
+            jbctl = td / 'jbctl'
+            jbctl.write_text('#!/bin/sh\necho TRUST_FAILED >&2\nexit 75\n')
+            jbctl.chmod(0o755)
+            script = '\n'.join(_extract_function(PKG_POSTINST, name) for name in
+                               ['trust_installed_macho', 'tcc_allow_contains',
+                                'ensure_chroot_native_service_signature',
+                                'ensure_tccd_system_signature'])
+            script = script.replace('/var/jb/usr/bin/ldid',
+                                    str(ldid))
+            script = script.replace('/var/jb/usr/bin/jbctl',
+                                    str(jbctl))
+            path = td / 'sign-fixture.sh'
+            path.write_text(
+                'ROOTFS=' + str(rootfs) + '\n'
+                'TCCD_NATIVE_ENTITLEMENTS=' + str(native) + '\n' +
+                script + '\nensure_tccd_system_signature\n')
+            failed = subprocess.run(['/bin/bash', str(path)],
+                                    capture_output=True, text=True, timeout=15)
+            self.assertNotEqual(
+                failed.returncode, 0,
+                'a failed trustcache admission must not report success')
+
+            # Positive control: an actually-live CDHash keeps the fast path.
+            jbctl.write_text(
+                '#!/bin/sh\ncase "$1 $2" in\n'
+                ' "trustcache add") exit 0;;\n'
+                ' "trustcache info") echo '
+                'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa; exit 0;;\n'
+                'esac\nexit 0\n')
+            ok = subprocess.run(['/bin/bash', str(path)],
+                                capture_output=True, text=True, timeout=15)
+            self.assertEqual(
+                ok.returncode, 0,
+                f'live admission must succeed: {ok.stdout}{ok.stderr}')
+
+    def test_tccd_union_profile_is_applied_last(self):
+        """The reviewed tccd delta is the project/native union; the final
+        native pass must not silently drop kTCCServiceListenEvent."""
+        pkg_fn = _extract_function(PKG_POSTINST, 'ensure_tccd_system_signature')
+        self.assertIn('"$ENTITLEMENTS"', pkg_fn)
+        self.assertIn("tcc_allow_contains 'kTCCServiceListenEvent'", pkg_fn)
+        helper = _extract_function(PKG_POSTINST,
+                                   'ensure_chroot_native_service_signature')
+        self.assertIn('final_entitlements="${5:-}"', helper)
+        self.assertIn('-S"$final_entitlements" -M', helper)
+        deep_fn = _extract_function(
+            DEEP_POSTINST, 'sign_and_trustcache_merging_native_entitlements')
+        self.assertIn('final_entitlements="${7:-}"', deep_fn)
+        self.assertIn('-S"$final_entitlements" -M', deep_fn)
+        self.assertIn("0 '' \"$ENT\"", DEEP_POSTINST)
+
+    def test_tcc_allow_parser_is_array_scoped(self):
+        """ListenEvent in check-by-audit-token must not satisfy the
+        com.apple.private.tcc.allow union check."""
+        with tempfile.TemporaryDirectory(prefix='tcc-allow-') as td:
+            td = Path(td)
+            fn = _extract_function(PKG_POSTINST, 'tcc_allow_contains')
+            script = td / 'allow.sh'
+            script.write_text(fn)
+            manager_only = (
+                '<dict>\n'
+                '<key>com.apple.private.tcc.manager.check-by-audit-token</key>\n'
+                '<array><string>kTCCServiceListenEvent</string></array>\n'
+                '</dict>\n')
+            allow = (
+                '<dict>\n'
+                '<key>com.apple.private.tcc.allow</key>\n'
+                '<array><string>kTCCServiceListenEvent</string>'
+                '<string>kTCCServiceSystemPolicyAllFiles</string></array>\n'
+                '</dict>\n')
+            def run(text):
+                return subprocess.run(
+                    ['/bin/bash', '-c',
+                     f'. {script}; printf %b ' + repr(text) +
+                     " | tcc_allow_contains 'kTCCServiceListenEvent'"],
+                    capture_output=True, text=True, timeout=10).returncode
+            self.assertNotEqual(run(manager_only), 0,
+                                'manager array must not satisfy tcc.allow')
+            self.assertEqual(run(allow), 0,
+                             'the union array must satisfy tcc.allow')
 
     def test_deep_repair_signs_tccd_native_merge(self):
         self.assertIn(

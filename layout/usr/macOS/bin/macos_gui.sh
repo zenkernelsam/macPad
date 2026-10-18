@@ -1015,31 +1015,73 @@ probe_tccd_transport() {
     log "macOS system tccd protocol round-trip ready."
 }
 
-# Exact transport witness for the private Ventura system-tccd job.  All
-# three observations must agree before any caller may depend on the
-# endpoint; each one individually defeats a false-ready case recorded by
-# the R007 reviewer fixtures:
-#   1. `launchctl print <domain>/<label>` must resolve THIS job in one real
-#      domain — a lookup error or an unrelated-domain printout is a miss.
+# Emit only the job's own registered service table from `launchctl print`.
+# `environment`/`default environment` blocks may contain arbitrary text,
+# including a service name copied from a plist; that is not registration
+# evidence (R008 reviewer fixture `endpoint_token_only_in_environment`).
+# Both the current `endpoints` spelling and the older `services` one are
+# accepted.
+tccd_service_table() {
+    awk '
+        /^[[:space:]]*(services|endpoints) = \{/ {
+            depth = 0
+            inside = 1
+        }
+        inside {
+            print
+            depth += gsub(/\{/, "{") - gsub(/\}/, "}")
+            if (depth <= 0) inside = 0
+        }
+    '
+}
+
+# Exact transport witness for the private Ventura system-tccd job.  Returns
+# 0 = ready, 1 = observed but not ready (safe to reload), 2 = observation
+# unknown (must NOT be treated as absent or broken — never destroy a job
+# because a lookup failed).  Checks, in order:
+#   1. `launchctl print <domain>/<label>` must resolve THIS job with a
+#      matching header in one real domain; lookups that fail for any reason
+#      other than a definite "Could not find service" are unknown.
 #   2. When that job reports `pid = N`, the exact pid of the current
 #      generation must be live; a stale or recycled pid is not evidence.
 #      (EnablePressuredExit may legitimately leave no pid field at all —
 #      the registered endpoint then answers on demand and the protocol
 #      probe below is the arbiter.)
 #   3. The private endpoint must appear as its own service-name token in
-#      that job's own print — a substring inside a different name such as
-#      com.apple.macosbooter.tccd.system.other never counts.
+#      that job's own service table — a substring inside a different name
+#      such as com.apple.macosbooter.tccd.system.other never counts, and
+#      neither does the same string in the environment block.
 #   4. probe_tccd_transport must return a bounded real XPC dictionary from
 #      the intended client context.
-tccd_transport_ready() {
+tccd_transport_state() {
     local tccd_domain="" tccd_print="" tccd_pid="" candidate
+    local saw_not_found=0 saw_unknown=0 saw_print=0
     for candidate in system user/501 user/0 gui/501; do
-        tccd_print=$(launchctl print "$candidate/$TCCD_SYSTEM_LABEL" 2>/dev/null) \
-            || continue
+        if ! tccd_print=$(launchctl print "$candidate/$TCCD_SYSTEM_LABEL" 2>&1); then
+            case "$tccd_print" in
+                *'Could not find service'*) saw_not_found=1 ;;
+                *) saw_unknown=1 ;;
+            esac
+            continue
+        fi
+        # An unrelated-domain dump, or one whose first line is not the
+        # exact requested job header, is not an observation of this job
+        # here (a matching string elsewhere in the dump is not enough).
+        case "$tccd_print" in
+            "$candidate/$TCCD_SYSTEM_LABEL = {"*) ;;
+            *) continue ;;
+        esac
         tccd_domain=$candidate
+        saw_print=1
         break
     done
-    [ -n "$tccd_domain" ] || return 1
+    if [ -z "$tccd_domain" ]; then
+        # Only four definite not-found answers prove absence.  A silent
+        # error/timeout is unknown, not "job gone".
+        [ "$saw_unknown" -eq 0 ] && [ "$saw_not_found" -eq 1 ] &&
+            [ "$saw_print" -eq 0 ] && return 1
+        return 2
+    fi
     if printf '%s\n' "$tccd_print" | grep -q 'pid = '; then
         tccd_pid=$(printf '%s\n' "$tccd_print" |
             sed -n 's/.*pid = \([0-9][0-9]*\).*/\1/p' | head -1)
@@ -1048,10 +1090,16 @@ tccd_transport_ready() {
             *) kill -0 "$tccd_pid" 2>/dev/null || return 1 ;;
         esac
     fi
-    printf '%s\n' "$tccd_print" |
+    printf '%s\n' "$tccd_print" | tccd_service_table |
         grep -Eq 'com\.apple\.macosbooter\.tccd\.system([^A-Za-z0-9_.-]|$)' ||
         return 1
-    probe_tccd_transport
+    probe_tccd_transport || return 1
+    return 0
+}
+
+tccd_transport_ready() {
+    tccd_transport_state
+    [ "$?" -eq 0 ]
 }
 
 start_tccd_system() {
@@ -1061,18 +1109,32 @@ start_tccd_system() {
     # runtime-confirmed every send_message_with_reply_sync returning
     # _xpc_error_connection_invalid while no system endpoint was
     # registered, which left the preflight default 1 -> deny -> 1002.
-    local waited=0 pid=""
+    local waited=0 pid="" state=0
     if launchctl list "$TCCD_SYSTEM_LABEL" >/dev/null 2>&1; then
         # A warm job is not a transport witness: the R007 reviewer fixtures
         # showed a running process with a missing endpoint and an
         # unrelated-domain substring both passing the old checks.  The
         # existing job is reused only when its exact domain, endpoint,
         # generation and a real client-context reply all agree; otherwise
-        # it is reloaded below.
-        if tccd_transport_ready; then
-            log "macOS system tccd endpoint already running."
-            return 0
-        fi
+        # it is reloaded below — except when observation itself failed.
+        # A failed lookup is UNKNOWN, not "job broken": unloading/removing
+        # a live job because launchctl could not answer is destructive and
+        # was the R008 `observation_error_still_unloads_job` defect.
+        tccd_transport_state
+        state=$?
+        case "$state" in
+            0)
+                log "macOS system tccd endpoint already running."
+                return 0
+                ;;
+            1)
+                : # observed but not ready -> controlled reload below
+                ;;
+            *)
+                log "ERROR: macOS system tccd state could not be observed; leaving the existing job untouched."
+                return 1
+                ;;
+        esac
         launchctl unload "$TCCD_SYSTEM_PLIST" 2>/dev/null
         launchctl remove "$TCCD_SYSTEM_LABEL" 2>/dev/null
     fi
@@ -1744,41 +1806,78 @@ trust_closure_already_live() {
 import json, os, re, subprocess, sys
 try:
     files = json.load(open(sys.argv[1]))["files"]
-    live = {h.lower() for h in re.findall(
-        r"[0-9a-fA-F]{40}",
-        subprocess.run(["/var/jb/usr/bin/jbctl", "trustcache", "info"],
-                       capture_output=True, text=True).stdout)}
-    need = {c["hash"].lower() for f in files.values()
-            for c in f.get("codes", [])}
+    query = subprocess.run(["/var/jb/usr/bin/jbctl", "trustcache", "info"],
+                           capture_output=True, text=True)
+    # A nonzero query with partial stdout is not a complete membership
+    # answer: jbctl can print some hashes and then fail.  Treat it as a
+    # failed observation and force the verified walk.
+    if query.returncode != 0:
+        sys.exit(1)
+    live = {h.lower() for h in re.findall(r"[0-9a-fA-F]{40}", query.stdout)}
+
+    def entry_codes(entry):
+        if not isinstance(entry, dict):
+            return set()
+        codes = set()
+        for code in entry.get("codes", []):
+            if not isinstance(code, dict):
+                return set()
+            value = code.get("hash")
+            if not isinstance(value, str) or not re.fullmatch(
+                    r"[0-9a-fA-F]{40}", value):
+                return set()
+            codes.add(value.lower())
+        return codes
+
+    def covered(entry):
+        codes = entry_codes(entry)
+        return bool(codes) and codes <= live
+
+    # Every recorded slice hash must be live.  An entry with no usable
+    # CodeDirectory (missing codes, empty list, malformed hash) proves
+    # nothing and must not satisfy the fast path.
+    need = set()
+    for entry in files.values():
+        codes = entry_codes(entry)
+        if not codes:
+            sys.exit(1)
+        need |= codes
     if not need or not need <= live:
         sys.exit(1)
     # The closure check alone cannot omit a newly mandatory target — but a
     # manifest written before that target existed also passes it, silently
     # skipping the restore walk forever (R007 defect).  Require every
     # explicit prerequisite to be covered too: a regular file needs a
-    # manifest entry whose recorded hashes are all live; a scanned
-    # directory needs at least one recorded member; an explicit --hash
-    # flag value must itself be live (the walk registers these verbatim,
-    # so a flag added after the manifest was written must not be skipped
-    # here either).  Other missing paths and non-path args fail the
-    # isfile/isdir filters naturally.
+    # manifest entry whose recorded hashes are all live and non-empty; a
+    # scanned directory needs at least one recorded member with a live,
+    # non-empty CodeDirectory set; an explicit --hash flag value must
+    # itself be live.  A path-shaped argument that exists as neither a
+    # file nor a directory is a missing mandatory prerequisite and fails
+    # (R008 `missing_mandatory_path`), while flag spellings are handled
+    # separately.
     args = sys.argv[2:]
-    for i, path in enumerate(args):
+    i = 0
+    while i < len(args):
+        path = args[i]
         if os.path.isfile(path):
-            entry = files.get(path)
-            if not entry or not {c["hash"].lower() for c in
-                    entry.get("codes", [])} <= live:
+            if not covered(files.get(path)):
                 sys.exit(1)
         elif os.path.isdir(path):
             prefix = os.path.join(path, "")
-            if not any(key.startswith(prefix) for key in files):
+            if not any(key.startswith(prefix) and covered(files[key])
+                       for key in files):
                 sys.exit(1)
         elif path == "--hash":
             if i + 1 >= len(args) or args[i + 1].lower() not in live:
                 sys.exit(1)
+            i += 2
+            continue
         elif path.startswith("--hash="):
             if path.split("=", 1)[1].lower() not in live:
                 sys.exit(1)
+        else:
+            sys.exit(1)
+        i += 1
     sys.exit(0)
 except Exception:
     sys.exit(1)
@@ -1881,6 +1980,16 @@ restore_cold_boot_trust() {
         /var/jb/usr/macOS/Frameworks/Metal.framework/XPCServices/MTLCompilerService.xpc/MTLCompilerService \
         "$ROOTFS/System/Library/Frameworks/Metal.framework/XPCServices/MTLCompilerService.xpc/Contents/MacOS/MTLCompilerService" \
         "$ROOTFS/usr/local/bin/macwsworkspacectl"; do
+        case "$path" in
+            "$ROOTFS$VNC_BIN"|"$ROOTFS/tmp/GlassDemo")
+                # Optional payloads: a fresh install legitimately lacks
+                # OSXvnc-server and the GlassDemo diagnostic.  The closure
+                # probe treats every supplied path as mandatory, so only
+                # pass them when they exist.  Required targets (tccd,
+                # WindowServer, dyld, packaged helpers) stay unconditional.
+                [ -e "$path" ] || continue
+                ;;
+        esac
         set -- "$@" "$path"
     done
 
@@ -1949,7 +2058,12 @@ restore_cold_boot_trust() {
     # until macws_boot_trust restored the 20 existing CodeDirectories under
     # this bounded installation root. Restore the signatures without
     # re-signing or modifying Cursor's nested-code resources.
-    set -- "$@" "$ROOTFS/opt/local/libexec/macws-cursor"
+    # restore the signatures without re-signing or modifying Cursor's nested
+    # CodeDirectories.  Cursor is optional, so only a present installation
+    # root is supplied to the mandatory closure probe.
+    if [ -d "$ROOTFS/opt/local/libexec/macws-cursor" ]; then
+        set -- "$@" "$ROOTFS/opt/local/libexec/macws-cursor"
+    fi
 
     quicklook_display_root="$ROOTFS/System/Library/Frameworks/QuickLookUI.framework/Versions/A/PlugIns"
     for quicklook_display_bundle in "$quicklook_display_root"/*.qldisplay; do
