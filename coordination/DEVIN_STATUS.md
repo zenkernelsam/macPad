@@ -819,11 +819,20 @@ trustcache readd: `{"added":7,"files":6,"hashes":7}`.
 
 # R008 delivery — 2026-10-18 (backend)
 
-Candidate = `HEAD 6e7035351b77d97537cb7d228ab36bb7a1f6af53` + the R008
+Candidate = `6e7035351b77d97537cb7d228ab36bb7a1f6af53` + the R008
 patch committed with this delivery. The shared working tree also held
 another worker's uncommitted AppInput/provider changes; they were
 excluded from the accepted package by building in a clean worktree at
-HEAD. The commit contains only the files listed below.
+that base. The commit contains only the files listed below.
+
+**Coherence warning:** while this packet ran, the other worker committed
+`64539fb` (AppInput/provider changes) on top of the base. Delivery commit
+`8e470ba` therefore contains both trees, but the device evidence below
+was produced from the clean base + R008 patch, i.e. **without**
+`64539fb`'s libmachook/provider changes. A rebuild and device acceptance
+on the combined HEAD is still required; do not treat `8e470ba` as a
+device-accepted candidate without it. The R008 files themselves are
+identical in both builds.
 
 ## Changed files and source hashes
 
@@ -900,3 +909,6 @@ worker's in-progress tests; not a green-suite claim).
   `MACWS_LSXPC_TRACE` in the WS plist and no on-device debugger exists.
 - No final-composite pixel witness in `--no-vnc` mode.
 - Push authentication remains unavailable; commit is local only.
+- Device evidence is scoped to base `6e70353` + R008, not the combined
+  HEAD `8e470ba`; the concurrent `64539fb` provider changes were not in
+  the accepted package.

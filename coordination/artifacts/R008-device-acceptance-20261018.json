@@ -11,6 +11,7 @@
     "address": "<transient LAN address, not persisted>",
     "note": "User-supplied 192.168.68.62 was unreachable; the coordination relay's updated address 192.168.68.63 responded. Credentials stayed in transient environment only."
   },
+  "coherence_warning": "While this packet ran, the other worker committed 64539fb (their AppInput/provider changes) on top of 6e70353. The accepted package was built in a clean worktree at 6e70353 + the R008 patch and deliberately excludes 64539fb. This delivery commit 8e470ba therefore contains both trees, but the device evidence is scoped to the R008 diff plus the 6e70353 libmachook; a rebuild and acceptance on the combined HEAD is still required before claiming 8e470ba as a device-accepted candidate.",
   "thermal": {
     "before": "thermal-state=nominal raw=0 battery-temp-centic=3489 (34.89 C), macwsthermal exit 0",
     "after": "thermal-state=nominal raw=0 battery-temp-centic=3550 (35.50 C), macwsthermal exit 0"
