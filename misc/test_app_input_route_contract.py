@@ -115,6 +115,63 @@ int main(void) {
     r.version = MacWSInputWireVersionForKind(r.kind);
     assert(classify(&r, false, &w) ==
            MacWSAppInputRouteRejectWindowRequired);
+
+    // R003-F1 regression: GlobalSystemSurface must never widen an
+    // exact-window kind. Both kinds are exercised with window zero/nonzero
+    // and flag off/on. A flagged record is rejected even when it names a
+    // window, because the flag is incompatible with the exact-window route.
+    for (int flagged = 0; flagged < 2; flagged++) {
+        for (int windowed = 0; windowed < 2; windowed++) {
+            uint32_t expectedWindow = windowed ? 73u : 0u;
+
+            r = base();
+            r.kind = MacWSInputKindConfigureWindow;
+            r.version = MacWSInputWireVersionForKind(r.kind);
+            r.sceneID = MacWSInputSceneForWindow(expectedWindow, 0);
+            if (flagged) r.flags |= MacWSInputFlagGlobalSystemSurface;
+            if (flagged) {
+                assert(classify(&r, false, &w) ==
+                       MacWSAppInputRouteRejectGlobalOwner);
+            } else if (windowed) {
+                assert(classify(&r, false, &w) ==
+                       MacWSAppInputRouteExactWindow);
+                assert(w == 73u);
+            } else {
+                assert(classify(&r, false, &w) ==
+                       MacWSAppInputRouteRejectWindowRequired);
+            }
+
+            r = base();
+            r.kind = MacWSInputKindCloseWindow;
+            r.version = MacWSInputWireVersionForKind(r.kind);
+            r.sceneID = MacWSInputSceneForWindow(expectedWindow, 0);
+            if (flagged) r.flags |= MacWSInputFlagGlobalSystemSurface;
+            if (flagged) {
+                assert(classify(&r, false, &w) ==
+                       MacWSAppInputRouteRejectGlobalOwner);
+            } else if (windowed) {
+                assert(classify(&r, false, &w) ==
+                       MacWSAppInputRouteExactWindow);
+                assert(w == 73u);
+            } else {
+                assert(classify(&r, false, &w) ==
+                       MacWSAppInputRouteRejectWindowRequired);
+            }
+        }
+    }
+
+    // The fix must not over-restrict genuine global pointer records.
+    r = base();
+    r.kind = MacWSInputKindTap;
+    r.version = MacWSInputWireVersionForKind(r.kind);
+    r.flags |= MacWSInputFlagGlobalSystemSurface;
+    r.sceneID = MacWSInputSceneForWindow(0, 0);
+    assert(classify(&r, false, &w) ==
+           MacWSAppInputRouteGlobalSystemSurface);
+    r.sceneID = MacWSInputSceneForWindow(44, 0);
+    assert(classify(&r, false, &w) ==
+           MacWSAppInputRouteGlobalSystemSurface);
+
     r = base();
     r.kind = MacWSInputKindRelativePointer;
     r.version = MacWSInputWireVersionForKind(r.kind);
@@ -204,6 +261,17 @@ int main(void) {
         self.assertIn("record->targetPID != selfPID", text)
         self.assertIn("MacWSInputWindowIDForScene(record->sceneID)", text)
         self.assertIn("MacWSInputFlagGlobalSystemSurface", text)
+        # R003-F1: the exact-window branch must precede the generic global
+        # branch. Behavior is exercised above; this pins the source order so
+        # a future edit cannot silently reintroduce the widening.
+        body = text[text.index(
+            "static inline int MacWSAppInputRouteClassify("):]
+        exact_branch = body.index(
+            "MacWSAppInputRouteKindRequiresExactWindow(record->kind)")
+        generic_global = body.index(
+            "if (globalSurface) return "
+            "MacWSAppInputRouteGlobalSystemSurface;")
+        self.assertLess(exact_branch, generic_global)
         # No framework dependency: this must stay usable from a plain C test.
         for forbidden in ("#import", "Foundation", "objc/"):
             self.assertNotIn(forbidden, text)

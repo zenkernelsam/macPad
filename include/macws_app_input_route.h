@@ -108,10 +108,19 @@ static inline int MacWSAppInputRouteClassify(
             return MacWSAppInputRouteRejectGlobalOwner;
         return MacWSAppInputRouteGlobalSystemSurface;
     }
+    // Exact-window kinds are checked BEFORE the generic global branch. A
+    // ConfigureWindow/CloseWindow record is addressed to one real AppKit
+    // window; GlobalSystemSurface is incompatible with that contract even
+    // when a window ID is also present. Letting the flag win would accept a
+    // zero-window control record that the broker already rejects and that
+    // the consumer cannot repair. Regressing this order is caught by the
+    // focused route test (window zero/nonzero x flag on/off).
+    if (MacWSAppInputRouteKindRequiresExactWindow(record->kind)) {
+        if (globalSurface) return MacWSAppInputRouteRejectGlobalOwner;
+        if (windowID == 0) return MacWSAppInputRouteRejectWindowRequired;
+        return MacWSAppInputRouteExactWindow;
+    }
     if (globalSurface) return MacWSAppInputRouteGlobalSystemSurface;
-    if (MacWSAppInputRouteKindRequiresExactWindow(record->kind) &&
-        windowID == 0)
-        return MacWSAppInputRouteRejectWindowRequired;
     return windowID != 0 ? MacWSAppInputRouteExactWindow
                          : MacWSAppInputRouteProcessScoped;
 }
