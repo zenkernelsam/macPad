@@ -137,8 +137,23 @@ int      d141_gate_init(const char *sentinel_path);
 int      d141_armed(void);
 
 /* Generation tag — accepted only while UNINIT; serialized before the
- * gate decision. Post-init calls return -1. */
+ * gate decision. First-set wins: once a (uuid,pid,gen) tuple publishes,
+ * every later call returns -1 — pre-gate AND post-gate — because the
+ * UNINIT rollback would otherwise let a second caller re-win the window
+ * and overwrite g_uuid under a live reader (D183/D184). The only latch
+ * release is d141_reset_for_test, which requires quiescent test threads
+ * and is NOT a production reset path. The full 16-byte uuid is retained
+ * in-process inside the same INITIALIZING publication window and
+ * released via a validity flag before the rollback (D182). */
 int      d141_set_generation(int32_t pid, const unsigned char uuid[16]);
+
+/* Full producer UUID — 0 + exact 16 bytes when a set_generation has
+ * published, -1 + zeroed out otherwise (never stale bytes). No locks,
+ * no syscalls; errno untouched.
+ * PROVENANCE ONLY: records still carry just gen/pid (uuid low64); the
+ * returned high 64 bits are producer-declared metadata and can never
+ * be record-verified — decoders treat them as asserted (D175 wording). */
+int      d141_get_uuid(unsigned char out[16]);
 
 /* Emit one record. Silent when disarmed. errno preserved. Nonblocking:
  * full ring → drop + counter. */

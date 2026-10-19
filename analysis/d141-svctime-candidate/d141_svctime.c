@@ -33,6 +33,8 @@ static _Atomic int      g_state;    /* enum d141_init_state                */
 static _Atomic uint64_t g_consumer; /* owner tid; 0 = unclaimed            */
 static _Atomic uint64_t g_gen;
 static _Atomic int      g_pid;
+static unsigned char    g_uuid[16];
+static _Atomic int      g_uuid_valid;
 
 #ifdef D141_TEST_HOOKS
 void (*d141_hook_post_claim)(void) = NULL;
@@ -59,16 +61,40 @@ int d141_set_generation(int32_t pid, const unsigned char uuid[16]) {
     if (!atomic_compare_exchange_strong_explicit(&g_state, &expected,
             INITIALIZING, memory_order_acq_rel, memory_order_acquire))
         return -1;                  /* decision or another setup in flight */
+    /* First-set wins (D180/D184): a published tuple latches. Without this
+     * check the UNINIT rollback would let a second pre-gate caller re-win
+     * the window and overwrite non-atomic g_uuid while a get_uuid reader
+     * memcpy's it — a real torn read. The latch is checked BEFORE the
+     * test hook and any uuid/pid/gen store; refused callers restore
+     * UNINIT and leave. reset_for_test is the only latch release. */
+    if (atomic_load_explicit(&g_uuid_valid, memory_order_acquire)) {
+        atomic_store_explicit(&g_state, UNINIT, memory_order_release);
+        return -1;
+    }
 #ifdef D141_TEST_HOOKS
     if (d141_hook_gen_init) d141_hook_gen_init();
 #endif
     uint64_t lo = 0;
+    memcpy(g_uuid, uuid, 16);       /* full UUID BEFORE pid/gen stores  */
     memcpy(&lo, uuid, 8);
     atomic_store_explicit(&g_pid, pid, memory_order_relaxed);
     atomic_store_explicit(&g_gen,
         ((uint64_t)(uint32_t)pid << 32) ^ lo, memory_order_relaxed);
+    /* Release-publish the triple (uuid,pid,gen) as one image identity:
+     * a get_uuid acquire of the flag synchronizes every prior store in
+     * this window; readers never infer validity from gen != 0. */
+    atomic_store_explicit(&g_uuid_valid, 1, memory_order_release);
     atomic_store_explicit(&g_state, UNINIT, memory_order_release);
     return 0;
+}
+
+int d141_get_uuid(unsigned char out[16]) {
+    if (atomic_load_explicit(&g_uuid_valid, memory_order_acquire) == 1) {
+        memcpy(out, g_uuid, 16);
+        return 0;
+    }
+    memset(out, 0, 16);
+    return -1;
 }
 
 int d141_gate_init(const char *sentinel_path) {
@@ -234,6 +260,7 @@ void d141_reset_for_test(void) {
     atomic_store(&g_drain_refused, 0); atomic_store(&g_gate_spun, 0);
     atomic_store(&g_state, UNINIT); atomic_store(&g_consumer, 0);
     atomic_store(&g_gen, 0);   atomic_store(&g_pid, 0);
+    atomic_store(&g_uuid_valid, 0); memset(g_uuid, 0, sizeof(g_uuid));
 #ifdef D141_TEST_HOOKS
     d141_hook_post_claim = NULL;
     d141_hook_gen_init = NULL;

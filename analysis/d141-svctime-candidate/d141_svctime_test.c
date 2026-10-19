@@ -727,13 +727,154 @@ static void t18(void) {
     unlink(SENT);
 }
 
+/* ---- D182 t19: UUID accessor U1/U2/U3/U4/U6/U7 ------------------------
+ * U1 verbatim round-trip, U2 unset, U3 record low64 binding, U4 reset,
+ * U6 second-set refusal, U7 errno preservation on both paths. */
+static void t19(void) {
+    static const unsigned char UUID[16] =
+        {0x96,0x67,0x6a,0x53,0xb1,0xe0,0x3d,0x7e,
+         0xb9,0x8b,0xb7,0x38,0x73,0xcd,0x18,0x80};
+    unsigned char out[16];
+
+    /* U2: before any set → -1, out zeroed */
+    d141_reset_for_test(); unlink(SENT);
+    memset(out, 0xAA, 16);
+    CHECK(d141_get_uuid(out) == -1, "U2 unset → -1");
+    { int z = 1; for (int i = 0; i < 16; i++) z &= (out[i] == 0);
+      CHECK(z, "U2 out zeroed"); }
+
+    /* U1: verbatim 16-byte round trip incl. high64 */
+    CHECK(d141_set_generation(22527, UUID) == 0, "set rc");
+    memset(out, 0, 16);
+    errno = EBADF;
+    CHECK(d141_get_uuid(out) == 0, "U1 get rc");
+    CHECK(memcmp(out, UUID, 16) == 0, "U1 all 16 bytes verbatim");
+    CHECK(errno == EBADF, "U7 errno preserved (valid path)");
+
+    /* U6a (D183/D184): second set BEFORE gate_init — the UNINIT rollback
+     * must not let it re-win the window; the first-set latch refuses it */
+    static const unsigned char OTHER[16] = {9,9,9,9,9,9,9,9,
+                                            8,8,8,8,8,8,8,8};
+    CHECK(d141_set_generation(1, OTHER) == -1,
+          "U6 pre-gate second set refused by latch");
+    memset(out, 0, 16);
+    CHECK(d141_get_uuid(out) == 0 && memcmp(out, UUID, 16) == 0,
+          "U6 uuid unchanged by refused pre-gate set");
+
+    /* U3: drained record (gen,pid) recovers lo64 == accessor lo64 —
+     * the exact relation the D175 decoder enforces. */
+    arm();
+    d141_emit(D141K_DISPATCH_BEGIN, 1, 0);
+    d141_record rec[1];
+    CHECK(d141_drain(rec, 1) == 1, "U3 record drained");
+    uint64_t rec_lo = ((uint64_t)((uint32_t)(rec[0].gen >> 32) ^
+                                  (uint32_t)rec[0].pid) << 32)
+                      | (rec[0].gen & 0xffffffffull);
+    uint64_t acc_lo; memcpy(&acc_lo, out, 8);
+    CHECK(rec_lo == acc_lo, "U3 record lo64 == accessor lo64");
+
+    /* U6b: post-gate second set refused; uuid untouched */
+    CHECK(d141_set_generation(1, OTHER) == -1, "U6 post-gate refused");
+    memset(out, 0, 16);
+    CHECK(d141_get_uuid(out) == 0 && memcmp(out, UUID, 16) == 0,
+          "U6 uuid unchanged post-gate");
+
+    /* U4 + U7b: reset clears validity; invalid path preserves errno */
+    d141_reset_for_test();
+    memset(out, 0xAA, 16);
+    errno = EDOM;
+    CHECK(d141_get_uuid(out) == -1, "U4 post-reset → -1");
+    { int z = 1; for (int i = 0; i < 16; i++) z &= (out[i] == 0);
+      CHECK(z, "U4 out zeroed"); }
+    CHECK(errno == EDOM, "U7 errno preserved (invalid path)");
+    unlink(SENT);
+}
+
+/* ---- D182 t20 / U5: publication gate, deterministic -------------------
+ * gen_pause parks the writer inside INITIALIZING while g_uuid is being
+ * written — a mid-window reader must observe INVALID (flag still 0),
+ * never torn bytes; post-release the read is verbatim. No sleeps. */
+static void t20(void) {
+    d141_reset_for_test(); unlink(SENT);
+    static const unsigned char UUID[16] =
+        {0x96,0x67,0x6a,0x53,0xb1,0xe0,0x3d,0x7e,
+         0xb9,0x8b,0xb7,0x38,0x73,0xcd,0x18,0x80};
+    t15_uuidp = UUID;
+    atomic_store(&gen_hook_in, 0); atomic_store(&gen_hook_rel, 0);
+    atomic_store(&gen_rc, -9);
+    d141_hook_gen_init = gen_pause;
+    pthread_t G;
+    pthread_create(&G, NULL, t15_gen, NULL);
+    while (!atomic_load_explicit(&gen_hook_in, memory_order_acquire))
+        sched_yield();              /* writer parked inside INITIALIZING */
+    unsigned char out[16]; memset(out, 0xAA, 16);
+    CHECK(d141_get_uuid(out) == -1, "U5 mid-window get → -1");
+    { int z = 1; for (int i = 0; i < 16; i++) z &= (out[i] == 0);
+      CHECK(z, "U5 mid-window out zeroed"); }
+    atomic_store_explicit(&gen_hook_rel, 1, memory_order_release);
+    pthread_join(G, NULL);
+    CHECK(atomic_load(&gen_rc) == 0, "U5 set completed");
+    memset(out, 0, 16);
+    CHECK(d141_get_uuid(out) == 0 && memcmp(out, UUID, 16) == 0,
+          "U5 post-release verbatim");
+    unlink(SENT);
+}
+
+/* ---- D184 t21: concurrent second-set while first writer parked --------
+ * Deterministic: first writer holds INITIALIZING in hook_gen_init; a
+ * concurrent set loses the CAS → −1 without touching uuid; after release
+ * the first tuple publishes intact, and a post-publish pre-gate set hits
+ * the first-set latch. No sleeps — existing barriers only. */
+static const unsigned char *t21_uuidp2;
+static _Atomic int t21_rc2;
+static void *t21_gen2(void *a) {
+    (void)a;
+    t21_rc2 = d141_set_generation(999, t21_uuidp2);
+    return NULL;
+}
+static void t21(void) {
+    d141_reset_for_test(); unlink(SENT);
+    static const unsigned char UUID[16] =
+        {0x96,0x67,0x6a,0x53,0xb1,0xe0,0x3d,0x7e,
+         0xb9,0x8b,0xb7,0x38,0x73,0xcd,0x18,0x80};
+    static const unsigned char OTHER[16] = {9,9,9,9,9,9,9,9,
+                                            8,8,8,8,8,8,8,8};
+    t15_uuidp = UUID; t21_uuidp2 = OTHER;
+    atomic_store(&gen_hook_in, 0); atomic_store(&gen_hook_rel, 0);
+    atomic_store(&gen_rc, -9); atomic_store(&t21_rc2, -9);
+    d141_hook_gen_init = gen_pause;
+    pthread_t G, S;
+    pthread_create(&G, NULL, t15_gen, NULL);
+    while (!atomic_load_explicit(&gen_hook_in, memory_order_acquire))
+        sched_yield();              /* first writer holds INITIALIZING    */
+    pthread_create(&S, NULL, t21_gen2, NULL);
+    pthread_join(S, NULL);
+    CHECK(atomic_load(&t21_rc2) == -1,
+          "concurrent second set lost CAS while INITIALIZING");
+    unsigned char out[16]; memset(out, 0xAA, 16);
+    CHECK(d141_get_uuid(out) == -1, "still unpublished mid-window");
+    atomic_store_explicit(&gen_hook_rel, 1, memory_order_release);
+    pthread_join(G, NULL);
+    CHECK(atomic_load(&gen_rc) == 0, "first writer published");
+    memset(out, 0, 16);
+    CHECK(d141_get_uuid(out) == 0 && memcmp(out, UUID, 16) == 0,
+          "uuid verbatim after concurrent refusal");
+    /* post-publish, pre-gate: the new latch refuses the window re-entry */
+    CHECK(d141_set_generation(999, OTHER) == -1,
+          "post-publish pre-gate set refused by latch");
+    memset(out, 0, 16);
+    CHECK(d141_get_uuid(out) == 0 && memcmp(out, UUID, 16) == 0,
+          "uuid intact after latch refusal");
+    unlink(SENT);
+}
+
 int main(void) {
     struct { const char *name; void (*fn)(void); } tests[] = {
         { "t1",  t1  }, { "t2",  t2  }, { "t3",  t3  }, { "t4",  t4  },
         { "t5",  t5  }, { "t6",  t6  }, { "t7",  t7  }, { "t9",  t9  },
         { "t10", t10 }, { "t11", t11 }, { "t12", t12 }, { "t13", t13 },
         { "t14", t14 }, { "t15", t15 }, { "t16", t16 }, { "t17", t17 },
-        { "t18", t18 },
+        { "t18", t18 }, { "t19", t19 }, { "t20", t20 }, { "t21", t21 },
     };
     for (size_t i = 0; i < sizeof(tests) / sizeof(tests[0]); i++) {
         int before = checks;

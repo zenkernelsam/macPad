@@ -27,6 +27,33 @@ Kinds: `PASS_ENTER/EXIT` (CGXRunOneServicesPass), `DISPATCH_BEGIN`
 (_CGXHandleMessage), `REPLY_ENQUEUE` (CGXPostReplyMessage), `FLUSH_BEGIN`
 (_push_out_message), `MACH_CALL`, `MACH_RET`.
 
+## Full-UUID retention/accessor (D182, per accepted D180 design)
+
+`d141_set_generation` retains all 16 UUID bytes in `g_uuid[16]` inside
+the existing INITIALIZING window: `memcpy(g_uuid,…)` *before* the
+relaxed `g_pid`/`g_gen` stores, then `g_uuid_valid = 1` (release), then
+the existing `g_state = UNINIT` (release) rollback. `d141_get_uuid(out)`
+acquire-loads the validity flag: `1 → memcpy + 0`; `0 → zeroed out +
+-1`. No locks/syscalls; errno untouched; validity holds from a
+successful set until `d141_reset_for_test` (which clears both).
+
+**First-set latch (D184, fixing D183):** immediately after winning
+`UNINIT→INITIALIZING`, `set_generation` acquire-loads `g_uuid_valid`;
+if a tuple already published, it restores `UNINIT` and returns `-1`
+BEFORE the test hook or any store — the rollback otherwise re-opens the
+window to a second pre-gate caller that could overwrite `g_uuid` under
+a live `get_uuid` memcpy (torn read). `d141_reset_for_test` is the only
+latch release and **requires quiescent test threads; it is not a
+production reset path**.
+
+**Provenance semantics (binding):** records still carry only `gen`/`pid`
+— uuid *low64*. The accessor's high 64 bits are **producer-declared**
+metadata: nothing on a record can independently verify them, and
+decoders must treat `image_uuid` hi64 as asserted (the D175 svcdecode
+wording stands). Validity is gated solely by the release/acquire flag —
+readers never infer it from `gen != 0` (relaxed stores give no
+cross-variable ordering).
+
 ## Ring protocol
 
 - MPSC producers: CAS-claim `head`; `head − tail ≥ CAP(256) → drop + count`.
@@ -124,11 +151,12 @@ edge kinds are emitted on the same tid inside the bracket.
 | `d141_gate_spun()`, `d141_head()`, `d141_tail()` (D150b) | read-only observability for T15/T16 |
 | `d141_hook_gen_init` (D150b, `D141_TEST_HOOKS` only) | deterministic gen-window parking |
 | `d141_gate_init` retry semantics (D150b I1) | UNINIT observed → re-CAS; `INITIALIZING` → bounded spin; `-1` only on pathological unsettled |
+| `d141_get_uuid(out)` (D182) | additive provenance accessor; no record/emit/drain/ring change |
 
 ## Tests (`run_tests.sh`)
 
-Deterministic; barrier/hook-driven, zero sleeps. ASan+UBSan **437 checks,
-0 failures**; TSan **437 checks, 0 race reports**; arm64 object compiles.
+Deterministic; barrier/hook-driven, zero sleeps. ASan+UBSan **462 checks,
+0 failures**; TSan **462 checks, 0 race reports**; arm64 object compiles.
 
 | Test | Checks | Coverage |
 |---|---|---|
@@ -149,6 +177,9 @@ Deterministic; barrier/hook-driven, zero sleeps. ASan+UBSan **437 checks,
 | T16 | 271| I2: exact CAP-boundary + flood — 255 commit, P parks claim 255, drain prefix, 255 followers, 1+CAP refusals, head never advances on refusal, ordered final drain, emitted=511/dropped=257/attempts=768 |
 | T17 | 18 | I3: parked-prefix overlap + 4×300 churn gated on drain_started; per-record aux/magic/gen/tid/unique; conservation |
 | T18 | 13 | I5: distinct-id join, `MACH_RCV_TIMED_OUT` exclusion (decoder rejects non-success RET; CALL stays unmatched; delayed success RET pairs to it), async interleave, aux verbatim, per-leg errno |
+| T19 | 15 | D182 U1/U2/U3/U4/U6/U7: verbatim 16B round-trip, unset → −1+zeroed, record lo64 == accessor lo64, **pre-gate** second-set latch refusal (D184) + retained post-gate refusal, reset clears, errno both paths |
+| T20 | 4  | D182 U5: `hook_gen_init` parks writer mid-INITIALIZING → get_uuid −1+zeroed (flag gates; no scheduling luck); release → verbatim |
+| T21 | 6  | D184: concurrent second set loses CAS while first writer parked → −1, nothing touched; first publishes verbatim; post-publish pre-gate set hits the latch |
 
 ## Remaining known bounds
 
