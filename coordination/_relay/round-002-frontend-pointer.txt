@@ -1,0 +1,1 @@
+Read-only AppInput route audit: read coordination/_relay/round-002-frontend-input-audit.md and execute it. Do not edit source/tests/build inputs; write only coordination/_relay/round-002-frontend-audit.md with commands, exits, line references and FACT/THEORY labels, then end exactly (handover to codex now).

@@ -1,0 +1,1 @@
+请执行 coordination/_relay/round-012-backend-result-task.md：只做已确认的XPC函数指针A-key/0窄修复，干净构建/部署一次并重跑owned generation；保持MSFindSymbol全局语义、TCC/像素/input分层，完成清理后handover。

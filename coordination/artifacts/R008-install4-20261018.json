@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-18T14:29:15.302165+08:00",
+  "finished": "2026-10-18T14:30:08.789290+08:00",
+  "command": "export PATH=/var/jb/usr/bin:/var/jb/usr/sbin:/usr/bin:/usr/sbin:/bin:/sbin; sha256sum /var/tmp/macws-r008-full.deb; export DEBIAN_FRONTEND=noninteractive; MACWS_POSTINST_NO_RESPRING=1 /var/jb/usr/bin/dpkg -i /var/tmp/macws-r008-full.deb 2>&1 | grep -E \"Setting up|tccd|ERROR|error|Synchronized|DPKG\"; echo DPKG_INSTALL4_RC=$?",
+  "command_sha256": "b936b3d5d640ed65ed78efa855f9e305508cab2d0808cc83d12f6b0eead4c129",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "8601d8ff088f650f943f5a48cdba6961005996a282ba8eb3f7eb01d907403074  /var/tmp/macws-r008-full.deb\nSetting up com.kdt.macosbooter (0.3.4) ...\nPrepared Ventura system tccd for chroot launch; preserved the stock executable.\nSynchronized package runtime into the mounted macOS rootfs.\nDPKG_INSTALL4_RC=0\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

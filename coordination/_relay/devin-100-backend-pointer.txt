@@ -1,0 +1,1 @@
+Read coordination/_relay/devin-100-backend-task.md and execute the offline exact-binary audit; target tccd_22F82_live exists locally with verified UUID/hash. No device operations. Preserve raw disassembly and return D100 evidence plus explicit handover.

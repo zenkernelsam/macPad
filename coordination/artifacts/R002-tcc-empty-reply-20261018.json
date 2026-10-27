@@ -1,0 +1,119 @@
+{
+  "packet": "Backend R002 — TCC ABI audit and empty-reply producer",
+  "date": "2026-10-18",
+  "mode": "read-only evidence; no source/tests/build inputs, no build, no dependency install, no Git operation, no jobs started",
+  "device": {
+    "model": "iPad13,11 (T8103)",
+    "os": "iPadOS 16.3 / 20D47",
+    "kernel": "Darwin 22.3.0 xnu-8792.82.2",
+    "rootfs": "macOS 13.4.1 / 22F82",
+    "address": "<device; not persisted>"
+  },
+  "fingerprints": {
+    "tccd": {
+      "path": "/var/mnt/rootfs/System/Library/PrivateFrameworks/TCC.framework/Support/tccd",
+      "sha256": "42c388e875f5a479402a3a8318aa9c866101c1162d042ba0daafbf5d996c828d",
+      "uuid_arm64e": "9845D17F-0409-3884-8A17-260C729636E5",
+      "cdhash": "1a32fd7ee14553cc453c111e84d15bbfd04267a4",
+      "architectures": "x86_64 arm64e",
+      "job": "user/501/com.macwsguide.tccd-system",
+      "pid_during_capture": 45068,
+      "endpoint": "com.apple.macosbooter.tccd.system"
+    },
+    "tcc_framework": {
+      "analysis_file": "analysis/TCC_22F82",
+      "uuid": "1238D7CA-719A-36A4-94B1-2F387E6B3BF1",
+      "preflight_function": "0x1850d03bc",
+      "note": "the framework binary is in the dyld shared cache; no on-disk framework executable was found on this rootfs"
+    },
+    "skylight": {
+      "analysis_file": "analysis/SkyLight_22F82",
+      "uuid": "96676A53-B1E0-3D7E-B98B-B73873CD1880",
+      "checker_function": "0x185425da0"
+    },
+    "probe": {
+      "path": "/var/mnt/rootfs/usr/local/bin/macwstccdprobe",
+      "sha256": "430e3925da9054864f263dcd6a31029e50a4b4b7b7df49d07c9ce308f28201b4",
+      "uuid": "6B8EB001-A91D-36A8-BFFB-A5A5ED5D6096",
+      "arch": "arm64"
+    }
+  },
+  "abi_audit": {
+    "skylight_callsite": {
+      "instructions": "0x185425df4 ldp q0,q1,[x20]; 0x185425df8 stp q0,q1,[sp]; 0x185425dfc mov x1,sp; 0x185425e00 mov x0,x19; 0x185425e04 mov x2,#0; 0x185425e08 blraaz x8; 0x185425e0c cmp w0,#0; 0x185425e10 cset w0,eq",
+      "fact": "SkyLight copies the 32-byte audit token to the stack and passes a pointer in x1; service in x0; options NULL in x2; return int in w0."
+    },
+    "tcc_callee": {
+      "instructions": "0x1850d03d8 mov x19,x0; 0x1850d0420 stur x1,[x29,#-0x68]; 0x1850d0500 ldr w19,[x8,#0x18]; 0x1850d0528 mov x0,x19; 0x1850d052c retab",
+      "fact": "the callee stores x1 as a pointer, never consumes x2, and returns a 32-bit int in w0 (zero-extended to x0)."
+    },
+    "probe_call": {
+      "instructions": "0x100000a60 ldp q0,q1,[sp,#0x20]; 0x100000a64 stp q0,q1,[sp,#0x60]; 0x100000a68 add x1,sp,#0x60; 0x100000a6c mov x2,#0; 0x100000a70 blr x20",
+      "fact": "the probe's by-value audit_token_t typedef compiles to the same copy-to-stack + x1 pointer + x2 NULL ABI as SkyLight (AAPCS64 indirect aggregate), so the call is compatible; int64_t return is benign because w0 is zero-extended."
+    },
+    "service_representation": "CFStringRef client -> XPC string server ('kTCCServicePostEvent' in REQUEST_MSG).",
+    "recommendation": "make the probe signature explicit as const audit_token_t * and int return in the next source packet; current ABI is correct only by calling convention."
+  },
+  "real_request": {
+    "caller": "pid 46525, uid 0, audit=ffffffff000000000000000000000000000000000000b5bd0000000000015a49, sender_auid=501, tccd_uid=0",
+    "connection": "com.apple.macosbooter.tccd.system",
+    "request_fields": {
+      "require_purpose": "xpc_null",
+      "service": "kTCCServicePostEvent",
+      "function": "TCCAccessRequest",
+      "preflight": true,
+      "target_token": "{pid:46525, auid:-1, euid:0}",
+      "TCCD_MSG_ID": "46525.1",
+      "background_session": false
+    },
+    "reply": {
+      "type": "OS_xpc_dictionary",
+      "count": 0,
+      "keys": []
+    },
+    "spi_result": 1
+  },
+  "server_empty_reply_path": {
+    "runtime_log": [
+      "ERROR: responsibility_get_responsible_audit_token_for_audit_token() from PID[46525]: (#103) Policy not found",
+      "ERROR: Failed to create attribution chain from message.",
+      "RECV: synchronous reply <dictionary: ... { count = 0 ... }>"
+    ],
+    "static_control_flow": [
+      "0x100006508 xpc_dictionary_create_reply -> x23 (pre-created reply)",
+      "0x1000069ac request-context-nil path",
+      "0x1000069c8 cbnz w0,0x100007928 (logging gate)",
+      "0x100007928 bl 0x100052ca4 (logs 'Failed to create attribution chain from message.')",
+      "0x100007930 b 0x1000069cc",
+      "0x1000069cc..0x1000069e0 sends x23 unchanged via xpc_connection_send_message",
+      "no xpc_dictionary_set_* on this path -> count=0"
+    ],
+    "conclusion": "the empty reply is produced before service policy evaluation; it is an attribution-chain/responsibility failure, not an explicit result=false and not a TCC policy denial."
+  },
+  "context_ab": {
+    "uid_0_probe": "exit 0, reply count=0, SPIPreflight result=1",
+    "uid_501_probe": "exit 0, reply count=0, SPIPreflight result=1, same responsibility/attribution failure",
+    "services": ["kTCCServicePostEvent", "kTCCServiceSystemPolicyAllFiles", "kTCCServiceAccessibility"],
+    "all_services": "exit 0, reply count=0",
+    "ping": "exit 0, reply count=0 (different early path, not a TCC service request)",
+    "ws_postmin": "SLSPostEventRecord -> rc=1002; 0 tccd log lines in the window; the live WS used a cached checker result, so no fresh WS-sender request was captured",
+    "limits": "no fresh WS request (would require an owner-managed generation), no debugger, oslog -p pid returned 0; production WS trace is rejected by production_preflight"
+  },
+  "theory_and_next": {
+    "theory": "the SSH/launchdchrootexec probe lacks a responsibility policy for its audit token; a fresh launchd/RunningBoard-hosted chroot client may build the attribution chain and receive a populated reply.",
+    "next_experiments": [
+      "capture oslog during a fresh WS generation's first TCC requests and grep tccd for responsibility/attribution/REQUEST/AUTHREQ_RESULT",
+      "run the same probe from a launchd-hosted temporary job (next packet; existing lifecycle)",
+      "if attribution succeeds but the reply stays empty, trace the TCCD_MSG_SPI_VERSION gate at 0x100007018..0x100007058 and fallback 0x100007158 with a debugger",
+      "next source packet: explicit probe signature and a bounded server-log assertion"
+    ]
+  },
+  "final_state": {
+    "live_generation_unchanged": "tccd 45068, WS 45211",
+    "native_health": "tccd 883, SpringBoard 872, backboardd 905",
+    "markers": "both namespaces absent",
+    "probe_or_debugger_processes": "none",
+    "thermal": "nominal 34.79 C",
+    "device_evidence_archive": "/var/mobile/macws_r002_evidence_20261018/"
+  }
+}

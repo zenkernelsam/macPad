@@ -1,0 +1,24 @@
+{
+  "time": "2026-10-18T14:57:01.307935+08:00",
+  "tests": "python3 -m unittest discover -s DevinWatchdog_mac -p test_qoder_iterm_relay.py -v",
+  "tests_exit": 0,
+  "tests_count": 4,
+  "input_sent": false,
+  "snapshot": {
+    "session_id": "C455E1A7-FC18-4473-9B6D-22F619785362",
+    "name": "✦ macPad移植-后端 | Working (qoderclicn)",
+    "tty": "/dev/ttys001",
+    "processes": [
+      {
+        "pid": 39300,
+        "ppid": 39194,
+        "cwd": "/Users/ciscohe/Desktop/macPad",
+        "command": "qoderclicn"
+      }
+    ],
+    "agent_pid": 39300,
+    "binding_verified": true,
+    "handover_ready": false,
+    "screen": " │ … +2 rows (Ctrl+O)\n │ Check whether `.theos/_` has libmachook built. The clean build may reuse\n │ Theos's shared lib? No, the worktree's `.theos` is separate.\n │ Wait 5 min.\n ▫ Bash(sleep 300; tail -c 300 /tmp/macws-clean-build.log; echo; date \n   +%H:%M:%S; grep -n \"CLEAN_RC\" /tmp/macws-clean-build.log; ls -l \n \u0000\u0000/tmp/macpad-r008-clean/packages/ 2…)\n   └ Running… (1m 53s)\n \u0000\u0000\u0000\u0000(Ctrl+B to run in background)\n\n────────────────────────────────────────────────────────────────────────────────\n Tasks\u0000\u00002/6 completed (Ctrl+T to toggle)\n \n ✓\u0000#1 Fix six R008 reviewer edge cases\n ✓ #2 Run full macPad pipeline on device\n » #3 Witnessing cold start and recovery\n ☐ #4 Capture full TCC reply schema\n ☐ #5 Real input acceptance\n ☐\u0000#6 Record evidence, cleanup, commit, handover\n \n ⠦ Generating... (esc to cancel, 1h 6m 49s)                     ? for shortcuts\n────────────────────────────────────────────────────────────────────────────────\n YOLO Shift+Tab to Auto Mode   1 AGENTS.md file · 21 skills · 1 Background task\n────────────────────────────────────────────────────────────── macPad移植-后端 ─\n *   Type your message or @path/to/file\n────────────────────────────────────────────────────────────────────────────────\n\u0000DeepSeek-Flash\u0000(DeepSeek)\u0000Model\u0000·\u0000Max\u0000·\u00001M\u0000context\u0000·\u0000ctx\u0000▓▓▓▓░░░░░░\u000041%\n"
+  }
+}

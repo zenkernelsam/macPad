@@ -1,0 +1,1 @@
+请执行 coordination/_relay/round-031-to-frontend.md；复核 validator 对真实LLVM拒绝样本的行为，先保存自包含checkpoint，完成文档并 handover。

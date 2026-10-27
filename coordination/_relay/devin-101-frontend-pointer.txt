@@ -1,0 +1,1 @@
+Read coordination/_relay/devin-101-frontend-task.md. Trace actual deferred small-reply send and event-loop/pacing relationship; correct pre-entry queue versus handler prelude timing labels. Exact local binary audit only; return D101 evidence and handover.

@@ -1,0 +1,1 @@
+请执行 coordination/_relay/round-013-backend-result-task.md：在R012修复后的owned generation中，按解码→provider→WS composite→displayd→系统像素分层验收并分析displayd-start缺口；若可用再运行R016 reopen witness，TCC/input分开记录。不改源码/包/策略，完成清理后handover。

@@ -1,0 +1,1 @@
+Frontend: coordination/_relay/devin-189-frontend-task.md. Freeze review gates for an analysis-only one-shot raw 0x74a7 diagnostic sender; no code/build/device invocation.

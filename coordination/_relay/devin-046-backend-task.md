@@ -1,0 +1,10 @@
+# D046 backend — observer final forwarding and log-open gates (local only)
+
+D044 reviewed preliminarily; frontend D045 still active, no deployment. Fix remaining concrete edges, do not expand observer scope. Log open currently opens before validating type: existing FIFO can block without O_NONBLOCK. Existing owned regular files with mode0644 are accepted despite token privacy. Require nonblocking safe open, reject nonregular/nonowned/over-permissive existing files (or explicit safe correction only after validation), enforce bounded path behavior; test FIFO/device/symlink/permissive-file negatives without hanging. Keep no-symlink/0600/new-log policy and no device changes.
+
+Prove errno forwarding across ENTIRE wrapper including pre-original helper calls (TLS/loader/access/etc): capture incoming errno, restore immediately before original call, capture original errno, restore at final return. Plain memory reads alone do not justify other helper calls. Tests should exercise wrappers with original leaving errno unchanged as well as setting it; not emitter-only tests. Live disarm must cease token snapshot collection as well as logging where feasible, while originals still execute unchanged. Guard helper effects and avoid unbounded mutex/log I/O in WS. Record exact remaining latency limits rather than claim bounded time from finite write count.
+
+Correct TCC documentation: API1/default versus explicit policy denial are distinct; EMPTY reply may leave default1, so no policy-denial claim without actual reply-field/path evidence. Independently use exact TCC22F82 disassembly, not generic meanings. Resolve frontend D045 blockers when final stable result available, no repeated polling. Preserve display4 permits/relocator/PAC and unrelated WIP. Local focused tests + both architecture builds only; no commit/package/deploy/restart/marker/device action.
+
+Write docs/evidence/devin-d046-observer-final-boundaries-20261019.md and coordination/_relay/devin-046-backend-result.md with hashes, precise tests and remaining live gaps. Stop after final file/terminal line:
+(handover to codex now)

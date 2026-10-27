@@ -1,0 +1,1 @@
+请执行 coordination/_relay/round-006-to-backend.md：沿真实IconServices F11H崩溃追MPS library/compiler输入与现有adapter，先精确证据后窄方案，不盲改UID、不旁路assert、不重启外部generation或重建包。只读取证并清理，完成handover。

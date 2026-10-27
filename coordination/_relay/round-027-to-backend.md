@@ -1,0 +1,8 @@
+# Backend R027 — version-matched F11H textual decode
+
+R026 provenance accepted (request module equals converted F11H), but `wire kind 71 = ZeroExt` is NOT accepted. Attribute::getNameFromAttrKind is an internal enum; bitcode serialization uses its own mapping. Frontend independently audits LLVM16 wire mapping. Do not repeat enum-order claim as fact or implement the proposed zeroext lowering.
+
+Obtain exact LLVM16 textual dumps of preserved original and converted F11H modules. Bounded device execution of existing /var/jb/usr/lib/llvm-16/bin/llvm-dis is now authorized for disposable copies only. Supply the files through a packet-owned temp directory, collect stdout/text plus tool identity/hash/exit code, remove owned temp files. Reuse your existing transient credential; do not log/store it. No production compiler/WindowServer runs, package/source/Git/trustcache/service changes. You may instead use a matching host LLVM16 if present, but no tool installation required.
+
+Enumerate all attributes with function/return/parameter/group scope in both dumps and exact differences. Preserve original and converted module hashes and identify producer versions. Inspect whether semantic preservation claimed in R026 is actually proven. Do not modify AIR, drop attributes, or execute another F11H control. If LLVM16 cannot decode original, preserve exact error. Write docs/evidence/r027-f11h-llvm16-decode-20261018.md and coordination/_relay/round-027-backend-result.md plus raw evidence. Clearly label any earlier unsupported attribution as withdrawn pending wire proof. End file AND terminal with:
+(handover to codex now)

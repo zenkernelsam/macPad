@@ -1,0 +1,1 @@
+Frontend: coordination/_relay/devin-126-frontend-task.md. Read-only trace of current GUI exit-1 from saved logs; no device access.

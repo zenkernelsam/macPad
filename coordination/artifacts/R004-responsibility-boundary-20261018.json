@@ -1,0 +1,52 @@
+{
+  "packet": "Backend R004 — native vs chroot responsibility getter boundary",
+  "date": "2026-10-18",
+  "mode": "read-only getter controls; no setter/kernel write/entitlement expansion/TCC grant-db edit/checker override; no shared source/build/Git change",
+  "device": "iPad13,11 iPadOS 16.3 20D47 / macOS 13.4.1 22F82",
+  "inventory": {
+    "tccd_fat_sha256": "42c388e875f5a479402a3a8318aa9c866101c1162d042ba0daafbf5d996c828d",
+    "tccd_arm64e_thin_sha256": "039f64b776c28083578f354aa2939fd4461726d4e411e44f5ec17755074ccfe9",
+    "tccd_uuid": "9845D17F-0409-3884-8A17-260C729636E5",
+    "native_import": "dyld_info: _responsibility_get_responsible_audit_token_for_audit_token (from libSystem)",
+    "helper_source_sha256": "78ffa3547a5a2d05c710448ce73f8f81d52dc62a0f865a24b2a97a0e43436237",
+    "helper_native_local_sha256": "5e1f428fadd7cce6907537507af3e176e2f0e7f8051378ebf736811cf9c84112",
+    "helper_chroot_local_sha256": "9d2db85a8ef8a7929dc4c108fa36e2ca209557a4e7866428efff7fc757937c2f",
+    "native_health": "tccd 883, SpringBoard 872, backboardd 905",
+    "thermal_final": "nominal 34.59 C"
+  },
+  "abi": {
+    "caller": "tccd 0x10004fb48 bl responsibility_getter; x0=target token ptr, x1=out token ptr, x2=0, x3=0; returns int w0; errno via __error",
+    "error_log": "0x100051a54 errno+strerror format",
+    "chroot_prologue": "7f2303d5ffc300d1fd7b02a9fd830091000440ade00700ade003009104000094 = pacibsp; sub sp,sp,#0x30; stp x29,x30,[sp,#0x20]; stp x20,x19,[sp,#0x10]",
+    "validation": "helper call returned a normal error, no crash; signature not guessed"
+  },
+  "native_getter": {
+    "availability": "unavailable to non-platform helper",
+    "attempts": [
+      "dlsym(RTLD_DEFAULT) NULL",
+      "dlopen libSystem/libsystem_coreservices/libsystem_info/libsystem_kernel/libsystem_darwin/CoreServices: symbol not found",
+      "libquarantine/libresponsibility: errno=2, not in iOS dyld cache",
+      "direct import -Wl,-undefined,dynamic_lookup: dyld symbol not found in flat namespace"
+    ],
+    "crash_report": "resp_native_direct_r004-2026-10-18-162405.ips EXC_CRASH SIGABRT namespace DYLD reason symbol not found",
+    "blocker": "platform/private gating; no entitlement expansion attempted"
+  },
+  "chroot_getter": {
+    "path": "/usr/lib/system/libquarantine.dylib",
+    "uuid": "A2D17FF6-CBC6-3D19-89E1-F5E57191E8A3",
+    "base": "0x1a6d5f000",
+    "symbol": "0x1a6d60b00",
+    "control_self": {"token": "ffffffff 00000000 00000000 00000000 00000000 0000ca14 00000000 0001827b pidversion=98939", "rc": -1, "errno": 103, "errstr": "Policy not found", "out": "all zero"},
+    "control_live_native_token": {"native_pid": 51948, "token": "ffffffff 00000000 00000000 00000000 00000000 0000caec 00000000 00018427 pidversion=99367", "alive_during_call": true, "rc": -1, "errno": 103, "errstr": "Policy not found", "out": "all zero"}
+  },
+  "boundary": "Ventura getter reachable and ENOPOLICY for both live chroot and live native tokens; native getter unreachable to a non-platform helper. No inference of a missing kernel policy from ENOPOLICY; the result is consistent with a missing target relationship or a Ventura wrapper contract mismatch, and cannot distinguish them. No selector/request-layout comparison possible without the native getter.",
+  "cleanup": {
+    "helpers": "moved to /var/mobile/macws_r004_evidence_20261018; active paths removed",
+    "jobs": "none created; no helper/sampler processes remain",
+    "markers": "both absent",
+    "live_generation": "tccd 50427 / WS 50574 appeared outside this packet; left untouched",
+    "crash_delta": "expected resp_native_direct DYLD SIGABRT; WindowServer.wakeups_resource bug_type 142 (resource report, not a crash); no new WindowServer crash"
+  },
+  "analysis_archive": "analysis/r004-responsibility/ (ignored): responsibility_probe.c, metadata.json; no Apple binaries in Git",
+  "next_proposal": "obtain an exact platform-client/entitlement contract review; use an existing entitled native client or minimal exact-entitlement test in a separate packet; same live token both sides; raw return/errno/output only; no setter/kernel write/global override"
+}

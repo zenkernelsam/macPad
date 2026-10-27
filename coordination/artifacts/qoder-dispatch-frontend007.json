@@ -1,0 +1,21 @@
+{
+  "time": "2026-10-18T16:26:42.174411+08:00",
+  "body_sent_once": true,
+  "cr_sent_once": true,
+  "snapshot": {
+    "session_id": "02A55FDA-3ED9-47B0-AD3A-DCF4E26FD263",
+    "name": "✦ macPad移植-前端 | Working (qoderclicn)",
+    "tty": "/dev/ttys000",
+    "processes": [
+      {
+        "pid": 38533,
+        "ppid": 38396,
+        "cwd": "/Users/ciscohe/Desktop/macPad",
+        "command": "qoderclicn"
+      }
+    ],
+    "agent_pid": 38533,
+    "binding_verified": true,
+    "handover_ready": false
+  }
+}

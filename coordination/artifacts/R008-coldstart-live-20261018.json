@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-18T15:24:33.996280+08:00",
+  "finished": "2026-10-18T15:24:34.747760+08:00",
+  "command": "date +%H:%M:%S; echo \"=== TCCD JOB\"; launchctl print user/501/com.macwsguide.tccd-system 2>&1 | egrep \"state|pid|com.apple.macosbooter\" | head -8; echo \"=== WS\"; launchctl list 2>/dev/null | grep windowserver; echo \"=== COMPOSITE\"; cat /var/mnt/rootfs/private/tmp/macws_final_composite.state; echo \"=== THERMAL\"; /var/jb/usr/macOS/bin/macwsthermal; echo \"=== READY LOG\"; grep -E \"tccd endpoint ready|WindowServer graphics ready|WindowServer process ready\" /var/jb/var/mobile/macos_gui.log /var/jb/var/mobile/*.log 2>/dev/null | tail -5",
+  "command_sha256": "bd9aff97bb59b74a44022d27ad1ad12b491bdb40f6aeca0bb28b478354e5ca2f",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "15:24:34\n=== TCCD JOB\n\tstate = running\n\tpid = 38754\n\t\t\"com.apple.macosbooter.tccd.system\" = {\n=== WS\n38911\t0\tUIKitApplication:com.macwsguide.windowserver\n=== COMPOSITE\nstate=missing\nproducer=0\nsequence=0\nupdated=1792308261.181178\nreason=displayd-start\n=== THERMAL\nthermal-state=nominal raw=0 low-power=no battery-temp-centic=3479 virtual-temp-centic=3479 effective-temp-centic=3479 uptime=47921.014\n=== READY LOG\n/var/jb/var/mobile/guistart.log:[macos_gui] WindowServer graphics ready (pid=61467, clean producer observed).\n/var/jb/var/mobile/macos_gui_restart.log:[macos_gui] WindowServer process ready (pid=54055, stable for 8s; graphics not yet witnessed).\n",
+  "stderr": "egrep: warning: egrep is obsolescent; using grep -E\n",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

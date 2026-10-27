@@ -1,0 +1,1 @@
+请执行 coordination/_relay/round-010-backend-result-task.md：冻结合并HEAD，按标准pipeline构建一次完整包并验收设备provider/F1实际装载；先inventory与保留baseline，区分像素/TCC/input端点，完成清理后handover。

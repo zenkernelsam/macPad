@@ -1,0 +1,1 @@
+请执行 coordination/_relay/round-030-to-backend.md；真正重编码为正确28字节 triple，严格不变量通过后才隔离A/B，完成文档并 handover。

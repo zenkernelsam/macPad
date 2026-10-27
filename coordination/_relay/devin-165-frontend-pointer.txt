@@ -1,0 +1,1 @@
+Frontend: coordination/_relay/devin-165-frontend-task.md. Audit D164 cold-start/generation comparison consistency; design-only, no device/integration.

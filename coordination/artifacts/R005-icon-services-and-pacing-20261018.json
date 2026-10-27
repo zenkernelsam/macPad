@@ -1,0 +1,49 @@
+{
+  "packet": "Backend R005 — IconServices crash audit and finite pacing sample",
+  "date": "2026-10-18",
+  "mode": "read-only; external WS generation not started/stopped/restarted; no source/build/Git/dependency/setter/grant/kernel changes",
+  "responsibility_input": {
+    "provider": "/usr/lib/system/libquarantine.dylib",
+    "uuid": "A2D17FF6-CBC6-3D19-89E1-F5E57191E8A3",
+    "getter_offset": "0x1b00",
+    "getter_bytes": "7f2303d5ffc300d1fd7b02a9fd830091000440ade00700ade003009104000094",
+    "full_image": "analysis/r005-responsibility-inputs/libquarantine.dylib",
+    "full_sha256": "f5989c8f4afc9985e95795bf683679eed629af8b5ae288a0fb87317ba0e844f2",
+    "dependencies": "8 direct libsystem/dyld/dispatch/block images extracted under /var/mobile/macws_r005_evidence_20261018/responsibility-inputs/deps; UUIDs/full hashes/slice hashes in analysis/r005-responsibility-inputs/metadata.json",
+    "tccd_provenance": {
+      "ventura": "fat 42c388e8..., arm64e 039f64b7..., UUID 9845D17F..., imports responsibility getter from libSystem",
+      "native_ios": "67669ed7..., UUID 0120CE08-6868-352E-B7EC-819850D57587; no responsibility imports found",
+      "correction": "R004's import metadata was from the Ventura tccd; native gating remains THEORY, not established."
+    }
+  },
+  "iconservices": {
+    "real_crashes": ["iconservicesagent-2026-10-18-154951.ips", "iconservicesagent-2026-10-18-161016.ips", "iconservicesagent-2026-10-18-161058.ips", "iconservicesagent-2026-10-18-161950.ips"],
+    "exception": "EXC_CRASH SIGABRT",
+    "faulting_thread": "com.apple.MPS.MPSLibrary.preheat",
+    "faulting_stack": ["abort", "__assert_rtn", "MTLReportFailure.cold.1", "MTLReportFailure", "MPSLibrary::MPSKey_Compile(MPSKey_data*) +944"],
+    "assertion": "MPSLibrary.mm:485: failed assertion `MPSLibrary::MPSKey_Create internal error: Unable to get MPS kernel F11H. Error: Compiler encountered an internal error'",
+    "workloop": "iconservicesagent workloop thread blocked in MPSLibrary::MPSKey_Compile wait (unfair lock)",
+    "job": "com.macwsguide.iconservicesagent user/501; launchdchrootexec 0 0 /var/mnt/rootfs iconservicesagent runAsRoot; uid/gid 0; KeepAlive SuccessfulExit=false; throttle 10s",
+    "session_agent": "com.macwsguide.iconservicesd user/501; launchdchrootexec 240 240 iconservicesd; uid/gid 240; stable",
+    "store": "/var/mnt/rootfs/Library/Caches/com.apple.iconservices.store 240:240 0700",
+    "agent_cache": "/var/mnt/rootfs/Users/root/Library/Caches absent; HOME=/Users/root, TMPDIR=/tmp from launchdchrootexec",
+    "trust": "agent stock CDHash 1c0d3271... trusted; libmachook arm64e CDHash ee0f018f... trusted",
+    "interpretation": "root-role MPS preheat compile error, not uid/gid/cache/trust; UID501 supplier recipe remains an untested hypothesis"
+  },
+  "pacing": {
+    "generation": "external tccd 50427 start 16:18:02, WindowServer 50574 start 16:18:08; left untouched",
+    "spindump": "/var/mobile/macws_r005_evidence_20261018/ws-spindump-20261018.txt (3s, 20ms, 3.8MB)",
+    "state": "macws_final_composite.state missing producer=0 sequence=0",
+    "cpu": "WS 1.0-1.2%",
+    "stack": "main thread deep unsymbolicated chain; com.apple.coreanimation.display.primary blocked on WS main thread 0x978af for 142/150 samples",
+    "limit": "no service request sent to the external generation; expository stack not symbolicated for libmachook; no macws_coexist_wait symbol observed. No claim that the pacing wait holds queued messages.",
+    "next": "owned fresh generation: bounded read-only timestamps around mac_hooks.m ~27319, one finite request, correlate enqueue/wait/dispatch/response with frame sequence and CPU"
+  },
+  "final": {
+    "native_health": "tccd 883, SpringBoard 872, backboardd 905",
+    "thermal": "nominal 34.39 C",
+    "owned_helpers": "none created in R005; R004 helpers already archived; spindump process ended",
+    "external_generation": "left running and unmodified",
+    "markers": "both absent"
+  }
+}

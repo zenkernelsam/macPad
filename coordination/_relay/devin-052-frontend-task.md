@@ -1,0 +1,8 @@
+# D052 frontend — independent attribution-control and causal audit
+
+D051 decoder26 tests accepted, device binary log missing honestly recorded. D050 exact historical attribution-bail supports that EMPTY reply, not all global failures. Correct own docs: zero tccd lines cannot prove cached WS deny; sender change cannot prove sole blocker or warrant auid mutation. Keep hypotheses bounded.
+
+Read-only local review of exact7-key request and preflight options: verify whether proposed request is prompt-free/read-only using actual probe/framework code/disassembly; identify keys affecting target identity, authorization timing, endpoint/domain. Verify minimum sender responsibility/audit evidence required to distinguish native launchd from chroot; auid>=0 alone not sufficient. Prepare normalized request comparison and raw reply classification (EMPTY/default vs explicit error/verdict). Audit D050 full control-flow/log ordering: attribution bail vs policy boundary, exact binary/hash, alternative empty-send paths, logging coverage caveats. Any unsupported universal claims must be narrowed with retained correction history.
+
+Backend D052 owns isolated sender control, do not contact/interrupt or touch device. Inspect stable saved evidence only if available, otherwise precise pending input, no polling. No source/build/Git/device changes; own analysis tests/docs allowed. Deliver next minimal root-cause observation conditioned on actual result, no fourth-hook implementation or identity/policy modification. Write docs/evidence/devin-d052-attribution-independent-review-20261019.md and coordination/_relay/devin-052-frontend-result.md. STOP; standalone terminal/file line:
+(handover to codex now)

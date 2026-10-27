@@ -1,0 +1,1 @@
+Frontend: coordination/_relay/devin-156-frontend-task.md. Correct D152 RET aux contract per D155; spec-only, no source/tests/device/backend interruption.

@@ -1,1 +1,1 @@
-R007 已集中审核：真实字典回复进展保留，但恢复流程、冷启动签名/信任、端点就绪检查与回复语义仍需修订。请阅读 coordination/reviews/R007-20261015.md 和 coordination/DEVIN_TASK.md 完成 R008；先收敛可复现传输链，不改 TCC 策略。完成后明确 handover。
+Frontend: coordination/_relay/devin-125-frontend-task.md. Independently audit complete installed-vs-pending UI/F1 patch inventory; read-only.

@@ -1,0 +1,83 @@
+{
+  "packet": "Backend R003 — fresh WS attribution and hosted-probe A/B",
+  "date": "2026-10-18",
+  "constraints": "read-only source/build/Git; no rebuild/install/dependencies; no grant/db/session/checker edits; device exclusive; installed 6e70353+R008 package, not merged HEAD",
+  "inventory": {
+    "device": "iPad13,11 (T8103), iPadOS 16.3 20D47, Darwin 22.3.0",
+    "rootfs": "macOS 13.4.1 22F82",
+    "repo_head_seen": "7e5d771",
+    "deployed": {
+      "source_base": "6e70353 + R008 package; not attributable to merged HEAD",
+      "macos_gui.sh": "471fc752ed72d0a376ef747d834530607c484839b1d2af2585a4eb3fab6ebc9d",
+      "postinst.sh": "ed42f4782563e1110f0d86fc0d0a279b48eeee9b4c7cb4013e15d58948fe2df1",
+      "libmachook_arm64e": "9a5119534d3dd40c3353efa8cbf888392b3a020c63785377a498cc466c572819",
+      "libmachook_arm64": "151a2175c0b9bacb571cd9798c7204e4cd17922ed875823dc014593dd332bced",
+      "probe": "430e3925da9054864f263dcd6a31029e50a4b4b7b7df49d07c9ce308f28201b4",
+      "tccd": "42c388e875f5a479402a3a8318aa9c866101c1162d042ba0daafbf5d996c828d",
+      "tccd_uuid": "9845D17F-0409-3884-8A17-260C729636E5"
+    },
+    "native_health": "tccd 883, SpringBoard 872, backboardd 905",
+    "thermal_before": "nominal 34.39 C",
+    "prior_generation": "tccd 45068, WS 45211; logs preserved in /var/mobile/macws_r003_evidence_20261018/prior_generation/"
+  },
+  "fresh_generation": {
+    "command": "bash /var/jb/usr/macOS/bin/macos_gui.sh stop; bash /var/jb/usr/macOS/bin/macos_gui.sh start coexist --no-vnc",
+    "stop_exit": 0,
+    "start_exit": 0,
+    "tccd_pid": 48750,
+    "tccd_job": "user/501/com.macwsguide.tccd-system",
+    "ws_pid": 48891,
+    "endpoint": "com.apple.macosbooter.tccd.system",
+    "composite": "state=missing producer=0 sequence=0 (process readiness only; no display success)",
+    "postmin_1": {"injector_pid": 49186, "ws_msgid": "48891.17", "sls_rc": 1002},
+    "postmin_2": {"injector_pid": 49199, "ws_msgid": "48891.19", "sls_rc": 1002}
+  },
+  "ws_sender_requests": {
+    "fact": "WindowServer is the XPC sender (sender_pid=48891, uid=0, auid=501); tccd performs the responsibility lookup on the target token (the process being checked).",
+    "requests": [
+      {"msgid": "48891.16", "service": "kTCCServiceListenEvent", "target_pid": 49186, "reply_count": 0, "responsibility_errno": 103},
+      {"msgid": "48891.17", "service": "kTCCServicePostEvent", "target_pid": 49186, "reply_count": 0, "responsibility_errno": 103},
+      {"msgid": "48891.18", "service": "kTCCServiceListenEvent", "target_pid": 49199, "reply_count": 0, "responsibility_errno": 103},
+      {"msgid": "48891.19", "service": "kTCCServicePostEvent", "target_pid": 49199, "reply_count": 0, "responsibility_errno": 103},
+      {"msgid": "48891.20", "service": "kTCCServiceScreenCapture", "target_pid": 49121, "reply_count": 0, "responsibility_errno": 103},
+      {"msgid": "48891.21", "service": "kTCCServiceListenEvent", "target_pid": 48579, "reply_count": 0, "responsibility_errno": 103}
+    ],
+    "target_48579": "/System/Library/CoreServices/iconservicesagent runAsRoot (project launchd-hosted chroot daemon)",
+    "log_chain": "RESPONSIBILITY_ERROR -> Failed to create attribution chain from message -> RECV empty dictionary",
+    "pidversion_limit": "the WS target_token descriptor prints only {pid, auid, euid}; the 32-byte token is in the request but pidversion is not logged. Correlation is msgID + target pid + tccd generation.",
+    "postmin_result": "SLSPostEventRecord -> rc=1002; empty reply, not an explicit policy denial"
+  },
+  "hosted_probe_ab": {
+    "label": "com.macwsguide.r003-hosted-probe",
+    "domains": ["system", "user/501"],
+    "pid": 49211,
+    "parent": "launchd via /var/jb/usr/macOS/bin/launchdchrootexec",
+    "request": {"msgid": "49211.1", "service": "kTCCServicePostEvent", "target_pid": 49211},
+    "tccd_log": "responsibility_get_responsible_audit_token_for_audit_token() from PID[49211]: (#103) Policy not found; Failed to create attribution chain",
+    "reply": "count=0; TCCPREFLIGHT result=1",
+    "conclusion": "launchd hosting alone is insufficient; the launchd-hosted iconservicesagent target also fails the same lookup"
+  },
+  "upstream_disassembly": {
+    "tccd": "42c388e8..., arm64e UUID 9845D17F-0409-3884-8A17-260C729636E5",
+    "responsibility_call": "0x10004fb48 bl _responsibility_get_responsible_audit_token_for_audit_token; 0x10004fb4c cbz w0,0x10004fbc4; nonzero -> [x21,#0xa]=0, [x21,#0x18]=0",
+    "error_log": "0x100051a54 'ERROR: responsibility_get_responsible_audit_token_for_audit_token() from PID[%d]: (#%d) %{public}s' (errno + strerror)",
+    "empty_reply": "0x100006508 xpc_dictionary_create_reply -> x23; 0x1000069ac nil context; 0x1000069c8 gate; 0x100007928 bl 0x100052ca4 (attribution log); 0x100007930 b 0x1000069cc; 0x1000069cc..0x1000069e0 sends x23 unchanged",
+    "conclusion": "responsibility policy lookup for the chroot target token fails before TCC service policy; the empty reply is not result=false"
+  },
+  "correction_to_r002": "zero tccd lines during a WS post did not prove a cached result; the fresh generation proves the WS requests exist and fail the target responsibility lookup. R002 probe attribution finding is confirmed but scoped to the target token, not a universal WS cause.",
+  "next_ab_proposal": [
+    "establish a responsibility relationship for one chroot target PID via an entitled helper or a RunningBoard-registered parent (exact entitlement verified first)",
+    "re-run the same hosted probe and a fresh WS PostEvent check; accept a populated reply (keys/types) and, separately, a visible input witness",
+    "if the lookup still fails, capture the responsibility policy producer path with a bounded tool; no fabricated token/session, no grant/db edits, no checker override"
+  ],
+  "final_state": {
+    "stop_exit": 0,
+    "processes": "no WindowServer/chroot tccd/OSXvnc/launchdchrootexec/probe/oslog/debugger processes",
+    "hosted_job": "removed; launchctl print system/user returns 113",
+    "markers": "both absent",
+    "native_health": "tccd 883, SpringBoard 872, backboardd 905",
+    "thermal_after": "nominal 34.69 C",
+    "crash_delta": "40 reports in 16:08-16:10 (37 ExcUserFault synthetic terminations from controlled stop/start, plus MTLCompilerService-161015, iconservicesagent-161016, iconservicesagent-161058); no new WindowServer crash",
+    "device_evidence": "/var/mobile/macws_r003_evidence_20261018/ (13 MB oslog, prior generation, hosted probe out/err/plist)"
+  }
+}

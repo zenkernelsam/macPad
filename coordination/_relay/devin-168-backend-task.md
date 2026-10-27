@@ -1,0 +1,3 @@
+# D168 backend — measurement integration boundary audit
+
+Read-only audit the accepted isolated D141/D150b/D162 candidate and D164/D166 requirements. Map the minimum future observer/decoder boundaries needed to obtain same-generation CALL→handler→reply timing under serialize-one-probe, including local-port absence, sequence gaps, bounded drops, permission gates, and teardown. Separate existing code from missing work and propose the smallest reviewable next milestone; no source edits, builds, device access, product integration, or wake-adaptation conclusion. Save a concise evidence note and relay handover. For any later implementation milestone, checkpoint and commit only after review acceptance; exclude unrelated WIP.

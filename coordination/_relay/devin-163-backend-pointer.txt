@@ -1,0 +1,1 @@
+Backend: D150b/D162 has been reviewer-accepted; read `coordination/reviews/D150b-D162-20261020.md`. Commit only the accepted isolated candidate files plus its evidence report, after checking exact contents/status; do not include unrelated WIP or binaries. Report commit hash and staged list. No integration/device actions.

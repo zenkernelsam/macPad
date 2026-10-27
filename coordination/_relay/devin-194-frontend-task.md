@@ -1,0 +1,3 @@
+# D194 frontend — frozen D190 main/UUID gate review
+
+Read-only review D190 main and UUID scanner against D188/D189/D191/D192. Freeze main/core file hashes in report before review; backend is separately repairing cleanup, so do not judge moving cleanup lines. Focus on dlsym C-name spelling (Mach-O nlist prefix versus runtime symbol name), actual address ownership via dladdr vs a separate dyld UUID match, exact-one-SkyLight identity, bounds on Mach-O LC_UUID scanning, message layout and record format. Determine if current main can resolve the intended symbol and if UUID match belongs to the called function. Cite existing source/binary evidence; no speculative acceptance. Do not edit/build/invoke sender or access device. Save concrete findings and handover.

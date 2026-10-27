@@ -1,0 +1,9 @@
+# User-visible desktop regression — priority correction
+
+User reports previously visible wallpaper/Dock/menu bar and no desktop today. Historical 2026-10-13 evidence records ready layers and continuous final composite sequence278+; R012/R013 on 2026-10-18 recorded state=missing producer=0 sequence=0 and zero displayd accepted/rejected frames. This is a loss of demonstrated display capability, not acceptable end-to-end progress. Current stopped-session state alone cannot prove regression, but R013 active-generation evidence does show a regression relative to historical acceptance.
+
+R013 owned generation was explicitly stopped after testing. Later compiler packets are isolated and do not start the desktop. Do not attribute absence solely to compiler work or claim F11H is the sole composite cause. Deployment/source changes, launch configuration and original rendered baseline need controlled comparison.
+
+At next backend handover: prioritize restore/reproduce last known visible desktop before production integration of compiler experiments. Inventory exact previous rendered artifact/config identities and backup availability (R010 backup is not automatically a known-good rendered baseline), current artifacts and startup settings. Plan one-variable A/B with reversible baseline preservation, visible wallpaper/Dock/menu bar + advancing composite sequence/pixel witness, then input separately. Do not blindly roll back all provider/PAC changes or overwrite newer source. Isolated compiler candidate remains diagnostic until reviewed.
+
+Workflow correction: every future installed change must preserve or explicitly test the previously accepted visible-desktop witness; process readiness and local probe success cannot replace it. Coordinator should state regression plainly and track recovery as the next user-visible milestone.

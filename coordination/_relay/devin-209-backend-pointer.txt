@@ -1,0 +1,1 @@
+Backend: HUMAN REQUEST: shut down macPad now, then pause. Read coordination/_relay/devin-209-backend-task.md; use standard stop, verify result, preserve WIP/native iOS; no restart until human returns.

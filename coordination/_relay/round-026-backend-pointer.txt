@@ -1,0 +1,1 @@
+请执行 coordination/_relay/round-026-to-backend.md；离线核对序列化属性71和转换源头，禁止盲删属性或设备重跑，完成文档并 handover。

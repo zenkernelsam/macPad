@@ -1,0 +1,8 @@
+# Devin backend D033 — current device/read-only regression boundary
+
+You replace qoder backend. Read AGENTS.md, both coordination/_relay/qoder-final-*-handover.md, SYNC.md and coordination/reviews/visible-desktop-regression-priority-20261018.md. User priority is restoring known-visible wallpaper/Dock/menu bar. R031 candidate grammar/audit passes but NEVER compiler-tested; park it. No more private compiler replay now.
+
+Connection tuple/password provided terminal-only; do not write secrets, user hostnames or addresses into files/Git/logs, nor put password in process arguments. Use sshpass -e with task-specific transient env or existing helper. Inventory read-only: hw/build, native PID/lstart, project daemon/WS/Host status, existing latest crash/log generation timestamps, installed provider/libmachook/launcher/companion identities, current composite state and preserved backup hashes. Inspect latest system-side crashes noted around22:28–22:33, without assuming cause. Distinguish a stopped desktop from a running failed generation; locate last known rendered baseline, not merely R010 backup. Do not start/stop/restart services, restore files, deploy/build/commit or alter markers/trustcache. Avoid recursive scans and perpetual tails; bounded reads only.
+
+Return exact current-state evidence, deployment vs historical visible-baseline comparison, candidate reversible next action and ownership/cleanup status. No theory promoted without log/disassembly. Write docs/evidence/devin-d033-device-regression-inventory-20261018.md and coordination/_relay/devin-033-backend-result.md. End file AND terminal with standalone:
+(handover to codex now)

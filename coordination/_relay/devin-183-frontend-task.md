@@ -1,0 +1,3 @@
+# D183 frontend — independent review of D180 D141 UUID API contract
+
+Read-only audit D180's planned `g_uuid_valid` release/acquire publication and U1–U8 acceptance rows against the committed D141 concurrency contract. Focus on INITIALIZING ordering, first-set immutability, errno preservation, reset assumptions, memory-model correctness, and what the deterministic hook does/does not prove. Recommend any additional focused test needed before D182 implementation is accepted. Do not edit code/tests, build, access device, or authorize product integration. Save a concise evidence note and formal handover.

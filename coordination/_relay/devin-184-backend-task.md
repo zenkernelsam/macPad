@@ -1,0 +1,7 @@
+# D184 backend — enforce D180 first-set UUID immutability
+
+Do not commit D182 yet. Fix D183's re-set/torn-read finding only in the analysis candidate.
+
+`d141_set_generation` returns state to UNINIT after publishing, so a second pre-gate call can reacquire INITIALIZING while `g_uuid_valid==1` and overwrite non-atomic `g_uuid[16]` as `d141_get_uuid` copies it. Enforce D180's explicit first-set-wins contract: immediately after winning UNINIT→INITIALIZING, acquire-load `g_uuid_valid`; if already 1, release-store `g_state=UNINIT` and return -1 before the test hook or any UUID/PID/gen write. This prevents a second publication window and preserves the first tuple. Keep reset_for_test as the only way to clear the latch.
+
+Tests: revise U6 to call a second `set_generation` after the first successful call but BEFORE `gate_init`, assert -1 and UUID unchanged (must exercise the new latch). Add a deterministic concurrent second-set attempt while first writer is parked by `d141_hook_gen_init`; it must lose CAS/return -1, then first writer publishes and UUID remains intact. Retain the existing post-gate refusal test if useful. No sleeps; use current barriers. Run focused suite including the 437 prior checks, ASan/UBSan, TSan and arm64 compile. Document that `d141_reset_for_test` requires quiescent test threads; do not claim production reset. No drain consumer, v3 writer, hooks/sender/transport/device/product integration, wake conclusion, or commit before review acceptance.

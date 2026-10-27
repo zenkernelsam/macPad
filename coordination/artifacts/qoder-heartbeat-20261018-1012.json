@@ -1,0 +1,41 @@
+{
+  "time": "2026-10-18T10:12:46.536Z",
+  "local_time": "2026-10-18T18:12:46+08:00",
+  "frontend": {
+    "session_id": "02A55FDA-3ED9-47B0-AD3A-DCF4E26FD263",
+    "name": "macPad移植-前端",
+    "tty": "/dev/ttys000",
+    "pid": 38533,
+    "cwd": "/Users/ciscohe/Desktop/macPad",
+    "binding_verified": true,
+    "r014": "handed over; accepted with exact-header validation caveat",
+    "r015": {
+      "task": "coordination/_relay/round-015-to-frontend.md",
+      "body_sha256": "252fe914c8f33da68a82284ec1b5a83e76510a667628326c741c44f2a4cb409c",
+      "body_sent_once": true,
+      "cr_sent_once": true,
+      "dry_run_identity_passed": true,
+      "working_confirmed": true
+    }
+  },
+  "backend": {
+    "session_id": "C455E1A7-FC18-4473-9B6D-22F619785362",
+    "name": "macPad移植-后端",
+    "tty": "/dev/ttys001",
+    "pid": 39300,
+    "cwd": "/Users/ciscohe/Desktop/macPad",
+    "binding_verified": true,
+    "handover_ready": false,
+    "state": "Working on R010 full package compile; no install shown"
+  },
+  "path_review": {
+    "r014_rootfs_alias": "/var/mnt/rootfs/System/Cryptexes/OS/System/Library/dyld",
+    "confirmed_by": "coordination/artifacts/r006-cache-find2.json",
+    "canonical_rootfs_path": "/var/mnt/rootfs/System/Volumes/Preboot/Cryptexes/OS/System/Library/dyld"
+  },
+  "actions": {
+    "backend_messages_while_working": 0,
+    "device_operations_by_coordinator": 0
+  },
+  "next": "existing scheduled wake"
+}

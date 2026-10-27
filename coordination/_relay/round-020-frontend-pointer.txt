@@ -1,0 +1,1 @@
+请执行 coordination/_relay/round-020-to-frontend.md：只读审计R010发现的provider临时Identifier是否影响dyld/trust/依赖身份，区分事实与理论并给最小后续修复建议；不改源码、包或设备，完成后handover。

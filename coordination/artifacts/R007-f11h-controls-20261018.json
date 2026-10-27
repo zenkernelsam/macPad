@@ -1,0 +1,60 @@
+{
+  "packet": "Backend R007 — bounded F11H specialization/pipeline control",
+  "date": "2026-10-18",
+  "mode": "finite disposable helper outside shared build inputs; project signing/trust; no shared compiler restart/kill/reconfigure; no external WS/tccd/agent mutation; no source/build/Git edits; no assert/MPS/TCC bypass",
+  "helper": {
+    "source_sha256": "bd08b532316cea44cbf4cefc148137ea7d24d7a42fab5f8ca1fbc64a60ee7980",
+    "char_binary_sha256": "2ffbd190c0a450043c024e1c175c8b9cadc20ebaef26b055d9023d7b84fabd5f",
+    "bool_binary_sha256": "375ab51a1215cd5716d89d8955509b8f5f00b294026a8250580d54c457361af2",
+    "bool_deployed_cdhash": "f8aed9c386c4e4b2a72de669164d5f937c7436c2",
+    "device": "Apple M1 registry 4294968576",
+    "diagnostics": "process-local MACWS_RUNTIME_DIAGNOSTICS=1 and MACWS_LSXPC_TRACE=1; no shared marker"
+  },
+  "controls": {
+    "char_0_1_converted_original": {
+      "library_load": "ok (all)",
+      "function": "nil",
+      "nserror": "MTLLibraryErrorDomain code 3: Constant kUseSoftwareLinearFilter (0) is of type MTLDataTypeBool but value found has type MTLDataTypeChar",
+      "pipeline": "not reached",
+      "interpretation": "invalid helper input type; manifest abi_type 'b' = API Bool, source i8 = AIR type; not the MPS path"
+    },
+    "bool_0_1_converted_original": {
+      "library_load": "ok (all)",
+      "adapter": "METAL2METAL accepted-manifest mpsimage (1825/1825); companion loaded from converted metallib",
+      "compiler_requests": ["requestType=9 reply received", "requestType=8 reply received", "requestType=15 data=7632 bytes llvmVersion=31001 APISpecifiedTimeoutInSeconds=0"],
+      "reply": "XPCErrorDescription = Connection interrupted",
+      "function_pipeline": "no return before watchdog",
+      "watchdog": "25s, exit 124 (all four)",
+      "data_prefix": "0x0000000600040600e000000008000000e800000000000000..."
+    }
+  },
+  "evidenced_gate": "compiler service type-15 request for the F11H specialization/pipeline is interrupted on the client side; no service-side NSError/compiler log",
+  "missing_artifact": "full 7632-byte type-15 request and the compiler service reply/error; LSXPC description truncates the data; shared compiler diagnostics marker was not set because the external generation owns the shared service",
+  "shared_state": {
+    "external_generation": "tccd 50427, WS 50574, iconservicesagent 51072 alive; untouched",
+    "compiler_services": "51489/51490 alive; earlier 54959 absent; no new MTLCompilerService crash report",
+    "restart_kill_reconfigure": "none by this packet",
+    "markers": "both absent; no shared marker changed"
+  },
+  "ws_sample_copy": {
+    "path": "analysis/r007-ws-sample/ws-spindump-20261018.txt (3.7 MB)",
+    "loaded_images": "analysis/r007-ws-sample/loaded-images.json",
+    "windowserver_uuid": "465422C7-3CFC-3E9F-9C04-813F3A265AA6",
+    "shared_cache": "BE59BB71-7B69-3EFC-86A8-5625A077AE2E slide 0x1ba40000",
+    "unresolved_uuids": ["CC9C81E9-9998-336F-A191-C68162587D54", "983665BA-B173-392C-9874-65213940AEF1"],
+    "note": "no new external sampling/restart; frontend to symbolicate against matched UUIDs"
+  },
+  "next_minimal_patch_scope": [
+    "capture the service-side compiler reply/error for the exact 7632-byte type-15 F11H request with an owned disposable compiler service generation and the existing diagnostics marker only if no conflicting owner, or isolated replay of the request",
+    "if the type-15 F11H request shape/target is rejected: extend the exact adapter gate for that shape, preserving validation",
+    "if the translated AIR/constant is rejected: fix the exact F11H metal2metal Bool-constant translation",
+    "any future control must pass MTLDataTypeBool at index 0; no assert bypass, UID change, broad entitlement or global conversion"
+  ],
+  "final": {
+    "native_health": "tccd 883, SpringBoard 872, backboardd 905",
+    "thermal": "nominal 34.39 C",
+    "new_crashes": "none in R007; no new MTLCompilerService report",
+    "owned_helpers": "moved to /var/mobile/macws_r007_evidence_20261018/helpers; no processes remain",
+    "external_generation": "untouched"
+  }
+}

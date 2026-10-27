@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-18T15:24:49.909442+08:00",
+  "finished": "2026-10-18T15:24:51.043885+08:00",
+  "command": "export PATH=/var/jb/usr/bin:/var/jb/usr/sbin:/usr/bin:/usr/sbin:/bin:/sbin\n/var/jb/usr/macOS/bin/launchdchrootexec 0 0 /var/mnt/rootfs \\\n  /usr/local/bin/macos_ws_event_probe postmin\nrc=$?\necho POSTMIN_RC=$rc\nexit 0\n",
+  "command_sha256": "f9aca679f957e7b0e7fed19bac9f467c91e83ecf399d210122e29837d18372fd",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "mode=postmin\npostmin: cid=81191 postRecord=0x86088001a7f2a788 getRecord=0xf2030001a7ff90e4\npostmin: SLSPostEventRecord -> rc=1002\nPOSTMIN_RC=0\n",
+  "stderr": "chdir: No such file or directory\n[launchdchrootexec] target=/usr/local/bin/macos_ws_event_probe arch=arm64e insert=/usr/local/lib/libmachook.dylib\n#### MACWS-CTOR-CANARY InitStuff entered\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\n#### MACWS-CTOR-CANARY InitStuff done\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\nMACWSHook: REFUSED no permit for target\n",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

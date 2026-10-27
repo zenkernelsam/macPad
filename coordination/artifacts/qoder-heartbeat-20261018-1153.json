@@ -1,0 +1,8 @@
+{
+  "time": "2026-10-18T11:53:46.702Z",
+  "local_time": "2026-10-18T19:53:46+08:00",
+  "frontend": {"session_id":"02A55FDA-3ED9-47B0-AD3A-DCF4E26FD263","tty":"/dev/ttys000","pid":38533,"cwd":"/Users/ciscohe/Desktop/macPad","binding_verified":true,"handover_ready":false,"r022":"prepared but not sent"},
+  "backend": {"session_id":"C455E1A7-FC18-4473-9B6D-22F619785362","tty":"/dev/ttys001","pid":39300,"cwd":"/Users/ciscohe/Desktop/macPad","binding_verified":true,"handover_ready":false,"r013":"Working read-only device layered acceptance/SSH inventory"},
+  "acceptance": {"windowserver_provider_recovery":"R012 passed","pixels":"pending","tcc":"pending","input":"pending","reopen":"pending"},
+  "actions": {"frontend_r022_body_sent_once":false,"backend_mid_task_messages":0,"device_operations_by_coordinator":0}
+}

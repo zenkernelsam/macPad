@@ -1,0 +1,1 @@
+请执行 coordination/_relay/round-003-to-backend.md：你独占设备，用现有已安装产物做一次新WS generation首次TCC取证及launchd-hosted probe对照；不改共享源码、不重建、不改权限策略。沿用本会话已提供的临时SSH参数，不落凭据。完成证据、清理及handover。

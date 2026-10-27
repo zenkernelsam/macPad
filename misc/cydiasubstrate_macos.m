@@ -46,6 +46,7 @@
 #include <mach/mach.h>
 #include <objc/message.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <string.h>
 #include <sys/mman.h>
 #include <unistd.h>
@@ -310,15 +311,22 @@ static int macws_insn_pc_relative(uint32_t i) {
     return 0;
 }
 
-// Defense-in-depth: also refuse terminators inside the stolen window.
-// A verbatim-copied ret/br/blr would execute in the thunk before the
-// branch-back is reached; while semantically equivalent for leaf ret,
-// the LR-signing interaction with a copied pacibsp is unsafe.
+// Terminal register transfers inside the stolen window. These are copied
+// verbatim into the thunk (they are position-independent) and suppress the
+// appended branch-back — control never falls through them. The blr/blra*
+// call variants are additionally distinguished at relocation time and
+// refused, since they return into the window and have not been exercised.
 static int macws_insn_terminal(uint32_t i) {
     if ((i & 0xfffffc1f) == 0xd65f0000) return 1;   // ret Xn
     if (i == 0xd65f0bff || i == 0xd65f0fff) return 1; // retaa / retab
     if ((i & 0xfffffc1f) == 0xd61f0000) return 1;   // br Xn
     if ((i & 0xfffffc1f) == 0xd63f0000) return 1;   // blr Xn
+    // Authenticated register branches (arm64e), zero-discriminator forms:
+    // mask drops the Rn field (bits [9:5]); op4=11111 selects *Z encoding.
+    if ((i & 0xfffffc1f) == 0xd61f081f) return 1;   // braaz Xn
+    if ((i & 0xfffffc1f) == 0xd61f0c1f) return 1;   // brabz Xn
+    if ((i & 0xfffffc1f) == 0xd63f081f) return 1;   // blraaz Xn
+    if ((i & 0xfffffc1f) == 0xd63f0c1f) return 1;   // blrabz Xn
     if (i == 0xd69f03e0) return 1;                  // eret
     return 0;
 }
@@ -444,7 +452,25 @@ void MSHookFunction(void *symbol, void *replace, void **result) {
     const uint32_t *src = (const uint32_t *)symbol;
 
 #define MACWS_REFUSE(why) do {                                          \
-        macws_hook_log("MACWSHook: REFUSED " why "\n");                 \
+        Dl_info _macws_di;                                              \
+        if (dladdr(symbol, &_macws_di) && _macws_di.dli_fbase) {        \
+            char _macws_buf[384];                                       \
+            snprintf(_macws_buf, sizeof(_macws_buf),                    \
+                "MACWSHook: REFUSED " why " target=%p image=%s+%#llx " \
+                "sym=%s\n",                                             \
+                orig_symbol,                                            \
+                _macws_di.dli_fname ? _macws_di.dli_fname : "?",        \
+                (unsigned long long)((uintptr_t)symbol -                \
+                    (uintptr_t)_macws_di.dli_fbase),                    \
+                _macws_di.dli_sname ? _macws_di.dli_sname : "?");       \
+            macws_hook_log(_macws_buf);                                 \
+        } else {                                                        \
+            char _macws_buf[160];                                       \
+            snprintf(_macws_buf, sizeof(_macws_buf),                    \
+                "MACWSHook: REFUSED " why " target=%p\n",               \
+                orig_symbol);                                           \
+            macws_hook_log(_macws_buf);                                 \
+        }                                                               \
         if (result) *result = orig_symbol;                              \
         return;                                                         \
     } while (0)
@@ -460,12 +486,16 @@ void MSHookFunction(void *symbol, void *replace, void **result) {
     if (memcmp(src, permit->expected, 16) != 0)
         MACWS_REFUSE("prologue drift");
 
-    for (int i = 0; i < 4; i++)
-        if (macws_insn_pc_relative(src[i]) ||
-            macws_insn_terminal(src[i]))
-            MACWS_REFUSE("PC-relative/terminal in stolen window");
-
-    // Thunk: stolen bytes + branch back to symbol+16.
+    // Exact-relocation thunk. Each stolen instruction is translated to
+    // position-independent thunk code:
+    //   * position-independent insns copy verbatim;
+    //   * cbz/cbnz become an inverted-condition skip over an absolute
+    //     ldr+br pair carrying the ORIGINAL absolute target;
+    //   * terminal register branches/returns copy verbatim and suppress
+    //     the appended branch-back (control never falls through);
+    //   * blr-family insns (calls that return into the window) and every
+    //     other PC-relative class (b/bl/b.cond/tbz/adr/adrp/ldr-lit) are
+    //     refused — mis-retargeting them would silently corrupt the window.
     // Every failure path from here on must still hand back a callable
     // original — the refusal contract applies to install failures too
     // (a NULL result would crash callers that invoke *result).
@@ -474,15 +504,62 @@ void MSHookFunction(void *symbol, void *replace, void **result) {
     if (thunk == MAP_FAILED)
         MACWS_REFUSE("thunk mmap failed");
     uint32_t *tp = (uint32_t *)thunk;
-    memcpy(tp, src, 16);
-    tp[4] = 0x58000051;                              // ldr x17, #8
-    tp[5] = 0xd61f0220;                              // br x17
-    *(uint64_t *)(tp + 6) = (uint64_t)((char *)symbol + 16);
+    const uint64_t sym_pc = (uint64_t)(uintptr_t)symbol;
+    int control_leaves = 0;
+    for (int i = 0; i < 4 && !control_leaves; i++) {
+        const uint32_t insn = src[i];
+        const uint64_t pc = sym_pc + (uint64_t)i * 4;
+        if ((insn & 0x7e000000u) == 0x34000000u) {   // cbz / cbnz
+            const int32_t imm19 = ((int32_t)insn << 8) >> 13;
+            const uint64_t target = pc + (int64_t)imm19 * 4;
+            // A target inside the stolen window would land inside the
+            // patch stub once symbol[0..16) is overwritten — refuse
+            // rather than silently re-routing it.
+            if (target >= sym_pc && target < sym_pc + 16) {
+                munmap(thunk, 4096);
+                MACWS_REFUSE("cbz/cbnz target inside stolen window");
+            }
+            // invert condition; imm19=5 skips ldr+br+.quad (4 slots) and
+            // lands on the next emitted instruction
+            *tp++ = ((insn ^ (1u << 24)) & ~(0x7ffffu << 5)) | (5u << 5);
+            *tp++ = 0x58000051;                      // ldr x17, #8
+            *tp++ = 0xd61f0220;                      // br x17
+            *(uint64_t *)tp = target; tp += 2;
+        } else if (macws_insn_terminal(insn)) {
+            if ((insn & 0xfffffc1f) == 0xd63f0000 ||   // blr Xn
+                (insn & 0xfffffc1f) == 0xd63f081f ||   // blraaz Xn
+                (insn & 0xfffffc1f) == 0xd63f0c1f) {   // blrabz Xn
+                munmap(thunk, 4096);
+                MACWS_REFUSE("indirect call in stolen window");
+            }
+            *tp++ = insn;                            // verbatim
+            control_leaves = 1;
+        } else if (macws_insn_pc_relative(insn)) {
+            munmap(thunk, 4096);
+            MACWS_REFUSE("unrelocatable PC-relative in stolen window");
+        } else {
+            *tp++ = insn;                            // verbatim
+        }
+    }
+    if (!control_leaves) {
+        *tp++ = 0x58000051;                          // ldr x17, #8
+        *tp++ = 0xd61f0220;                          // br x17
+        *(uint64_t *)tp = sym_pc + 16; tp += 2;
+    }
+    const size_t thunk_used = (size_t)((char *)tp - (char *)thunk);
     if (mprotect(thunk, 4096, PROT_READ | PROT_EXEC) != 0) {
         munmap(thunk, 4096);
         MACWS_REFUSE("thunk mprotect RX failed");
     }
-    sys_icache_invalidate(thunk, 32);
+    sys_icache_invalidate(thunk, thunk_used);
+
+#ifdef MACWS_RELOC_TESTONLY
+    // Test-only thunk-inspection build: return the raw thunk before the
+    // target patch so host tests can verify emitted bytes without needing
+    // writable code pages. Never defined in production builds.
+    if (result) *result = thunk;
+    return;
+#endif
 
     // Patch: absolute branch to replace over symbol[0..16).
     // Caller responsibility: invoke at a quiescent scope (ctor /
@@ -573,9 +650,14 @@ void MSHookMessageEx(Class _class, SEL sel, IMP imp, IMP *result) {
     }
     if (result) *result = original;
     if (!_class || !sel || !imp || !original || !types) {
-        macws_hook_log(!_class || !sel || !imp
-            ? "MACWSHook: MSG-REFUSED bad args\n"
-            : "MACWSHook: MSG-REFUSED missing method/encoding\n");
+        char _macws_buf[288];
+        snprintf(_macws_buf, sizeof(_macws_buf),
+            "MACWSHook: MSG-REFUSED %s class=%s sel=%s imp=%p\n",
+            (!_class || !sel || !imp)
+                ? "bad args" : "missing method/encoding",
+            _class ? class_getName(_class) : "(null)",
+            sel ? sel_getName(sel) : "(null)", (void *)imp);
+        macws_hook_log(_macws_buf);
         return;
     }
     class_replaceMethod(_class, sel, imp, types);

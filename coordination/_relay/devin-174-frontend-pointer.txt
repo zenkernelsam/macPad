@@ -1,0 +1,1 @@
+Frontend: coordination/_relay/devin-174-frontend-task.md. Read-only audit whether D173 verifies full image UUID and fails closed on bounded tracking caps.

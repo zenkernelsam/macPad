@@ -1,0 +1,38 @@
+{
+  "time": "2026-10-18T10:02:46.505Z",
+  "local_time": "2026-10-18T18:02:46+08:00",
+  "frontend": {
+    "session_id": "02A55FDA-3ED9-47B0-AD3A-DCF4E26FD263",
+    "name": "macPad移植-前端",
+    "tty": "/dev/ttys000",
+    "pid": 38533,
+    "cwd": "/Users/ciscohe/Desktop/macPad",
+    "binding_verified": true,
+    "handover_ready_before_dispatch": true,
+    "r013": "handed over; accepted with limits",
+    "r014": "dispatched once; offline only"
+  },
+  "backend": {
+    "session_id": "C455E1A7-FC18-4473-9B6D-22F619785362",
+    "name": "macPad移植-后端",
+    "tty": "/dev/ttys001",
+    "pid": 39300,
+    "cwd": "/Users/ciscohe/Desktop/macPad",
+    "binding_verified": true,
+    "handover_ready": false,
+    "state": "Working on R010 full-package build; no install step shown yet"
+  },
+  "actions": {
+    "frontend_deep_review": true,
+    "backend_mid_task_messages": 0,
+    "device_operations_by_coordinator": 0
+  },
+  "frontend_r014_dispatch": {
+    "body_sha256": "10db5787b48d97cf85451c23b2fdffd2dcab83500507f47536e54a5c23ba2370",
+    "body_sent_once": true,
+    "cr_sent_once": true,
+    "dry_run_identity_passed": true,
+    "working_confirmed": true
+  },
+  "next": "existing scheduled wake"
+}

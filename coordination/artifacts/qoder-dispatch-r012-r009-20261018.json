@@ -1,0 +1,24 @@
+{
+  "time": "2026-10-18T17:22:55.846654+08:00",
+  "frontend_body_once_cr_once": true,
+  "backend_dry_run_passed": true,
+  "backend_body_once_cr_once": true,
+  "backend_wrong_path_attempt": "rejected by relay before send; corrected file round-009-backend-pointer.txt sent once",
+  "states": {
+    "frontend": {
+      "pid": 38533,
+      "tty": "/dev/ttys000",
+      "session_id": "02A55FDA-3ED9-47B0-AD3A-DCF4E26FD263",
+      "binding_verified": true,
+      "task": "R012 provider package integration"
+    },
+    "backend": {
+      "pid": 39300,
+      "tty": "/dev/ttys001",
+      "session_id": "C455E1A7-FC18-4473-9B6D-22F619785362",
+      "binding_verified": true,
+      "task": "R009 isolated compiler service read-only feasibility"
+    }
+  },
+  "credentials": "no new credentials sent; previous SSH temp session only"
+}

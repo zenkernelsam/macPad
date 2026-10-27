@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-18T15:25:39.611787+08:00",
+  "finished": "2026-10-18T15:25:40.114134+08:00",
+  "command": "date +%H:%M:%S; launchctl list 2>/dev/null | grep -E \"tccd-system|windowserver\"; echo \"=== tccd print\"; launchctl print user/501/com.macwsguide.tccd-system 2>&1 | grep -E \"state =|pid =|com.apple.macosbooter\" | head -6; echo \"=== watchdog\"; grep -E \"reconnecting|recovered|tccd|did not recover|GUI clients reconnected\" /var/jb/var/mobile/macos_gui_watchdog.log | tail -10; echo \"=== thermal\"; /var/jb/usr/macOS/bin/macwsthermal",
+  "command_sha256": "17370f980cc34269ea3ad188d23c2d442e6d2c953499d83df12c9b68423dca96",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "15:25:40\n39606\t0\tcom.macwsguide.tccd-system\n39302\t0\tUIKitApplication:com.macwsguide.windowserver\n=== tccd print\n\tstate = running\n\tpid = 39606\n\t\t\"com.apple.macosbooter.tccd.system\" = {\n=== watchdog\n[macos_gui] watchdog: reconnecting GUI clients to replacement WindowServer 39302\n[macos_gui] Starting macOS system tccd (private endpoint)...\n[macos_gui] macOS system tccd protocol round-trip ready.\n[macos_gui] macOS system tccd endpoint ready (pid=39606).\n=== thermal\nthermal-state=nominal raw=0 low-power=no battery-temp-centic=3489 virtual-temp-centic=3489 effective-temp-centic=3489 uptime=47986.613\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

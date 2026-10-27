@@ -1,0 +1,139 @@
+{
+  "schema": 1,
+  "round": "R024",
+  "date": "2026-10-18",
+  "status": "blocked-missing-device-access",
+  "goal": "Read-only acquisition of full 22F82 cache map rows, exact libxpc guard bytes, frame-0 ownership/bytes and any non-lightweight reason string.",
+  "constraints_honored": {
+    "device_work": "read-only; no login succeeded; no remote command executed",
+    "windowserver_generation": false,
+    "policy_tcc_trustcache_changes": false,
+    "package_source_build_git_changes": false,
+    "host_address_recorded": false,
+    "credential_value_recorded": false
+  },
+  "access_environment": {
+    "MACWS_DEVICE": "unset",
+    "MACWS_DEVICE_PORT": "unset",
+    "MACWS_SSH_PASSWORD": "unset",
+    "configured_ssh_hosts": 1,
+    "local_identity_keys_present": false,
+    "sshpass_present": true,
+    "iproxy_present": false,
+    "local_forward_listeners_open": false
+  },
+  "access_attempts": [
+    {
+      "authentication": "BatchMode key",
+      "port": 22,
+      "result": "connect timeout",
+      "exit": 255,
+      "authenticated": false,
+      "host_key_written": false
+    },
+    {
+      "authentication": "BatchMode key",
+      "port": 2222,
+      "result": "host is down",
+      "exit": 255,
+      "authenticated": false,
+      "host_key_written": false
+    },
+    {
+      "authentication": "BatchMode key",
+      "port": 22222,
+      "result": "host is down",
+      "exit": 255,
+      "authenticated": false,
+      "host_key_written": false
+    }
+  ],
+  "local_fallback_inventory": {
+    "full_22f82_map_present": false,
+    "cache_map_head": {
+      "path": "analysis/r011-xpc-crash/cache-map-head.txt",
+      "lines": 42,
+      "stops_at": "libxpc __TEXT 0x180136000 -> 0x18017A000",
+      "contains_frame0_owner": false
+    },
+    "exact_libxpc_bytes": {
+      "path": "analysis/r011-xpc-crash/libxpc-bootstrap-entry-180ae1140.bin",
+      "cache_fileoff_start": "0x145140",
+      "size": 256,
+      "sha256": "b6c7c5f257a34e5bae662e9fe60485de9b2cafb08e39848b786936c5395c6796",
+      "covers_guard_cluster": false
+    },
+    "guard_cluster_bytes_present": false,
+    "frame0_bytes_present": false,
+    "reason_string_present": false,
+    "ios163_cache_is_22f82": false
+  },
+  "exact_local_result": {
+    "libxpc_uuid": "F3F19227-FF8F-389C-A094-6F4C16E458AF",
+    "id_dylib": "/usr/lib/system/libxpc.dylib",
+    "text_unslid_range": "0x180136000-0x18017A000",
+    "text_cache_file_range": "0x136000-0x17A000",
+    "text_size": 278528,
+    "text_sha256_expected": "af2bbe7c88c8be38aedef36d80410db39c4376cc1f9ebd0b0cf2b052582b0db5",
+    "runtime_slide": "0x99c000",
+    "guard_report_image0": "shared cache base 0x180000000; frame offsets are cache-relative",
+    "frames": [
+      {"frame": 0, "cache_offset": "0x3CEB78", "in_libxpc": false, "libxpc_image_offset": null, "owner": "unresolved"},
+      {"frame": 1, "cache_offset": "0x13BF8C", "in_libxpc": true, "libxpc_image_offset": "0x5F8C"},
+      {"frame": 2, "cache_offset": "0x141928", "in_libxpc": true, "libxpc_image_offset": "0xB928"},
+      {"frame": 3, "cache_offset": "0x1417B0", "in_libxpc": true, "libxpc_image_offset": "0xB7B0"},
+      {"frame": 4, "cache_offset": "0x1410E4", "in_libxpc": true, "libxpc_image_offset": "0xB0E4"},
+      {"frame": 5, "cache_offset": "0x140C84", "in_libxpc": true, "libxpc_image_offset": "0xAC84"}
+    ],
+    "guard_disassembly": null,
+    "reason_string": null,
+    "misuse_message_claimed": false,
+    "benignity_claimed": false
+  },
+  "missing_inputs": [
+    {
+      "id": "M1",
+      "item": "Reachable endpoint and credential in the worker environment",
+      "required": ["MACWS_DEVICE", "MACWS_DEVICE_PORT", "MACWS_SSH_PASSWORD or key-based login"],
+      "notes": "No credential value may be stored in the repository."
+    },
+    {
+      "id": "M2",
+      "item": "Full 22F82 cache map or frame-0 rows",
+      "device_path": "/var/mnt/rootfs/System/Volumes/Preboot/Cryptexes/OS/System/Library/dyld/dyld_shared_cache_arm64e.map",
+      "size": 874394,
+      "expected_sha256": "4c817de2e92565feaa07e544cb7921f08e53badd2fccee877e5d99b155d32088",
+      "minimum": "image header/segment rows whose unslid range contains 0x1803CEB78"
+    },
+    {
+      "id": "M3",
+      "item": "Exact 22F82 libxpc bytes",
+      "preferred": {"cache_range": "0x136000-0x17A000", "size": 278528, "expected_sha256": "af2bbe7c88c8be38aedef36d80410db39c4376cc1f9ebd0b0cf2b052582b0db5"},
+      "minimum": {"cache_range": "0x13BE00-0x141B00", "size": 23552}
+    },
+    {
+      "id": "M4",
+      "item": "Frame-0 owning image and bytes",
+      "minimum": "image UUID/name plus cache 0x3CEB78 +/- 0x100 after M2"
+    },
+    {
+      "id": "M5",
+      "item": "Reason string for the same guard event",
+      "options": ["non-lightweight crash report", "ReportCrash/launchd line", "device log/oslog", "exact libxpc literal/__cstring bytes reached from the fault call"]
+    },
+    {
+      "id": "M6",
+      "item": "Optional per-image function table for libxpc image offsets 0xAC84-0xB928"
+    },
+    {
+      "id": "M7",
+      "item": "Optional map rows/bytes for frames 6+ (0x250400, 0x25F97C, 0x7521684, 0x7503B00, ...)"
+    }
+  ],
+  "background_tasks": {
+    "running_or_queued": false,
+    "verification": "TaskList empty and no matching SSH/grep processes after the access attempts"
+  },
+  "evidence_file": "docs/evidence/r024-libxpc-guard-attribution-20261018.md",
+  "evidence_sha256": "8c134763c204f305c306abc18342332735e30f0f3aec420de8024b971c1788b2"
+}

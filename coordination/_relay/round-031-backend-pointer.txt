@@ -1,0 +1,1 @@
+请执行 coordination/_relay/round-031-to-backend.md；完整canonical writer与真实LLVM解码门禁，先保存自包含checkpoint，完成文档并 handover。

@@ -1,0 +1,1 @@
+Offline audit only: reconcile D094 layered table with D037/D039 Host artifacts; can any saved artifact prove current-generation MacWSHost/iPad panel pixels? Keep this distinct from VNC. Also verify reopen freshness source contract references. No device/capture/build/edit/restart/Git. Return concise evidence paths and handover.

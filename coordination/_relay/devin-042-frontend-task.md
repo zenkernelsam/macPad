@@ -1,0 +1,8 @@
+# D042 frontend — independent input acceptance + exact global decision audit
+
+D040 reviewed: container-null theory rightly withdrawn against historical R002 inner-call telemetry. But claiming 'TCC PostEvent refuses' remains unsupported by accessor1/EMPTY reply; gate0 alone is not explicit policy field. Coordinator personally inspected D041 after-text PNG: Finder search contains d; exact injected-app key path accepted only, not physical Host key/touch/global input. No worker auto-continue now; STOP after handover.
+
+Local read-only: independently inspect D041 before/after/reverted PNG hashes and per-record trace to bound exact-app path claims (injector bypasses which Host stages, sequence correlation and route=uncorrelated limits). Then exact SkyLight22F82 disassembly trace from gate318464 through inner3407ec to producer/cache/checker/TCC callback; map each branch return to exact artifacts and identify precisely what remains unobserved in CURRENT WS generation. Do not conflate gCurMsgAudit with unrelated event registry; no literal ctx/service decoding unless exact bytes show it. Compare responsibility103 finding to proven call chain: relation still THEORY unless direct data-flow/log ties. Preserve rejected hypotheses with confirm/refute observations.
+
+Review backend proposed narrow observation design if stably available, otherwise deliver a concrete minimal missing-input manifest and negative/acceptance tests; no device/production-source/build/Git edits, no contacting backend. Apply share lessons: exact provider capabilities already working, real service response, no TCC blanket override. Write docs/evidence/devin-d042-input-independent-audit-20261019.md and coordination/_relay/devin-042-frontend-result.md.
+(handover to codex now)

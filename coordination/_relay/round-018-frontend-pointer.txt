@@ -1,0 +1,1 @@
+请执行 coordination/_relay/round-018-to-frontend.md：离线审计仓库现有arm64e函数指针签名/调用契约，与R017的blraaz x19和MSFindSymbol裸地址对照；只给证据和缺口，不改源码或设备，完成后handover。

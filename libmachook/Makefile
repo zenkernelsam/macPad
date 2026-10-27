@@ -12,7 +12,7 @@ include $(THEOS)/makefiles/common.mk
 
 LIBRARY_NAME = libmachook
 
-libmachook_FILES = jit.m objc_hooks.c mac_hooks.m AppInputBridge.m AudioRenderBridge.m LocalFilePanel.m DNSBridge.c MacWSFinalCompositePublisher.m Compatibility/MacWSAppleNeuralEngine.m Compatibility/MacWSCatalystInputPolicy.m Compatibility/MacWSCatalystKeychain.m Compatibility/MacWSIOKitRegistry.m Compatibility/MacWSSublimeProcess.m Compatibility/MacWSSysVSemaphore.c Compatibility/MacWSSteamNamedSemaphore.c Compatibility/MacWSSteamProcess.m Diagnostics/MacWSInputLatency.m Diagnostics/MacWSLoaderObservation.m Diagnostics/MacWSRandomDiagnostics.m Diagnostics/MacWSIdentityDiagnostics.m Diagnostics/MacWSSteamPipeDiagnostics.m os_variant_hooks.x \
+libmachook_FILES = jit.m objc_hooks.c mac_hooks.m AppInputBridge.m AudioRenderBridge.m LocalFilePanel.m DNSBridge.c MacWSFinalCompositePublisher.m Compatibility/MacWSAppleNeuralEngine.m Compatibility/MacWSCatalystInputPolicy.m Compatibility/MacWSCatalystKeychain.m Compatibility/MacWSIOKitRegistry.m Compatibility/MacWSSublimeProcess.m Compatibility/MacWSSysVSemaphore.c Compatibility/MacWSSteamNamedSemaphore.c Compatibility/MacWSSteamProcess.m Diagnostics/MacWSInputLatency.m Diagnostics/MacWSLoaderObservation.m MacWSSenderObservation.c Diagnostics/MacWSRandomDiagnostics.m Diagnostics/MacWSIdentityDiagnostics.m Diagnostics/MacWSSteamPipeDiagnostics.m os_variant_hooks.x \
   ControlCenter_hooks.x Metal_hooks.x QuartzCore_hooks.x os_log_hooks.m \
   exec_hooks.c
 libmachook_FILES += Compatibility/MacWSOfficeMultiplyFilter.m

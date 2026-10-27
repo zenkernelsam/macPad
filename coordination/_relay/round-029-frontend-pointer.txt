@@ -1,0 +1,1 @@
+请执行 coordination/_relay/round-029-to-frontend.md；只读独立审核已落盘候选的语义与 bitstream 完整性，不打断后端，完成文档并 handover。

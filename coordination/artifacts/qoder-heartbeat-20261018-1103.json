@@ -1,0 +1,9 @@
+{
+  "time": "2026-10-18T11:03:46.561Z",
+  "local_time": "2026-10-18T19:03:46+08:00",
+  "frontend": {"session_id":"02A55FDA-3ED9-47B0-AD3A-DCF4E26FD263","tty":"/dev/ttys000","pid":38533,"cwd":"/Users/ciscohe/Desktop/macPad","binding_verified":true,"r019":"handed over and static scope PASS"},
+  "backend": {"session_id":"C455E1A7-FC18-4473-9B6D-22F619785362","tty":"/dev/ttys001","pid":39300,"cwd":"/Users/ciscohe/Desktop/macPad","binding_verified":true,"r012":"Working clean build/deploy/owned-generation validation"},
+  "candidate": {"source":"libmachook/mac_hooks.m single XPC hunk","global_msfindsymbol_changed":false,"other_callsites_changed":false},
+  "acceptance": {"runtime":"pending backend","windowserver_pixels_tcc_input":"not accepted"},
+  "actions": {"backend_mid_task_messages":0,"device_operations_by_coordinator":0}
+}

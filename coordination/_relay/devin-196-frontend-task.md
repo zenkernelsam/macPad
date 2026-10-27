@@ -1,0 +1,3 @@
+# D196 frontend — frozen D193 cleanup/test review
+
+Read-only independently review the handed-over D193 cleanup decision/execution tests against D192 exact-stub classes. Freeze current hashes before reading; backend will separately repair scanner/main, so review only cleanup/classification/loopback test sections and do not infer scanner acceptance from moving code. Check cleanup behavior under malformed complex/non-complex responses, use of saved SRP, actual error return record preservation and whether tests observe branch execution rather than just helper output. No edits/build/main invocation/device access. Save findings and formal handover.

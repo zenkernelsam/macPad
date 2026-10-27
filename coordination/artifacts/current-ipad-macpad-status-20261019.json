@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-19T19:00:40.857444+08:00",
+  "finished": "2026-10-19T19:00:41.342483+08:00",
+  "command": "set -eu\np=/var/jb/usr/macOS/bin/macws_control_probe\nif test -x \"$p\"; then \"$p\" status; else echo CONTROL_PROBE_NOT_INSTALLED; fi\n",
+  "command_sha256": "5b84c1a4a521b6a5d5debce7710019d5824a1955b925035a13e98e0dcfaa87db",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "ok=yes launched-pid=0 message=状态已刷新\nprotocol=12 rootfs=yes windowserver=no busy=no startup-retry=yes startup-log-bytes=1282 phase=操作失败 error=GUI 启动脚本失败（退出码 1）\navailability glassdemo_available=no terminal_available=yes activity_monitor_available=yes finder_available=yes vscode_available=no system_settings_available=yes maps_available=yes amadine_available=no word_available=no excel_available=no powerpoint_available=no steam_available=no weather_available=yes sublime_available=no\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

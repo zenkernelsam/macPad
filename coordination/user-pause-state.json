@@ -1,26 +1,28 @@
 {
-  "requested_at": "2026-10-15T07:36:04.051838+08:00",
+  "requested_at": "2026-10-20T07:32:42.794469+08:00",
   "requested_by": "human_user",
   "state": "PAUSED",
-  "resume_requires": "explicit human resume; generic heartbeat is insufficient",
+  "resume_requires": "Explicit human instruction after returning; do not resume from generic heartbeat.",
   "automatic_restart": false,
   "pending_review": "R008 independent review unfinished; no R009 dispatched",
-  "updated_at": "2026-10-15T07:37:54.975118+08:00",
+  "updated_at": "2026-10-20T07:34:24.836943+08:00",
   "shutdown_message_sent_once": true,
   "credentials_reprovided_transiently": true,
   "technical_dispatch_sent": false,
-  "shutdown_completed_at": "2026-10-15T07:37:54.975091+08:00",
+  "shutdown_completed_at": "2026-10-20T07:34:24.836943+08:00",
   "shutdown_evidence": {
     "stop_command": "zsh /var/jb/usr/macOS/bin/macos_gui.sh stop",
     "stop_rc": 0,
     "output": "Stopped. The iPad is back on iOS.",
-    "records": [
-      "coordination/artifacts/r008-pause-prestate.json",
-      "coordination/artifacts/r008-pause-stop2.json",
-      "coordination/artifacts/r008-pause-poststate.json",
-      "coordination/artifacts/r008-pause-execprobe-clean.json",
-      "coordination/artifacts/r008-pause-final.json"
-    ],
-    "final_state": "zero macwsguide/macosbooter launchd jobs; zero chroot processes; execprobe/A/B jobs removed; no lldb/tmux/probe processes; native backboardd(pid 70595)+SpringBoard(23168)+tccd(23321) running; chroot /bin/echo HI rc=0; thermal serious 37.0C"
-  }
+    "report": "docs/evidence/devin-d209-backend-20261020.md",
+    "relay": "coordination/_relay/devin-209-backend-result.md",
+    "final_state": "GUI processes none running; VNC stopped; baseline hostd/keychaind/allocd/Host retained by standard stop; native iOS services alive"
+  },
+  "verified_at": "2026-10-15T07:39:43.850554+08:00",
+  "independent_shutdown_verified": false,
+  "independent_evidence": "artifacts/user-shutdown-independent-20261015.json",
+  "resumed_at": "2026-10-18T15:50:17.292049+08:00",
+  "coordinator_wake_policy": "Automation deleted; human-requested shutdown only, then pause.",
+  "shutdown_task": "coordination/_relay/devin-209-backend-task.md",
+  "shutdown_result_pending": false
 }

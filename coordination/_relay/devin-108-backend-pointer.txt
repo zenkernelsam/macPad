@@ -1,0 +1,1 @@
+Read coordination/_relay/devin-108-backend-task.md. Complete missing offline IMG4 payload decompression/hash linkage if a validated decoder is usable; keep policy snapshot instant-state versus history and dynamic-name limits precise. No device/kernel execution. Return D108 evidence and handover.

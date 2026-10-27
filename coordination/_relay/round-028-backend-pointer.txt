@@ -1,0 +1,1 @@
+请执行 coordination/_relay/round-028-to-backend.md；先核实原始模块来源，证据充分才做隔离兼容候选 A/B；禁止盲删属性，完成文档并 handover。

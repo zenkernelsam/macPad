@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-18T14:30:34.877166+08:00",
+  "finished": "2026-10-18T14:30:35.412251+08:00",
+  "command": "set -e; B=/var/mobile/macws_r008_preinstall_20261018; P=/var/jb/usr/macOS/LaunchDaemons/com.apple.WindowServer.plist; cp -p \"$P\" \"$B/WindowServer.package.plist\"; /var/jb/usr/bin/python3 - \"$P\" <<\"PY\"\nimport plistlib, sys\np = sys.argv[1]\nd = plistlib.load(open(p, \"rb\"))\ne = d.setdefault(\"EnvironmentVariables\", {})\ne[\"MACWS_LSXPC_TRACE\"] = \"1\"\nplistlib.dump(d, open(p, \"wb\"))\nprint(\"trace_env\", e)\nPY\nplutil -lint \"$P\" 2>&1 || /var/jb/usr/bin/python3 -c \"import plistlib,sys;plistlib.load(open(sys.argv[1],\\\"rb\\\"));print(\\\"plist-ok\\\")\" \"$P\"; sha256sum \"$P\"",
+  "command_sha256": "10e5411e4338df7f80da3259141798433c4582d90e237dba23687dde4c32456e",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "trace_env {'CA_VSYNC_OFF': '1', 'MACWS_AGX_NATIVE': '1', 'MACWS_AGX_REGISTER_CLASSES': '1', 'CA_DISABLE_SWAP_ICC': '1', 'MACWS_LSXPC_TRACE': '1'}\nError: Object not found at keypath \"lint\" in file /var/jb/usr/macOS/LaunchDaemons/com.apple.WindowServer.plist\n24cd61cfb239a51c5e085ca9af433a9a3a2755f4c66763c12a855639f3ac561f  /var/jb/usr/macOS/LaunchDaemons/com.apple.WindowServer.plist\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

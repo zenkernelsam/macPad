@@ -1,0 +1,28 @@
+{
+  "time": "2026-10-18T12:13:46.734Z",
+  "states": [
+    {
+      "name": "✦ macPad移植-前端 | Working (qoderclicn)",
+      "pid": 38533,
+      "tty": "/dev/ttys000",
+      "session_id": "02A55FDA-3ED9-47B0-AD3A-DCF4E26FD263",
+      "binding_verified": true,
+      "handover_ready": false
+    },
+    {
+      "name": "✦ macPad移植-后端 | Working (qoderclicn)",
+      "pid": 39300,
+      "tty": "/dev/ttys001",
+      "session_id": "C455E1A7-FC18-4473-9B6D-22F619785362",
+      "binding_verified": true,
+      "handover_ready": false
+    }
+  ],
+  "backend_task": "round-014-backend-result-task.md",
+  "frontend_task": "round-022-to-frontend.md",
+  "reminder_sent_once": true,
+  "frontend_task_sent_once": true,
+  "backend_task_sent_once": true,
+  "relay_tests": "5 passed",
+  "limitations": "No composite pixels or accepted input; MPS abort not proven cause of missing composite"
+}

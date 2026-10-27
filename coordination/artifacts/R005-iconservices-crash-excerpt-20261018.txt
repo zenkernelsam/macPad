@@ -1,0 +1,47 @@
+R005 IconServices crash excerpt — 2026-10-18
+Device: iPad13,11 / iPadOS 16.3 20D47 / macOS 13.4.1 22F82
+Reports: iconservicesagent-2026-10-18-154951/161016/161058/161950.ips
+Latest faulting report: /var/mobile/Library/Logs/CrashReporter/iconservicesagent-2026-10-18-161950.ips
+  pid 50980, parent launchd, path /System/Library/CoreServices/iconservicesagent
+  userID 0, coalition com.macwsguide.iconservicesagent
+  exception EXC_CRASH SIGABRT, faultingThread index 2 (MPS preheat queue)
+
+Agent stderr (/var/jb/var/mobile/iconservicesagent.log), verbatim assertion:
+/AppleInternal/Library/BuildRoots/2acced82-df86-11ed-9b95-428477786501/Library/Caches/com.apple.xbs/Sources/MetalPerformanceShaders/MPSCore/Utility/MPSLibrary.mm:485: failed assertion `MPSLibrary::MPSKey_Create internal error: Unable to get MPS kernel F11H. Error: Compiler encountered an internal error
+'
+
+Faulting thread stack (com.apple.MPS.MPSLibrary.preheat):
+  __pthread_kill +8
+  pthread_kill +288
+  abort +180
+  __assert_rtn +272
+  MTLReportFailure.cold.1 +48
+  MTLReportFailure +464
+  MPSLibrary::MPSKey_Compile(MPSKey_data*) +944
+  _dispatch_call_block_and_release +32
+  ... dispatch workloop ...
+
+IconsServices workloop thread:
+  __ulock_wait +8
+  _os_unfair_lock_lock_slow +208
+  MPSLibrary::MPSKey_Compile(MPSKey_data*) +56
+  ... (waiting on the MPS key compile lock)
+
+Job protocol (live user/501):
+  com.macwsguide.iconservicesagent:
+    launchdchrootexec 0 0 /var/mnt/rootfs /System/Library/CoreServices/iconservicesagent runAsRoot
+    uid/gid 0; Mach service com.apple.macosbooter.iconservices;
+    KeepAlive SuccessfulExit=false; ThrottleInterval 10; runs=3; last terminating signal Abort trap: 6
+  com.macwsguide.iconservicesd:
+    launchdchrootexec 240 240 /var/mnt/rootfs /System/Library/CoreServices/iconservicesd
+    uid/gid 240; Mach service com.apple.macosbooter.iconservices.store; stable
+Store /var/mnt/rootfs/Library/Caches/com.apple.iconservices.store: 240:240 mode 0700
+Agent env: only XPC_SERVICE_NAME; launchdchrootexec supplies HOME=/Users/root, TMPDIR=/tmp
+/var/mnt/rootfs/Users/root/Library/Caches is absent (observed; no confstr call without attaching)
+Trust: stock agent CDHash 1c0d3271b014e92563a85372fe4dce9e162d57fb trusted;
+       injected /usr/local/lib/libmachook.dylib arm64e CDHash ee0f018fc03a0526c63c8100e475c5729f7c456a trusted.
+
+Interpretation: the abort is an MPS kernel compile internal error (kernel F11H) in the
+root-role preheat thread; it is not a uid/gid/HOME/cache/trust failure. The supplier
+UID501/GID20 recipe is an untested hypothesis and would not address an MTLReportFailure
+compile error. No uid/runAsRoot/ownership/entitlement change was made.

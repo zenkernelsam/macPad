@@ -1,0 +1,70 @@
+R004 responsibility getter controls — 2026-10-18 (read-only)
+Device: iPad13,11 / iPadOS 16.3 20D47 / macOS 13.4.1 22F82
+Helper: /tmp/r004/responsibility_probe.c
+  source sha256 78ffa3547a5a2d05c710448ce73f8f81d52dc62a0f865a24b2a97a0e43436237
+  native local sha256 5e1f428fadd7cce6907537507af3e176e2f0e7f8051378ebf736811cf9c84112
+  chroot local sha256 9d2db85a8ef8a7929dc4c108fa36e2ca209557a4e7866428efff7fc757937c2f
+tccd: fat 42c388e8..., arm64e thin 039f64b7..., UUID 9845D17F-0409-3884-8A17-260C729636E5
+
+1) NATIVE iOS — getter availability (FACT)
+dyld_info -imports tccd-22F82-arm64e:
+  _responsibility_get_responsible_audit_token_for_audit_token (from libSystem)
+Native helper attempts:
+  dlsym(RTLD_DEFAULT) -> NULL
+  dlopen /usr/lib/libSystem.B.dylib -> symbol not found
+  dlopen /usr/lib/system/libsystem_coreservices.dylib -> symbol not found
+  dlopen /usr/lib/system/libsystem_info.dylib -> symbol not found
+  dlopen /usr/lib/system/libsystem_kernel.dylib -> symbol not found
+  dlopen /usr/lib/system/libsystem_darwin.dylib -> symbol not found
+  dlopen /usr/lib/system/libquarantine.dylib -> errno=2, not in dyld cache
+  dlopen /usr/lib/libresponsibility.dylib -> errno=2, not in dyld cache
+  dlopen CoreServices.framework/CoreServices -> symbol not found
+Direct import with -Wl,-undefined,dynamic_lookup:
+  dyld[51792]: symbol not found in flat namespace
+    '_responsibility_get_responsible_audit_token_for_audit_token'
+  crash report resp_native_direct_r004-2026-10-18-162405.ips:
+    EXC_CRASH SIGABRT, namespace DYLD, reason "symbol not found in flat namespace ..."
+=> native getter is gated to platform/private clients; no entitlement expansion attempted.
+
+2) CHROOT Ventura — provider identity and ABI (FACT)
+HANDLE=RTLD_DEFAULT
+SYMBOL=0x1a6d60b00
+PROVIDER PATH=/usr/lib/system/libquarantine.dylib
+PROVIDER UUID=A2D17FF6-CBC6-3D19-89E1-F5E57191E8A3
+PROVIDER BASE=0x1a6d5f000
+FUNC BYTES=7f2303d5ffc300d1fd7b02a9fd830091000440ade00700ade003009104000094
+  = pacibsp; sub sp,sp,#0x30; stp x29,x30,[sp,#0x20]; stp x20,x19,[sp,#0x10]; ...
+ABI (from tccd call site 0x10004fb48):
+  x0 = const audit_token_t *target
+  x1 = audit_token_t *out
+  x2 = NULL, x3 = NULL
+  return int w0; error in errno (log 0x100051a54 uses errno + strerror)
+
+3) CONTROL A — chroot getter on live chroot self token
+CTX=chroot PID=51732 UID=0
+SELF=ffffffff 00000000 00000000 00000000 00000000 0000ca14 00000000 0001827b pidversion=98939
+TARGET=self
+RC=-1 ERRNO=103 ERRSTR="Policy not found"
+OUT=00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+
+4) CONTROL B — chroot getter on a LIVE native iOS token
+Native holder:
+  CTX=native PID=51948 UID=0
+  SELF=ffffffff 00000000 00000000 00000000 00000000 0000caec 00000000 00018427 pidversion=99367
+  HOLD pid=51948 uid=0; ps confirmed alive during the call
+Chroot getter with that exact token:
+  TARGET=ffffffff 00000000 00000000 00000000 00000000 0000caec 00000000 00018427 pidversion=99367
+  RC=-1 ERRNO=103 ERRSTR="Policy not found"
+  OUT all zero
+
+5) Boundary interpretation
+- Ventura libquarantine getter is reachable and returns ENOPOLICY (103) for both a
+  live chroot token and a live native token.
+- The native getter is not reachable to a non-platform helper; no native-side
+  getter control is possible without adding forbidden platform entitlements.
+- ENOPOLICY alone does not prove "kernel policy missing"; it shows the tested
+  target tokens have no responsibility relationship the Ventura lookup can use,
+  or the Ventura contract cannot resolve them. This is not proof that the native
+  implementation would succeed, and not proof of a kernel data absence.
+- No setter, kernel write, fabricated token/session, grant/db edit or checker
+  override was used. No shared source/tests/build input or Git change.

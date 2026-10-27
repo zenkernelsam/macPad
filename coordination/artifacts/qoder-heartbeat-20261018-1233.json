@@ -1,0 +1,20 @@
+{
+  "time": "2026-10-18T12:33:46.806Z",
+  "frontend": {
+    "pid": 38533,
+    "tty": "/dev/ttys000",
+    "r022": "handed over accepted",
+    "r023": "sent once"
+  },
+  "backend": {
+    "pid": 39300,
+    "tty": "/dev/ttys001",
+    "r014": "Working isolated F11H diagnostics"
+  },
+  "r022": "LIBXPC user fault; exact trigger unresolved",
+  "actions": {
+    "frontend_body_sent_once": true,
+    "backend_mid_task_messages": 0,
+    "coordinator_device_operations": 0
+  }
+}

@@ -1,0 +1,1 @@
+请执行 coordination/_relay/round-006-to-frontend.md：精确分析Ventura responsibility wrapper/ABI与真实系统边界，明确哪些getter/setter签名有机器码依据；launchd hosting已被反证不足。仅离线证据，不改源码/Git/设备。完成handover。

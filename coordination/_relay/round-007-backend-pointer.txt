@@ -1,0 +1,1 @@
+请执行 coordination/_relay/round-007-to-backend.md：有限disposable F11H常量0/1特殊化及pipeline对照，记录真实NSError/编译请求；不重启共享compiler或外部WS，不旁路断言，不改共享源码/Git/构建包。补传既有WS采样，完成清理与handover。

@@ -397,6 +397,8 @@ async def sleep_countdown(seconds):
 
 async def _inject(session, args, enter_key, state):
     """注入续跑消息并更新该会话的状态。"""
+    if not getattr(args, "auto_continue", False):
+        return
     sid = session.session_id
     try:
         await send_message(session, args.continue_text, args.enter_delay, enter_key)
@@ -605,9 +607,11 @@ def main():
                    help=r"回车键内容，支持 \r \n（默认 '\r'，即 CR）")
     p.add_argument("--cooldown", type=float, default=DEFAULT_COOLDOWN,
                    help=f"同一会话两次注入的最小间隔秒（默认 {DEFAULT_COOLDOWN:.0f}）")
-    p.add_argument("--idle-continue", action=argparse.BooleanOptionalAction, default=True,
+    p.add_argument("--auto-continue", action="store_true",
+                   help="显式启用自动续发（默认关闭；否则仅检测，不注入消息）")
+    p.add_argument("--idle-continue", action=argparse.BooleanOptionalAction, default=False,
                    help="空闲即续跑：devin 停在输入框且屏幕 N 秒无变化 → 自动注入续跑"
-                        "（默认开；用 --no-idle-continue 关闭）")
+                        "（默认关；还需 --auto-continue 才会注入）")
     p.add_argument("--idle-seconds", type=float, default=DEFAULT_IDLE_SECONDS,
                    help=f"空闲多久算“停了”（默认 {DEFAULT_IDLE_SECONDS:.0f}s）")
     p.add_argument("--idle-marker", action="append", default=None,
@@ -627,6 +631,11 @@ def main():
     p.add_argument("--log-file", default=None, help="日志双写到该文件")
     p.add_argument("--version", action="version", version=f"devin_iterm_watch {VERSION}")
     args = p.parse_args()
+
+    # A completed handover must stay idle until the coordinator dispatches.
+    # Old launch commands now monitor only; rate-limit retry is also opt-in.
+    if not args.auto_continue:
+        args.dry_run = True
 
     setup_encoding()
     setup_logging(args.log_file)

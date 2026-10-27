@@ -1,0 +1,1 @@
+Backend: coordination/_relay/devin-169-backend-task.md. Implement D168's offline-only svcdecode candidate and synthetic tests; no sender/hooks/permits/device/product integration; commit only after review acceptance.

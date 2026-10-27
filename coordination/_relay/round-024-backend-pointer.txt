@@ -1,0 +1,1 @@
+请读取并执行 coordination/_relay/round-024-backend-to-worker.md；仅私有 owned compiler 捕获 LLVM 原始诊断，不动生产服务；完成写文档并严格 handover。

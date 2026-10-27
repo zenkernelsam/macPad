@@ -1,0 +1,223 @@
+{
+  "schema": "macws-r012-xpc-pointer-fix-evidence-v1",
+  "date": "2026-10-18",
+  "timezone": "Asia/Hong_Kong",
+  "packet": "coordination/_relay/round-012-backend-result-task.md",
+  "categorical": "The narrow A-key/zero signing fix is implemented, built once from clean c97e219+one-file patch, verified, installed, and exercised in one owned generation. tccd/authd/systemstatusd survive the former XPC bootstrap point, WindowServer 78380 is ready with the provider/libmachook maps, and no new _xpc_bootstrap_services crash occurred. Pixels/TCC/input remain separately unaccepted. The direct XPC_BOOTSTRAP execution log was not captured in the fixed services (arm64 interopd still reports SYMBOL NOT FOUND), so the exact signed-call execution witness remains a limit; installed callsite bytes are exact.",
+  "source": {
+    "head": "c97e219f3f367662dc9bdb1f20d7e76fba544df1",
+    "change": "libmachook/mac_hooks.m only; raw MSFindSymbol result signed with ptrauth_key_asia/0 before existing blraaz call; dictionary, timing, result log and failure path unchanged",
+    "mac_hooks_sha256": "e6cc4597a6a61bf65a25782d4939eb1470c0e237aaf3af40c46fa296eeb9463d",
+    "patch_sha256": "5567b452df17c5720ef08c54fc95768cd71e3377a099caf8e4e7ad3a6f03f087",
+    "diff_stat": "1 file changed, 14 insertions(+), 1 deletion(-)",
+    "provider_source_sha256": "6ac796c78f11fce18806840a20276308c782dbc77603c7781fc55d35eeaa7c2b (unchanged)",
+    "only_one_source_file": true,
+    "static_contract": "PASS: raw lookup, raw variable, A-key/zero sign, __arm64e__ guard, call/dict/log preserved, provider unchanged, one source file",
+    "worktrees": {
+      "main": "one uncommitted source diff, visible for frontend R019",
+      "clean": "/private/tmp/macpad-r012-clean at c97e219 + patch; built once"
+    }
+  },
+  "build": {
+    "toolchain": "host cross-build (Xcode 26.2 clang/Apple ld64, Theos, GNU Make 3.81 shim, local lzma/dpkg-deb shims)",
+    "macwswindowing_reused": {
+      "sha256": "51222343e4b15c225a2741ce3a0f5b8460725056f6fe213addc5f2986a8bc0cc",
+      "manifest_verify": "passed against the R012 clean tree"
+    },
+    "command": "gmake FINALPACKAGE=1 STRIP=0 OPTFLAG=-O2 THEOS_PACKAGE_SCHEME=rootless GO_EASY_ON_ME=1 MACWS_WINDOWING_CROSS_PREBUILT=<R010 prebuilt> package",
+    "exit": 0,
+    "package": {
+      "path": "packages/com.kdt.macosbooter_0.3.4_iphoneos-arm64.deb",
+      "sha256": "c0b9fb22a15b8cb53fb741ddc1353e58cc858e8aa924154dcc4d77d331354176",
+      "bytes": 6047170,
+      "members": 273
+    },
+    "artifact_contract": "PACKAGE-VERIFY-OK (real .deb via local dpkg-deb shim), exit 0",
+    "provider_staged": {
+      "main_sha256": "992b70d37024ac453096d9017ab94d6bde7dea8bb702a109636cfe0948abc322",
+      "arm64_sha256": "2ad4c652b5d4f6f20dd971a662b98c099cbb4235c145bc5ee1078f50ff75433a",
+      "arm64e_sha256": "6dfa858e3634769c0f41f0490854673f79a6238f6872c83b6c2f43f9a0184326",
+      "slices": "both platform 1, minos 13.0.0, exact install name"
+    },
+    "libmachook_staged": {
+      "sha256": "56a5202d60dda16b5dff3a3defa4445f01e7d0e65ad67ad26c7efd39667169b6",
+      "bytes": 3040496
+    },
+    "provider_note": "provider source unchanged; clean rebuild produced new provider UUIDs/binary hashes (992b70d3/2ad4c652/6dfa858e vs R010 ca587894/58b62f06/b9e6a4c2); not a source change"
+  },
+  "callsite": {
+    "source_block": "libmachook/mac_hooks.m:6359-6380: MSFindSymbol raw -> raw variable -> #if __arm64e__ ptrauth_sign_unauthenticated(raw,ptrauth_key_asia,0) -> fn; dict and log unchanged",
+    "compiled_arm64e": [
+      "0x6a10/0x6a1c bl MSFindSymbol",
+      "0x6a20 cbz x0",
+      "0x6a24 mov x17,x0",
+      "0x6a28 mov x16,#0",
+      "0x6a2c pacia1716",
+      "0x6a30 mov x21,x17",
+      "0x6a50 cbz x21",
+      "0x6a54 mov x0,x20 (dict)",
+      "0x6a58 blraaz x21",
+      "0x6a5c return"
+    ],
+    "range_sha256": "4c06e5f57d691255d37ad3d7c3afd4b002c57890c25d5f6741ca8b10128390d9",
+    "installed_match": "installed arm64e range 0x69ec..0x6a60 byte-identical to built range; pacia1716 x16=0 and blraaz x21 present",
+    "installed_libmachook": {
+      "arm64e_sha256": "47f78880f6de1fadc9faabbf79d16ccc56cfba2feb5a45e2155e09c22c2d9432",
+      "arm64e_uuid": "C439DBEC-1C83-3EB7-A717-07F380024A4B",
+      "arm64e_cdhash": "b579715ec2cef37f7ffb4c8c89e42eccc32b04df",
+      "arm64_sha256": "6de9b6880495c3e0f431c2fc0e328b4420aecac178391d466fa71b141efcbd18",
+      "arm64_uuid": "957B5055-CF61-35F5-AE63-7F5E3BB6DDC6",
+      "arm64_cdhash": "0bbcbb6f2ac99bbf98901a3e9a65e821d6f5bd08"
+    }
+  },
+  "install": {
+    "remote_deb_sha256": "c0b9fb22a15b8cb53fb741ddc1353e58cc858e8aa924154dcc4d77d331354176",
+    "dpkg_exit": 0,
+    "package_after": "com.kdt.macosbooter 0.3.4 install ok installed",
+    "provider_target": {
+      "inode": 250671913,
+      "sha256": "b2ae21da42704b1d584f2b655e837f7db62a10f2a035b3f741adc819ce1423e7",
+      "arches": [
+        "arm64",
+        "arm64e"
+      ],
+      "uuid_arm64": "7284A084-5EBA-3D4B-987A-28D5C6CA1D31",
+      "uuid_arm64e": "5700E649-B271-36CF-888C-4CCC8E1BA6EC",
+      "cdhash_arm64": "88ce9304d855233b4a945890b67e31f0c4fc93aa",
+      "cdhash_arm64e": "4218d9f14e3b52fc1d71ae33af2385ac930ce713",
+      "trustcache": "both live",
+      "slices": "both platform 1, minos 13.0.0, exact install name",
+      "ldid_identifier": ".CydiaSubstrate.new-75235 (publisher temp basename; secondary finding)"
+    },
+    "r010_baseline_preserved": {
+      "dir": "/var/mobile/macws_r012_evidence_20261018/r010-baseline",
+      "provider_sha256": "7320a210c3e85963ce149398e9bb0b0a34e7c1337ed9af1dbd77b0a328477337",
+      "libmachook_sha256": "4fa53411d6477720cdfb4a540f40fa1c63ce020ff093576fa6732dd3da399322",
+      "libmachook_arm64_sha256": "d2f110fda66a4414fe926193b859434d9d18fb6f8911c8c0c9e28291cd95d4cd"
+    }
+  },
+  "owned_generation": {
+    "command": "macos_gui.sh start coexist --no-terminal --no-vnc",
+    "exit": 0,
+    "duration_seconds": 66,
+    "tccd": {
+      "pid": 78174,
+      "protocol_round_trip": "ready"
+    },
+    "authd": {
+      "pid": 78162,
+      "alive": true
+    },
+    "systemstatusd": {
+      "pid": 77896,
+      "alive": true
+    },
+    "windowserver": {
+      "pid": 78380,
+      "ready": "process ready, stable 8s; graphics not yet witnessed"
+    },
+    "inputd": 78372,
+    "displayd": 78476,
+    "native": {
+      "SpringBoard": 872,
+      "tccd": 883,
+      "backboardd": 905,
+      "alive": true
+    },
+    "thermal": "nominal 33.79 C",
+    "markers": "absent both namespaces",
+    "ws_map": {
+      "pid": 78380,
+      "paths": [
+        "/System/Library/Frameworks/CydiaSubstrate.framework/CydiaSubstrate",
+        "/usr/local/lib/libmachook_arm64.dylib"
+      ],
+      "found": 8,
+      "exit": 0
+    },
+    "provider_method": {
+      "provider_image": "/System/Library/Frameworks/CydiaSubstrate.framework/CydiaSubstrate",
+      "provider_uuid": "5700E649-B271-36CF-888C-4CCC8E1BA6EC",
+      "via_hook": 43,
+      "replacement_called": 1,
+      "original_called": 1,
+      "verdict": "INSTALLED-ORIGINAL-CALLABLE",
+      "exit": 0
+    },
+    "new_crash_delta": {
+      "xpc_bootstrap_crashes": "none",
+      "tccd_authd_systemstatusd_crashes": "none",
+      "excuserfault_reports": {
+        "count": 15,
+        "class": "EXC_GUARD, GUARD_TYPE_USER, namespc 7, reason 9",
+        "examples": [
+          "pkd 78030",
+          "SystemUIServer 78529",
+          "OSXvnc-server 78609",
+          "filecoordinationd",
+          "coreaudiod",
+          "QuickLookUIService",
+          "ViewBridgeAuxiliary",
+          "macwsworkspacectl",
+          "locationd"
+        ],
+        "note": "processes were alive in the status; not the former _xpc_bootstrap_services crash; preserved as a separate delta"
+      }
+    },
+    "xpc_bootstrap_log": {
+      "tccd_system_err": "no XPC_BOOTSTRAP line (927 B: constructor/permit lines only)",
+      "systemstatusd_err": "no XPC_BOOTSTRAP line (948 B)",
+      "macwsinteropd_err": "XPC_BOOTSTRAP fn=0x0 dict=...; SYMBOL NOT FOUND (arm64)",
+      "conclusion": "services survive and no former crash; exact signed-call execution inside the fixed services was not directly logged; do not claim more"
+    },
+    "composite": {
+      "state": "missing",
+      "producer": 0,
+      "sequence": 0,
+      "reason": "displayd-start",
+      "pixels": "none claimed"
+    },
+    "tcc_reply": "not re-tested; R008 empty-dictionary/attribution baseline preserved",
+    "input": "not re-tested; R008 postmin 1002 preserved",
+    "r016": "not run; live WS existed but no G0/G1/same-PID reopen witness produced"
+  },
+  "cleanup": {
+    "stop_exit": 0,
+    "target_processes_after": "none",
+    "native_after": {
+      "SpringBoard": 872,
+      "tccd": 883,
+      "backboardd": 905
+    },
+    "markers_after": "absent both namespaces",
+    "package_after": "com.kdt.macosbooter 0.3.4 remains installed; provider target inode 250671913",
+    "r010_baseline": "preserved",
+    "probes": "/var/mobile/macws_r012_evidence_20261018/probes",
+    "host_app": "pre-existing MacWSHost 71324 absent in the R012 pre-start inventory; not killed by R012; no new Host app; host pid list empty after stop",
+    "device_mutations": "only package install and R012 evidence copies/probes; no source/build on device, no TCC/input/pixel claims"
+  },
+  "limits": [
+    "exact signed XPC call execution not logged in tccd/authd/systemstatusd; arm64 interopd still reports SYMBOL NOT FOUND",
+    "new ExcUserFault EXC_GUARD reports preserved but not attributed/fixed here",
+    "provider publisher temp ldid identifier remains",
+    "provider binary rebuilt with new UUID/hashes while source unchanged",
+    "no pixels/TCC reply/input acceptance; R016 not run",
+    "source patch is uncommitted in the main tree; coordinator/frontend to integrate"
+  ],
+  "evidence_files": [
+    "analysis/r012-xpc-fix/source.patch",
+    "analysis/r012-xpc-fix/static-contract.txt",
+    "analysis/r012-xpc-fix/callsite-arm64e-0x69ec-0x6a60.disasm.txt",
+    "analysis/r012-xpc-fix/staged-callsite-scan.txt",
+    "analysis/r012-xpc-fix/full-build.log",
+    "analysis/r012-xpc-fix/package-verify.txt",
+    "analysis/r012-xpc-fix/install.txt",
+    "analysis/r012-xpc-fix/postinstall-verify.txt",
+    "analysis/r012-xpc-fix/installed-callsite.txt",
+    "analysis/r012-xpc-fix/generation.txt",
+    "analysis/r012-xpc-fix/service-logs.txt",
+    "analysis/r012-xpc-fix/excuserfault-reports.raw",
+    "analysis/r012-xpc-fix/cleanup.txt",
+    "analysis/r012-xpc-fix/final-state.txt"
+  ]
+}

@@ -1,0 +1,1 @@
+请执行 coordination/_relay/round-005-to-frontend.md：离线审计 responsibility/audit 的真实契约和现有适配，提出窄修复候选及判别实验；仅写报告，不改源码、不操作设备/Git。后端独占新WS generation取证。完成后handover。

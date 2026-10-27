@@ -1,0 +1,1 @@
+请执行 coordination/_relay/round-027-to-frontend.md；独立审核 bitcode wire ID，不要用内存枚举代替序列化编号；完成文档并 handover。

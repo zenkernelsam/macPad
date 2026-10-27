@@ -1,0 +1,1 @@
+Backend: coordination/_relay/devin-175-backend-task.md. Offline candidate only: record full UUID, reject unverified identity, and fail scoring on any tracking cap. No commit/device/product integration.

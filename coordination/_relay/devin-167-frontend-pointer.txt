@@ -1,0 +1,1 @@
+Frontend: coordination/_relay/devin-167-frontend-task.md. Read-only audit whether the current event probe can enforce D166's serialize-one-probe measurement rule; no code/device/integration.

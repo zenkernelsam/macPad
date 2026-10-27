@@ -1,0 +1,1 @@
+Frontend: coordination/_relay/devin-188-frontend-task.md. Read-only exact-binary audit whether 0x74a7 has a safe standalone sender path; no invocation/device/integration.

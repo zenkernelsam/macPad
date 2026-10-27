@@ -1,0 +1,1 @@
+请执行 coordination/_relay/round-005-to-backend.md：保存精确libquarantine分析输入，并审计真实IconServices崩溃/身份目录信任，有限取证人工pacing消息等待；不改外部WS generation、不重建、不改源码/Git/权限策略。沿用临时SSH，完成证据清理与handover。

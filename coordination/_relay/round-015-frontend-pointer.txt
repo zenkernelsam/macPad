@@ -1,0 +1,1 @@
+请执行 coordination/_relay/round-015-to-frontend.md：只查离线资料能否证明22F82/1066.8 cache header及mapping/patch格式；没有精确依据就把R014采集方案改为只收身份和原始header后停止，不可按地址合理性解析。保留已验证的rootfs别名，不碰设备或源码，完成后handover。

@@ -1,0 +1,1 @@
+请执行 coordination/_relay/round-012-to-frontend.md：将当前修复provider纳入可复现的正式package/postinst双架构路径并补focused验收；先核实Theos真实输出名，不碰native /var/jb/Library substrate。后端并行只读审计isolated MTLCompilerService可行性。完成提交限定路径并handover。

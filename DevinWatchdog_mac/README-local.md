@@ -22,6 +22,13 @@ python3 DevinWatchdog_mac/macpad_devin_relay.py send coordination/next-pointer.t
 
 ## 保留真实退出码的 SSH / SCP
 
+交接通知卡住时，可手动调用 `macpad_devin_relay.py remind-handover`，
+传入 `--role`、新核验的 `--expected-session-id` 和 `--expected-pid`。
+此动作只发送固定的清理/重新交接请求，不接受消息文件；必须是带后台提示的
+空白 Ask Devin 输入框、无工作/排队/菜单状态且 ACP 无子进程。
+同一 session/tty/PID 在 `tmp/handover-reminders/` 留预占记录，失败也不自动重发。
+它不是自动化或 idle-continue；新开发任务仍要求新的独立 handover。
+
 `macpad_ssh.py`从临时环境读取MACWS_DEVICE、MACWS_DEVICE_PORT（默认2222）、MACWS_SSH_PASSWORD，不把密码放argv或文件。
 
 ```sh

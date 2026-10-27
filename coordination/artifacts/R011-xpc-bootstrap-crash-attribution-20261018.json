@@ -1,0 +1,193 @@
+{
+  "schema": "macws-r011-xpc-bootstrap-attribution-v1",
+  "date": "2026-10-18",
+  "timezone": "Asia/Hong_Kong",
+  "packet": "coordination/_relay/round-011-backend-result-task.md",
+  "method": "read-only device cache range reads, crash-report register parse, exact installed libmachook call-site bytes, provider source audit; no service/WS start, source/package change, debugger or marker change",
+  "r010_frame_correction": {
+    "r010_claim": "R010 listed the startup crash image as libmachook.dylib UUID 76a98a5a-0c9c-32e5-93a3-b006f2bcd6d4",
+    "actual": "crash frame 0 is libxpc.dylib UUID f3f19227-ff8f-389c-a094-6f4c16e458af at offset 0xf140; libmachook.dylib UUID 76a98a5a is frame 1 caller loadImageCallback at image offset 0x6a4c. The package rejection stands; the crash attribution is corrected."
+  },
+  "cache_image": {
+    "cache_path": "/var/mnt/rootfs/System/Volumes/Preboot/Cryptexes/OS/System/Library/dyld/dyld_shared_cache_arm64e",
+    "cache_uuid": "BE59BB71-7B69-3EFC-86A8-5625A077AE2E",
+    "cache_main_bytes": 1591689216,
+    "cache_sub01_bytes": 1832419328,
+    "cache_header_sha256": "b78ba2651311e7d7d4ab28a3cbd345acd798ddb99f9881c9c1e8e943bbc31c63",
+    "map_bytes": 874394,
+    "map_sha256": "4c817de2e92565feaa07e544cb7921f08e53badd2fccee877e5d99b155d32088",
+    "mapping_offset": 512,
+    "mapping_count": 6,
+    "text_mapping": {
+      "index": 0,
+      "address": "0x180000000",
+      "size": "0x53aaa000",
+      "fileoff": 0
+    },
+    "libxpc_path": "/usr/lib/system/libxpc.dylib",
+    "libxpc_uuid": "F3F19227-FF8F-389C-A094-6F4C16E458AF",
+    "image_fileoff": "0x136000",
+    "image_header_sha256": "8d5b12c57bf877375300a4d7eba0dc4263acfc992f1a129b20c5d63eb87e8ba7",
+    "text_vmaddr": "0x180136000",
+    "text_size": "0x44000",
+    "text_fileoff": "0x136000",
+    "text_sha256": "af2bbe7c88c8be38aedef36d80410db39c4376cc1f9ebd0b0cf2b052582b0db5",
+    "lc_build_version": {
+      "platform": 6,
+      "minos": "0x100800",
+      "sdk": "0x100800"
+    },
+    "lc_id_dylib": "/usr/lib/system/libxpc.dylib",
+    "lc_symtab": {
+      "symoff": 1199958032,
+      "nsyms": 2721,
+      "stroff": 1367660880,
+      "strsize": 461166809,
+      "independent_name_lookup": "not resolved with naive cache-file offsets; crash symbolic name + exact entry/PC used"
+    },
+    "runtime_slide": "0x99c000",
+    "runtime_base": "0x180ad2000",
+    "unslid_function": "0x180137140",
+    "runtime_function": "0x180ae1140",
+    "function_fileoff": "0x145140",
+    "function_bytes_256_sha256": "b6c7c5f257a34e5bae662e9fe60485de9b2cafb08e39848b786936c5395c6796",
+    "function_entry_first_bytes": "7f2303d5ffc300d1f44f01a9fd7b02a9fd830091f30300aa",
+    "artifact_note": "exact image UUID + __TEXT/function/header hashes; full image+shared LINKEDIT hash not extracted (only exact ranges needed)"
+  },
+  "caller_libmachook": {
+    "installed_path": "/var/jb/usr/macOS/lib/libmachook.dylib",
+    "sha256": "4fa53411d6477720cdfb4a540f40fa1c63ce020ff093576fa6732dd3da399322",
+    "uuid": "76A98A5A-0C9C-32E5-93A3-B006F2BCD6D4",
+    "text_vmaddr": "0x0",
+    "text_fileoff": "0x0",
+    "file_bytes": 1524784,
+    "loadImageCallback_symbol": "0x5764",
+    "call_site_image_offset": "0x6a48",
+    "return_image_offset": "0x6a4c",
+    "callsite_bytes_sha256": "42c7dfae8d3b46147a9e5c31b8781d3f330eb87cdba4ffebad1ee390699147c7",
+    "exact_instructions": [
+      "0x6a40 cbz x19, #0x7374",
+      "0x6a44 mov x0, x20",
+      "0x6a48 blraaz x19",
+      "0x6a4c ldr x8, [x21] (return address)"
+    ],
+    "source": "libmachook/mac_hooks.m:6359-6366 int(*_xpc_bootstrap_services_fn)(xpc_object_t)=MSFindSymbol((MSImageRef)header,\"__xpc_bootstrap_services\"); if(fn) { int result=fn(dict); }",
+    "dict_construction": "xpc_dictionary_create(NULL,NULL,0); set key \"/System/Library/Frameworks/Metal.framework/Metal\" to uint64 2; x0/x20 = dict"
+  },
+  "provider_contract": {
+    "source": "misc/cydiasubstrate_macos.m (SHA 6ac796c7f11fce18806840a20276308c782dbc77603c7781fc55d35eeaa7c2b)",
+    "msfindsymbol": "line 267; find_sym_in_image line 261 returns (void *)(slide + n_value); no ptrauth sign",
+    "mshookfunction_result": "line 534 *result = ptrauth_sign_unauthenticated(thunk, ptrauth_key_asia, 0)",
+    "finding": "MSFindSymbol returns a raw function address; the caller stores it in x19 and executes blraaz x19 (key A, zero modifier). The pointer has no PAC signature. X19 is 0x180ae1140 without signature bits; the authenticated branch produces the poisoned target 0x2000000180ae1140 and an instruction abort at the valid function entry."
+  },
+  "crash_registers": {
+    "reports": [
+      "analysis/r010-provider-f1/crashes/tccd-2026-10-18-182623.ips",
+      ".../authd-2026-10-18-182623.ips",
+      ".../systemstatusd-2026-10-18-182649.ips"
+    ],
+    "tccd": {
+      "pid": 70481,
+      "x0": "0x1457042b0",
+      "x20": "0x1457042b0",
+      "x19": "0x180ae1140",
+      "lr": "0x1003e2a4c",
+      "pc": "0x180ae1140",
+      "far": "0x2000000180ae1140",
+      "esr": "0x82000004 (instruction abort, translation fault)",
+      "x1": "0x10049d82e",
+      "x2": "0x1b788029",
+      "x3": "0xfffffffffffffff2",
+      "x16": "0x8e53000180dc7b30",
+      "x17": "0x1001f0078"
+    },
+    "systemstatusd": {
+      "pid": 70814,
+      "x0": "0x151e09500",
+      "x20": "0x151e09500",
+      "x19": "0x180ae1140",
+      "lr": "0x1011dea4c",
+      "pc": "0x180ae1140",
+      "far": "0x2000000180ae1140",
+      "esr": "0x82000004",
+      "x1": "0x10129982e",
+      "x2": "0x1b788029",
+      "x3": "0xfffffffffffffff2",
+      "x16": "0xcf05000180dc7b30",
+      "x17": "0x101068078"
+    },
+    "authd": {
+      "pid": 70469,
+      "x0": "0x1498041d0",
+      "x20": "0x1498041d0",
+      "x19": "0x180ae1140",
+      "lr": "0x104faea4c",
+      "pc": "0x180ae1140",
+      "far": "0x2000000180ae1140",
+      "esr": "0x82000004",
+      "x1": "0x10506982e",
+      "x2": "0x1b788029",
+      "x3": "0xfffffffffffffff2",
+      "x16": "0x6d3f000180dc7b30",
+      "x17": "0x104c84078"
+    },
+    "lr_correlation": "all LR = libmachook base + 0x6a4c, the return after blraaz x19",
+    "register_roles": "x0/x20 = dict heap pointer; x19 = raw libxpc function pointer; x1-x3 are not callee arguments; x16/x17 are unrelated indirect-branch scratch and do not hold the fault target"
+  },
+  "callee_abi": {
+    "entry_disasm": [
+      "0x180ae1140 pacibsp",
+      "0x180ae1144 sub sp,sp,#0x30",
+      "0x180ae1148 stp x20,x19,[sp,#0x10]",
+      "0x180ae114c stp x29,x30,[sp,#0x20]",
+      "0x180ae1150 add x29,sp,#0x20",
+      "0x180ae1154 mov x19,x0",
+      "0x180ae1158 mov x0,#0",
+      "0x180ae115c mov x1,#0",
+      "0x180ae1160 mov x2,#0",
+      "... bl internal xpc functions ...",
+      "0x180ae11e4 retab"
+    ],
+    "prototype_evidence": "one incoming argument x0 (moved to x19); no read of x1-x3 before the function defines x0-x2 for internal calls; return in x0 with retab; consistent with the source's int(*)(xpc_object_t). The crash occurs on instruction fetch at the entry, before pacibsp executes; the callee body/dictionary semantics are not reached and cannot be the instruction-abort cause.",
+    "dictionary_shape": "source: one key /System/Library/Frameworks/Metal.framework/Metal -> uint64 2; no runtime dict memory in the crash report; successful callee execution would be needed to validate content semantics"
+  },
+  "conclusion": {
+    "attribution": "runtime+static-confirmed PAC authentication failure at the libmachook/provider function-pointer boundary. The call is blraaz x19; x19 is the raw 22F82 libxpc entry 0x180ae1140 returned by MSFindSymbol without an IA signature; the authenticated branch poisons it to 0x2000000180ae1140 and the instruction fetch aborts at the valid libxpc entry. This is not a 22F82 libxpc ABI/dictionary failure and not just an address inference.",
+    "r010_gate_note": "a role/identity gate or removing/constant-returning the call would avoid this crash path but would not correct the evidenced MSFindSymbol raw-pointer contract; the narrow fix is to sign/authenticate the function pointer with ptrauth_key_asia (key A, zero) at the call boundary or provide a function-pointer-specific resolved API.",
+    "missing_observations": [
+      "independent cache-aware local-symbol-table entry for __xpc_bootstrap_services (naive LC_SYMTAB cache offsets did not resolve); crash symbolization + exact entry/PC/pointer are exact",
+      "runtime dictionary contents/heap memory and successful callee execution are not captured; dict-shape semantics remain unvalidated, but are not the fault cause",
+      "full image+shared LINKEDIT hash not extracted; exact image UUID/__TEXT/function/header hashes preserved"
+    ]
+  },
+  "device_state": {
+    "inventory_time": "2026-10-18 18:49 HKT",
+    "no_chroot_services": "no WindowServer/tccd-system/displayd/inputd/interopd/iconservicesagent/launchdchrootexec/probes",
+    "host_app": "MacWSHost PID 71324, mobile, elapsed 17:47, pre-existing after R010 cleanup; not started/stopped by R011",
+    "native": {
+      "tccd": 883,
+      "SpringBoard": 872,
+      "backboardd": 905,
+      "alive": true
+    },
+    "markers": "all absent in both namespaces",
+    "package": "com.kdt.macosbooter 0.3.4 installed; provider target inode 250668640 remains",
+    "mutations": "none on device by R011; cache/libmachook reads were range reads; no source/package/service/WS/marker changes"
+  },
+  "limits": [
+    "R011 did not restart any service/WS; no new runtime crash was manufactured",
+    "the exact local symbol-table entry was not independently resolved",
+    "no dictionary memory/full image hash",
+    "no service/WS/pixels/TCC/input acceptance"
+  ],
+  "evidence_files": [
+    "analysis/r011-xpc-crash/cache-read.json",
+    "analysis/r011-xpc-crash/cache-map-head.txt",
+    "analysis/r011-xpc-crash/libxpc-bootstrap-entry-180ae1140.bin",
+    ".disasm.txt",
+    "analysis/r011-xpc-crash/libmachook-callsite-6a20.bin",
+    ".disasm.txt",
+    "analysis/r011-xpc-crash/current-inventory.txt",
+    "analysis/r010-provider-f1/crashes/*"
+  ]
+}

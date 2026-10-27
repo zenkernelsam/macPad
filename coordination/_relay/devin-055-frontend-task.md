@@ -1,0 +1,6 @@
+# D055 frontend — namespace-control and error provenance independent audit
+
+D054 exact source analysis useful but adjacent XNU8792.81.2 vs device8792.82.2 limits claims of unique errno provenance. Backend D054 declares dead-vnode ENOENT while your source table says textvp failures ESRCH: reconcile as unresolved, not both proven. No universal all-senders/two-gate-only claim.
+
+Local read-only review of D054 raw API outputs, helper ABI/token lifetime, actual libproc wrappers and exact tccd callsite. Design/review D055 same already-running native child chroot-before/after query (no second exec/trust admission needed), what results support and what remains unproven. Distinguish API errno from userspace path-validation errno and retained stale errno after success. Independently assess token/pidversion race, path namespace, vnode and logging coverage. Do not recommend sender-path aliases that merely satisfy existence checks or policy bypasses. Review stable saved D055 artifacts if available without polling/contacting backend; otherwise precise pending inputs. No device/source/build/Git changes; own analysis/docs only. Write docs/evidence/devin-d055-namespace-independent-review-20261019.md and coordination/_relay/devin-055-frontend-result.md. STOP with exact final file AND terminal line:
+(handover to codex now)

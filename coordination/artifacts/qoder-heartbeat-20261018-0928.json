@@ -1,0 +1,18 @@
+{
+  "time": "2026-10-18T17:29:20.012968+08:00",
+  "states": {
+    "frontend": {
+      "pid": 38533,
+      "tty": "/dev/ttys000",
+      "session_id": "02A55FDA-3ED9-47B0-AD3A-DCF4E26FD263",
+      "state": "Working; editing package artifact verifier for provider payload"
+    },
+    "backend": {
+      "pid": 39300,
+      "tty": "/dev/ttys001",
+      "session_id": "C455E1A7-FC18-4473-9B6D-22F619785362",
+      "state": "Working; investigating isolated compiler service bootstrap and existing private-identifier bundle"
+    }
+  },
+  "no_dispatch_required": "Both workers are still actively working; no handover observed."
+}

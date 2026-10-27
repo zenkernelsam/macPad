@@ -1,0 +1,30 @@
+{
+  "time": "2026-10-18T17:42:46+08:00",
+  "candidate_head": "c97e219",
+  "review": "coordination/reviews/R012-frontend-R009-backend-20261018.md",
+  "frontend": {
+    "task": "coordination/_relay/round-013-to-frontend.md",
+    "pointer": "coordination/_relay/round-013-frontend-pointer.txt",
+    "session_id": "02A55FDA-3ED9-47B0-AD3A-DCF4E26FD263",
+    "tty": "/dev/ttys000",
+    "pid": 38533,
+    "body_sha256": "bb1c6dfd727c005d170b8911787b1fc5aec343970bba95557695ad8af0d30ae8",
+    "body_sent_once": true,
+    "cr_sent_once": true,
+    "working_confirmed": true
+  },
+  "backend": {
+    "task": "coordination/_relay/round-010-backend-result-task.md",
+    "pointer": "coordination/_relay/round-010-backend-pointer.txt",
+    "session_id": "C455E1A7-FC18-4473-9B6D-22F619785362",
+    "tty": "/dev/ttys001",
+    "pid": 39300,
+    "body_sha256": "15f8a23cfa6962c8bd62f050fac4402dcff361bdc56600445cf6acc5c800dff3",
+    "body_sent_once": true,
+    "cr_sent_once": true,
+    "working_confirmed": true
+  },
+  "shared_device_owner": "backend only",
+  "credentials": "not included; use transient authorized SSH environment",
+  "dry_run_identity_checks": "passed for both roles before dispatch"
+}

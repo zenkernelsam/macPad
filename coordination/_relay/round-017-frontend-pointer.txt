@@ -1,0 +1,1 @@
+请执行 coordination/_relay/round-017-to-frontend.md：只在本地查精确22F82 libxpc与_xpc_bootstrap_services ABI/调用证据，区分15.6材料；若缺失，列出后端R011需采集的具体寄存器/反汇编。不碰设备或源码，完成后handover。

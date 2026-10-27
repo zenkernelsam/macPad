@@ -1,0 +1,149 @@
+{
+  "schema": "macws-r024-f11h-diagnostic-evidence-v1",
+  "date": "2026-10-18",
+  "timezone": "Asia/Hong_Kong",
+  "packet": "coordination/_relay/round-024-backend-to-worker.md",
+  "categorical": "The exact LLVM DiagnosticInfo text was captured four times from the packet-owned private compiler endpoint: Unknown attribute kind (71) (Producer: 'LLVM16.0.0' Reader: 'LLVM '). The fatal handler hook was installed at the true function entry MTLCompiler+0x7985c (0x798bc - symbolLocation 0x60) through an LC_LOAD_DYLIB on the owned compiler copy, and the prologue patch was byte-verified (changed=1). Request SHA-256, schema, converted library identity and client reply match R014. No production compiler, WindowServer, native service, package, source, Git or marker was changed.",
+  "invariants": {
+    "source_changes": false,
+    "package_changes": false,
+    "git_write": false,
+    "windowserver_started": false,
+    "shared_compiler_restarted_or_modified": false,
+    "production_bundle_modified": false,
+    "assertion_bypassed": false,
+    "success_forced": false,
+    "owned_processes_remaining": 0,
+    "production_compiler_count_before_after": [14, 14]
+  },
+  "inventory": {
+    "native": {"SpringBoard": 872, "tccd": 883, "backboardd": 905, "started": "2026-10-18T12:26:48+08:00"},
+    "package": {"name": "com.kdt.macosbooter", "version": "0.3.4", "status": "install ok installed"},
+    "provider_sha256": "b2ae21da42704b1d584f2b655e837f7db62a10f2a035b3f741adc819ce1423e7",
+    "libmachook_arm64e_sha256": "47f78880f6de1fadc9faabbf79d16ccc56cfba2feb5a45e2155e09c22c2d9432",
+    "libmachook_arm64_sha256": "6de9b6880495c3e0f431c2fc0e328b4420aecac178391d466fa71b141efcbd18",
+    "production_flat_bundle_inode": 106024,
+    "markers_absent": true
+  },
+  "endpoint": {
+    "reused_layout": ".../MacWS/r014 (recreated from /var/mobile/macws_r014_evidence_20261018/owned/r014)",
+    "owned_compiler": {
+      "original_sha256": "4d3182832053f830e3236d7e2395ae2771c10bf2b16f1c9bbc03085e9df9ea6f",
+      "original_cdhash": "d0410d8980d3e87b683c63385cf5b2827b04e96a",
+      "architecture": "arm64e",
+      "patched_sha256": "7bc22e08e234c18fb5a230f930edf5ea0665fe32bf46eae8a3ba9ab9538bce32",
+      "patched_cdhash": "b3e29eef5732b354712a1e1fc1ec28b99fa55e31",
+      "added_load_command": "LC_LOAD_DYLIB /var/jb/usr/macOS/Frameworks/Metal.framework/XPCServices/MacWS/r014/service/r024_diag.dylib",
+      "headerpad": "load commands end 0x910, first section 0x20c4, new command 120 bytes",
+      "patcher": "analysis/r024-f11h/patch_load_dylib.py",
+      "patcher_sha256": "003f8a30a383a7e768f60b66b3fde2f857f9809b07f5a413d5fad53addea3d2f"
+    },
+    "diagnostic_dylib": {
+      "source_sha256": "2bfcac41a5c9e7b8964ae72e979274c5602e8f43e3ef6ed9ec46fcf78944661e",
+      "architecture": "arm64e",
+      "sha256": "61aec4daf617266d524823a2ad12f2ba31ed30d9b291e984018969ac9bc20a8c",
+      "cdhash": "d0b584a81182108449251b878ff940efd5243516",
+      "arm64_attempt": {
+        "cdhash": "a7721cef6a2a0d9426eefc1a15525e1e0d6b6447",
+        "failure": "dyld: Library not loaded ... mach-o file, but is an incompatible architecture (have 'arm64', need 'arm64e')"
+      },
+      "arm64e_v1_cdhash": "3dbe1c11ed8df3b238be77a332cf357b673fc4ca",
+      "arm64e_v1_failure": "hooked 0x798bc (return address), not the function entry"
+    },
+    "wrapper": {
+      "name": "r024_wrapper",
+      "sha256": "d49f5025d2bbc015ba4fbbaa06147ca2bfe57ec0aad7278c44e8d99b68531464",
+      "cdhash": "44767b6abe8e0f91c5f5c242dad18656e8f42039"
+    },
+    "plist_cfbundleexecutable": "r024_wrapper"
+  },
+  "hook": {
+    "mtlcompiler_base": "0x1fc256000",
+    "crash_frame_imageOffset": "0x798bc",
+    "symbolLocation": 96,
+    "true_entry": "0x7985c",
+    "hooked_address": "0x1fc2cf85c",
+    "entry_before": "d503237f d10103ff a9024ff4 a9037bfd",
+    "entry_after": "58000050 d61f0200 ...",
+    "changed": true,
+    "original_pointer": "non-null per instance (e.g. 0x845a000100294000)",
+    "hook_library": "MSHookFunction from substrate",
+    "preload": "dlopen(/System/Library/PrivateFrameworks/MTLCompiler.framework/MTLCompiler, RTLD_NOW|RTLD_GLOBAL)"
+  },
+  "capture": {
+    "diagnostic_text": "Unknown attribute kind (71) (Producer: 'LLVM16.0.0' Reader: 'LLVM ')",
+    "diagnostic_length": 68,
+    "producer": "LLVM16.0.0",
+    "reader": "LLVM ",
+    "fatal_blocks": 4,
+    "service_pids": [88385, 88393, 88401, 88409],
+    "raw_log": "analysis/r024-f11h/device-evidence/diag-raw.log",
+    "raw_log_sha256": "0500ca7fdfa40c6a9f2b1c801ecbc6a71ca6963cb23a3d1d1ed33e6a638832e2",
+    "request": {
+      "requestType": 15,
+      "data_bytes": 7632,
+      "data_sha256": "ffa7daa51d8de4493c06c8c3e65717b116521d4e9fb6cc89fa8e89f91cbe2e90",
+      "data_fnv1a64": "0b867f3663545473",
+      "schema": {
+        "requestType": 15,
+        "data": "7632 bytes",
+        "llvmVersion": 31001,
+        "client_name": "r014_f11h_client_v4",
+        "APISpecifiedTimeoutInSeconds": 0
+      },
+      "library": "converted /usr/local/share/macws/mpsimage/default-desktop-effects-macabi.metallib (SHA-256 34273860...)",
+      "constant": "MTLDataTypeBool index 0 = 1"
+    },
+    "client_reply": "XPCErrorDescription = \"Connection interrupted\"",
+    "type8_hold": "R014_HOLD_AFTER_TYPE8=1",
+    "client_watchdog": "35 s, exit 124 after dumps"
+  },
+  "crash_delta": {
+    "mtlcompiler_real_reports": 9,
+    "hooked_instances_reports": 0,
+    "hooked_instances_note": "the diagnostic handler logged before calling the original; the fallback _exit(137) terminated the four hooked instances without an .ips; earlier unhooked/wrong-offset instances produced .ips with fatalDiagnosticHandler -> abort",
+    "helper_client_reports": 5,
+    "production_compiler_crashes": 0,
+    "native_crashes": 0,
+    "xpc_bootstrap_recurrence": false
+  },
+  "cleanup": {
+    "owned_tree": "/var/mobile/macws_r024_evidence_20261018/owned/r014",
+    "probes": "/var/mobile/macws_r024_evidence_20261018/probes",
+    "logs": "/var/mobile/macws_r024_evidence_20261018/logs",
+    "crashes": "/var/mobile/macws_r024_evidence_20261018/crashes",
+    "raw_log_at_top": "/var/mobile/macws_r024_evidence_20261018/diag-raw.log",
+    "owned_processes_remaining": 0,
+    "production_compiler_count": 14,
+    "production_r014_path_absent": true,
+    "native": {"SpringBoard": 872, "tccd": 883, "backboardd": 905, "started": "12:26:48"},
+    "package": "0.3.4 install ok installed",
+    "provider_sha256": "b2ae21da42704b1d584f2b655e837f7db62a10f2a035b3f741adc819ce1423e7",
+    "libmachook_arm64e_sha256": "47f78880f6de1fadc9faabbf79d16ccc56cfba2feb5a45e2155e09c22c2d9432",
+    "libmachook_arm64_sha256": "6de9b6880495c3e0f431c2fc0e328b4420aecac178391d466fa71b141efcbd18",
+    "markers_absent": true,
+    "thermal": "cached sampled-at=1792325110 nominal 3429 centic (34.29 C); no fresh sensor",
+    "r024_trustcache_cdhashes": [
+      "b3e29eef5732b354712a1e1fc1ec28b99fa55e31",
+      "d0b584a81182108449251b878ff940efd5243516",
+      "44767b6abe8e0f91c5f5c242dad18656e8f42039",
+      "a7721cef6a2a0d9426eefc1a15525e1e0d6b6447",
+      "3dbe1c11ed8df3b238be77a332cf357b673fc4ca"
+    ]
+  },
+  "root_cause": {
+    "claimed": false,
+    "exact_reader_rejection": "the bitcode reader does not recognize attribute kind 71 emitted by LLVM16.0.0",
+    "not_inferred": "the name of LLVM 16 attribute kind 71; no mapping from the triple alone",
+    "production_fix": "none proposed in this packet"
+  },
+  "host_evidence": "analysis/r024-f11h/ {src, build, run1, device-evidence}",
+  "device_evidence": "/var/mobile/macws_r024_evidence_20261018/",
+  "limits": [
+    "one converted/Bool1 control; original/Bool0 not re-exercised",
+    "attribute kind 71 name not mapped",
+    "reader version string is empty ('LLVM ')",
+    "hooked instances produced no .ips; prior abort reports retained",
+    "no fresh thermal sensor"
+  ]
+}

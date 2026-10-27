@@ -1,0 +1,10 @@
+# D044 backend — observer concurrency, correlation and forwarding review fixes
+
+D043 local tests/build accepted only preliminarily; no deployment. Coordinator inspected source: atomic fd load/open/store allows concurrent opens/leaks and shared log publication races; ring sequence reservation is exposed before record memcpy completes. Per-record seq+pthread tid is not a shared nested gate/dispatcher/callback invocation ID. Fix these before runtime claims.
+
+Local source/build/tests only, NO device/deploy/restart. Provide bounded thread-safe logger initialization, complete-record publication for readers, robust short-write/EINTR handling with no unbounded retry, private mode0600 and no symlink following for token log, regular-file/owner validation as appropriate. Preserve errno across ENTIRE wrappers including pre-original inspection and post-original memory reads; original errno/result must be returned exactly. Use thread-local nested invocation correlation propagated gate->dispatcher->impl, distinguish standalone callback/async invocations and no stale pairing. Bound token snapshots to verified readable lifetime; default-off must avoid collecting unrelated records, no global diagnostics producer coupling. Actual register/return signatures/PAC must match exact22F82 disasm.
+
+Tests must exercise simultaneous first emission, record integrity/publication, nested and concurrent invocation correlation, error/async forwarding, live disarm, budgets and failed/partial I/O. Do not infer gate cause from count alone; log entries before/after only with safe lifetime. Preserve current provider4 permits/relocator/PAC changes. Read D043 frontend final review if available, fix concrete blockers or document exact missing ABI rather than guessing. Build both slices, report hashes and diff scope. No commit/package/install. Future device observation requires new reviewed packet and user session handling; do not restart now.
+
+Write docs/evidence/devin-d044-observer-reliability-20261019.md and coordination/_relay/devin-044-backend-result.md. STOP after handover.
+(handover to codex now)

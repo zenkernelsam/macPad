@@ -1,0 +1,8 @@
+# D037 frontend — final independent execution/desktop acceptance review
+
+D036 final local relocator corrected3 issues; your terminal approved local candidate. Consolidate that FINAL approval in a dated document (current D035 result still describes old P1). Review exact final sources/tests/hashes, use independent disassembly/host tests and record remaining limits. Specifically existing misc/test_mshook_relocate.c W-register/plain BR cases are not X-register BRAAZ/PAC execution proof; backend D037 instructed to correct and run isolated live probes before gated single owned-generation A/B. No frontend device mutation or contacting backend terminal.
+
+Read-only local independent work. Check X/W distinction, signed target authentication, x17 scratch ABI preservation, CBZ taken/non-taken/null-target, in-window negative, call/return refusal and exact UUID/prologue gating. Do not extend approval to general relocator instruction classes absent tests. Validate final generation plan respects watchdog and rollback, no diagnostic alternate producer confound, actual changed-bytes/counters/state/visible pixel evidence. Inspect stable artifacts only, do not poll. Write precise acceptance/rejection criteria and evaluate final saved D037 evidence if available, else list pending live inputs. New writes only own evidence/disposable analysis, no source/build-input/Git/device edits.
+
+Write docs/evidence/devin-d037-relocation-final-independent-review-20261018.md and coordination/_relay/devin-037-frontend-result.md. Apply share-package lessons (real protocol+pixels, identity, one-variable, bounded lifecycle). STOP after handover.
+(handover to codex now)

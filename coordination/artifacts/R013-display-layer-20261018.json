@@ -1,0 +1,228 @@
+{
+  "schema": "macws-r013-display-layer-evidence-v1",
+  "date": "2026-10-18",
+  "timezone": "Asia/Hong_Kong",
+  "packet": "coordination/_relay/round-013-backend-result-task.md",
+  "categorical": "One owned --no-vnc generation started and stopped cleanly. Provider load/callability PASS. Decode/asset layer FAIL: MTLCompilerService F11H abort at 19:51:37 and iconservicesagent MPS abort at 19:52:17. WindowServer transport of a final composite was never witnessed: zero FINAL-COMPOSITE lines in every log, AGX selected legacy-0x70. displayd receiver ready on port 21507, 10 replay sends accepted at the Mach layer, 0 accepted and 0 rejected final-composite messages, and zero window-stream/frame entries. The state file remains the initial missing/displayd-start record written at 19:50:49. No pixels, no system readback. R016 reopen witness NOT RUN: sidecar G0=2 has one visible entry (not zero-entry) and no Host request existed. TCC result=1 (no reply dictionary) and input 1002 recorded separately. 29 EXC_GUARD reports classified; no tccd/authd/systemstatusd/XPC bootstrap crash.",
+  "invariants": {
+    "source_changes": false,
+    "package_changes": false,
+    "publisher_identifier_changes": false,
+    "pacing_compiler_tcc_entitlement_assertion_ownership_changes": false,
+    "native_services_restarted": false,
+    "only_owned_generation_start_stop": true,
+    "diagnostic_markers": "absent throughout (iOS and chroot namespaces)"
+  },
+  "source": {
+    "head": "c97e219f3f367662dc9bdb1f20d7e76fba544df1",
+    "libmachook_mac_hooks_sha256": "e6cc4597a6a61bf65a25782d4939eb1470c0e237aaf3af40c46fa296eeb9463d",
+    "mac_hooks_diff_stat": "1 file changed, 14 insertions(+), 1 deletion(-) (R012, unchanged this round)"
+  },
+  "prestart": {
+    "time": "2026-10-18T19:49:56+08:00",
+    "native": {
+      "SpringBoard": 872,
+      "tccd": 883,
+      "backboardd": 905,
+      "started": "2026-10-18T12:26:48+08:00"
+    },
+    "package": {
+      "name": "com.kdt.macosbooter",
+      "version": "0.3.4",
+      "status": "install ok installed"
+    },
+    "provider": {
+      "path": "/var/mnt/rootfs/System/Library/Frameworks/CydiaSubstrate.framework/CydiaSubstrate",
+      "inode": 250671913,
+      "sha256": "b2ae21da42704b1d584f2b655e837f7db62a10f2a035b3f741adc819ce1423e7"
+    },
+    "libmachook": {
+      "arm64e_sha256": "47f78880f6de1fadc9faabbf79d16ccc56cfba2feb5a45e2155e09c22c2d9432",
+      "arm64e_cdhash": "b579715ec2cef37f7ffb4c8c89e42eccc32b04df",
+      "arm64_sha256": "6de9b6880495c3e0f431c2fc0e328b4420aecac178391d466fa71b141efcbd18",
+      "arm64_cdhash": "0bbcbb6f2ac99bbf98901a3e9a65e821d6f5bd08"
+    },
+    "markers_absent": [
+      "/tmp/macws_runtime_diagnostics",
+      "/tmp/macws_mtlcompiler_diagnostics",
+      "/tmp/macws_mtlcompiler_hold",
+      "/var/mnt/rootfs/tmp/macws_runtime_diagnostics",
+      "/var/mnt/rootfs/tmp/macws_mtlcompiler_diagnostics",
+      "/var/mnt/rootfs/tmp/macws_mtlcompiler_hold"
+    ],
+    "thermal": "sampled-at=1792324203 thermal-state=nominal raw=0 low-power=no battery-temp-centic=3400 virtual-temp-centic=3400 effective-temp-centic=3400",
+    "baseline_backups": "/var/mobile/macws_r012_evidence_20261018/r010-baseline/ present"
+  },
+  "generation": {
+    "command": "timeout 300 bash /var/jb/usr/macOS/bin/macos_gui.sh start coexist --no-vnc",
+    "start_exit": 0,
+    "relay_exit": 0,
+    "relay_timeout": 0,
+    "launcher_graphics_line": "WindowServer process ready (pid=80310, stable for 8s; graphics not yet witnessed).",
+    "launcher_mode_note": "layout/usr/macOS/bin/macos_gui.sh:686-694 uses stable>=8 process-only readiness under --no-vnc and never reads /private/tmp/macws_graphics_ready; the phrase is not producer evidence",
+    "native_agx_line": "NATIVE-AGX: built-in command ABI + cancelled-swap completion + final-composite IOSurface enabled; requested RFB CPU bridge disabled.",
+    "processes": {
+      "WindowServer": {"pid": 80310, "started": "~19:50:00"},
+      "macwsdisplayd": {"pid": 80405, "started": "19:50:49"},
+      "Dock": {"pid": 80529, "started": "19:50:52"},
+      "Terminal": {"pid": 80562, "started": "19:50:56"},
+      "OSXvnc": {"pid": 80546, "started": "19:50:56", "restarted_as": 80670, "restart_time": "19:51:01"},
+      "tccd_system": {"pid": 80165},
+      "authd": {"pid": 80153},
+      "systemstatusd": {"pid": 79898},
+      "MacWSHost": {"pid": 81325, "started": "19:57:14", "note": "late; no generation-start participation"}
+    }
+  },
+  "layers": {
+    "provider": {
+      "verdict": "PASS (load/callability only)",
+      "ws_map_count": 8,
+      "provider_uuid": "5700E649-B271-36CF-888C-4CCC8E1BA6EC",
+      "probe": "original-published=0x102e74c90; via-hook=43 replacement_called=1 original_called=1; VERDICT=INSTALLED-ORIGINAL-CALLABLE; exit 0"
+    },
+    "decode_asset": {
+      "verdict": "FAIL (aborted)",
+      "terminal_sidecar": {
+        "path": "/var/mnt/rootfs/private/tmp/macws_window_metrics.80562.bin",
+        "bytes": 80,
+        "sha256": "b01ce21f02dfc34665d66d1399acb01e1bb1794ac8a4f765471444af91b74b38",
+        "metrics_version": 3,
+        "generation": 2,
+        "entry_count": 1,
+        "window_id": 31,
+        "flags": ["visible", "has_shadow", "resizable", "focused"],
+        "configure_ack": "supported=true received=false reason=no_identified_configure_yet"
+      },
+      "mtlcompiler_crash": {
+        "capture": "2026-10-18T19:51:37.298+08:00",
+        "pid": 80741,
+        "coalition": "com.macwsguide.iconservicesagent",
+        "exception": "EXC_CRASH / SIGABRT",
+        "triggered_symbols": [
+          "abort",
+          "fatalDiagnosticHandler",
+          "llvm::LLVMContext::diagnose",
+          "llvm::errorToErrorCodeAndEmitErrors",
+          "MTLCompilerObject::readModuleFromBinaryRequest",
+          "MTLCompilerObject::buildSpecializedFunctionRequest",
+          "MTLCompilerObject::buildRequest"
+        ],
+        "images": {
+          "MTLCompilerService": "6d2cfe56-8d88-39aa-bc25-7ffe5058ed4e",
+          "MTLCompiler": "482ee528-9d70-3ed7-a746-d19bb741245b",
+          "libLLVM": "3c9d9d6c-cc92-326a-911c-141bc96dc8be",
+          "MTLCompilerBypassOSCheck": "457ffbd6-21e0-35a9-9ba7-cc5d00729a0a"
+        },
+        "note": "same F11H signature as the R012-generation 19:33:48 abort (pid 78797); that file's mtime is late and is not counted as R013"
+      },
+      "iconservices_abort": {
+        "capture": "2026-10-18T19:52:17.650+08:00",
+        "pid": 80735,
+        "exception": "EXC_CRASH / SIGABRT",
+        "triggered_symbols": ["MPSLibrary::MPSKey_Compile(MPSKey_data*)", "_os_unfair_lock_lock_slow", "__ulock_wait"]
+      }
+    },
+    "ws_composite_producer": {
+      "verdict": "NOT WITNESSED",
+      "agx_probe": "requested=0x78 result=0xe00002c2 fallback=0x70 result=0 selected=legacy-0x70 (three launch blocks)",
+      "final_composite_lines_all_logs": 0,
+      "iomfb_completion_counter": "unavailable: gated by absent /tmp/macws_runtime_diagnostics",
+      "graphics_ready_marker": "removed by launcher at stop; not sampled after start; --no-vnc does not consult it",
+      "publisher_failure_lines": "none (all failure stages are unconditional dprintf)",
+      "silent_path_note": "valid owned surface is pre-filtered by scanout dimensions/format; transport failures log, so the producer boundary was never witnessed"
+    },
+    "displayd_receive": {
+      "verdict": "READY, ZERO ACCEPTED, ZERO REJECTED",
+      "segment_start_line": 19297,
+      "segment_end_line": 19354,
+      "receiver_ready": 2,
+      "replay_requests": 10,
+      "replay_lookup_send": "lookup=0 (BOOTSTRAP_SUCCESS), send=0, min-completion=1",
+      "accepted": 0,
+      "rejected": 0,
+      "frame_first": 0,
+      "workspace_events": 0,
+      "geometry_stream_restart": 0,
+      "request_subscribe": 0,
+      "receiver_port": 21507,
+      "protocol": 8,
+      "state_file": {
+        "state": "missing",
+        "producer": 0,
+        "sequence": 0,
+        "updated": 1792324249.663221,
+        "updated_local": "2026-10-18T19:50:49.663+08:00",
+        "reason": "displayd-start"
+      },
+      "inconsistency": "replay lookups/sends succeeded against a registered replay service, but WindowServer stderr contains no replay-receiver-ready/replay-received/replay-rejected line; registration ownership unresolved and not used for acceptance"
+    },
+    "system_pixel_readback": {
+      "verdict": "NONE",
+      "claim": "no pixel verdict; no accepted surface, no stream, no readback performed"
+    }
+  },
+  "r016_reopen": {
+    "run": false,
+    "reason": "strict zero-entry G0 precondition absent (G0=2 with one visible entry) and no Host request/result",
+    "host_app": {"pid": 81325, "started": "19:57:14"},
+    "hostd_log": "last macOS Terminal session is old pid 50936 result=signal-15; no new session"
+  },
+  "tcc_input": {
+    "tcc": {
+      "command_exit": 0,
+      "result": 1,
+      "reply_dictionary": "not captured",
+      "acceptance": false
+    },
+    "input": {
+      "command_exit": 0,
+      "SLSPostEventRecord_rc": 1002,
+      "acceptance": false
+    }
+  },
+  "crash_delta": {
+    "window": "2026-10-18T19:50:23+08:00..19:51:36+08:00",
+    "exc_user_fault_count": 29,
+    "exc_user_fault_class": "EXC_GUARD / GUARD_TYPE_USER / namespc 7 / reason_code 0x9 / esr Address size fault / identical faulting image-offset signature",
+    "processes": [
+      "CoreLocationAgent", "OSXvnc-server", "QuickLookUIService", "SystemUIServer",
+      "Terminal", "ViewBridgeAuxiliary", "com.apple.hiservices-xpcservice",
+      "com.apple.quicklook.ThumbnailsAgent", "coreaudiod", "coreservicesd",
+      "filecoordinationd", "iconservicesagent", "lsregister", "macwsdisplayd",
+      "macwsinteropd", "macwsworkspacectl", "pbs", "pkd", "sharedfilelistd"
+    ],
+    "long_lived_named_processes_survived": ["Terminal 80562", "macwsdisplayd 80405", "OSXvnc-server 80670"],
+    "cause_attribution": "none",
+    "other": {
+      "MTLCompilerService-2026-10-18-195137.ips": "R013 F11H abort",
+      "MTLCompilerService-2026-10-18-193349.ips": "R012-generation capture 19:33:48; surfaced late",
+      "iconservicesagent-2026-10-18-195220.ips": "R013 MPS abort",
+      "ReportCrash-2026-10-18-195139.ips": "report agent",
+      "tccd_authd_systemstatusd_xpc_bootstrap": "no crash"
+    }
+  },
+  "cleanup": {
+    "command": "timeout 240 bash /var/jb/usr/macOS/bin/macos_gui.sh stop",
+    "stop_exit": 0,
+    "ssh_exit": 0,
+    "owned_processes_remaining": 0,
+    "gui_status": "display : COEXISTENCE; -- processes -- (none running)",
+    "native_after": {"SpringBoard": 872, "tccd": 883, "backboardd": 905, "started": "12:26:48"},
+    "markers_absent": true,
+    "package_unchanged": true,
+    "provider_sha256": "b2ae21da42704b1d584f2b655e837f7db62a10f2a035b3f741adc819ce1423e7",
+    "libmachook_arm64e_sha256": "47f78880f6de1fadc9faabbf79d16ccc56cfba2feb5a45e2155e09c22c2d9432",
+    "libmachook_arm64_sha256": "6de9b6880495c3e0f431c2fc0e328b4420aecac178391d466fa71b141efcbd18",
+    "baseline_backups_intact": true,
+    "thermal": "sampled-at=1792325110 thermal-state=nominal raw=0 low-power=no effective-temp-centic=3429"
+  },
+  "preserved_device_evidence": "/var/mobile/macws_r013_evidence_20261018/{logs,crashes,probes}",
+  "host_evidence": "analysis/r013-display/ (SHA256SUMS manifest; 33 crash reports; generation, displayd segment, WindowServer, cleanup, probe outputs)",
+  "limits": [
+    "composite completion counters unavailable (runtime diagnostic marker absent by production preflight)",
+    "WindowServer replay-service registration is inconsistent with absent publisher log lines; ownership unresolved",
+    "--no-vnc readiness does not validate a graphics witness",
+    "no pixel readback possible without an accepted stream",
+    "R016 not runnable: no zero-entry sidecar and no Host request"
+  ]
+}

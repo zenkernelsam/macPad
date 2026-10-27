@@ -1,0 +1,9 @@
+{
+  "time": "2026-10-18T11:23:46.616Z",
+  "local_time": "2026-10-18T19:23:46+08:00",
+  "frontend": {"session_id":"02A55FDA-3ED9-47B0-AD3A-DCF4E26FD263","tty":"/dev/ttys000","pid":38533,"cwd":"/Users/ciscohe/Desktop/macPad","binding_verified":true,"r020":"handed over and accepted with limits","r021":"dispatched offline acceptance checklist"},
+  "backend": {"session_id":"C455E1A7-FC18-4473-9B6D-22F619785362","tty":"/dev/ttys001","pid":39300,"cwd":"/Users/ciscohe/Desktop/macPad","binding_verified":true,"r012":"Working full package staging; no handover"},
+  "finding": {"temporary_identifier":"does not block current probes/trust","reproducibility":"fails; PID-dependent Identifier/CDHash/SHA and trustcache accumulation"},
+  "acceptance": {"xpc_fix_runtime":"pending","windowserver_pixels_tcc_input":"not accepted"},
+  "actions": {"backend_mid_task_messages":0,"device_operations_by_coordinator":0}
+}

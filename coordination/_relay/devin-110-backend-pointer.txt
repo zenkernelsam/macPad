@@ -1,0 +1,1 @@
+Read coordination/_relay/devin-110-backend-task.md. Build isolated local counterexamples for frozen D107 errno contamination and FIFO/symlink trace hazards, with strict timeout/cleanup; no production marker paths or moving successor. Return concrete D110 evidence and handover.

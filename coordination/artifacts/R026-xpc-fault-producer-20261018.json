@@ -1,0 +1,120 @@
+{
+  "schema": 1,
+  "round": "R026",
+  "date": "2026-10-18",
+  "status": "bounded-producer-attribution-value-missing",
+  "scope": "offline exact-binary analysis; no new device probes",
+  "inputs": {
+    "ios_launchd": {
+      "path": "analysis/r025-libxpc-guard/launchd-ios-20D47.bin",
+      "sha256": "793c051be531606f00f091bade3068a0934e716a4865d32e4704d264dd49fa4f",
+      "uuid": "790A3FDD-A2AA-3732-9A81-DD0F4B7194EB"
+    },
+    "ios_launchd_disasm": {
+      "path": "analysis/r025-libxpc-guard/launchd-ios.disasm.txt",
+      "sha256": "7679e23d84440c93213125004767ef2e8efe08e1bfa23a89b818e48a6d3fd72a"
+    },
+    "focused_launchd_disasm": {
+      "path": "analysis/r025-libxpc-guard/disasm-launchd-xpc-fault-sites.txt",
+      "sha256": "433545d06c58cb476d5fe948126af96404182f97e6764b4a2520b5fe347124db"
+    },
+    "adapter_source": {
+      "path": "launchdchrootexec/main.m",
+      "sha256": "0e8d6504189188db4c8993194381abd6d459bbf01113374ef5ae010f606c110c"
+    },
+    "adapter_local_binary": {
+      "path": ".theos/obj/launchdchrootexec",
+      "sha256": "1004c7903743e67d0014096bedab1731279ddeeab3bbc18179ec26c506050f50",
+      "uuid": "685002B3-ECBD-3BCD-9D32-6384F5875472",
+      "arch": "arm64",
+      "installed_device_identity_preserved": false
+    },
+    "libxpc_text": {
+      "sha256": "af2bbe7c88c8be38aedef36d80410db39c4376cc1f9ebd0b0cf2b052582b0db5",
+      "fault_function": "img+0x1D5A8",
+      "reason_key": "xpc-fault"
+    }
+  },
+  "producer": {
+    "bounded_to": "iOS launchd cross-domain lookup guard",
+    "literal_set_sites": [
+      {
+        "id": "A",
+        "address": "0x10002F4E4",
+        "message_template": "System session daemon must not initiate XPC to the User session (rdar://77349945): endpoint = %s",
+        "precondition": "shared lookup helper 0x10003326C returned nonzero after the lookup path",
+        "reply_fields": ["port", "bootstrap", "exception"],
+        "endpoint_register": "x24"
+      },
+      {
+        "id": "B",
+        "address": "0x10002FB60",
+        "message_template": "System session daemon must not bootstrap_look_up User session services (rdar://77349945): endpoint = %s",
+        "precondition": "shared lookup helper 0x10003326C returned nonzero after the lookup path",
+        "reply_fields": ["error", "port", "non-launching"],
+        "endpoint_register": "x23"
+      }
+    ],
+    "shared_helper": {
+      "address": "0x10003326C",
+      "log_function": "0x100033314",
+      "log_fields": ["name", "instance", "handle", "flags", "requestor", "error"]
+    },
+    "leading_candidate": "B (bootstrap_look_up) because the observed operation is a service lookup",
+    "exact_site_selected": false,
+    "endpoint_value_not_captured": true
+  },
+  "request_match": {
+    "launchd_log": {
+      "path": "/var/log/com.apple.xpc.launchd/launchd.log.1",
+      "lines": {
+        "64609": "2026-10-18 18:24:43.889040 <Notice>: launchdchrootex.67961 sent an invalid request",
+        "64610": "2026-10-18 18:24:44.009730 (system) <Warning>: failed lookup: name = com.apple.analyticsd, flags = 0x8, requestor = codesign[67961], error = 3: No such process"
+      }
+    },
+    "domain_match": "launchd (system) + requestor codesign matches 'System session daemon'",
+    "lookup_match": "name=com.apple.analyticsd, error=3; handle/instance absent in log",
+    "type_match": "service lookup favors bootstrap_look_up site B; site A is the direct-XPC alternative",
+    "flags_match": "flags=0x8 is passed by both sites; not disambiguating",
+    "exact_string_is_not_generic_failed_lookup": true
+  },
+  "adapter": {
+    "spawn_mode": "POSIX_SPAWN_SETEXEC (no wait/return; target exit status is the shell wait status)",
+    "sets": ["DYLD_INSERT_LIBRARIES", "HOME", "TMPDIR", "MallocNanoZone", "arch selection"],
+    "system_service_launch_type_condition": "getppid()==1 && nonempty XPC_SERVICE_NAME",
+    "codesign_report_parent_pid": 67477,
+    "system_service_branch_applied": false,
+    "owns_xpc_fault": false,
+    "transforms_bootstrap_session_audit_or_xpc": false
+  },
+  "fatality": {
+    "exact_code_path": "os_fault_with_payload -> task_violated_guard(...,TRUE) -> task_enqueue_exception_with_corpse(lightweight=TRUE)",
+    "lightweight_condition": "task_should_generate_lightweight_corpse finds exception port with MACH_EXCEPTION_BACKTRACE_PREFERRED",
+    "lightweight_path_result": "enqueue KCDATA_OBJECT_TYPE_LW_CORPSE backtrace object and return; does not generate full corpse task or kill the task itself",
+    "report_isLightWeightCorpse": 1,
+    "report_termination": {"namespace": "LIBXPC", "indicator": "XPC_EXIT_REASON_FAULT", "code": 9, "flags": 518},
+    "fatal_termination_proven": false,
+    "diagnostic_event": true,
+    "operation_failed": true,
+    "harmlessness_claimed": false
+  },
+  "relevance": {
+    "provider_identifier_or_trustcache": false,
+    "macos_xpc_bootstrap_pac_crash": false,
+    "current_ws_composite_input_blocker": false,
+    "explanation": "iOS launchd cross-domain lookup guard for a chroot system-session process requesting a user-session service; lightweight diagnostic; class recurs process-independently; no evidence it explains current bring-up blockers",
+    "further_rounds_warranted": "only if a current service logs the same guard and loses functionality"
+  },
+  "remaining_inputs_if_needed": [
+    "actual xpc-fault value for incident 5AA40622-72B7-4995-AB7B-5F115A105EED (selects site A/B and endpoint)",
+    "launchd request operation type/handle for the analyticsd lookup",
+    "installed device launchdchrootexec SHA/UUID if binary-level adapter identity is required"
+  ],
+  "not_needed": [
+    "additional 22F82 cache/libxpc bytes",
+    "new device probe or generation"
+  ],
+  "evidence_file": "docs/evidence/r026-xpc-fault-producer-20261018.md",
+  "evidence_sha256": "11d39f551f174816f2174fe20a659a25ba7e739fdd932d7f92c9330e543f33ef",
+  "background_tasks_running_or_queued": false
+}

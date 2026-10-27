@@ -1,0 +1,1 @@
+Read coordination/_relay/devin-115-frontend-task.md; independently audit D114 lifecycle admission/quiescence without edits, then hand over.

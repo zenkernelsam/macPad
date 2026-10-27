@@ -1,0 +1,3 @@
+# D191 frontend — D169 v3 probe-stream ABI compatibility check
+
+Read-only inspect the committed D169 v3 header/record definitions, decoder file loader, and D189 contract. Produce the exact expected D190 output file layout and ABI facts: header size/alignment/field offsets, d141_record size/field offsets, native byte-order assumptions, magic/version/CAP, exact record count and malformed-length requirements, and UUID/PID/gen consistency conditions. Verify D190 can include the committed headers and pass its loopback output to d169_stream_load/decode without private redefinition. Do not inspect moving D190 files, edit/build, access device, or invoke WindowServer. Save a concise evidence note and formal handover.

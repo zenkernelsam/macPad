@@ -1,0 +1,1 @@
+请执行 coordination/_relay/round-021-to-frontend.md：只读准备固定provider Identifier修复的双架构稳定性/失败验收清单，不实现、不构建、不碰设备，完成后handover。

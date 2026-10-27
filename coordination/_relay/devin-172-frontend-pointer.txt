@@ -1,0 +1,1 @@
+Frontend: coordination/_relay/devin-172-frontend-task.md. Independently audit D171 two-stream decoder against D170; especially pid-derived gen identity and actual fixtures. Read-only, no device/integration.

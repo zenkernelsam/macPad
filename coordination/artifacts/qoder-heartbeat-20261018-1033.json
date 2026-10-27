@@ -1,0 +1,44 @@
+{
+  "time": "2026-10-18T10:33:16.529Z",
+  "local_time": "2026-10-18T18:33:16+08:00",
+  "frontend": {
+    "session_id": "02A55FDA-3ED9-47B0-AD3A-DCF4E26FD263",
+    "tty": "/dev/ttys000",
+    "pid": 38533,
+    "cwd": "/Users/ciscohe/Desktop/macPad",
+    "binding_verified": true,
+    "r016": "handed over; source-level freshness plan accepted",
+    "r017": "prepared for local-only XPC ABI audit"
+  },
+  "backend": {
+    "session_id": "C455E1A7-FC18-4473-9B6D-22F619785362",
+    "tty": "/dev/ttys001",
+    "pid": 39300,
+    "cwd": "/Users/ciscohe/Desktop/macPad",
+    "binding_verified": true,
+    "r010": "handed over; package/install and component contracts pass, owned generation failed",
+    "candidate_installed": true,
+    "windowserver_after": false,
+    "pixels_tcc_input": "not accepted"
+  },
+  "review": {
+    "artifact": "coordination/reviews/R010-backend-R016-frontend-20261018.md",
+    "xpc_pac_abi_cause": "THEORY; exact 22F82 callee ABI/register evidence missing"
+  },
+  "next_tasks": {
+    "frontend": "coordination/_relay/round-017-to-frontend.md",
+    "backend": "coordination/_relay/round-011-backend-result-task.md",
+    "device_lane_owner": "backend; read-only only"
+  },
+  "dispatch": {
+    "frontend_body_sha256": "969dc7e818ab52551a647596d220fd31a640bd7817d2452403dbf4e7a57a991a",
+    "frontend_body_sent_once": true,
+    "frontend_cr_sent_once": true,
+    "frontend_working_confirmed": true,
+    "backend_body_sha256": "8b69a61a8363495a59529abcc23b5741734470e26b1dbefa1bfe5140bfe70f0b",
+    "backend_body_sent_once": true,
+    "backend_cr_sent_once": true,
+    "backend_working_confirmed": true,
+    "dry_run_identity_checks": "passed for both before send"
+  }
+}

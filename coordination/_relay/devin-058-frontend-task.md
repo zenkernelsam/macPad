@@ -1,0 +1,8 @@
+# D058 frontend — reconcile SETEXEC binary identity and in-root path design
+
+D056 namespace-control audit accepted, but spawn-hop cause is NOT accepted. Current launchdchrootexec/main.m119 sets POSIX_SPAWN_SETEXEC and133 passes flags; posix_spawn symbol presence alone cannot prove a new PID. Independently inspect the EXACT binary you reviewed, record path/hash/UUID/source revision and disassemble spawnattr flags + posix_spawn call. Distinguish old local artifact from installed binary; if installed identity absent state missing, no orphan/#103 causal claim. Correct D056 docs with retained history. Backend D057 active; do not contact/interrupt.
+
+Review fd_rdir-aware source against device build limits and D055 measured behavior. Double-root retraction is source-informed; real in-root path relative lookup still requires control. Design a zero-TCC disposable already-running child query of actual live WS/tccd process path (byPID only if token unavailable), no fabricated tokens. Identify what proves namespace-relative path versus merely existence, and no claim it proves launchd responsibility/policy readiness. No new helper execution/device/trust write in this frontend packet. Assess whether a future directly launchd-owned genuine in-root helper could test both independently measured requirements, with precise prerequisites and no aliases/fake identity.
+
+Local read-only analysis/docs only, no production source/build/Git/device changes. Write docs/evidence/devin-d058-launch-identity-independent-review-20261019.md and coordination/_relay/devin-058-frontend-result.md. STOP with exact last line in file AND terminal:
+(handover to codex now)

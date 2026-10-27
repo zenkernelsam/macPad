@@ -1,0 +1,1 @@
+请读取并执行 coordination/_relay/round-024-frontend-to-worker.md；只读补齐 exact 22F82 guard 证据，完成写文档并严格 handover。

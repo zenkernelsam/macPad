@@ -1,0 +1,1 @@
+用户决定切换回Devin CLI。请立即按 coordination/_relay/WORKER_SWITCH_HANDOVER_REQUEST.md 停止扩展、清理并写最终交接，说明何时可安全关闭qoder；不要继续派生实验。

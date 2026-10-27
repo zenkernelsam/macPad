@@ -1,0 +1,1 @@
+Frontend: coordination/_relay/devin-200-frontend-task.md. Read-only exact-binary ABI audit of the proposed PASS entry/exit observer; no implementation/device integration.

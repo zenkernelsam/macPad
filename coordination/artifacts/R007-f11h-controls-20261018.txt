@@ -1,0 +1,44 @@
+R007 F11H finite control excerpts — 2026-10-18
+Helper source: /tmp/r007/f11h_probe.m sha256 bd08b532316cea44cbf4cefc148137ea7d24d7a42fab5f8ca1fbc64a60ee7980
+Char binary sha256 2ffbd190...; Bool binary sha256 375ab51a...
+Deployed Bool CDHash f8aed9c386c4e4b2a72de669164d5f937c7436c2 (project entitlement profile, trustcached)
+Device: iPad13,11 / iPadOS 16.3 20D47 / macOS 13.4.1 22F82; device Apple M1 registry 4294968576
+Process-local diagnostics: MACWS_RUNTIME_DIAGNOSTICS=1 MACWS_LSXPC_TRACE=1 (no shared marker changed)
+
+1) CHAR negative control (invalid API type; all four cases) — REAL NSError
+STAGE=library RESULT=ok
+#### METAL2METAL-SPECIALIZE selector=newFunctionWithName:constantValues:error: name=F11H
+  function=0x0 errorDomain=MTLLibraryErrorDomain errorCode=3
+  description=Constant kUseSoftwareLinearFilter (0) is of type MTLDataTypeBool
+  but value found has type MTLDataTypeChar
+STAGE=function RESULT=nil
+STAGE=function ERR_DOMAIN=MTLLibraryErrorDomain ERR_CODE=3
+STAGE=function ERR_USERINFO={ NSLocalizedDescription = "Constant kUseSoftwareLinearFilter (0)
+  is of type MTLDataTypeBool but value found has type MTLDataTypeChar"; }
+Pipeline not reached. This proves the manifest's abi_type 'b' is the API Bool type;
+the source 'i8' is the AIR type. The Char control is not the MPS path.
+
+2) BOOL control (actual API type), converted/original × 0/1 — all four cases
+STAGE=library RESULT=ok
+#### METAL2METAL accepted-manifest path=.../mpsimage-default.route.plist sourceFunctions=1825 translated=1825
+#### METAL2METAL companion=... path=/usr/local/share/macws/mpsimage/default-desktop-effects-macabi.metallib error=(nil)
+#### LSXPC-CONN name=com.apple.MTLCompilerService
+requestType=9  (reply received)
+requestType=8  (reply received)
+requestType=15 data=7632 bytes llvmVersion=31001 APISpecifiedTimeoutInSeconds=0
+  client_name="r007_f11h_probe_bool"
+reply: "XPCErrorDescription" = "Connection interrupted"
+No STAGE=function/STAGE=pipeline return; process watchdog 25s -> exit 124.
+Request data prefix: 0x0000000600040600e000000008000000e800000000000000...
+The full 7632-byte data is truncated in the LSXPC description; no service-side NSError
+or compiler log was retained. No shared diagnostics marker was set.
+
+3) Placement
+- library load: ok for both installed libraries.
+- function specialization/pipeline: Bool constants reach the compiler service type-15
+  request; client gets XPC Connection interrupted and does not return before the watchdog.
+- Original and converted behave the same in this bounded control; the adapter accepted the
+  mpsimage manifest and loaded the companion for both runs.
+- Shared compiler services 51489/51490 remain; one earlier compiler service instance (54959)
+  is absent; external tccd 50427/WS 50574/iconservicesagent 51072 remain alive. No new
+  MTLCompilerService crash report. No restart/kill/reconfigure was performed by this packet.

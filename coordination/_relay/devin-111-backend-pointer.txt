@@ -1,0 +1,1 @@
+Read coordination/_relay/devin-111-backend-task.md. Complete D110's omitted corrected-helper acceptance contract with reusable task-local tests; no moving frontend artifacts or runtime changes. Keep adapter-dependent results pending, not fabricated passes. Return D111 and handover.

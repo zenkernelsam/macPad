@@ -1,0 +1,8 @@
+# D069 backend - one bounded live MAC policy snapshot (read-only)
+
+D068 exact T8103 image/layout/mock accepted. Authorize ONE bounded live KRW snapshot through existing Dopamine primitives to answer the registered-policy question. Do not execute __mac_syscall, TCC, setter, policy registration, or deploy/restart/observer. Preserve current desktop and watchdog. Use authorized iPad root@192.168.68.63:2222 only, transient env credentials, no unrelated host scan.
+
+Before read: capture current WS/tccd PID/lstart, desktop state/sequence and kernel UUID/hash identity. Verify live kernel base/slide through existing trusted primitive, not guessed constant. Read only mac_policy_list header and bounded entries with double-read consistency, caps (numloaded<=max<=0x400,index<=0x40,name<=0x80), pointer low56/range checks, name printable/NUL, ops+0x388/+0x3a8 nonnull flags. No arbitrary address CLI. Save raw sanitized addresses/names/hook-presence plus command exits/hashes before cleanup. If slide/base/list pointer cannot be independently verified, STOP without read and report missing input.
+
+Interpretation: Quarantine name present/ops syscall nonnull proves possible registered handler at snapshot; absent closes only that snapshot's handler arm, leaving precheck/no-match and runtime changes. Never claim return behavior or universal policy absence. Compare Sandbox/AMFI only as names already observed, no calls. Clean helper/job/read artifacts; verify desktop ready/sequence and no owned process. Write docs/evidence/devin-d069-live-policy-snapshot-20261019.md and coordination/_relay/devin-069-backend-result.md. STOP with final line:
+(handover to codex now)

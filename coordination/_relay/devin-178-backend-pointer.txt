@@ -1,0 +1,1 @@
+Backend: coordination/_relay/devin-178-backend-task.md. Fix median/report allocation consistency and validate reserved/uuid_valid fields; offline candidate only, no commit/device integration.

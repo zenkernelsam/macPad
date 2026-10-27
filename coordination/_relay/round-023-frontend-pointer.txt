@@ -1,0 +1,1 @@
+请执行 coordination/_relay/round-023-to-frontend.md：用本地R011精确22F82 libxpc字节核对LIBXPC guard共同帧和reason-string路径，缺字节则列最小范围；不再用15.6当事实，不碰设备/源码，结束后台任务并handover。

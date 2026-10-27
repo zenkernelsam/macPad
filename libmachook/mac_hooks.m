@@ -48,6 +48,7 @@
 #include "macws_iosurface_layout_abi.h"
 #include "macws_nocopy_abi.h"
 #include "MacWSLoaderObservation.h"
+#include "MacWSSenderObservation.h"
 
 // These macOS code-signing entry points are present in the iPadOS shared
 // cache and used by Ventura's CoreLocationAgent, but the iPhoneOS SDK omits
@@ -1728,15 +1729,26 @@ typedef struct {
     uint32_t  wrapperSig0, wrapperSig1, wrapperSig2, wrapperSig3;
     uint32_t  fbSwapIdOffset;
     uint32_t  inStructSwapIdOffset;
+    // LC_UUID of the exact image build the offsets above were derived from.
+    // All-zero means "no approved identity": registration fails closed
+    // (provider returns -2 on the live-vs-pin memcmp) and the hook is
+    // skipped rather than armed against an unvetted build.
+    uint8_t   uuid[16];
 } MacWSIOMFBABI;
 
 static const MacWSIOMFBABI kMacWSIOMFBABIs[] = {
     { 0x5450, 0x5280a283, 0x940023a7, 0x1750,
       0xb4000080, 0xf9447001, 0xb4000041, 0xd61f083f,
-      0xb0, 0x98 }, // macOS 15.6.1 (24G90)
+      0xb0, 0x98,
+      { 0 } }, // macOS 15.6.1 (24G90) — uuid unknown here, fails closed
     { 0x4400, 0x52808d03, 0x94001f64, 0x11cc,
       0xb4000080, 0xf9439401, 0xb4000041, 0xd61f083f,
-      0x68, 0x50 }, // macOS 13.4 (Ventura)
+      0x68, 0x50,
+      { 0x7a, 0xc5, 0x31, 0xb7, 0x05, 0xf5, 0x38, 0xfe,
+        0x92, 0xe5, 0xda, 0x6d, 0x86, 0xd2, 0x2a, 0x14 } },
+      // macOS 13.4 (Ventura) — IOMobileFramebuffer 7AC531B7-05F5-38FE-
+      // 92E5-DA6D86D22A14, from the extracted rootfs image
+      // (private/tmp/dscout_ventura .../IOMobileFramebuffer, otool LC_UUID).
 };
 
 static const MacWSIOMFBABI *g_macws_iomfb_abi;
@@ -1761,6 +1773,28 @@ static const MacWSIOMFBABI *MacWSIOMFBABIResolve(
         }
     }
     return NULL;
+}
+
+// ---- MACWSHookPermitV2 registration --------------------------------------
+// The deployed provider's MSHookFunction is fail-closed: it patches only
+// targets pre-registered as (image-uuid, image-offset, expected-prologue)
+// permits.  Resolve the V2 symbol once per process; a provider that exports
+// nothing returns -9 and the caller's hook stays uninstalled — identical
+// fail-closed behavior to an unregistered target.  Every argument here is an
+// independently recorded pin: uuid of the exact image build, the target's
+// image offset, and the RE'd 16-byte prologue.  No live-image self-pinning.
+static int macws_register_hook_permit(const void *image_base,
+        const uint8_t *expected_uuid16, uint64_t image_offset,
+        const uint32_t expected[4]) {
+    typedef int (*permit_fn_t)(const void *, const void *,
+                               uint64_t, const uint32_t[4]);
+    static permit_fn_t permitFn;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        permitFn = (permit_fn_t)dlsym(RTLD_DEFAULT, "MACWSHookPermitV2");
+    });
+    if (!permitFn || !image_base || !expected_uuid16 || !expected) return -9;
+    return permitFn(image_base, expected_uuid16, image_offset, expected);
 }
 // SkyLight`WS::Displays::CAWSManager::CAWSManager — the "another display
 // server owns the display" cbz x8 -> abort branch. 13.4: ctor+0x230 at
@@ -5900,26 +5934,68 @@ static void macws_configure_controlcenter_airplay_settings_route(void) {
 // thread-local observation context (Diagnostics/MacWSLoaderObservation).
 // Record-only: return values, errno and loader error state are unchanged.
 static void **g_macws_cgx_audit_slot;   // &SkyLight gCurMsgAudit
+// D043 record-only observation — WS-local fixed globals (same
+// image-relative scheme as gCurMsgAudit).  Populated only when the
+// dedicated sender-observation sentinel armed the install; otherwise
+// NULL and every helper below is inert.
+static const uint8_t *g_macws_obs_right_desc;   // SkyLight @0x1d3dcb6c8
+static volatile uint64_t *g_macws_obs_lazy;     // SkyLight @0x1d8ba6b50
+
 static int (*macws_orig_sender_can_synth)(void *, void *);
-static int macws_diag_sender_can_synth(void *a0, void *a1) {
-    void *cred = g_macws_cgx_audit_slot ? *g_macws_cgx_audit_slot : NULL;
-    uint32_t sz = cred ? *(volatile uint32_t *)((char *)cred + 4) : 0;
-    uint32_t apid = (cred && sz >= 0x34)
-        ? *(volatile uint32_t *)((char *)cred + 0x28) : 0; // audit.pid
-    uint32_t aeuid = (cred && sz >= 0x34)
-        ? *(volatile uint32_t *)((char *)cred + 0x18) : 0; // audit.euid
-    // errno contract: the wrapper returns the ORIGINAL's errno to the
-    // caller — save it before Exit/logging, restore before return.
-    unsigned seq = MacWSLoaderObservationEnter();
-    int r = macws_orig_sender_can_synth(a0, a1);
-    int saved_errno = errno;
+
+// The wrapper bodies live in MacWSSenderObservation.c (invoke
+// functions) so the host test can exercise the exact forwarding path —
+// errno envelope, armed-gated captures, chain correlation.  The
+// env-hook pointers below keep the loader-observation window and the
+// runtime-diagnostics #### CGXSYNTH line working unchanged.
+typedef int (*macws_audit_right_fn)(void *, void *, void *);
+static macws_audit_right_fn macws_obs_orig_audit_right;
+static int macws_obs_audit_right(void *audit, void *desc, void *impl) {
+    return macws_sender_obs_disp_invoke(
+        (MacWSSenderObsDispFn)macws_obs_orig_audit_right,
+        audit, desc, impl);
+}
+
+typedef int (*macws_tcc_check_fn)(void *, void *);
+static macws_tcc_check_fn macws_obs_orig_tcc_check;
+static int macws_obs_tcc_check(void *audit, void *service) {
+    return macws_sender_obs_impl_invoke(
+        (MacWSSenderObsImplFn)macws_obs_orig_tcc_check,
+        audit, service, &g_macws_obs_lazy);
+}
+
+static unsigned macws_obs_loader_pre(void *ctx) {
+    (void)ctx;
+    return MacWSLoaderObservationEnter();
+}
+
+static void macws_obs_gate_post(void *ctx,
+                                const MacWSSenderObsRecord *rec,
+                                uint32_t aeuid, uint32_t apid,
+                                unsigned seq) {
+    (void)ctx;
     MacWSLoaderObservationExit();
-    fprintf(stderr,
-            "#### CGXSYNTH cred=%p size=%u euid=%u pid=%u rc=%d seq=%u\n",
-            cred, sz, aeuid, apid, r, seq);
-    fflush(stderr);
-    errno = saved_errno;
-    return r;
+    // #### CGXSYNTH text line remains tied to the runtime-diagnostics
+    // sentinel only — unchanged behavior, no per-frame logs otherwise.
+    if (macws_runtime_diagnostics_enabled()) {
+        fprintf(stderr,
+                "#### CGXSYNTH cred=%#llx size=%u euid=%u pid=%u "
+                "rc=%d seq=%u\n",
+                (unsigned long long)rec->audit_ptr, rec->audit_size,
+                aeuid, apid, rec->rc, seq);
+        fflush(stderr);
+    }
+}
+
+static int macws_diag_sender_can_synth(void *a0, void *a1) {
+    static const MacWSSenderObsGateEnv env = {
+        .audit_slot = &g_macws_cgx_audit_slot,
+        .right_desc = &g_macws_obs_right_desc,
+        .pre_orig = macws_obs_loader_pre,
+        .post_orig = macws_obs_gate_post,
+    };
+    return macws_sender_obs_gate_invoke(
+        (MacWSSenderObsGateFn)macws_orig_sender_can_synth, a0, a1, &env);
 }
 
 void loadImageCallback(const struct mach_header* header, intptr_t vmaddr_slide) {
@@ -6069,26 +6145,72 @@ void loadImageCallback(const struct mach_header* header, intptr_t vmaddr_slide) 
                 0xb9, 0x8b, 0xb7, 0x38, 0x73, 0xcd, 0x18, 0x80 };
             // SkyLight-22F82 gate prologue @+0x318464 (RE-verified):
             //   pacibsp / sub sp,#0x70 / stp x29,x30,[sp,#0x60] /
-            //   add x29,sp,#0x60
-            const uint32_t gate_prologue[4] = {
-                0xd503237f, 0xd101c3ff, 0xa9067bfd, 0x910183fd };
+            //   add x29,sp,#0x60  — shared pin constant (D043: single
+            //   source of truth, byte-verified vs analysis/SkyLight_22F82)
+            const uint32_t *gate_prologue = kMacWSSenderObsGatePrologue;
+            // D043: dedicated sender-observation sentinel — deliberately
+            // NOT the macws_runtime_diagnostics umbrella (that flag also
+            // activates an alternate display producer, which would make
+            // any observation non-causal).  This switch arms only the
+            // three record-only boundaries below; still fail-closed via
+            // the same permit contract, still requires the real WS exe.
+            BOOL senderObs = isWS && macws_sender_observation_enabled();
             int permit = -9;
-            if (isWS && macws_runtime_diagnostics_enabled() && permitFn) {
+            if (isWS && (macws_runtime_diagnostics_enabled() || senderObs)
+                && permitFn) {
                 permit = permitFn(header, skylight_22f82_uuid,
                                   0x1853fd464ull - 0x1850e5000ull,
                                   gate_prologue);
             }
             fprintf(stderr,
                     "#### CGXSYNTH-INSTALL gate=%p slot=%p hdr=%p "
-                    "isWS=%d diag=%d permitFn=%p permit=%d\n",
+                    "isWS=%d diag=%d senderObs=%d permitFn=%p permit=%d\n",
                     gate, g_macws_cgx_audit_slot, (void *)header,
-                    isWS, macws_runtime_diagnostics_enabled(),
+                    isWS, macws_runtime_diagnostics_enabled(), senderObs,
                     (void *)permitFn, permit);
             fflush(stderr);
             if (gate && permit == 0) {
                 MSHookFunction(gate,
                                (void *)macws_diag_sender_can_synth,
                                (void **)&macws_orig_sender_can_synth);
+            }
+            // D043 record-only boundaries: dispatcher + impl.  Same
+            // dedicated sentinel, same UUID/offset/prologue permit
+            // contract; each installs independently (fail closed per
+            // site).  WS-local globals are resolved image-relative
+            // exactly like gCurMsgAudit above.  Prologue pins verified
+            // byte-exact in analysis/SkyLight_22F82.
+            if (senderObs && permitFn) {
+                g_macws_obs_right_desc = (const uint8_t *)(
+                    (uintptr_t)header + MACWS_SENDER_OBS_OFF_RIGHT_DESC);
+                g_macws_obs_lazy = (volatile uint64_t *)(
+                    (uintptr_t)header + MACWS_SENDER_OBS_OFF_LAZY_CHECKER);
+                void *disp = (void *)((uintptr_t)header +
+                                      MACWS_SENDER_OBS_OFF_DISP);
+                void *impl = (void *)((uintptr_t)header +
+                                      MACWS_SENDER_OBS_OFF_IMPL);
+                int pd = permitFn(header, skylight_22f82_uuid,
+                                  MACWS_SENDER_OBS_OFF_DISP,
+                                  kMacWSSenderObsDispPrologue);
+                int pi = permitFn(header, skylight_22f82_uuid,
+                                  MACWS_SENDER_OBS_OFF_IMPL,
+                                  kMacWSSenderObsImplPrologue);
+                fprintf(stderr,
+                        "#### SENDEROBS-INSTALL disp=%p impl=%p "
+                        "rightDesc=%p lazy=%p permitDisp=%d permitImpl=%d\n",
+                        disp, impl, (void *)g_macws_obs_right_desc,
+                        (void *)g_macws_obs_lazy, pd, pi);
+                fflush(stderr);
+                if (pd == 0) {
+                    MSHookFunction(disp,
+                                   (void *)macws_obs_audit_right,
+                                   (void **)&macws_obs_orig_audit_right);
+                }
+                if (pi == 0) {
+                    MSHookFunction(impl,
+                                   (void *)macws_obs_tcc_check,
+                                   (void **)&macws_obs_orig_tcc_check);
+                }
             }
         }
             
@@ -6296,12 +6418,25 @@ void loadImageCallback(const struct mach_header* header, intptr_t vmaddr_slide) 
                 (uintptr_t)header + iomfbAbi->publicSwapEndOffset);
             if (memcmp(publicSwapEnd, expectedSwapEndWrapper,
                        sizeof(expectedSwapEndWrapper)) == 0) {
-                MSHookFunction(publicSwapEnd,
-                    (void *)MacwsIOMobileFramebufferSwapEnd_new,
-                    (void **)&g_macws_orig_iomfb_swap_end);
-                fprintf(stderr,
-                    "#### COEXIST API SwapEnd hook installed target=%p trampoline=%p\n",
-                    publicSwapEnd, g_macws_orig_iomfb_swap_end);
+                // Register the (uuid,offset,prologue) permit the fail-closed
+                // provider requires.  All three values are independently
+                // pinned in the ABI table: uuid of the exact build, the
+                // publicSwapEnd image offset, and the wrapper signature.
+                int permit_rc = macws_register_hook_permit(
+                    header, iomfbAbi->uuid, iomfbAbi->publicSwapEndOffset,
+                    expectedSwapEndWrapper);
+                if (permit_rc == 0) {
+                    MSHookFunction(publicSwapEnd,
+                        (void *)MacwsIOMobileFramebufferSwapEnd_new,
+                        (void **)&g_macws_orig_iomfb_swap_end);
+                    fprintf(stderr,
+                        "#### COEXIST API SwapEnd hook installed target=%p trampoline=%p\n",
+                        publicSwapEnd, g_macws_orig_iomfb_swap_end);
+                } else {
+                    fprintf(stderr,
+                        "#### COEXIST API SwapEnd hook skipped: "
+                        "permit refused rc=%d\n", permit_rc);
+                }
             } else {
                 const uint32_t *actual = (const uint32_t *)publicSwapEnd;
                 fprintf(stderr,
@@ -6356,8 +6491,21 @@ void loadImageCallback(const struct mach_header* header, intptr_t vmaddr_slide) 
         // after CoreFoundation can parse their metadata.
         xpc_object_t dict = (xpc_object_t)xpc_dictionary_create(NULL, NULL, 0);
         xpc_dictionary_set_uint64(dict, "/System/Library/Frameworks/Metal.framework/Metal", 2);
-        int(*_xpc_bootstrap_services_fn)(xpc_object_t) =
+        void *_xpc_bootstrap_services_raw =
             MSFindSymbol((MSImageRef)header, "__xpc_bootstrap_services");
+        int(*_xpc_bootstrap_services_fn)(xpc_object_t) = NULL;
+        if (_xpc_bootstrap_services_raw) {
+            // MSFindSymbol returns the raw linked address; the direct call
+            // below is a C function pointer and uses the A-key/zero contract.
+#if __arm64e__
+            _xpc_bootstrap_services_fn = (int(*)(xpc_object_t))
+                ptrauth_sign_unauthenticated(_xpc_bootstrap_services_raw,
+                                             ptrauth_key_asia, 0);
+#else
+            _xpc_bootstrap_services_fn = (int(*)(xpc_object_t))
+                _xpc_bootstrap_services_raw;
+#endif
+        }
         fprintf(stderr, "#### XPC_BOOTSTRAP: fn=%p dict=%p "
             "(registering Metal compiler service)\n",
             _xpc_bootstrap_services_fn, dict);
@@ -19841,6 +19989,17 @@ static void macws_install_quartzcore_frame_info_hook(
 
     g_macws_qc_frame_info_abi = abi;
     g_macws_quartzcore_header = (uintptr_t)header;
+    int permit_rc = macws_register_hook_permit(header, abi->uuid,
+        abi->enableTagListOffset, abi->enablePrologue);
+    if (permit_rc != 0) {
+        fprintf(stderr,
+            "#### IOMFB CANCEL-COMPLETION QuartzCore observer skipped: "
+            "permit refused rc=%d\n", permit_rc);
+        g_macws_qc_frame_info_abi = NULL;
+        g_macws_quartzcore_header = 0;
+        atomic_store(&installed, 0);
+        return;
+    }
     MSHookFunction(target, (void *)macws_enable_frame_info_tag_list,
         (void **)&g_macws_orig_enable_frame_info_tag_list);
     fprintf(stderr,
@@ -19965,6 +20124,17 @@ static void macws_install_quartzcore_coexist_pacing_hooks(
         return;
     }
 
+    int permit_begin = macws_register_hook_permit(header, abi->uuid,
+        abi->beginSkylightUpdateOffset, abi->beginPrologue);
+    int permit_finish = macws_register_hook_permit(header, abi->uuid,
+        abi->finishSkylightUpdateOffset, abi->finishPrologue);
+    if (permit_begin != 0 || permit_finish != 0) {
+        fprintf(stderr,
+            "#### COEXIST pre-lock pacing skipped: permit refused "
+            "begin=%d finish=%d\n", permit_begin, permit_finish);
+        atomic_store_explicit(&installed, 0, memory_order_release);
+        return;
+    }
     MSHookFunction(begin_target,
         (void *)macws_iomfbserver_begin_skylight_update,
         (void **)&g_macws_orig_iomfbserver_begin_skylight_update);

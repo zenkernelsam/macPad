@@ -1,0 +1,27 @@
+diff --git a/libmachook/mac_hooks.m b/libmachook/mac_hooks.m
+index 3a1a923..fec1e29 100644
+--- a/libmachook/mac_hooks.m
++++ b/libmachook/mac_hooks.m
+@@ -6356,8 +6356,21 @@ typedef int (*permit_fn_t)(const void *, const void *,
+         // after CoreFoundation can parse their metadata.
+         xpc_object_t dict = (xpc_object_t)xpc_dictionary_create(NULL, NULL, 0);
+         xpc_dictionary_set_uint64(dict, "/System/Library/Frameworks/Metal.framework/Metal", 2);
+-        int(*_xpc_bootstrap_services_fn)(xpc_object_t) =
++        void *_xpc_bootstrap_services_raw =
+             MSFindSymbol((MSImageRef)header, "__xpc_bootstrap_services");
++        int(*_xpc_bootstrap_services_fn)(xpc_object_t) = NULL;
++        if (_xpc_bootstrap_services_raw) {
++            // MSFindSymbol returns the raw linked address; the direct call
++            // below is a C function pointer and uses the A-key/zero contract.
++#if __arm64e__
++            _xpc_bootstrap_services_fn = (int(*)(xpc_object_t))
++                ptrauth_sign_unauthenticated(_xpc_bootstrap_services_raw,
++                                             ptrauth_key_asia, 0);
++#else
++            _xpc_bootstrap_services_fn = (int(*)(xpc_object_t))
++                _xpc_bootstrap_services_raw;
++#endif
++        }
+         fprintf(stderr, "#### XPC_BOOTSTRAP: fn=%p dict=%p "
+             "(registering Metal compiler service)\n",
+             _xpc_bootstrap_services_fn, dict);

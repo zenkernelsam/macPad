@@ -1,0 +1,3 @@
+# D176 frontend — independent D175 full-UUID/cap suppression review
+
+Read-only review D175's exact candidate and evidence. Verify format-v3 full UUID propagation and generation consistency, unknown-UUID suppression (including empty streams), filter semantics, scoring-suppression order/counters, allocation failure paths, and whether all overflow cases are actually fixture-covered. D174 specifically requires a span_overflow fixture; check current coverage. Check if header-supplied upper UUID bytes are clearly an authoritative producer field rather than something verified by D141 records (only low64 is record-verifiable). Return a clear verdict and line-level findings. Do not edit code/tests, build, access device, or authorize integration. Save note and formal handover.

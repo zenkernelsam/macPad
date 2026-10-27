@@ -1,0 +1,8 @@
+{
+  "time": "2026-10-18T11:43:46.685Z",
+  "local_time": "2026-10-18T19:43:46+08:00",
+  "frontend": {"session_id":"02A55FDA-3ED9-47B0-AD3A-DCF4E26FD263","tty":"/dev/ttys000","pid":38533,"cwd":"/Users/ciscohe/Desktop/macPad","binding_verified":true,"r021":"result present; accepted","r022":"prepared but not sent; live screen lacks fresh idle handover"},
+  "backend": {"session_id":"C455E1A7-FC18-4473-9B6D-22F619785362","tty":"/dev/ttys001","pid":39300,"cwd":"/Users/ciscohe/Desktop/macPad","binding_verified":true,"r012":"handed over and accepted bounded milestone","r013":"dispatch prepared for layered display/pixel/reopen acceptance"},
+  "r012": {"windowserver_ready":true,"provider_map":true,"xpc_crash_delta":"none","final_composite":"missing producer=0 sequence=0","tcc":"not retested","input":"not accepted","signed_call_log":"missing"},
+  "actions": {"frontend_r022_body_sent_once":false,"backend_mid_task_messages":0,"device_operations_by_coordinator":0}
+}

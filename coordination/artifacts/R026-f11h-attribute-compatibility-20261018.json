@@ -1,0 +1,149 @@
+{
+  "schema": "macws-r026-f11h-attribute-compatibility-evidence-v1",
+  "date": "2026-10-18",
+  "timezone": "Asia/Hong_Kong",
+  "packet": "coordination/_relay/round-026-to-backend.md",
+  "categorical": "Offline analysis establishes that the rejected serialized attribute kind 71 is LLVM 16 ZeroExt, not memory: the exact LLVM 16.0.0 Attribute::getNameFromAttrKind table maps 71 to the 7-byte string zeroext. The type-15 AIR bitcode is byte-identical (raw SHA-256 042303be...) to the converter's LLVM 16 llvm-as output, so the converter's re-serialization produced the rejected wire bytes while preserving the semantic attribute set. The host LLVM17 textual IR's memory(...) is a cross-version decode and is not used as the kind-71 name. No attribute was removed, no reader check was patched, and no device compiler/service/F11H run occurred. The exact zeroext parameter/return scope and the reader's LLVM version remain the next missing artifacts; a reader-matched llvm-as re-encoding is the supported semantics-preserving candidate, pending an isolated A/B.",
+  "invariants": {
+    "offline_only": true,
+    "device_compiler_or_f11h_run": false,
+    "device_changes": false,
+    "source_changes": false,
+    "package_changes": false,
+    "git_write": false,
+    "attribute_removal_or_stripping": false,
+    "reader_check_patched": false,
+    "validation_weakened": false,
+    "production_changes": false,
+    "device_reads": "read-only library/symbol/table reads only"
+  },
+  "inputs": {
+    "type15_data": {
+      "bytes": 7632,
+      "sha256": "ffa7daa51d8de4493c06c8c3e65717b116521d4e9fb6cc89fa8e89f91cbe2e90"
+    },
+    "type15_air": {
+      "bytes": 7372,
+      "raw_sha256": "042303be36e32a7c2755ffae074fc66e99bc6260009b3abcb970a5d87167b849"
+    },
+    "converted_f11h": {
+      "bytes": 7372,
+      "raw_sha256": "042303be36e32a7c2755ffae074fc66e99bc6260009b3abcb970a5d87167b849",
+      "note": "byte-identical to the type-15 module; the client forwards the converter output unchanged"
+    },
+    "original_f11h": {
+      "bytes": 6916,
+      "raw_sha256": "ce018722f1d9058534380e6fa0aade64cdaef3cbbd0e806d02d769810273ec9b"
+    },
+    "original_library": {
+      "path": "analysis/r006-mps-f11h/mpsimage.orig.metallib",
+      "bytes": 16448932,
+      "sha256": "376ded7ee154429f6950656eb668b26af27fc6149b734b11dd48a33d68fe4285"
+    },
+    "converted_library": {
+      "path": "analysis/r006-mps-f11h/mpsimage.conv.metallib",
+      "bytes": 17294324,
+      "sha256": "342738608c912eab663879868288299e38147ea64d45b74f57bc0dd12761b2de"
+    },
+    "converter": {
+      "repack_metallib_macabi_py_sha256": "42f7909f870f532ce16e9e1eff326eb01bc00e0d3042d5a4bef4a00bb3389b5f",
+      "metal2metal_profiles_py_sha256": "1a538e2062e5d3faa602088113ef931a2f8113e2be4c718ffda741a1f477eac6",
+      "metal2metal_py_sha256": "23742a879cb9a7d74e6b5cb1eb7e75742e6654ed011ed28e9848a018a0b92f17",
+      "round_trip": "retarget_air: llvm-dis -> target triple rewrite -> optional known lowerings -> llvm-as (misc/repack_metallib_macabi.py:709-758)",
+      "attribute_edits": "none; no zeroext removal/renumbering"
+    },
+    "llvm16": {
+      "libLLVM_sha256": "32589bf306ed80c08aa065afe084a87f3be4252947c835d22385129a09d9e3a6",
+      "llvm_dis_sha256": "9e281a54902e3fba5aa78271ef486e8fb76fcfede1e08c58a561f04c82c452a6",
+      "llvm_as_sha256": "36554b64bf63bca9d92400d8229f0e5b057a658b3b5b25c4321725b4cbbda236",
+      "version": "Procursus LLVM version 16.0.0",
+      "default_target": "arm64-apple-ios16.0"
+    },
+    "r024_diagnostic": "Unknown attribute kind (71) (Producer: 'LLVM16.0.0' Reader: 'LLVM ')",
+    "host_decoder": "Apple clang 17.0.0 (LLVM 17), x86_64-apple-darwin24.6.0"
+  },
+  "mapping": {
+    "symbol": "_ZN4llvm9Attribute19getNameFromAttrKindENS0_8AttrKindE",
+    "image": "/var/jb/usr/lib/llvm-16/lib/libLLVM.dylib",
+    "address": "0x1f6ac4",
+    "disassembly": [
+      "sbfiz x8, x0, #3, #0x20 (index = AttrKind * 8)",
+      "adrp/add x9 -> 0x3cc77a8 (length table)",
+      "ldr x1, [x9, x8]",
+      "adrp/add x9 -> 0x5da6320 (pointer table)",
+      "ldr x0, [x9, x8]",
+      "ret"
+    ],
+    "kind71": {
+      "length_entry_address": "0x3cc79e0",
+      "length": 7,
+      "pointer_entry_address": "0x5da6558",
+      "pointer_value": "0x0010000003b4a918 (low 48-bit address 0x3b4a918)",
+      "string_bytes": "7a 65 72 6f 65 78 74 00",
+      "name": "zeroext"
+    },
+    "neighbors": {
+      "69": "willreturn",
+      "70": "writeonly",
+      "71": "zeroext",
+      "72": "byref",
+      "73": "byval"
+    },
+    "conclusion": "FACT: LLVM 16.0.0 AttrKind 71 is ZeroExt; the older reader rejects the raw value 71"
+  },
+  "provenance": {
+    "fact": [
+      "the type-15 AIR bitcode is byte-identical to the converter's F11H output (same raw SHA-256)",
+      "the converter's retarget_air re-serializes through llvm-dis/llvm-as and does not edit zeroext",
+      "the converter's llvm-as is Procursus LLVM 16.0.0",
+      "the R024 diagnostic names the producer LLVM16.0.0 and rejects raw kind 71"
+    ],
+    "theory": "the original Apple module also carried zeroext semantically; the converter preserved the attribute and set the LLVM16 wire ordinal. The original's exact zeroext sites were not dumped.",
+    "conversion_step": "the converter's LLVM16 llvm-as re-serialization is the step that produced the exact rejected byte sequence; the client forwards it unchanged",
+    "reader_version": "unknown (diagnostic Reader string is empty); not invented"
+  },
+  "host_ir_caveat": {
+    "decoder": "Apple clang 17.0.0 (LLVM 17)",
+    "observed": "attributes groups render memory(argmem: readwrite/read)/memory(none)",
+    "status": "cross-version decode only; LLVM17 enum 71 is not LLVM16 enum 71",
+    "not_used_for": "naming kind 71 or proving the zeroext sites"
+  },
+  "module_comparison": {
+    "original_vs_converted_vs_type15": "same textual attribute-group structure in the host IR (attributes.json)",
+    "original_to_converted": "size/hash changed by the llvm-dis/llvm-as round-trip; target triple rewritten to air64-apple-ios19.0.0-macabi",
+    "converted_to_type15": "byte-identical raw bitcode (042303be...)"
+  },
+  "missing_artifact": {
+    "exact_scope": "LLVM16 textual dump of the preserved converted/type15 module to list every zeroext declaration/call parameter and return site",
+    "deferred_command": "/var/jb/usr/lib/llvm-16/bin/llvm-dis <converted-F11H.bc> -o F11H.ll",
+    "reason_deferred": "device execution is prohibited in this packet",
+    "reader_version": "unknown; Reader string is empty"
+  },
+  "compatibility_options": {
+    "reader_matched_reencoding": {
+      "status": "preferred candidate; not implemented",
+      "mechanism": "use the converter's existing --llvm-as parameter with an llvm-as whose enum ordering matches the reader; same AIR text, no attribute removal",
+      "requirements": ["reader LLVM version", "older parser accepts the IR features", "private-endpoint A/B"]
+    },
+    "attribute_aware_lowering": {
+      "status": "fallback candidate; not implemented",
+      "mechanism": "lower only the exact zeroext sites to explicit zext/mask and drop the attribute, via apply_air_lowerings",
+      "risk": "must preserve unsigned extension semantics; blind stripping is not allowed"
+    },
+    "reader_side_or_client_patch": "out of scope; no reader check patching or validation weakening"
+  },
+  "next_ab_design": [
+    "A0 read-only LLVM16 llvm-dis of the preserved module: enumerate zeroext sites and real memory attrs",
+    "A1 offline disposable converter copy: re-assemble the same AIR with a reader-matched llvm-as; verify the raw zeroext kind and semantics",
+    "A2 future private-endpoint F11H control: acceptance requires no Unknown attribute kind (71) and a real compiler reply or the next concrete error",
+    "preserve original/converted/type15/converter hashes in the A/B record"
+  ],
+  "limits": [
+    "no LLVM16 headers/Attributes.inc/BitcodeWriter source locally; enum name table extracted from the exact binary; writer enum-value contract inferred from the reader diagnostic",
+    "host LLVM17 IR is a cross-version decode and is not authoritative for kind 71",
+    "exact zeroext scope/occurrences and reader LLVM version missing",
+    "no device compiler/service/F11H run"
+  ],
+  "host_evidence": "analysis/r026-f11h/ {extract_compare.py, orig/conv/type15 modules and IR, llvm16-kind71-evidence.txt, attributes.json}",
+  "device_reads": "/var/jb/usr/lib/llvm-16 library/symbol/table bytes read only"
+}

@@ -1,0 +1,1 @@
+请执行 coordination/_relay/round-008-to-backend.md：安全取得isolated compiler service的完整F11H type15回复/错误；先核marker ownership，禁止重启/杀共享compiler或外部WS。证据不足就交接说明限制，不旁路MPS失败。沿用临时SSH，完成清理与handover。

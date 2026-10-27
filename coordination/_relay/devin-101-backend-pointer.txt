@@ -1,0 +1,1 @@
+Read coordination/_relay/devin-101-backend-task.md. Verify D100 absent-entry inference versus self-token success handling and errno logging versus control-flow flattening, using exact disassembly. Offline only; no device/probe/setter. Return D101 evidence and handover.

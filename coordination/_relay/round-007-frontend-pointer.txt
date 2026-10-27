@@ -1,0 +1,1 @@
+请执行 coordination/_relay/round-007-to-frontend.md：只读审计合并provider修复会新激活哪些method/local-symbol hooks、门禁与副作用，并制定双架构实际装载/像素/输入验证计划；仅写报告，不构建、不改源码/Git、不操作设备。后端继续native对照，完成handover。

@@ -1,0 +1,1 @@
+请执行 coordination/_relay/round-016-to-frontend.md：只读审计现有application reopen freshness逻辑及测试/证据，给后端下一设备窗口准备可判定的请求、响应和新generation见证；不重复实现、不碰设备或源码，完成后handover。

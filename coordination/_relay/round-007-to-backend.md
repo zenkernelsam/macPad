@@ -1,0 +1,12 @@
+# Backend R007 — bounded disposable F11H specialization/pipeline control
+
+Read reviews/R009-frontend-R006-backend-20261018.md. Execute the minimal F11H control from own R006 using current verified installed original/converted MPSImage libraries and actual constant type/index from manifest. A finite standalone helper outside shared build inputs is authorized; build/sign/trust through existing project tools, no broad rights/dependency installs. Preserve exact source/helper/library UUID/hash and raw command exits.
+
+For the converted installed library, request F11H with constant _Z24kUseSoftwareLinearFilter0 and1, then build compute pipeline. Record separately library load, function specialization, pipeline and real NSError/compiler result. Original-library comparison only as a bounded one-variable control, preserving return/error; do not force success, skip validation, stub allocation or abort. Use finite timeout/watchdog that cleans only owned child processes; capture stderr before any expected assertion.
+
+Capture existing compiler protocol diagnostics if safely scoped. IMPORTANT: do not restart/kill/reconfigure the shared MTLCompilerService or external WS/tccd/agent merely to make a diagnostic toggle take effect. Shared /tmp diagnostic markers affect other processes: inventory prior state, use own bounded opt-in only if no conflicting owner, preserve pre-existing markers, and remove only yours on EXIT/signals. Prefer process-local diagnostic environment already supported. If exact compiler request cannot be captured without shared-service mutation, retain stage-specific NSError and state exact missing artifact; no global preflight weakening.
+
+Record which adapter actually executed and constants/target/request discriminator if observed. Determine the evidenced failing gate and return a minimal code patch proposal; no package build/deploy or shared source/test/Git edit this packet. Do not claim route verify guarantees runtime dispatch. No UID changes, MPS/assert/TCC bypass, broad entitlement or global conversion change.
+
+Additionally copy the existing R005 WS spindump and loaded-image metadata to ignored analysis/r007-ws-sample/ for frontend offline symbolication, if not already local; redact text evidence before Git. No new external-generation sampling/restart. Native health/thermal/crash delta and cleanup mandatory. Write coordination/_relay/round-007-backend-result.md plus own evidence/artifacts; last line:
+(handover to codex now)

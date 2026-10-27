@@ -1,0 +1,126 @@
+{
+  "schema": 1,
+  "round": "R025",
+  "date": "2026-10-18",
+  "status": "completed-partial-reason-value-missing",
+  "device": {
+    "model": "iPad13,11",
+    "os": "iPadOS 16.3",
+    "build": "20D47",
+    "kernel": "xnu-8792.82.2~1/RELEASE_ARM64_T8103"
+  },
+  "access": {
+    "mode": "read-only SSH acquisition",
+    "credential_recorded": false,
+    "host_recorded": false,
+    "remote_files_written": false,
+    "windowserver_generation": false,
+    "package_source_build_git_changes": false,
+    "tcc_policy_trustcache_changes": false
+  },
+  "acquired": {
+    "map": {
+      "path": "analysis/r025-libxpc-guard/dyld_shared_cache_arm64e.map",
+      "size": 874394,
+      "sha256": "4c817de2e92565feaa07e544cb7921f08e53badd2fccee877e5d99b155d32088"
+    },
+    "libxpc_text": {
+      "path": "analysis/r025-libxpc-guard/libxpc-text-0x136000-0x17a000.bin",
+      "size": 278528,
+      "sha256": "af2bbe7c88c8be38aedef36d80410db39c4376cc1f9ebd0b0cf2b052582b0db5",
+      "matches_expected": true
+    },
+    "frame0_block": {
+      "path": "analysis/r025-libxpc-guard/frame0-block-0x3ce000.bin",
+      "size": 4096,
+      "sha256": "5a34a937fb253f0b9290ee42dd414fe0c1a8a8aa6d5d7172a14709c082373696"
+    },
+    "libsystem_kernel_header": {
+      "path": "analysis/r025-libxpc-guard/libsystem_kernel-header-0x3bf000.bin",
+      "size": 4096,
+      "sha256": "e03416bf2045cb92d9a35dcda4603e7e6159b3d78e19a118b47c37f6869c078a"
+    },
+    "ios_launchd": {
+      "path": "analysis/r025-libxpc-guard/launchd-ios-20D47.bin",
+      "size": 540752,
+      "sha256": "793c051be531606f00f091bade3068a0934e716a4865d32e4704d264dd49fa4f",
+      "uuid": "790A3FDD-A2AA-3732-9A81-DD0F4B7194EB"
+    },
+    "exact_disassembly": {
+      "path": "analysis/r025-libxpc-guard/disasm-exact-guard.txt",
+      "sha256": "e9909ace6afcc7e78a8164fe8e7399fb34908ef01cc763da76889b37ab10cd3f"
+    }
+  },
+  "offset_convention": {
+    "report_image0": "shared cache base 0x180000000; frame offsets are cache-relative/file offsets",
+    "libxpc": {
+      "uuid": "F3F19227-FF8F-389C-A094-6F4C16E458AF",
+      "text_cache_range": "0x136000-0x17A000",
+      "image_offset_formula": "cache_offset - 0x136000"
+    },
+    "libsystem_kernel": {
+      "uuid": "34A49B54-82B2-37A1-9314-F6A4A2BB3FF8",
+      "text_cache_range": "0x3BF000-0x3F8FE8",
+      "image_offset_formula": "cache_offset - 0x3BF000"
+    }
+  },
+  "frames": [
+    {"frame": 0, "cache_offset": "0x3CEB78", "image": "libsystem_kernel", "image_offset": "0xFB78", "role": "syscall 529 return"},
+    {"frame": 1, "cache_offset": "0x13BF8C", "image": "libxpc", "image_offset": "0x5F8C", "role": "return after fault-function call at img+0x5F88"},
+    {"frame": 2, "cache_offset": "0x141928", "image": "libxpc", "image_offset": "0xB928", "function": "img+0xB81C", "role": "backtrace context, not fault function"},
+    {"frame": 3, "cache_offset": "0x1417B0", "image": "libxpc", "image_offset": "0xB7B0", "function": "img+0xB624", "role": "backtrace context, not fault function"},
+    {"frame": 4, "cache_offset": "0x1410E4", "image": "libxpc", "image_offset": "0xB0E4", "function": "img+0xACF8", "role": "backtrace context, not fault function"},
+    {"frame": 5, "cache_offset": "0x140C84", "image": "libxpc", "image_offset": "0xAC84", "function": "img+0xAB5C", "role": "backtrace context, not fault function"}
+  ],
+  "exact_fault_path": {
+    "frame0_stub": ["mov x16, #0x211", "svc #0x80", "b.lo (frame 0)"],
+    "syscall_number": 529,
+    "syscall_name": "os_fault_with_payload",
+    "frame1_reason_key": "xpc-fault",
+    "frame1_call_site": "img+0x5F88 bl img+0x1D5A8",
+    "fault_function": {
+      "offset": "img+0x1D5A8",
+      "reason_string_register": "x19 = x0",
+      "fault_args": {"namespace": 7, "reason": 9, "payload": null, "payload_size": 0, "reason_string": "x19", "flags": 0},
+      "fault_call": "img+0x1D754 bl img+0x16F358"
+    },
+    "only_caller_of_fault_function": "img+0x5F88",
+    "fault_function_in_report_frames": false,
+    "misuse_message_claimed": false,
+    "benignity_claimed": false
+  },
+  "launchd_correlation": {
+    "log_path": "/var/log/com.apple.xpc.launchd/launchd.log.1",
+    "lines": {
+      "64609": "2026-10-18 18:24:43.889040 <Notice>: launchdchrootex.67961 sent an invalid request",
+      "64610": "2026-10-18 18:24:44.009730 (system) <Warning>: failed lookup: name = com.apple.analyticsd, flags = 0x8, requestor = codesign[67961], error = 3: No such process"
+    },
+    "pid_identity": "PID 67961 is launchdchrootexec; the guard report is codesign PID 67961 at 18:24:44.0107",
+    "relation": "failed analyticsd lookup 1 ms before the guard; strong trigger correlation, not proof of the xpc-fault value",
+    "ios_launchd_xpc_fault_set_sites": [
+      {"address": "0x10002F4E4", "path": "cross-domain session violation"},
+      {"address": "0x10002FB60", "path": "cross-domain bootstrap_look_up violation"}
+    ],
+    "xpc_fault_value_status": "not captured"
+  },
+  "remaining_missing_inputs": [
+    {
+      "id": "M1",
+      "item": "actual xpc-fault string / os_reason reason string",
+      "incident_id": "5AA40622-72B7-4995-AB7B-5F115A105EED",
+      "options": [
+        "non-lightweight crash report/ReportCrash line preserving os_reason",
+        "retained unified-log line for libxpc '%s (backtrace follows)' at img+0x1D640",
+        "exact producer analysis of which launchd/libxpc path sets xpc-fault for the failed com.apple.analyticsd lookup"
+      ]
+    }
+  ],
+  "not_needed_anymore": [
+    "additional cache map",
+    "additional libxpc __TEXT bytes",
+    "frame-0 owning image/bytes"
+  ],
+  "evidence_file": "docs/evidence/r025-libxpc-guard-attribution-20261018.md",
+  "evidence_sha256": "40dec5e0f1041c974c41379d250a07105e752dfdda48da08ca4eba1e50eaa0b4",
+  "background_tasks_running_or_queued": false
+}

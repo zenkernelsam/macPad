@@ -1,0 +1,1 @@
+Offline final cross-review only: inspect D094 layered-acceptance panel row and D098 inventory against D041/D094 artifacts. Confirm panel freshness is capped at seq~1176 and later sequence proves delivery only; list any factual overclaim. No capture/device/source/build/Git.

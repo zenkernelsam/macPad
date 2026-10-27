@@ -1,0 +1,130 @@
+{
+  "time": "2026-10-15T07:30:29.752683+08:00",
+  "head_before": "529c4129242f3e5038e39153a10e80eb9a909952",
+  "head_after": "529c4129242f3e5038e39153a10e80eb9a909952",
+  "candidate_sha256": {
+    "Makefile": "e098dcab27c32b4b95159306303a94615ec4653e8b40bde658088787e4275557",
+    "coordination/DEVIN_STATUS.md": "a3ba82980b6b44c64aadb459214ca800634535d275894d8eaafdc1b6e8c58c1a",
+    "coordination/REVIEWER_STATE.md": "d8bd2ff85733c011df766faa1f6e164887d357a9de017c339bfb055f659316e6",
+    "coordination/WORKING": "a59ca53780a792d10dad1c6773697851b970757f8f308c12345a8db0800ae167",
+    "coordination/artifacts/R008-dispatch-receipt.json": "e82e1874bdbe1b7de2ebc77f8b69741a54c952218a3ffebe0f7f6a80da342520",
+    "coordination/artifacts/R008-heartbeat-20261015-054321.json": "a0768c831fc63191c680206f5a0b05100684bf0d17a4b5e17a727e94e38a3dba",
+    "coordination/artifacts/R008-heartbeat-20261015-060321.json": "870c2457da9635292ee6f706ded67e6e2f786dcef687d68f75ec2fb90e9b2f42",
+    "coordination/artifacts/R008-heartbeat-20261015-062321.json": "ce000e2869cfc83ddd404c38b2fae1180d7ad7218b0bd040b24f6d99d295db98",
+    "coordination/artifacts/R008-heartbeat-20261015-064351.json": "a0c7159a3f2980ee36bc666cbb65e4a47acb74dac73454ce06f06a63f65b797e",
+    "coordination/artifacts/R008-heartbeat-20261015-070351.json": "1baa11f446b57fd48862da755bd03e213e22df97b18d69a1565f17e9d435dbc1",
+    "coordination/artifacts/R008-receipt-screen.json": "f9f690397007b2bf16eee3a7833ad175549ba41a222b2f39ff2254e75b4d466a",
+    "coordination/relay-wait-state.json": "bd4e72232d4f0727efbb7887bccba963086f4ef8fb8b3ca77eb710bf9802246b",
+    "docs/evidence/r006-tcc-producer-20261015.md": "45a9ca251e1fe962f8e9b46133d1200c50b1339b36fc85daa6d92d3ebbc85205",
+    "docs/evidence/r007-system-tccd-20261015.md": "bcbbe210919156854c51a9d8a26cc7b3f834517d6c56e212453e4a748a7ccfee",
+    "docs/evidence/r008-tccd-transport-repro-20261015.md": "c839e9e0f242e36dbabacac32c92d1b886b8bf799b78e61287b3408b6774b632",
+    "layout/DEBIAN/postinst": "a9343416dc4d6c630f2415b74c0e29776cae3f9c95b9fa235f00ba3b7e649b96",
+    "layout/usr/macOS/bin/macos_gui.sh": "75e1c584ea0d9695a239c83f7c9501d4736c3390aa58ca681dd38d3d9a06a162",
+    "layout/usr/macOS/bin/postinst.sh": "477b6075d50f388750faf54b1dbd968bfa460117a7e49b68b85f874aed267a8b",
+    "layout/usr/macOS/bin/tccd-native-entitlements.plist": "dd9d8b69929973893ab907ccbea4ab6bfe0f15befab6abc8449fd89ec11b9e98",
+    "macwstccdprobe/Makefile": "b66a830190e8c30f1413a0dbaa6d4220032456e9b0060a5cf28e6dd5e2bc8871",
+    "macwstccdprobe/main.c": "54fe253c2810704eb6286124e9878f2bf5cf63d51844e35aad9ce218ba8d03cd",
+    "misc/test_boot_trust.py": "9fbcbff228dc175eb1e1fe32955335f9dd83c329b029e0058ec9bcf8f08e4dce",
+    "misc/test_tccd_lifecycle_contract.py": "6626906ccf06e29eb9d7d65e5c06bfac6c746e0b36b29d9088f2a1cc8508185d"
+  },
+  "checks": [
+    {
+      "argv": [
+        "python3",
+        "misc/test_tccd_lifecycle_contract.py"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": "......................\n----------------------------------------------------------------------\nRan 22 tests in 4.031s\n\nOK\n"
+    },
+    {
+      "argv": [
+        "python3",
+        "misc/test_boot_trust.py"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": "...................\n----------------------------------------------------------------------\nRan 19 tests in 0.012s\n\nOK\n"
+    },
+    {
+      "argv": [
+        "python3",
+        "misc/test_restore_boot_contract.py"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": "..........\n----------------------------------------------------------------------\nRan 10 tests in 0.480s\n\nOK\n"
+    },
+    {
+      "argv": [
+        "python3",
+        "misc/test_workspace_wallpaper_launch_contract.py"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": "....\n----------------------------------------------------------------------\nRan 4 tests in 0.001s\n\nOK\n"
+    },
+    {
+      "argv": [
+        "python3",
+        "misc/audit_runtime_switches.py"
+      ],
+      "exit": 0,
+      "stdout": "runtime-switch audit OK: 309 source/plist env names, 86 source flag files, 467 total recorded entries\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "bash",
+        "-n",
+        "layout/usr/macOS/bin/macos_gui.sh"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "bash",
+        "-n",
+        "layout/DEBIAN/postinst"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "bash",
+        "-n",
+        "layout/usr/macOS/bin/postinst.sh"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "plutil",
+        "-lint",
+        "layout/usr/macOS/bin/tccd-native-entitlements.plist"
+      ],
+      "exit": 0,
+      "stdout": "layout/usr/macOS/bin/tccd-native-entitlements.plist: OK\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "git",
+        "diff",
+        "--check",
+        "95382f4",
+        "HEAD"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    }
+  ],
+  "concurrency_limit": 2
+}

@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-18T15:00:19.362319+08:00",
+  "finished": "2026-10-18T15:00:19.964498+08:00",
+  "command": "upload /tmp/macpad-r008-clean/packages/com.kdt.macosbooter_0.3.4_iphoneos-arm64.deb -> /var/tmp/macws-r008-clean.deb",
+  "command_sha256": "841f457422fadcaadc7311ba4333e318c3f9ea708d8368114e64cf43cf4ef081",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "",
+  "stderr": "",
+  "upload_source_sha256": "e1370e00e0680f2650026a07417cf3d1917526be5f1bbf6751aedc6cd4669e21",
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

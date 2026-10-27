@@ -1,0 +1,1 @@
+Read coordination/_relay/devin-109-backend-task.md. Independently review frozen D107 diagnostic behavior preservation, I/O/identity/ownership and measurement confounds. Do not inspect moving frontend successor or execute runtime probes. Return concrete D109 findings and handover.

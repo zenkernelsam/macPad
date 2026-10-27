@@ -1,0 +1,1 @@
+请执行 coordination/_relay/round-019-to-frontend.md：只读审核后端窄XPC签名修复的调用范围，确认只对__xpc_bootstrap_services直接调用做A-key/0签名，不扩大MSFindSymbol全局语义；不改源码或设备，完成后handover。

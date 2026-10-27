@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-18T15:01:25.326933+08:00",
+  "finished": "2026-10-18T15:01:25.941939+08:00",
+  "command": "for f in /var/jb/usr/macOS/lib/libmachook.dylib /var/jb/usr/macOS/lib/libmachook_arm64.dylib /var/mnt/rootfs/usr/local/lib/libmachook.dylib /var/mnt/rootfs/usr/local/lib/libmachook_arm64.dylib; do lipo -info \"$f\"; sha256sum \"$f\"; done; T=/var/mnt/rootfs/System/Library/PrivateFrameworks/TCC.framework/Support/tccd; ldid -arch arm64e -e \"$T\" 2>/dev/null | /var/jb/usr/bin/python3 -c \"import plistlib,sys;d=plistlib.loads(sys.stdin.buffer.read());print(\\\"allow\\\",sorted(d.get(\\\"com.apple.private.tcc.allow\\\",[])))\"; sha256sum /var/jb/usr/macOS/bin/macos_gui.sh /var/jb/usr/macOS/bin/postinst.sh",
+  "command_sha256": "349de69bcaa731449ebc3c988146ce9a362df54ce2ce1c63dfcfde31de6bff8a",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "Non-fat file: /var/jb/usr/macOS/lib/libmachook.dylib is architecture: arm64e\n9a5119534d3dd40c3353efa8cbf888392b3a020c63785377a498cc466c572819  /var/jb/usr/macOS/lib/libmachook.dylib\nNon-fat file: /var/jb/usr/macOS/lib/libmachook_arm64.dylib is architecture: arm64\n151a2175c0b9bacb571cd9798c7204e4cd17922ed875823dc014593dd332bced  /var/jb/usr/macOS/lib/libmachook_arm64.dylib\nNon-fat file: /var/mnt/rootfs/usr/local/lib/libmachook.dylib is architecture: arm64e\n9a5119534d3dd40c3353efa8cbf888392b3a020c63785377a498cc466c572819  /var/mnt/rootfs/usr/local/lib/libmachook.dylib\nNon-fat file: /var/mnt/rootfs/usr/local/lib/libmachook_arm64.dylib is architecture: arm64\n151a2175c0b9bacb571cd9798c7204e4cd17922ed875823dc014593dd332bced  /var/mnt/rootfs/usr/local/lib/libmachook_arm64.dylib\nallow ['kTCCServiceListenEvent', 'kTCCServiceSystemPolicyAllFiles']\n471fc752ed72d0a376ef747d834530607c484839b1d2af2585a4eb3fab6ebc9d  /var/jb/usr/macOS/bin/macos_gui.sh\ned42f4782563e1110f0d86fc0d0a279b48eeee9b4c7cb4013e15d58948fe2df1  /var/jb/usr/macOS/bin/postinst.sh\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

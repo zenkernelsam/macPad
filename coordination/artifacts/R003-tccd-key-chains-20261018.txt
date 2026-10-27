@@ -1,0 +1,74 @@
+R003 key TCC correlation chains — 2026-10-18 (fresh WS generation)
+Device: iPad13,11 / iPadOS 16.3 20D47 / macOS 13.4.1 22F82
+Installed package: 6e70353 + R008 (deployed hashes below), NOT merged HEAD
+tccd: PID 48750 (fresh generation), sha256 42c388e8..., UUID 9845D17F-0409-3884-8A17-260C729636E5
+WindowServer: PID 48891 (fresh generation, --no-vnc), sender_uid=0, sender_auid=501
+Raw oslog (13 MB) archived on device:
+  /var/mobile/macws_r003_evidence_20261018/r003-oslog.txt
+
+1) postmin #1 — WS-sender PostEvent request, target = event injector PID 49186
+WindowServer[48891]: SEND: 0/7 synchronous to com.apple.macosbooter.tccd.system:
+  request: msgID=48891.17, function=TCCAccessRequest, service=kTCCServicePostEvent,
+  target_token={pid:49186, auid:-1, euid:0}
+tccd[48750]: REQUEST: tccd_uid=0, sender_pid=48891, sender_uid=0, sender_auid=501,
+  function=TCCAccessRequest, msgID=48891.17
+tccd[48750]: REQUEST_MSG: msgID=48891.17, msg={ ... target_token={pid:49186,...}
+  TCCD_MSG_ID="48891.17" ... }
+tccd[48750]: ERROR: responsibility_get_responsible_audit_token_for_audit_token()
+  from PID[49186]: (#103) Policy not found
+tccd[48750]: ERROR: Failed to create attribution chain from message.
+WindowServer[48891]: RECV: synchronous reply <dictionary: ... { count = 0 ... }>
+macos_ws_event_probe postmin: SLSPostEventRecord -> rc=1002
+
+2) postmin #2 — WS-sender PostEvent request, target = PID 49199
+WindowServer[48891]: msgID=48891.19, service=kTCCServicePostEvent,
+  target_token={pid:49199, auid:-1, euid:0}
+tccd[48750]: REQUEST sender_pid=48891 ... msgID=48891.19
+tccd[48750]: ERROR: responsibility_get_responsible_audit_token_for_audit_token()
+  from PID[49199]: (#103) Policy not found
+tccd[48750]: ERROR: Failed to create attribution chain from message.
+WindowServer[48891]: RECV count = 0
+postmin -> rc=1002
+
+3) Other WS-sender checks in the same fresh generation (all count=0)
+msgID 48891.16 ListenEvent target 49186 -> responsibility PID[49186] #103
+msgID 48891.18 ListenEvent target 49199 -> responsibility PID[49199] #103
+msgID 48891.20 ScreenCapture target 49121 -> responsibility PID[49121] #103
+msgID 48891.21 ListenEvent target 48579 -> responsibility PID[48579] #103
+   (48579 = /System/Library/CoreServices/iconservicesagent runAsRoot,
+    a project launchd-hosted chroot daemon)
+
+4) Launchd-hosted probe A/B (temporary owned job)
+label: com.macwsguide.r003-hosted-probe
+launchctl print resolves in: system and user/501
+PID: 49211, parent launchd via /var/jb/usr/macOS/bin/launchdchrootexec
+macwstccdprobe[49211]: SEND msgID=49211.1, service=kTCCServicePostEvent,
+  target_token={pid:49211, auid:-1, euid:0}
+tccd[48750]: REQUEST sender_pid=49211 ... msgID=49211.1
+tccd[48750]: ERROR: responsibility_get_responsible_audit_token_for_audit_token()
+  from PID[49211]: (#103) Policy not found
+tccd[48750]: ERROR: Failed to create attribution chain from message.
+probe.err: LSXPC reply count = 0; TCCPREFLIGHT result=1
+Conclusion: launchd hosting alone does not create a responsibility policy.
+
+5) Upstream tccd operation and empty-reply branch (tccd arm64e, sha above)
+0x10004fb48  bl _responsibility_get_responsible_audit_token_for_audit_token
+0x10004fb4c  cbz w0, 0x10004fbc4      ; success path
+             ; nonzero -> [x21,#0xa]=0, [x21,#0x18]=0, error log
+0x100051a54  "ERROR: responsibility_get_responsible_audit_token_for_audit_token()
+             from PID[%d]: (#%d) %{public}s" (errno + strerror)
+0x100006508  xpc_dictionary_create_reply -> x23 (pre-created reply)
+0x1000069ac  request-context-nil path
+0x1000069c8  cbnz w0, 0x100007928 (logging gate)
+0x100007928  bl 0x100052ca4 (logs "Failed to create attribution chain from message.")
+0x100007930  b 0x1000069cc
+0x1000069cc..0x1000069e0 sends x23 unchanged
+=> empty dictionary, no xpc_dictionary_set_* on this path
+
+6) Limits / provenance
+- pidversion is not printed in the WS target_token descriptor
+  ({pid, auid, euid}); the 32-byte token is in the request but not logged.
+  Correlation is msgID + target pid + tccd generation PID.
+- No new WindowServer crash report; composite state missing in --no-vnc,
+  so no pixel witness. Process readiness is not display success.
+- Prior generation logs preserved under prior_generation/.

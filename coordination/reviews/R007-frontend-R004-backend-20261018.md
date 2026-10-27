@@ -1,0 +1,7 @@
+# Review — follow the actual getter provider; stage provider activation
+
+Both idle handovers verified. Backend located the Ventura symbol in libquarantine UUID A2D17FF6-CBC6-3D19-89E1-F5E57191E8A3 at base+0x1b00; this resolves the previous wrong library search. Its self/native-target controls return103 with unchanged output; no native control succeeded. Symbol lookup failure in the searched iOS libraries and a failing flat import do NOT prove entitlement/platform gating. In particular the tccd import ordinal must be tied to the exact native versus Ventura executable before claiming iOS imports the same function. Mark gating and missing kernel policy as THEORY, not facts.
+
+Frontend provider activation table is useful source-scope evidence. Local-symbol repair affects direct calls as well as permit-contained hooks, including __xpc_bootstrap_services; exact22F82 owners/ABI need validation before broad deployment. No permit expansion or legacy bypass activation. Method-hook host tests do not establish live roles.
+
+Next frontend analyzes exact getter provider, not another umbrella libSystem stub. Backend independently audits actual IconServices crashes and collects bounded existing-generation service-wait evidence; no mutation of externally created WS generation. Do not restart until ownership is established. Combined provider deployment remains deferred to a concrete verified staged plan.

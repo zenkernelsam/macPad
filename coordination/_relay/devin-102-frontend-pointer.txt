@@ -1,0 +1,1 @@
+Read coordination/_relay/devin-102-frontend-task.md. Trace existing pacing callers/thread/lock evidence against D101 services loop, using preserved samples and exact code. No runtime/source changes. Return D102 evidence and handover.

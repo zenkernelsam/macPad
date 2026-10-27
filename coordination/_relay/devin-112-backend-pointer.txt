@@ -1,0 +1,1 @@
+Read coordination/_relay/devin-112-backend-task.md. Harden D111 against lstat/open TOCTOU and false reference-only passes; verify negative adapters fail with bounded execution. Candidate remains pending; no frontend moving files or device access. Return D112 handover.

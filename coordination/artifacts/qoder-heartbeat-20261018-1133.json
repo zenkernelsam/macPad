@@ -1,0 +1,8 @@
+{
+  "time": "2026-10-18T11:33:46.616Z",
+  "local_time": "2026-10-18T19:33:46+08:00",
+  "frontend": {"session_id":"02A55FDA-3ED9-47B0-AD3A-DCF4E26FD263","tty":"/dev/ttys000","pid":38533,"cwd":"/Users/ciscohe/Desktop/macPad","binding_verified":true,"r021":"result present; acceptance plan accepted","r022":"prepared but relay rejected send because live screen was not idle/handover"},
+  "backend": {"session_id":"C455E1A7-FC18-4473-9B6D-22F619785362","tty":"/dev/ttys001","pid":39300,"cwd":"/Users/ciscohe/Desktop/macPad","binding_verified":true,"r012":"Working after package staging; classifying guard reports; no handover"},
+  "acceptance": {"xpc_fix_runtime":"pending","windowserver_pixels_tcc_input":"not accepted"},
+  "actions": {"frontend_r022_body_sent_once":false,"backend_mid_task_messages":0,"device_operations_by_coordinator":0}
+}

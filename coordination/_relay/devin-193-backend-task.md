@@ -1,0 +1,3 @@
+# D193 backend — D190 special-reply cleanup correction
+
+D190 is not accepted. Read D192 and corrected D189. Fix the analysis-only sender's SRP ownership comment and cleanup to mirror exact 22F82 stub classes: valid reply retains cached SRP; malformed received reply calls mach_msg_destroy and retains SRP; MACH_SEND_INVALID_DATA/DEST/HEADER (0x10000002,03,10) retain SRP without destroy/dealloc; other non-success calls mig_dealloc_special_reply_port with saved rp. No retry. Add deterministic host tests verifying cleanup decisions for all classes, not just final reply labels; retain loopback coverage and real kr record semantics. Do not invoke main or any real SkyLight/WS sender, install, access device, commit or touch production. Report exact tests and handover for review.

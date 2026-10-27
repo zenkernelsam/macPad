@@ -1,0 +1,3 @@
+# D179 frontend — exact D141 full-UUID export feasibility
+
+Read-only audit the accepted D141 candidate API and D175 v3 stream header. Determine whether the actual D141 prototype retains or can export the full 16-byte UUID needed by D169 v3: inspect `d141_set_generation`, globals, ring records, reset/test APIs, and any existing serializer. State exactly what is retained (including PID and gen), what would need to be added at a future separately reviewed integration milestone, and whether the D169 header's upper UUID bytes are currently runtime-verifiable or only a declared field. No code edits, builds, device access, or product integration. Save a concise evidence note and hand over.

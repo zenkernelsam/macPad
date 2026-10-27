@@ -1,0 +1,1 @@
+Frontend: coordination/_relay/devin-179-frontend-task.md. Read-only establish whether D141 currently retains/exports full UUID for D169 v3; no device/integration.

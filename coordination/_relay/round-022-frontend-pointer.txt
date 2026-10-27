@@ -1,0 +1,1 @@
+请执行 coordination/_relay/round-022-to-frontend.md：离线分类R012期间EXC_GUARD namespc=7/reason=9报告是否与publisher Identifier/trust有关，和XPC PAC故障分开；不改代码、不构建、不碰设备，完成后handover。

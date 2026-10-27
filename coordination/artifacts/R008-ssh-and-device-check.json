@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-15T07:32:45.184002+08:00",
+  "finished": "2026-10-15T07:32:45.613760+08:00",
+  "command": "/var/jb/usr/bin/python3 -c '\nimport subprocess,json,os\nfor argv in [['\"'\"'sysctl'\"'\"','\"'\"'hw.machine'\"'\"','\"'\"'kern.osversion'\"'\"'],['\"'\"'ps'\"'\"','\"'\"'-axo'\"'\"','\"'\"'pid,uid,comm'\"'\"'],['\"'\"'/var/jb/usr/macOS/bin/macwsthermal'\"'\"']]:\n r=subprocess.run(argv,capture_output=True,text=True)\n out=r.stdout\n if argv[0]=='\"'\"'ps'\"'\"':out='\"'\"'\\n'\"'\"'.join(x for x in out.splitlines() if any(t in x for t in ['\"'\"'WindowServer'\"'\"','\"'\"'backboardd'\"'\"','\"'\"'macos_ws_event_probe'\"'\"','\"'\"'lldb'\"'\"','\"'\"'debugserver'\"'\"','\"'\"'tmux'\"'\"','\"'\"'tccd'\"'\"']))\n print(json.dumps({'\"'\"'argv'\"'\"':argv,'\"'\"'exit'\"'\"':r.returncode,'\"'\"'stdout'\"'\"':out,'\"'\"'stderr'\"'\"':r.stderr}))\nfor p in ['\"'\"'/tmp/macws_runtime_diagnostics'\"'\"','\"'\"'/var/mnt/rootfs/tmp/macws_runtime_diagnostics'\"'\"']:\n print(json.dumps({'\"'\"'marker'\"'\"':p,'\"'\"'exists'\"'\"':os.path.exists(p)}))\n'",
+  "command_sha256": "763fa5bff916d1461edfab6a09a7e0870e694ebab562155406e371bfa0459740",
+  "exit": 1,
+  "timeout": false,
+  "stdout": "",
+  "stderr": "Traceback (most recent call last):\n  File \"<string>\", line 4, in <module>\n  File \"/var/jb/usr/lib/python3.9/subprocess.py\", line 505, in run\n    with Popen(*popenargs, **kwargs) as process:\n  File \"/var/jb/usr/lib/python3.9/subprocess.py\", line 951, in __init__\n    self._execute_child(args, executable, preexec_fn, close_fds,\n  File \"/var/jb/usr/lib/python3.9/subprocess.py\", line 1821, in _execute_child\n    raise child_exception_type(errno_num, err_msg, err_filename)\nFileNotFoundError: [Errno 2] No such file or directory: 'sysctl'\n",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

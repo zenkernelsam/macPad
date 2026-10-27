@@ -1,0 +1,1 @@
+请执行 coordination/_relay/round-028-to-frontend.md；独立审核 LLVM intrinsic 自动升级与保留原始属性编码的边界，完成文档并 handover。

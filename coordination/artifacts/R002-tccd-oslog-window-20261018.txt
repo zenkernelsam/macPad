@@ -1,0 +1,48 @@
+R002 tccd os_log window — 2026-10-18 15:56:24 (ANSI stripped)
+Device: iPad13,11 / iPadOS 16.3 20D47 / macOS 13.4.1 22F82
+tccd: PID 45068, sha256 42c388e875f5a479402a3a8318aa9c866101c1162d042ba0daafbf5d996c828d
+UUID 9845D17F-0409-3884-8A17-260C729636E5, CDHash 1a32fd7ee14553cc453c111e84d15bbfd04267a4
+Live job: user/501/com.macwsguide.tccd-system, endpoint com.apple.macosbooter.tccd.system
+Raw capture archived on device: /var/mobile/macws_r002_evidence_20261018/r002-oslog-window.txt
+Command window: oslog --info > file & launchdchrootexec ... macwstccdprobe preflight kTCCServicePostEvent
+
+macwstccdprobe[46525]: SEND: 0/7 synchronous to com.apple.macosbooter.tccd.system:
+  request: msgID=46525.1, function=TCCAccessRequest, service=kTCCServicePostEvent,
+  target_token={pid:46525, auid:-1, euid:0}
+tccd[45068]: REQUEST: tccd_uid=0, sender_pid=46525, sender_uid=0,
+  sender_auid=501, function=TCCAccessRequest, msgID=46525.1
+tccd[45068]: REQUEST_MSG: msgID=46525.1, msg={
+	require_purpose=<xpc_null>
+	service="kTCCServicePostEvent"
+	function="TCCAccessRequest"
+	preflight=true
+	target_token={pid:46525, auid:-1, euid:0}
+	TCCD_MSG_ID="46525.1"
+	background_session=false
+}
+tccd[45068]: ERROR: responsibility_get_responsible_audit_token_for_audit_token()
+  from PID[46525]: (#103) Policy not found
+macwstccdprobe[46525]: RECV: synchronous reply <dictionary: ... { count = 0 ... }>
+tccd[45068]: ERROR: Failed to create attribution chain from message.
+
+Other same-window facts:
+- uid 501 caller (launchdchrootexec 501 501): same 7-key request, same count=0 reply,
+  same responsibility/attribution failure.
+- kTCCServiceSystemPolicyAllFiles and kTCCServiceAccessibility: same count=0.
+- macwstccdprobe ping: count=0 (different early path; not a TCC request).
+- WS postmin (macos_ws_event_probe): SLSPostEventRecord -> rc=1002, 0 tccd lines
+  in the window (cached checker result; no fresh WS request).
+
+Static branch (tccd arm64e, same sha256):
+- 0x100006508 xpc_dictionary_create_reply -> x23 (empty reply object)
+- 0x1000069ac request-context-nil path; 0x1000069c8 logging gate
+- 0x100007928 bl 0x100052ca4 (logs "Failed to create attribution chain from message.")
+- 0x100007930 b 0x1000069cc
+- 0x1000069cc..0x1000069e0 sends x23 unchanged via xpc_connection_send_message
+- no xpc_dictionary_set_* on this path -> count=0
+
+Interpretation: the empty reply is produced before service policy evaluation by a
+responsibility/attribution-chain failure. It is not an explicit result=false or a
+policy denial. The SSH-launched probe has no responsibility policy for its audit
+token. Whether a fresh launchd/RunningBoard-hosted WS request has a valid chain is
+not proven in this round; see round-002-backend-result.md for the next experiment.

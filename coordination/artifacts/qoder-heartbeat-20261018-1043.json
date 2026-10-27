@@ -1,0 +1,8 @@
+{
+  "time": "2026-10-18T10:43:16.552Z",
+  "local_time": "2026-10-18T18:43:16+08:00",
+  "frontend": {"session_id":"02A55FDA-3ED9-47B0-AD3A-DCF4E26FD263","tty":"/dev/ttys000","pid":38533,"cwd":"/Users/ciscohe/Desktop/macPad","binding_verified":true,"r017":"handed over and accepted","r018":"offline-only pointer-signing audit"},
+  "backend": {"session_id":"C455E1A7-FC18-4473-9B6D-22F619785362","tty":"/dev/ttys001","pid":39300,"cwd":"/Users/ciscohe/Desktop/macPad","binding_verified":true,"r011":"Working read-only exact crash attribution"},
+  "review": {"callsite_auth_mismatch":"strongly corroborated","callee_abi":"unresolved","ws_pixels_tcc_input":"not accepted"},
+  "actions": {"frontend_next_dispatched":true,"frontend_body_sha256":"e7a9afafc401c7c17166b9d608d7f93162b19693548e0718344cc73f53192ce3","frontend_body_sent_once":true,"frontend_cr_sent_once":true,"frontend_working_confirmed":true,"backend_mid_task_messages":0,"device_operations_by_coordinator":0}
+}

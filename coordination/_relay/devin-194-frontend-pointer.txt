@@ -1,0 +1,1 @@
+Frontend: coordination/_relay/devin-194-frontend-task.md. Read-only frozen D190 symbol/UUID/main audit; backend owns cleanup repair, no invocation/device.

@@ -1,0 +1,1 @@
+Offline-only authorization packet: review D060/D069/D096 and write the smallest precise grant text for one read-only responsibility discriminator, clearly separating procinfo responsibility fields from mac_policy_list Quarantine snapshot. State what each can and cannot prove. No device/KRW/TCC/build/restart/source/Git. Return concise handover.

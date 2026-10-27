@@ -1,0 +1,32 @@
+{
+  "time": "2026-10-18T12:37:48.101775+08:00",
+  "direction": "qoder workers",
+  "sync": "coordination/_relay/SYNC.md",
+  "frontend": {
+    "role": "macPad移植-前端",
+    "pid": 38533,
+    "tty": "/dev/ttys000",
+    "session_id": "02A55FDA-3ED9-47B0-AD3A-DCF4E26FD263",
+    "cwd": "/Users/ciscohe/Desktop/macPad",
+    "body_sha256": "728f19e7b831813a38aad02f64e2135d3a5062d3cb10d5d5a516a157a2e2529a",
+    "body_sent_once": true,
+    "cr_sent_once": true
+  },
+  "backend": {
+    "role": "macPad移植-后端",
+    "pid": 39300,
+    "tty": "/dev/ttys001",
+    "session_id": "C455E1A7-FC18-4473-9B6D-22F619785362",
+    "cwd": "/Users/ciscohe/Desktop/macPad",
+    "body_sha256": "adfe11c826877cfdb58fb7a2d52cdcdebff08e07d06eab249060d2816306e5ae",
+    "body_sent_once": true,
+    "cr_sent_once": true,
+    "credentials": "sent only in transient terminal message; never persisted"
+  },
+  "reference_docs": [
+    "docs/porting/sequoia-24G90-share-review-20261015.md",
+    "docs/porting/ventura-22F82-evening-handoff-20261015.md",
+    "docs/README.md"
+  ],
+  "technical_direction": "Ventura 22F82 first; Sequoia/M2 materials are reference only; no constant-true TCC or blanket assertion bypass."
+}

@@ -1,0 +1,8 @@
+# D043 frontend — independent observation ABI/polarity and candidate audit
+
+D042 exact AppInput audit accepted. Correct overstated inference: no responsibility_* imports cannot REFUTE indirect/dynamic/tccd-mediated involvement; say no direct call shown in checked import table. Different sender-vs-self tokens is THEORY until actual bytes compared. Keep EMPTY tccd/accessor1 distinct from policy verdict.
+
+Independently audit exact 3 proposed sender hook signatures, PAC callsites, function return polarities, ctx/descriptor ABI and lazy/async callback semantics from actual22F82 binary, quote disassembly. Map outcome matrix showing ALL plausible paths for gate/dispatcher/callback counts and returns; identify observations needed to distinguish cached deny/early gate/async/TCC transport/explicit policy. Never infer struct fields from proximity. Review backend D043 stable source candidate if available, otherwise deliver precise requirements and later pending diff. Dedicated observer toggle must not share runtime-diagnostics sentinel; no alternate display activation. Verify default-off and exact UUID/offset/prologue fail-closed, original forwarding, pointer validity, bounded raw logs/correlation/errno, no secret or unrelated token collection beyond current controlled probe event. No device/build/source/Git changes; own evidence/analysis only.
+
+Write docs/evidence/devin-d043-sender-observation-independent-review-20261019.md and coordination/_relay/devin-043-frontend-result.md. Correct prior responsibility claim in own docs with retained history. Preserve current desktop baseline; no next round until coordinator dispatch.
+(handover to codex now)

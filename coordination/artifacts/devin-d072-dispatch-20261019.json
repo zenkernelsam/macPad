@@ -1,0 +1,18 @@
+{
+  "round": "D072",
+  "timestamp": "2026-10-19T06:00:00+08:00",
+  "scope": "read-only local evidence and authorization packet; no device/KRW/TCC/deploy/build/restart/source/Git changes",
+  "backend": {
+    "pid": 8057,
+    "tty": "/dev/ttys001",
+    "session_id": "C455E1A7-FC18-4473-9B6D-22F619785362",
+    "body_sent_once": true,
+    "cr_sent_once": true,
+    "marker": "[macPad devin relay d072 c3ec22df77d4-f9af0c1c]",
+    "body_sha256": "c3ec22df77d4990043f8273d2988ba5aeaa5cb5fb0321f32a6ff6f7683ba649c"
+  },
+  "frontend": {
+    "status": "deferred",
+    "reason": "residual background grep task visible after D071 handover"
+  }
+}

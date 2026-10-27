@@ -1,0 +1,1 @@
+Frontend: coordination/_relay/devin-180-frontend-task.md. Read-only acceptance plan for isolated D141 full-UUID retention/export; no source/device/product integration.

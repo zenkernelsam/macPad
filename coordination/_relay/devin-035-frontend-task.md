@@ -1,0 +1,8 @@
+# D035 frontend — independent D034 permit candidate review
+
+Read coordination/reviews/git-visible-desktop-regression-audit-20261018.md and share-lessons-active-checklist-20261018.md. D033 baseline audit accepted with bounds: no direct changed-byte proof yet; missing fprintf logs are not proof of refusal, and all-refusal/causal claims must remain bounded. IOMFB distinct from SkyLight. Backend's unsolicited D034 local patch is unaccepted and not deployed; D035 backend now owns narrowing and independent expected identity pins.
+
+Read-only audit D034 current diff/stable artifacts (do not edit backend files). Focus dynamic expected prologue copied from live target; dynamic offset; NULL UUID self-capture; any re-enabled nil-skip/constant-return/symptom hook; original PAC pointer handling; Mach-O bounds; expected stolen-window relocation safety; accurate hook-install witness independent of fprintf; exact essential completion/frame-info dependency. Provide P1/P2 blockers and smallest upstream acceptable candidate rather than endorse full historical surface. Audit ABI table UUID/signature evidence; if insufficient identify exact binary ranges needed. Independently propose negative/functional tests that catch provider contract migration regression.
+
+No device/build/source/Git changes. Disposable scripts allowed in analysis/devin-d035-frontend. Do not message backend or repeat scans through entire analysis. Write docs/evidence/devin-d035-permit-independent-review-20261018.md and coordination/_relay/devin-035-frontend-result.md. Cite applied supplier lessons without importing TCC/assert bypasses. End terminal and file:
+(handover to codex now)

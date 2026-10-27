@@ -1,0 +1,1 @@
+请执行 coordination/_relay/round-013-to-frontend.md：只查现有本地22F82 shared-cache/fixup资料，尝试解析Quarantine 0xb6 stub的精确provider；若输入缺失就列出最小取证范围并停止。不碰设备或源码，完成证据后handover。

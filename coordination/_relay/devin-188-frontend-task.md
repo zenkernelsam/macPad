@@ -1,0 +1,3 @@
+# D188 frontend — exact 22F82 0x74a7 sender callsite audit
+
+Read-only audit the exact `analysis/SkyLight_22F82` image and existing evidence for `_XGetWindowServerTimebase` / `msgh_id=0x74a7`. Establish the caller/callee callsite, argument construction, Mach trap or MIG request shape, reply ID (`+100` if applicable), and whether a standalone serialized probe could use an existing public/SkyLight entry point without changing WindowServer state. Match UUID/hash and cite disassembly offsets; distinguish direct binary facts from inferred operational safety. Inventory existing tools to avoid duplicating a sender if one exists. Do not edit/build, invoke the function, access device, or authorize integration. Save a concise evidence note and hand over.

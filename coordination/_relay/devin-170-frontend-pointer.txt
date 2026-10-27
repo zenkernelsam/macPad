@@ -1,0 +1,1 @@
+Frontend: coordination/_relay/devin-170-frontend-task.md. Independently freeze svcdecode offline acceptance gates; no code/build/device/integration.

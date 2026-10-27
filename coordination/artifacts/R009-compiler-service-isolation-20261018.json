@@ -1,0 +1,146 @@
+{
+  "schema": "macws-r009-compiler-service-isolation-evidence-v1",
+  "date": "2026-10-18",
+  "packet": "round-009-to-backend.md",
+  "read_only": true,
+  "categorical": {
+    "isolated_service": "exists; distinct private XPC bundle endpoint is structurally supported and a staged bundle exists; first-launch acceptance is the remaining verification step",
+    "offline_replay": "no existing harness can consume the complete F11H type-15 request; full capture and a type-15 mode/XPC replay are missing"
+  },
+  "service": {
+    "flat_bundle": "/var/jb/usr/macOS/Frameworks/Metal.framework/XPCServices/MTLCompilerService.xpc",
+    "flat_info_sha256": "98d6b371d73553cb6ecf96923c338f8673768604cf33b91c20bcd4847cc52d49",
+    "flat_exec_sha256": "4d3182832053f830e3236d7e2395ae2771c10bf2b16f1c9bbc03085e9df9ea6f",
+    "flat_exec_size": 66816,
+    "uuid": "6D2CFE56-8D88-39AA-BC25-7FFE5058ED4E",
+    "cdhash": "d0410d8980d3e87b683c63385cf5b2827b04e96a",
+    "identifier": "MTLCompilerService",
+    "version": "306.3.5",
+    "platform": "iPhoneOS",
+    "xpc_service": {
+      "ServiceType": "Application",
+      "_MultipleInstances": true,
+      "DisableFreezing": true,
+      "MallocNanoZone": "1"
+    },
+    "entitlements": "none",
+    "loads": [
+      "Foundation",
+      "libSystem",
+      "libc++",
+      "/var/jb/usr/lib/TweakInject.dylib",
+      "/var/jb/usr/macOS/lib/MTLCompilerBypassOSCheck.dylib"
+    ],
+    "stock_ios_exec_sha256": "4431d99e7925c95188cdb6e6f85ee18bed2524fcc9f13edec1fc767a79331ca5",
+    "stock_ios_entitlements": {
+      "seatbelt-profiles": [
+        "MTLCompilerService"
+      ]
+    },
+    "rootfs_macos_exec_sha256": "46af1064f0c16a5485babe5dd80052a8f0e087a66c4ef9ca929061b97e8b3482",
+    "rootfs_macos_uuid": "6A0DCB39-8853-333B-851C-4005910A8E53",
+    "rootfs_macos_version": "306.7.4",
+    "private_bundle": "/var/jb/usr/macOS/Frameworks/Metal.framework/XPCServices/MacWS/MTLCompilerService.xpc",
+    "private_bundle_identifier": "com.macws.MTLCompilerService",
+    "private_info_sha256": "8bd6c4d812531472bc24bf106d7d9691878d5df8e01bbbee5d901fcd8b56775e",
+    "private_exec_sha256": "4d3182832053f830e3236d7e2395ae2771c10bf2b16f1c9bbc03085e9df9ea6f",
+    "launchd_job_or_plist": "none found; system XPC service declaration only; on-demand XPC bundle activation",
+    "mach_services_key": "absent"
+  },
+  "mapping": {
+    "registration": "xpc_add_bundle(flat_bundle, 2) in the client's pid domain on first com.apple.MTLCompilerService lookup",
+    "pid_domain_evidence": "source comment Metal_hooks.x:25222; stock mobile instances 51489/51490 coexist with root flat instances",
+    "pin": "mac_hooks.m:16721-16734/16991 rewrites any path containing MTLCompilerService to the flat bundle; private chroot clients must use an iOS-native client or raw libxpc _xpc_add_bundle for the private path",
+    "spawn": "launchd pid 1, ServiceType Application, _MultipleInstances, instance UUID forwarded; crash instance uid 0, coalition com.macwsguide.iconservicesagent"
+  },
+  "diagnostics": {
+    "marker_ios": "/tmp/macws_mtlcompiler_diagnostics",
+    "hold_ios": "/tmp/macws_mtlcompiler_hold",
+    "marker_chroot": "/var/mnt/rootfs/tmp/macws_mtlcompiler_diagnostics",
+    "all_absent": true,
+    "cache_root": "/var/jb/var/mobile/Library/Caches/macws-metalfe",
+    "request_dump_dirs": [
+      "/var/jb/var/mobile/mtlcompiler_requests",
+      "/var/jb/var/mobile/mtlcompiler_replies"
+    ],
+    "request_dump_dirs_present": false,
+    "constraint": "shared marker; do not enable for the private service; capture client-side and use the private crash report"
+  },
+  "service_side_failure": {
+    "report": "MTLCompilerService-2026-10-18-161907.ips",
+    "pid": 50985,
+    "uid": 0,
+    "parent": "launchd/1",
+    "coalition": "com.macwsguide.iconservicesagent/2675",
+    "exception": "EXC_CRASH SIGABRT",
+    "asi": "abort() called",
+    "stack": [
+      "fatalDiagnosticHandler",
+      "LLVMContext::diagnose",
+      "LLVMContext::emitError",
+      "errorToErrorCodeAndEmitErrors",
+      "readModuleFromBinaryRequest",
+      "buildSpecializedFunctionRequest",
+      "buildRequest",
+      "MTLCodeGenServiceBuildRequest",
+      "MacWSMTLCodeGenServiceBuildRequest",
+      "MTLCompilerServiceHandleEvent"
+    ],
+    "images": {
+      "MTLCompiler": "482EE528-9D70-3ED7-A746-D19BB741245B",
+      "libLLVM": "3C9D9D6C-CC92-326A-911C-141BC96DC8BE",
+      "tweak": "F8E4D577-6328-391B-9F70-B8DD3A7D2DE6"
+    },
+    "report_count": 25,
+    "latest": "16:58 (before R009 first read)",
+    "missing": [
+      "exact LLVM diagnostic string",
+      "full 7632-byte request"
+    ],
+    "correction": "R007 reported no new crash report; iOS /var/mobile/Library/Logs/CrashReporter contains 25 MTLCompilerService reports. Not a R009-generated crash; external generation untouched."
+  },
+  "offline_harness": {
+    "path": "misc/macws_mtl_dag_replay.m",
+    "contract": "native in-process MTLCodeGenServiceBuildRequest; input ' gad'; type 14; no launchd/XPC",
+    "f11h_compatible": false,
+    "f11h_request_prefix": "0000000600040600e000000008000000e800000000000000",
+    "f11h_request_size": 7632,
+    "missing": [
+      "full request bytes",
+      "full dictionary keys",
+      "type-15 mode or XPC replay against private endpoint"
+    ]
+  },
+  "markers_verified": {
+    "ios_runtime": "absent",
+    "ios_mtlcompiler": "absent",
+    "ios_hold": "absent",
+    "chroot_runtime": "absent",
+    "chroot_mtlcompiler": "absent",
+    "chroot_hold": "absent"
+  },
+  "device_state": {
+    "external": {
+      "tccd": 50427,
+      "WS": 50574,
+      "agent": 51072,
+      "state": "alive untouched"
+    },
+    "stock_compiler": [
+      51489,
+      51490
+    ],
+    "native": {
+      "tccd": 883,
+      "SpringBoard": 872,
+      "backboardd": 905
+    },
+    "R008_truth": "no-vnc WS process readiness only, no final-composite pixels, postmin1002, probe empty dict/attribution failure, external generation intact; not re-tested/re-labeled"
+  },
+  "limits": [
+    "no private launchd acceptance test (forbidden start)",
+    "no full request/exact LLVM text",
+    "thermal unreadable",
+    "correlation by code path/coalition, not request bytes"
+  ]
+}

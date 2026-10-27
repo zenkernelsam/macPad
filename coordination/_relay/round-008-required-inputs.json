@@ -1,0 +1,76 @@
+{
+  "packet": "Frontend R008 required input — exact Ventura libquarantine image",
+  "date": "2026-10-18",
+  "status": "blocked only on the exact Ventura 22F82 libquarantine image; local copies are 15.6/iOS and must not be substituted",
+  "missing_image": {
+    "path": "/usr/lib/system/libquarantine.dylib",
+    "uuid": "A2D17FF6-CBC6-3D19-89E1-F5E57191E8A3",
+    "os": "macOS 13.4.1 22F82, arm64e, chroot rootfs",
+    "runtime_base": "0x1a6d5f000",
+    "getter_symbol": "responsibility_get_responsible_audit_token_for_audit_token",
+    "getter_runtime_address": "0x1a6d60b00",
+    "getter_prologue_hex": "7f2303d5ffc300d1fd7b02a9fd830091000440ade00700ade003009104000094",
+    "decoded_prologue": "pacibsp; sub sp,sp,#0x30; stp x29,x30,[sp,#0x20]; add x29,sp,#0x20; ldp q0,q1,[x0]; stp q0,q1,[sp]; mov x0,sp; bl 0x1a6d60b2c",
+    "helper_call_target": "base+0x2c (0x1a6d60b2c); this is the exact helper body that is missing"
+  },
+  "local_inputs_checked": [
+    {
+      "path": "analysis/r004-responsibility/",
+      "contents": "metadata.json + responsibility_probe.c only; no Apple binary"
+    },
+    {
+      "path": "analysis/device-leftovers-20261006/var-mobile/dscq/usr/lib/system/libquarantine.dylib",
+      "uuid": "8CE8DAD0-52D6-3F46-98EF-161E1397FB48",
+      "sha256": "fd20c715c9d95268d6af349251aaa0bf8a7fc99064c0acd3cd265bc230c8cb4b",
+      "platform": "macOS 15.6",
+      "verdict": "version-adjacent only; not the required A2D17FF6 image"
+    },
+    {
+      "path": "analysis/ios163cache/",
+      "verdict": "iOS 16.3 cache; libquarantine absent; not the Ventura provider"
+    }
+  ],
+  "owner_cache_candidates": [
+    "/var/mnt/rootfs/System/Cryptexes/OS/System/Library/dyld/dyld_shared_cache_arm64e (+ .01)",
+    "/var/mnt/rootfs/System/Library/dyld/dyld_shared_cache_arm64e (+ subcaches)"
+  ],
+  "required_cache_metadata": {
+    "cache_header_uuid": "read from each main cache header; not known locally",
+    "image_table_entry": "exact path string /usr/lib/system/libquarantine.dylib, UUID A2D17FF6, unslid load address",
+    "mapped_ranges": "__TEXT, __LINKEDIT, __DATA_CONST/__got and __cstring ranges for that image",
+    "owning_subcache": "the cache file whose mapping contains the image's __TEXT/__LINKEDIT; R004 reports main + .01",
+    "image_build_version": "LC_BUILD_VERSION platform/minos/sdk and LC_UUID from the extracted image"
+  },
+  "required_bytes": {
+    "preferred": "the complete standalone libquarantine.dylib image (all load commands, all segments, __LINKEDIT, chained fixups); expected small (15.6 image is 36,816 bytes)",
+    "minimum_if_range_limited": [
+      "all of __TEXT (contains the getter at +0x1b00, helper at +0x1b2c, and direct local callees)",
+      "__LINKEDIT symbol table, string table and indirect symbol table (to resolve the helper's __sandbox_ms stub and local function names)",
+      "__DATA_CONST/__got chained-fixup entry for the __sandbox_ms slot at the Ventura address equivalent to the 15.6 GOT slot",
+      "__cstring containing the policy/service name (15.6: 'Quarantine')",
+      "LC_UUID, LC_BUILD_VERSION and all segment/load commands"
+    ],
+    "why": "the exact Ventura helper body, selector/struct and __sandbox_ms indirect binding are required to identify the 103 branch without importing 15.6 facts"
+  },
+  "extraction_recipe": [
+    "Copy only the needed cache set files (main + the subcache owning the image) with SHA-256; do not copy the whole cache tree.",
+    "Read the main cache image table; locate /usr/lib/system/libquarantine.dylib and UUID A2D17FF6; record unslid load address and segment ranges.",
+    "Use misc/dsc_extract_image.py <cache_base> /usr/lib/system/libquarantine.dylib <out>; if the subcache index is >= .16, map it into a temporary .01.. .15 symlink directory for the existing tool (do not edit the repo tool).",
+    "Verify: file; otool -l | grep -A2 LC_UUID; shasum -a 256; confirm UUID A2D17FF6 and macOS 13.4/minos 13.4.",
+    "Disassemble base+0x1b00 through base+0x1b2c and follow the helper at +0x2c to its __sandbox_ms call; resolve the indirect symbol index to the undefined symbol name.",
+    "Record the policy/service string, selector (w1), struct layout, return/errno path, and the exact instruction(s) that propagate 103."
+  ],
+  "analysis_goals": [
+    "Confirm whether the Ventura getter's helper at base+0x2c is the same qtn-syscall wrapper as the 15.6 image.",
+    "Confirm the actual policy name (15.6: 'Quarantine'), selector (15.6: 0xb6/182), struct fields and output-token write.",
+    "Identify whether 103 comes from the __sandbox_ms return/errno or from a local branch in the Ventura helper.",
+    "Tie the Ventura helper to the kernel MAC dispatch (__mac_syscall) and the exact device kernel build before proposing any correction."
+  ],
+  "explicit_non_goals": [
+    "Do not use the 15.6 UUID 8CE8DAD0 or selector 0xb6 as Ventura proof.",
+    "Do not copy the complete cache tree or guess a setter.",
+    "Do not add entitlements, fabricate tokens/sessions, write kernel memory or bypass TCC.",
+    "Do not infer platform entitlement gating solely from a missing export."
+  ],
+  "owner": "backend/device; exact image and cache metadata are on the Ventura rootfs"
+}

@@ -1,0 +1,1 @@
+Read coordination/_relay/devin-107-backend-task.md. Reconcile exact kernelcache identity/runtime-hash evidence across D064/D068/D069 versus later missing-artifact claims; bounded static branch/unload audit only if exact artifact verified. No device/KRW. Return D107 handover.

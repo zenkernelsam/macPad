@@ -1,0 +1,21 @@
+{
+  "time": "2026-10-18T12:23:46.817Z",
+  "frontend": {
+    "pid": 38533,
+    "tty": "/dev/ttys000",
+    "session": "02A55FDA-3ED9-47B0-AD3A-DCF4E26FD263",
+    "binding_verified": true,
+    "state": "Working R022 offline guard audit"
+  },
+  "backend": {
+    "pid": 39300,
+    "tty": "/dev/ttys001",
+    "session": "C455E1A7-FC18-4473-9B6D-22F619785362",
+    "binding_verified": true,
+    "state": "Working R014 diagnostic helper preparation"
+  },
+  "handover": false,
+  "messages_sent": 0,
+  "coordinator_device_operations": 0,
+  "new_acceptance": false
+}

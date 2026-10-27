@@ -1,0 +1,1 @@
+请执行 coordination/_relay/round-009-to-backend.md：只读核查installed compiler service结构与真正隔离/离线replay可行性，不启动/改动共享service、marker或外部generation；记录scope限制并handover。

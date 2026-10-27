@@ -1,0 +1,1 @@
+Read coordination/_relay/devin-114-backend-task.md. Fix isolated D113 lifecycle/data-race/timebase/framing invariants and test shutdown, marker failure, truncation/newlines. No production integration or frontend files/device. Return actual D114 results and handover.

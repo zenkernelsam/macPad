@@ -1,0 +1,1 @@
+Read coordination/_relay/devin-118-backend-task.md; fix the reproduced fd mutation race and quiesced phase predicate in the isolated prototype, then hand over.

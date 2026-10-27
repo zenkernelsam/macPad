@@ -1,0 +1,1 @@
+Offline evidence check only: verify D041 six panel PNGs and D094 VNC PNG are the latest saved captures; reconcile their capture boundaries and sequence/PID facts with D094 freshness table. Confirm whether any later panel artifact exists. No new capture/device/build/edit. Return concise handover.

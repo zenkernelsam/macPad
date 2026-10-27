@@ -1,0 +1,221 @@
+{
+  "schema": "macws-r014-f11h-private-capture-evidence-v1",
+  "date": "2026-10-18",
+  "timezone": "Asia/Hong_Kong",
+  "packet": "coordination/_relay/round-014-backend-result-task.md",
+  "categorical": "A packet-owned private compiler endpoint was registered in a disposable client's pid domain and activated by launchd (owned bundle procPath, unchanged executable CDHash d0410d89, tweak loaded). The single converted/Bool1 F11H control captured the complete 7,632-byte type-15 request (SHA-256 ffa7daa5...), its five-key schema, llvmVersion 31001, converted library identity, and private service PIDs. Every type-15 attempt ended with the client reply XPCErrorDescription=Connection interrupted and a private-service SIGABRT in readModuleFromBinaryRequest -> LLVM diagnose -> fatalDiagnosticHandler. The exact LLVM diagnostic string remains missing: the handler aborts without stderr, and a packet-owned diagnostic dylib that loaded and resolved MSHookFunction could not install its hook before the lazy-loaded MTLCompiler handler ran. No production compiler instance, launchd job, marker, package, native service or source was changed. Root cause is NOT claimed, and the compiler abort is not tied to the missing WindowServer composite.",
+  "invariants": {
+    "source_changes": false,
+    "package_changes": false,
+    "publisher_identifier_changes": false,
+    "shared_compiler_restart": false,
+    "windowserver_started": false,
+    "native_services_restarted": false,
+    "markers_changed": false,
+    "assertions_bypassed": false,
+    "production_endpoint_modified": false,
+    "owned_processes_remaining": 0
+  },
+  "inventory": {
+    "time": "2026-10-18T20:17:45+08:00",
+    "native": {"SpringBoard": 872, "tccd": 883, "backboardd": 905, "started": "2026-10-18T12:26:48+08:00"},
+    "package": {"name": "com.kdt.macosbooter", "version": "0.3.4", "status": "install ok installed"},
+    "provider_sha256": "b2ae21da42704b1d584f2b655e837f7db62a10f2a035b3f741adc819ce1423e7",
+    "libmachook_arm64e_sha256": "47f78880f6de1fadc9faabbf79d16ccc56cfba2feb5a45e2155e09c22c2d9432",
+    "libmachook_arm64_sha256": "6de9b6880495c3e0f431c2fc0e328b4420aecac178391d466fa71b141efcbd18",
+    "private_bundle": {
+      "path": "/var/jb/usr/macOS/Frameworks/Metal.framework/XPCServices/MacWS/MTLCompilerService.xpc",
+      "identifier": "com.macws.MTLCompilerService",
+      "executable_inode": 108067,
+      "executable_bytes": 66816,
+      "executable_sha256": "4d3182832053f830e3236d7e2395ae2771c10bf2b16f1c9bbc03085e9df9ea6f",
+      "executable_uuid": "6D2CFE56-8D88-39AA-BC25-7FFE5058ED4E",
+      "executable_cdhash": "d0410d8980d3e87b683c63385cf5b2827b04e96a",
+      "trustcache": true
+    },
+    "production_flat_bundle": {
+      "path": "/var/jb/usr/macOS/Frameworks/Metal.framework/XPCServices/MTLCompilerService.xpc",
+      "executable_inode": 106024,
+      "executable_sha256": "4d3182832053f830e3236d7e2395ae2771c10bf2b16f1c9bbc03085e9df9ea6f",
+      "modified": false
+    },
+    "stock_ios_compiler_instances": 14,
+    "markers_absent": [
+      "/tmp/macws_runtime_diagnostics", "/tmp/macws_mtlcompiler_diagnostics",
+      "/tmp/macws_mtlcompiler_hold", "/var/mnt/rootfs/tmp/macws_runtime_diagnostics",
+      "/var/mnt/rootfs/tmp/macws_mtlcompiler_diagnostics", "/var/mnt/rootfs/tmp/macws_mtlcompiler_hold"
+    ]
+  },
+  "isolation": {
+    "owned_bundle": {
+      "path": "/var/jb/usr/macOS/Frameworks/Metal.framework/XPCServices/MacWS/r014/MTLCompilerService.xpc",
+      "identifier": "com.macws.r014.MTLCompilerService",
+      "executable_sha256": "4d3182832053f830e3236d7e2395ae2771c10bf2b16f1c9bbc03085e9df9ea6f",
+      "executable_cdhash": "d0410d8980d3e87b683c63385cf5b2827b04e96a",
+      "service_type": "Application",
+      "multiple_instances": true,
+      "wrapper": "r014_service_wrapper4",
+      "wrapper_cdhash": "3539d32b7b0b2aa04fa8df41d89b0882b47fe172",
+      "moved_to": "/var/mobile/macws_r014_evidence_20261018/owned/r014"
+    },
+    "redirect_dylib": {
+      "v5_host_sha256": "6f62e6b3f1cbd6e753aa84ab33999a626c0f51deebbe2446a63f225234683021",
+      "v5_cdhash": "53c08f30dc86598a722fd604a25b75a6f9722f51",
+      "v6_host_sha256": "a11abffbd3a4d761d4ba1ab00bda0c3a90d5f7d7f1f7888ccdc997150e46a1a5",
+      "v6_cdhash": "1bb93be69c99803eed3ddfd29953431912830465",
+      "raw_libxpc_addresses": {
+        "xpc_connection_create": "0x194cdc8ac",
+        "xpc_connection_create_mach_service": "0x194cdc828",
+        "_xpc_add_bundle": "0x194ce97b0",
+        "xpc_connection_send_message_with_reply_sync": "0x194cddb34"
+      },
+      "resolver": "Mach-O LC_SYMTAB walk with LC_SEGMENT_64 fileoff-to-vmaddr mapping; dlsym and direct calls recurse under interposition"
+    },
+    "client": {
+      "name": "r014_f11h_client_v4",
+      "host_sha256": "433a57968ab8f7fb6a80511dc7f1accb959a3636b545b0aa08c0307ee9e2e13e",
+      "device_cdhash": "ede69832a27a3f00167e4c206b428d6e203efeb1"
+    },
+    "diagnostic": {
+      "name": "r014_diag2.dylib",
+      "host_sha256": "e18000043e9e85161852d4014727d19ddbc17796dc378ab68b7505bf048862e1",
+      "device_cdhash": "8b400f1505357291f070523b79a41e13b7aae455",
+      "loaded": true,
+      "MSHookFunction": "resolved",
+      "hook_installed": false,
+      "reason": "MTLCompiler loaded lazily; constructor/add-image/poll attempts observed no MTLCompiler image before the short-lived service aborted; a 2 s hold after the type-8 request did not change it"
+    }
+  },
+  "activation": {
+    "direct_private_bundle": {
+      "trigger": "empty XPC dictionary",
+      "pid": 84861,
+      "procPath": ".../MacWS/r014/MTLCompilerService.xpc/MTLCompilerService",
+      "coalition": "com.openssh.sshd.A38A9379-3179-4FCA-BA93-3C9289F36477",
+      "exception": "EXC_CRASH / SIGABRT / abort() called",
+      "stack": "MTLCompilerObject::buildRequest -> abort (invalid empty request)",
+      "crash_report": "MTLCompilerService-2026-10-18-202920.ips",
+      "images": {
+        "MTLCompilerService": "6D2CFE56-8D88-39AA-BC25-7FFE5058ED4E",
+        "MTLCompiler": "482EE528-9D70-3ED7-A746-D19BB741245B",
+        "MTLCompilerBypassOSCheck": "457FFBD6-21E0-35A9-9BA7-CC5D00729A0A"
+      }
+    },
+    "wrapper": {
+      "pid": 85142,
+      "procPath": ".../MacWS/r014/MTLCompilerService.xpc/r014_service_wrapper",
+      "stderr": "captured",
+      "tweak_patches": ["0x20e8", "0x25f0", "0x2628"]
+    },
+    "production_instances_before_after": [14, 14],
+    "precedence_gate": "ACTIVATION_HOOK=owned before naming com.apple.MTLCompilerService"
+  },
+  "f11h_control": {
+    "client_arguments": ["converted", "1"],
+    "library_converted": {
+      "path": "/usr/local/share/macws/mpsimage/default-desktop-effects-macabi.metallib",
+      "bytes": 17294324,
+      "sha256": "342738608c912eab663879868288299e38147ea64d45b74f57bc0dd12761b2de"
+    },
+    "library_original_not_exercised": {
+      "path": "/System/Library/Frameworks/MetalPerformanceShaders.framework/Versions/A/Frameworks/MPSImage.framework/Versions/A/Resources/default.metallib",
+      "bytes": 16448932,
+      "sha256": "376ded7ee154429f6950656eb668b26af27fc6149b734b11dd48a33d68fe4285"
+    },
+    "constant": "MTLDataTypeBool index 0 value 1",
+    "request": {
+      "requestType": 15,
+      "data_bytes": 7632,
+      "data_sha256": "ffa7daa51d8de4493c06c8c3e65717b116521d4e9fb6cc89fa8e89f91cbe2e90",
+      "data_fnv1a64": "0b867f3663545473",
+      "data_prefix": "00000006 00040600 e0000000 08000000 e8000000",
+      "schema": {
+        "APISpecifiedTimeoutInSeconds": 0,
+        "data": "7632 bytes",
+        "llvmVersion": 31001,
+        "client_name": "r014_f11h_client_v4",
+        "requestType": 15
+      },
+      "stable_across_runs": true
+    },
+    "reply": {
+      "XPCErrorDescription": "Connection interrupted",
+      "for_every_type15_attempt": true
+    },
+    "service_pids": [85340, 85510, 85528, 85536, 86475, 86651, 86718, 86726, 86790, 86798, 86805, 86813],
+    "service_procPath": ".../MacWS/r014/MTLCompilerService.xpc/MTLCompilerService.real",
+    "service_crash_stack": [
+      "abort",
+      "fatalDiagnosticHandler(llvm::DiagnosticInfo const&, void*)",
+      "llvm::LLVMContext::diagnose(llvm::DiagnosticInfo const&)",
+      "llvm::LLVMContext::emitError(llvm::Twine const&)",
+      "llvm::errorToErrorCodeAndEmitErrors",
+      "llvm::expectedToErrorOrAndEmitErrors<unique_ptr<Module>>",
+      "MTLCompilerObject::readModuleFromBinaryRequest",
+      "MTLCompilerObject::buildSpecializedFunctionRequest",
+      "MTLCompilerObject::buildRequest",
+      "MTLCodeGenServiceBuildRequest",
+      "MacWSMTLCodeGenServiceBuildRequest (MTLCompilerBypassOSCheck)"
+    ],
+    "service_images": {
+      "MTLCompiler": "482EE528-9D70-3ED7-A746-D19BB741245B",
+      "libLLVM": "3C9D9D6C-CC92-326A-911C-141BC96DC8BE",
+      "MTLCompilerBypassOSCheck": "457FFBD6-21E0-35A9-9BA7-CC5D00729A0A",
+      "MTLCompilerService.real": "6D2CFE56-8D88-39AA-BC25-7FFE5058ED4E"
+    },
+    "embedded_module": {
+      "wrapper_magic": "0x0B17C0DE at 0xF0, version 0, bitcode offset 20, size 7372",
+      "bitcode_magic": "BC C0 DE at offset 260",
+      "target_triple": "air64-apple-ios19.0.0-macabi",
+      "producer": "Apple metal version 31001.722 (metalfe-31001.722.4)",
+      "symbols": ["F11H", "kUseSoftwareLinearFilter", "MPSGaussianBlur.metal", "air.fc_initializer"],
+      "triple_profile": "misc/metal2metal_profiles.py ventura13-ios19-macabi (by design, not a malformed request)"
+    },
+    "client_watchdog": "35 s, exit 124; dumps flushed"
+  },
+  "root_cause": {
+    "claimed": false,
+    "evidence": "exact fault path and full request captured; parser failure inside readModuleFromBinaryRequest is proven, the semantic LLVM message is not",
+    "not_linked_to_ws_composite": true
+  },
+  "missing_artifact": "Exact LLVM DiagnosticInfo message: hook must be present at MTLCompiler dlopen (LC_LOAD_DYLIB on the owned copy or a verified image-add hook) with a deterministic stall before the type-15 send, or an lldb attach at MTLCompiler+0x798bc; crash reports only record abort() called",
+  "crash_delta": {
+    "private_path_reports": 17,
+    "mtlcompiler_real_reports": 16,
+    "direct_bundle_activation_report": "MTLCompilerService-2026-10-18-202920.ips",
+    "helper_client_reports": "r014_f11h_client* / ExcUserFault_r014_f11h_client_v4 (disposable only)",
+    "production_compiler_crashes": 0,
+    "native_crashes": 0,
+    "xpc_bootstrap_recurrence": false,
+    "preserved_total": 31
+  },
+  "cleanup": {
+    "owned_tree_moved": "/var/mobile/macws_r014_evidence_20261018/owned/r014",
+    "probes_moved": "/var/mobile/macws_r014_evidence_20261018/probes",
+    "logs_moved": "/var/mobile/macws_r014_evidence_20261018/logs",
+    "crashes_preserved": 31,
+    "owned_processes_remaining": 0,
+    "production_compiler_instances": 14,
+    "production_r014_path_absent": true,
+    "native": {"SpringBoard": 872, "tccd": 883, "backboardd": 905, "started": "12:26:48"},
+    "package": "0.3.4 install ok installed",
+    "provider_sha256": "b2ae21da42704b1d584f2b655e837f7db62a10f2a035b3f741adc819ce1423e7",
+    "libmachook_arm64e_sha256": "47f78880f6de1fadc9faabbf79d16ccc56cfba2feb5a45e2155e09c22c2d9432",
+    "libmachook_arm64_sha256": "6de9b6880495c3e0f431c2fc0e328b4420aecac178391d466fa71b141efcbd18",
+    "markers_absent": true,
+    "thermal": "cached sampled-at=1792325110 nominal 3429 centic (34.29 C); no fresh sensor",
+    "residual_trustcache_cdhashes": [
+      "7167357f", "81753da9", "c2b2f517", "604ff210", "483ddf68", "b0c2bf1c",
+      "53c08f30", "31369d90", "ede69832", "edd96b7a", "be0f0375", "fd5ea74a",
+      "04dc779f", "8b400f15", "3539d32b", "1bb93be6"
+    ]
+  },
+  "host_evidence": "analysis/r014-f11h/ {src, build, run1, device-evidence}",
+  "device_evidence": "/var/mobile/macws_r014_evidence_20261018/",
+  "limits": [
+    "one converted/Bool1 control; original and Bool0 not re-exercised",
+    "exact LLVM diagnostic string missing",
+    "MTLCompiler retried the type-15 request internally; multiple owned instances",
+    "thermal sysctl unreadable; cached status value only"
+  ]
+}

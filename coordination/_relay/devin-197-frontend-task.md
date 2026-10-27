@@ -1,0 +1,3 @@
+# D197 frontend — final D195 scanner/main review
+
+Read-only review the final handed-over D195 source snapshot (record hashes) against D194 F1-F3. Verify runtime C-name, dladdr address ownership, exactly-one UUID check, bounded LC parsing and synthetic tests, including truncated/duplicate commands. Check complete main never invokes SLSServerPort before both UUID checks. D196 already accepted cleanup; verify it was preserved without rerunning real sender. Return ACCEPT or concrete CHANGES_REQUESTED. No source edits, build, main invocation, device access or product integration. Save findings and formal handover.

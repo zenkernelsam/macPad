@@ -1,0 +1,1 @@
+Frontend: coordination/_relay/devin-191-frontend-task.md. Read-only freeze D169 v3 serialized ABI requirements for D190's host loopback output; no device or invocation.

@@ -1,0 +1,31 @@
+{
+  "user_requested_shutdown_and_pause": true,
+  "body_sent_once": true,
+  "cr_sent_once": true,
+  "credential_body_persisted": false,
+  "ui_tip_filter_only": "Exact /bug developer tip ignored by handover predicate for this user-requested shutdown; normal relay source unchanged.",
+  "receipt": {
+    "session_id": "EE473D24-793C-48E3-B8A9-2298BB40327F",
+    "name": "devin: macPad移植 (devin)",
+    "tty": "/dev/ttys001",
+    "commandLine": "devin acp",
+    "processes": [
+      {
+        "pid": 86525,
+        "ppid": 672,
+        "cwd": "/Users/ciscohe/Desktop/macPad",
+        "acp": false
+      },
+      {
+        "pid": 90827,
+        "ppid": 86525,
+        "cwd": "/Users/ciscohe/Desktop/macPad",
+        "acp": true
+      }
+    ],
+    "agent_pid": 90827,
+    "binding_verified": true,
+    "handover_ready": false,
+    "screen": " │ 75543   0       com.macwsguide.viewbridge\n │ 75452   0       UIKitApplication:com.macwsguide.interop\n │ 75487   0       com.macwsguide.systemuiserver\n │ 75144   0       UIKitApplication:com.macwsguide.windowserver\n │ 74732   0       com.macwsguide.cfprefsd-mobile-agent\n │ 75134   0       UIKitApplication:com.macwsguide.input\n │ 75467   0       com.macwsguide.corelocationagent\n │ 75781   134     com.macwsguide.iconservicesagent\n │ 75434   0       UIKitApplication:com.macwsguide.display\n │ 74854   0       com.macwsguide.csnameddatad\n │ === native health ===\n │ _wireless      23589   0.0  0.0        0      0   ??  ?s   Mon07AM   0:00.00 /System/Library/F\n │ amework/Support/CommCenter\n │ mobile         23168   0.0  0.0        0      0   ??  ?s   Mon07AM   0:00.00 /System/Library/C\n │ p/SpringBoard\n │ root           73699   0.0  0.0        0      0   ??  ?s   Mon01AM   0:00.00 /System/Library/F\n │ amework/Support/CommCenterRootHelper\n │ mobile         70641   0.0  0.0        0      0   ??  ?s   Mon01AM   0:00.00 /System/Library/F\n │ amework/Support/CommCenterMobileHelper\n │ mobile         70595   0.0  0.0        0      0   ??  ?s   Mon01AM   0:00.00 /usr/libexec/back\n │ === lldb/tmux/probes ===\n │ === tmux sessions ===\n │ tmux-0\n │ === thermal ===\n │ thermal-state=serious raw=2 low-power=no battery-temp-centic=3689 virtual-temp-centic=3689 eff\n │ time=353171.503\n │ THERMAL_RC=3\n └ Exited with code 0\n\n⠠⠤ Thinking · 31s (esc twice to interrupt)\n─────────────────────────────────────────────────────────────────────── (bypass permissions on) ─\n❭ Guide Devin while it works\n─────────────────────────────────────────────────────────────────────────────────────────────────\nSWE-2 Max                                                       Context: 183k / 262k tokens (69%)\n1 shell · ↓ select"
+  }
+}

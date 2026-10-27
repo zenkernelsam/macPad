@@ -1,0 +1,8 @@
+# Frontend R028 — independent upstream invariant review
+
+R027 wire audit accepted; ID71=nocallback. Backend R028 owns original-module provenance reconciliation and a possible isolated compatibility candidate. Do not modify their files or contact their terminal mid-task.
+
+Offline independent review: use authoritative LLVM16 BitcodeReader/AutoUpgrade/Intrinsics sources to trace whether llvm-dis materializes nocallback/nofree/nosync/willreturn on llvm.lifetime intrinsics even when absent from original bitcode. Identify exact function/source lines and serialized scope. Review whether a retarget converter that preserves original intrinsic attributes is semantically conservative, and which attributes are actual ABI/parameter contracts vs optimization annotations. Do not assume all attrs may be removed. Supply fail-closed review criteria for original record restoration and bitstream/triple retarget, including IR/body/metadata/constant/attribute equality, supported profile gates and reader acceptance. Reconcile the meaning of textual equality after auto-upgrade versus raw equality; do not claim provenance fixed until exact hashes known.
+
+No device/source/build/package/Git changes. Disposable analysis scripts under analysis/r028-attribute-review allowed. Deliver review evidence and a focused regression-test design suitable for a future narrow converter patch (not implementation-mirroring tests). No implementation or attribute removal in this packet. Write docs/evidence/r028-intrinsic-upgrade-review-20261018.md and coordination/_relay/round-028-frontend-result.md. End file AND terminal with:
+(handover to codex now)

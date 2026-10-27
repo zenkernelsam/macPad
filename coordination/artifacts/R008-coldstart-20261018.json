@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-18T14:30:42.976365+08:00",
+  "finished": "2026-10-18T14:30:50.998534+08:00",
+  "command": "export PATH=/var/jb/usr/bin:/var/jb/usr/sbin:/usr/bin:/usr/sbin:/bin:/sbin\nrm -f /var/jb/var/mobile/WindowServer.err\nbash /var/jb/usr/macOS/bin/macos_gui.sh start coexist\nrc=$?\necho COLDSTART_RC=$rc\nexit $rc\n",
+  "command_sha256": "6b3f93ba3db59b2fe10d0d7e9975abd9a3a7936de18ce5d0280d5d5b704cf6a4",
+  "exit": 1,
+  "timeout": false,
+  "stdout": "LEGACY-BOOT current\n[macos_gui] iPad windowing bridge ready for the current SpringBoard generation.\n[macos_gui] TIMING gui-start stage=windowing seconds=0 total=0\n[macos_gui] TIMING gui-start stage=contracts seconds=1 total=1\n[macos_gui] Cleaning up previous macOS GUI services...\n[macos_gui] Cleanup done.\n[macos_gui] TIMING gui-start stage=cleanup seconds=4 total=5\nMETAL-CACHE {\"retired_files\": 0, \"state\": \"current\"}\n[macos_gui] NATIVE-AGX: built-in command ABI + cancelled-swap completion + owned BGRA scanout + VNC mmap enabled.\n[macos_gui] ERROR: production debug environment found in /var/jb/usr/macOS/LaunchDaemons/com.apple.WindowServer.plist\n[macos_gui] Cleaning up previous macOS GUI services...\n[macos_gui] Cleanup done.\n[macos_gui] Restoring iOS (SpringBoard / backboardd)...\n[macos_gui] Stopped. The iPad is back on iOS.\nCOLDSTART_RC=1\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

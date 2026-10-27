@@ -1,0 +1,1 @@
+Read coordination/_relay/devin-106-backend-task.md. Trace saved exact libquarantine getter request and errno propagation without guessing unresolved stub/provider identity. Preserve D105 historical WS msgID causality and kernel-branch uncertainty. Offline only; return D106 handover.

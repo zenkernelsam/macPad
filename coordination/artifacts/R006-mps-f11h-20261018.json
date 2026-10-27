@@ -1,0 +1,85 @@
+{
+  "packet": "Backend R006 — identify F11H MPS compile producer",
+  "date": "2026-10-18",
+  "mode": "read-only offline/device inventory; external WS/tccd/agent untouched; no source/build/Git/dependencies/setter/grants/kernel writes; no assert bypass",
+  "crash": {
+    "reports": ["iconservicesagent-2026-10-18-161950.ips", "iconservicesagent-2026-10-18-161058.ips", "iconservicesagent-2026-10-18-161016.ips", "iconservicesagent-2026-10-18-154951.ips"],
+    "assertion": "MPSLibrary.mm:485: failed assertion `MPSLibrary::MPSKey_Create internal error: Unable to get MPS kernel F11H. Error: Compiler encountered an internal error'",
+    "faulting_thread": "com.apple.MPS.MPSLibrary.preheat",
+    "faulting_stack": ["abort", "__assert_rtn", "MTLReportFailure.cold.1", "MTLReportFailure", "MPSLibrary::MPSKey_Compile(MPSKey_data*) +944"],
+    "workloop": "iconservicesagent workloop blocked in MPSLibrary::MPSKey_Compile +56 (unfair-lock wait)"
+  },
+  "f11h_input": {
+    "source_metallib": "/System/Library/Frameworks/MetalPerformanceShaders.framework/Versions/A/Frameworks/MPSImage.framework/Versions/A/Resources/default.metallib",
+    "source_sha256": "376ded7ee154429f6950656eb668b26af27fc6149b734b11dd48a33d68fe4285",
+    "source_size": 16448932,
+    "source_air_targets": "1524 occurrences of air64-apple-macosx13.4.0; kernel source MPSGaussianBlur.metal",
+    "converted_metallib": "/usr/local/share/macws/mpsimage/default-desktop-effects-macabi.metallib",
+    "converted_sha256": "342738608c912eab663879868288299e38147ea64d45b74f57bc0dd12761b2de",
+    "converted_size": 17294324,
+    "converted_air_targets": "1524 occurrences of air64-apple-ios19.0.0-macabi",
+    "route": "/usr/local/share/macws/metal2metal/routes/mpsimage-default.route.plist",
+    "route_sha256": "fdfd91924fc445e19c8003d4fcc8e72c98106216ca19778cd55e9a13006c3c7b",
+    "route_profile": "ventura13-ios19-macabi",
+    "route_verify": "verified profile=ventura13-ios19-macabi translated=1825 (metal2metal.py verify-runtime-manifest)",
+    "f11h_contract": {
+      "function_type": "kernel",
+      "needs_function_constants": true,
+      "function_constants": [{"abi_type": "b", "index": 0, "name": "_Z24kUseSoftwareLinearFilter", "type": "i8"}],
+      "input_sha256": "0fa8f789101d5c7d9f292e0ccc068950d7495a2a853588b4067ccdd873778e2c",
+      "output_sha256": "6aeb00477fa3ca6ab59a9a125d22e2c6a3791fb3ff6873a890703871bc9f28f7"
+    }
+  },
+  "loaded_images_from_crash": {
+    "MPSImage": "96288960-0947-39B4-A0C8-D15D21279024",
+    "MPSCore": "315E13C7-26D8-3553-B717-53AC0D0551BA",
+    "CoreImage": "780B768C-4B54-36C3-AC8E-9D6138C86592",
+    "IconServices": "1D606610-E39F-3BE7-A402-256E7D3FB765",
+    "Metal": "2BAB169C-42DA-36E3-955A-F30B709EC2AD"
+  },
+  "adapter_and_compiler": {
+    "MTLCompilerBypassOSCheck": {"sha256": "9f07ed3c966c79ebb1aa9024a545307699b937cd825824f20993c9ee98ea9324", "uuid": "F8E4D577-6328-391B-9F70-B8DD3A7D2DE6"},
+    "MTLCompilerService_binary": {"sha256": "46af1064f0c16a5485babe5dd80052a8f0e087a66c4ef9ca929061b97e8b3482", "uuid": "6A0DCB39-8853-333B-851C-4005910A8E53", "arch": "x86_64 arm64e"},
+    "adapter_gates": [
+      "Metal_hooks.x macws_metal2metal_function_contract: F11H needs constants, so plain newFunctionWithName: skips the companion; the constantValues hooks use the companion and fall back to the original library on failure",
+      "Metal_hooks.x macws_qc_specialization_result logs specialization-failed only with macws_runtime_diagnostics_enabled()",
+      "MTLCompilerBypassOSCheck MacWSComposeImageFilters accepts only air64-apple-macosx13.4.0 modules and retargets them to air64-apple-ios19.0.0-macabi",
+      "MTLCompilerBypassOSCheck installs the Catalyst DAG context only for discriminators 14/15; image-filter path is a2=5"
+    ]
+  },
+  "missing_artifact": {
+    "raw_compiler_request_reply": "not retained",
+    "reason": "no /tmp/macws_runtime_diagnostics, no /tmp/macws_mtlcompiler_diagnostics, no /var/jb/var/mobile/mtlcompiler_replies; agent log contains only the MPS assertion; adapter specialization diagnostics are gated by the runtime marker",
+    "unknowns": ["actual request discriminator", "actual AIR target in the F11H compile request", "function constant values/type seen by the compiler", "reply error domain/code/message", "whether the companion F11H function or the pipeline creation failed"]
+  },
+  "hypotheses": {
+    "THEORY": "F11H's runtime specialization/compile request is outside the adapter's exact macOS134→macabi conversion/context shape (e.g., already-macabi modules or a different discriminator), so the iOS factory compiles it without the Catalyst context and returns an internal error; alternatively the companion F11H specialization fails on the function constant and falls back to the original library. Neither is proven without the raw request/reply.",
+    "not_supported": "UID/runAsRoot/ownership changes, MPS/assert bypass, broad shader validation changes, supplier G14/ANE/padding transplant."
+  },
+  "next_control_proposal": {
+    "approval_required": true,
+    "owned_disposable": "a separate chroot process/generation, not the external 50427/50574/51072",
+    "steps": [
+      "load the exact installed converted MPSImage metallib",
+      "request F11H with _Z24kUseSoftwareLinearFilter values 0 and 1 and create a compute pipeline",
+      "run with a fresh/disposable compiler service generation and the existing runtime/mtlcompiler diagnostic markers enabled only for the window, with EXIT/signal cleanup",
+      "capture METAL2METAL-SPECIALIZE/QC-DESKTOP-TARGET lines and the raw mtlcompiler request/reply (discriminator, AIR triple, constants, error)"
+    ],
+    "acceptance": "the raw request/reply identifies the exact failing gate; no external generation mutation and no markers left behind"
+  },
+  "next_minimal_patch_scope": [
+    "if the request is macabi without Catalyst context: extend the existing exact request-shape/target/function/constant gate, not a blanket conversion",
+    "if the request is macosx13.4.0 and the image-filter shape is missed: fix the exact route/gate identity",
+    "if companion F11H specialization fails on constants: adjust the exact F11H contract/constant handling",
+    "never bypass MTLReportFailure, change UID/runAsRoot/ownership, or widen entitlements"
+  ],
+  "final": {
+    "external_generation": "tccd 50427 (16:18:02), WS 50574 (16:18:08), iconservicesagent 51072; left untouched",
+    "native_health": "tccd 883, SpringBoard 872, backboardd 905",
+    "thermal": "nominal 34.59 C",
+    "new_crashes": "none during R006; latest retained IconServices report is 16:19:50",
+    "owned_processes": "none; no new job/sampler/helper; spindump ended",
+    "markers": "both absent",
+    "offline_inputs": "analysis/r006-mps-f11h/ (route, original/converted metallib; ignored)"
+  }
+}

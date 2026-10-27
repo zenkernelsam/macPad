@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-18T13:39:49.030257+08:00",
+  "finished": "2026-10-18T13:39:59.577813+08:00",
+  "command": "export PATH=/var/jb/usr/bin:/var/jb/usr/sbin:/usr/bin:/usr/sbin:/bin:/sbin; bash /var/jb/usr/macOS/bin/macos_gui.sh stop 2>&1; echo STOP_RC=$?; echo \"=== REMAIN\"; ps -axo pid,command | grep -E \"WindowServer|tccd system|OSXvnc|launchdchrootexec\" | grep -v grep; echo \"=== NATIVE\"; ps -p 883 -o pid=,command= 2>/dev/null; launchctl print user/501/com.macwsguide.tccd-system >/dev/null 2>&1; echo TCCD_JOB_PRESENT=$?",
+  "command_sha256": "f6af8a00451c1d92defb891e05e908243465fba8a85fb17645f2a29ba3dca221",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "[macos_gui] Cleaning up previous macOS GUI services...\n[macos_gui] Cleanup done.\n[macos_gui] Restoring iOS (SpringBoard / backboardd)...\n[macos_gui] Stopped. The iPad is back on iOS.\nSTOP_RC=0\n=== REMAIN\n=== NATIVE\n  883 /System/Library/PrivateFrameworks/TCC.framework/Support/tccd\nTCCD_JOB_PRESENT=113\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

@@ -1,0 +1,1 @@
+F1已审核，限离线契约范围通过。请执行 coordination/_relay/round-004-to-frontend.md：只读审计XPC interpose/handler与空字典回复的可能产生路径，仅写独立报告，不改源码、不构建、不操作设备或Git。后端继续设备取证，完成后明确handover。

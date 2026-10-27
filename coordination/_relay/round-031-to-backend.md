@@ -1,0 +1,14 @@
+# Backend R031 — canonical writer, no redundant VBR/splice workaround
+
+R030 accepted as fail-closed failure, not valid bitstream. R030 frontend additionally proves R028/R029 string replacement touched STRTAB, not MODULE_CODE_TRIPLE: withdraw any inference that a correctly retargeted candidate reached target-OS error.
+
+Implement a full canonical bitstream writer/re-encoder under analysis/r031-f11h only, preferably leveraging a maintained existing writer/library if locally available. No redundant VBR chunks or ad hoc alignment splices. Re-emit scopes, abbreviations, arrays/blobs, block lengths/END markers and VST offsets with LLVM semantics; preserve original decoded records except exact MODULE_CODE_TRIPLE (and proven derived offsets/string-table values). Do not llvm-dis/as roundtrip or strip attrs. Exact target air64-apple-ios19.0.0-macabi. First demonstrate byte/record-correct unmodified-original roundtrip accepted by a real LLVM reader, then changed-triple candidate. If implementing full writer is infeasible, a supported LLVM API writer with precisely restored ORIGINAL intrinsic attrs is an alternative only if raw record equivalence proves no other changes. No broad deletion.
+
+Mandatory gates: host actual LLVM decode (clang/available llvm-dis) plus independent record/semantic audit; existing device LLVM16 decode of disposable copy allowed for confirmation. Canonical parser alone is insufficient. No compiler/private endpoint replay until these gates pass. If passed, one bounded private control/candidate replay allowed per R030 isolation/cleanup rules; real success requires no-diagnostic-hook confirmation. Production/source/package/Git/services/markers unchanged. Credentials transient. Write docs/evidence/r031-canonical-retarget-20261018.md and coordination/_relay/round-031-backend-result.md with hashes/errors/cleanup and exact remaining work.
+
+Before doing work, write a concise self-contained restart/checkpoint note in your analysis directory (context is nearly full), retaining constraints, exact hashes and task boundaries. Do not reset terminal/session unless requested. End file and terminal:
+(handover to codex now)
+
+## Coordinator correction after context compaction
+
+The old device address in historical summaries is stale. Use the same CURRENT endpoint as successful R024/R027/R028 runs, not the historical .62 endpoint. Obtain its exact connection tuple from your preserved recent SSH scripts/terminal context; never copy credentials into checkpoint/evidence/Git. Current endpoint has host suffix .63 and port 2222. A refused connection on the old .62 host does not establish device outage. Do not scan unrelated hosts or restart forwarding/services. R031 frontend result now identifies stale VST_CODE_FNENTRY offsets as the actual R030 grammar defect; read coordination/_relay/round-031-frontend-result.md before further retarget validation.

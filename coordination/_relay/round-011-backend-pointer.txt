@@ -1,0 +1,1 @@
+请执行 coordination/_relay/round-011-backend-result-task.md：只读取证R010的XPC bootstrap崩溃，核对精确22F82 libxpc ABI、指令与可用寄存器；不重启服务/WS、不改源码或包，不把PAC归因当事实。完成清理并handover。

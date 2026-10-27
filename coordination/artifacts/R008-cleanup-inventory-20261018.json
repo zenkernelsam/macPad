@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-18T15:26:22.248062+08:00",
+  "finished": "2026-10-18T15:26:22.715087+08:00",
+  "command": "set +e; echo \"=== R007 leftovers\"; for f in /var/mnt/rootfs/usr/local/bin/tccd_nosig /var/mnt/rootfs/usr/local/bin/tccd_adhoc /var/mnt/rootfs/usr/local/bin/tccd_fullent /var/mnt/rootfs/usr/local/bin/tccd_eA /var/mnt/rootfs/usr/local/bin/tccd_eB /var/mnt/rootfs/usr/local/bin/tccd_e1 /var/mnt/rootfs/usr/local/bin/tccd_e2 /var/mnt/rootfs/usr/local/bin/daxadhoc /var/mnt/rootfs/usr/local/bin/mysvcx /var/mnt/rootfs/usr/local/bin/execreason /var/mnt/rootfs/usr/local/bin/tccd_p /var/mnt/rootfs/usr/local/bin/tccd_q /var/mnt/rootfs/usr/local/bin/tccd_m /var/mnt/rootfs/tmp/tccd_inv; do [ -e \"$f\" ] && ls -ld \"$f\"; done; for f in /var/mnt/rootfs/usr/local/bin/spawnreason* /var/mobile/tccd_* /var/mobile/daxadhoc* /var/mobile/mysvcx*; do [ -e \"$f\" ] && ls -ld \"$f\"; done; echo \"=== markers\"; ls -ld /tmp/macws_runtime_diagnostics /var/mnt/rootfs/tmp/macws_runtime_diagnostics 2>&1; echo \"=== procs\"; ps -axo pid,command | grep -E \"lldb|debugserver|tmux|macos_ws_event|macwstccdprobe\" | grep -v grep; echo \"=== scratch\"; ls -ld /var/jb/usr/macOS/bin/macos_gui_diag300.sh /var/tmp/libmachook-165.dylib /var/tmp/odcctools-extract /var/tmp/odcctools_1010.6-1_iphoneos-arm64.deb /var/tmp/macws-r008-full.deb /var/tmp/macws-r008-clean.deb /var/tmp/ws-oslog.txt 2>&1",
+  "command_sha256": "08f47cd0fdcf68fd51d8e6c84e6ca2d38abe3e5c803b7967914f41ab17d7f11b",
+  "exit": 1,
+  "timeout": false,
+  "stdout": "=== R007 leftovers\n-rwxr-xr-x 1 root wheel 1307904 Oct 15 03:35 /var/mnt/rootfs/usr/local/bin/tccd_nosig\n-rwxr-xr-x 1 root wheel 1309808 Oct 15 03:44 /var/mnt/rootfs/usr/local/bin/tccd_adhoc\n",
+  "stderr": "zsh:1: no matches found: /var/mnt/rootfs/usr/local/bin/spawnreason*\n",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

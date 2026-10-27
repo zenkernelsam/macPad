@@ -1,0 +1,1 @@
+Offline audit only: review R005/R006/R014/R024/R031/R032 plus D033 park instruction. Prepare hash-bound checklist and exact scope for any explicitly renewed private R031 compiler replay, its rollback/cleanup, and evidence still needed to connect result to R005. Do not execute/access device/restore endpoint/launch service/edit/trustcache/Git. Return concise handover.

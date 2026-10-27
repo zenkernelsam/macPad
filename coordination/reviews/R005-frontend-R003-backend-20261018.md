@@ -1,0 +1,7 @@
+# Scheduled review — target attribution failure; wrapper contract still unknown
+
+Both workers handed over with verified PID/session/cwd. Backend R003 captures fresh WS48891 requests to tccd48750 for target49186/49199 and hosted target49211. The responsibility error names the target PID, not the WS sender. Source/report review supports this distinction; input remains1002 and composite state missing. Launchd hosting alone did not repair the observed target failure. Preserve logs and exact tccd disassembly provenance.
+
+Frontend R005 accepted for version-scoped source coverage only. Its preferred launchd-hosted experiment is now refuted by R003. Absence of an in-project setter does not prove the operating system failed to create responsibility. The precise Ventura responsibility wrapper and iPadOS boundary remain unknown; do not promote a missing kernel-policy theory or proposed setter signature to fact. The observation that by-value audit accessor interposes do not rewrite the token is useful, but does not rule out indirect control-flow effects.
+
+Next: frontend analyzes exact Ventura/native wrapper binaries and ABI; backend records bounded native-versus-chroot getter controls after verifying signatures. No setter, kernel writes, fake audit/session/token, policy bypass or complete rebuild until the actual incompatible boundary is evidenced. Runtime attribution and grant-policy decisions remain separate.

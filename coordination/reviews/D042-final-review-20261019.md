@@ -1,0 +1,3 @@
+# D042 final review
+
+Both explicit idle handovers verified. Accept inputd->exact endpoint->AppKit->pixel key path (injector bypasses Host emission), restored display, artifact provenance at per-slice code level. Global decision-chain static map useful; cause not runtime-proven. Import absence does not exclude indirect responsibility involvement. Callback count/return outcome matrix must include early/async/cache/transport possibilities. Different token hypothesis awaits bytes. D043 local-only dedicated observation candidate + independent exact ABI/polarity review, no umbrella sentinel/deploy/restart. Authorize no device mutation in this packet.

@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-18T13:41:19.914412+08:00",
+  "finished": "2026-10-18T13:41:20.777882+08:00",
+  "command": "export PATH=/var/jb/usr/bin:/var/jb/usr/sbin:/usr/bin:/usr/sbin:/bin:/sbin; export DEBIAN_FRONTEND=noninteractive; /var/jb/usr/bin/dpkg -i --force-depends /var/tmp/odcctools_1010.6-1_iphoneos-arm64.deb 2>&1 | tail -8; echo ODCCTOOLS_RC=$?; /var/jb/usr/bin/dpkg -l odcctools 2>&1 | tail -2; which lipo otool; lipo -info /var/mnt/rootfs/usr/local/lib/libmachook.dylib 2>&1; echo LIPO_RC=$?",
+  "command_sha256": "91ce55e502f5e80a1edeb22d306f471ca09db2e084f3821261fddd75117115d5",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "dpkg: odcctools: dependency problems, but configuring anyway as you requested:\n odcctools depends on llvm-dev; however:\n  Package llvm-dev is not installed.\n odcctools depends on libtapi; however:\n  Package libtapi is not installed.\n\nSetting up odcctools (1010.6-1) ...\nupdate-alternatives: using /var/jb/usr/bin/nm-classic to provide /var/jb/usr/bin/nm (nm) in auto mode\nODCCTOOLS_RC=0\n+++-==============-============-==============-===================================\nii  odcctools      1010.6-1     iphoneos-arm64 linker and assembler for the iPhone\n/var/jb/usr/bin/lipo\n/var/jb/usr/bin/otool\nNon-fat file: /var/mnt/rootfs/usr/local/lib/libmachook.dylib is architecture: arm64e\nLIPO_RC=0\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

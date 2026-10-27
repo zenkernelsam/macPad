@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-18T14:30:13.674282+08:00",
+  "finished": "2026-10-18T14:30:14.482412+08:00",
+  "command": "T=/var/mnt/rootfs/System/Library/PrivateFrameworks/TCC.framework/Support/tccd; ldid -arch arm64e -e \"$T\" 2>/dev/null | /var/jb/usr/bin/python3 -c \"import plistlib,sys;d=plistlib.loads(sys.stdin.buffer.read());print(\\\"keys\\\",len(d));print(\\\"allow\\\",sorted(d.get(\\\"com.apple.private.tcc.allow\\\",[])));print(\\\"ncenter\\\",d.get(\\\"com.apple.private.notificationcenterui.tcc\\\"))\"; ldid -arch arm64e -h \"$T\" 2>/dev/null | grep -E \"Identifier|CDHash=27|CDHash=\"; sha256sum \"$T\" /var/jb/usr/macOS/bin/postinst.sh /var/jb/usr/macOS/bin/macos_gui.sh /var/mnt/rootfs/usr/local/bin/macwstccdprobe",
+  "command_sha256": "b07c82a040f8903a10b7c616128928165be7e767ca68fc8e4b1292d2e5518b73",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "keys 124\nallow ['kTCCServiceListenEvent', 'kTCCServiceSystemPolicyAllFiles']\nncenter True\nIdentifier=com.apple.tccd\nCDHash=1a32fd7ee14553cc453c111e84d15bbfd04267a4\nTeamIdentifier=not set\n42c388e875f5a479402a3a8318aa9c866101c1162d042ba0daafbf5d996c828d  /var/mnt/rootfs/System/Library/PrivateFrameworks/TCC.framework/Support/tccd\ned42f4782563e1110f0d86fc0d0a279b48eeee9b4c7cb4013e15d58948fe2df1  /var/jb/usr/macOS/bin/postinst.sh\n471fc752ed72d0a376ef747d834530607c484839b1d2af2585a4eb3fab6ebc9d  /var/jb/usr/macOS/bin/macos_gui.sh\n54a5c5bc5cbc98680a86ef18fe8d0420dcea851b851ada35b6eab05631bb1e6e  /var/mnt/rootfs/usr/local/bin/macwstccdprobe\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

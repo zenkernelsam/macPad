@@ -1,0 +1,8 @@
+# Devin frontend D033 — recover visible-desktop baseline map
+
+You are the frontend/reviewer worker replacing qoder. Read AGENTS.md, coordination/_relay/qoder-final-frontend-handover.md, qoder-final-backend-handover.md, SYNC.md and coordination/reviews/visible-desktop-regression-priority-20261018.md. User priority is restoring visible wallpaper/Dock/menu bar, not more compiler experiments.
+
+Local read-only audit: reconstruct last actually rendered 10-13 baseline artifact identities, deployed paths, startup flags/environment, static wallpaper payload, composite after-swap hook, provider behavior and source revisions; compare to today's R008/R010/R012/R013 frozen source/deployment evidence. Identify exact changes that could suppress producer output and missing identity evidence. R010 backups are not automatically rendered-good. Preserve exact logs/disassembly excerpts; label THEORY. Do not mistake stopped-session absence for failed live generation, but R013 did fail live composite acceptance. Review masked assertions as diagnostics, no new bypasses.
+
+Deliver a minimal reversible one-variable A/B plan to restore the visible desktop and an inventory of available original artifacts. No device access, code/build/package/Git/source edits; do not touch ignored share packages or compiler candidates. No baseline rollback from this packet. Write docs/evidence/devin-d033-visible-baseline-audit-20261018.md and coordination/_relay/devin-033-frontend-result.md. New workers have no memory; preserve reproducible commands and source/deploy hashes, rejected theories and limits. End result AND terminal with standalone:
+(handover to codex now)

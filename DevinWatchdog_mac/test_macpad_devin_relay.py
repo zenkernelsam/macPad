@@ -2,6 +2,7 @@
 import importlib.util
 from pathlib import Path
 import unittest
+from unittest.mock import patch
 
 spec = importlib.util.spec_from_file_location('relay', Path(__file__).with_name('macpad_devin_relay.py'))
 relay = importlib.util.module_from_spec(spec)
@@ -9,6 +10,22 @@ spec.loader.exec_module(relay)
 
 
 class HandoverGate(unittest.TestCase):
+    def test_reminder_requires_empty_background_prompt(self):
+        ready = 'Running in background\n❭ Ask Devin to build features, fix bugs, or work on your code\nSWE-2'
+        self.assertTrue(relay.reminder_ready(ready))
+        self.assertFalse(relay.handover_ready(ready))
+        self.assertFalse(relay.reminder_ready(ready.replace('Running in background', 'Done')))
+        for state in ['Guide Devin', 'esc twice to interrupt', 'Press Enter to send queued',
+                      '↵ accept', 'esc close', '[Pasted text #1]', 'Thinking ·', 'Typing ·',
+                      '❭ unsent draft']:
+            self.assertFalse(relay.reminder_ready(ready + '\n' + state))
+
+    def test_reminder_rejects_child_process(self):
+        with patch.object(relay.subprocess, 'check_output', return_value='12 1\n13 12\n'):
+            with self.assertRaises(RuntimeError):
+                relay.require_no_children(12)
+            relay.require_no_children(13)
+
     def test_explicit_handover_then_idle_is_ready(self):
         self.assertTrue(relay.handover_ready('Done.\n(handover to codex now)\n❭ Ask Devin to build\nSWE-2'))
         self.assertTrue(relay.handover_ready('(handover to codex)\n❭ Ask Devin'))
@@ -18,6 +35,12 @@ class HandoverGate(unittest.TestCase):
                        '│ (handover to codex now)\n❭ Ask Devin',
                        '(handover to codex now)\nDevin CLI\n❭ Ask Devin']:
             self.assertFalse(relay.handover_ready(screen))
+
+    def test_generic_devin_cli_help_text_does_not_invalidate_handover(self):
+        self.assertTrue(relay.handover_ready(
+            '(handover to codex now)\n✱ Did you know\n'
+            'Use /bug to report a bug to Devin CLI developers\n'
+            '❭ Ask Devin to build features\nSWE-2'))
 
     def test_busy_queue_menu_or_draft_prevents_send(self):
         ready = '(handover to codex now)\n❭ Ask Devin\n'

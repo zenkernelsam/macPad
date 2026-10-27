@@ -1,0 +1,1 @@
+Read coordination/_relay/devin-103-backend-task.md. Trace exact TCC client request token/key construction into D102 attribution flow and scope validation claims across dependencies. Local disassembly and saved evidence only; no device or token changes. Return D103 evidence and handover.

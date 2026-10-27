@@ -1,0 +1,4 @@
+# D068 frontend — WS observation readiness
+Correct prior claims: absent impl records do not prove absent calls; impl0 is not an explicit policy verdict. Reuse existing observer, helper and decoder evidence. Prepare ONE executable future WS observation plan: frozen hashes, hook installation proof, dedicated sentinel without display coupling, bounded controlled post, correlated logs, completeness/drop accounting, before/after pixels and reversible watchdog-aware deployment. Design only; do not execute.
+Local own analysis/docs only. No production source/Git changes, KRW execution, MAC syscalls, TCC requests, setters, deployment or desktop restart. Preserve current desktop. Write docs/evidence/devin-d068-frontend-20261019.md and coordination/_relay/devin-068-frontend-result.md. Stop after the exact final line in file and terminal:
+(handover to codex now)

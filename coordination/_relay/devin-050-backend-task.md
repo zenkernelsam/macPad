@@ -1,0 +1,8 @@
+# D050 backend — empty TCC reply producer attribution, read-only
+
+D048 isolated arm64e15/15 pass accepted as helper-level only; real WS hook install untested. Frontend D049 decoder still has failing tests; do not deploy observer or restart current desktop. No fourth hook, production changes or diagnostic markers.
+
+Trace preserved R007/R008/D041 actual empty dictionary reply to authentic system-tccd handler/transport boundary. Read exact probe request schema, actual server executable UUID/hash and available TCC/framework disassembly/logs. Determine which operation/request keys and identity/session scope the server expects and where an empty dictionary can be authored; distinguish request rejection, missing handler, reply decoding, transport failure and explicit policy result. Quote exact runtime/artifact/disassembly evidence; no inferred policy from accessor default1. Compare provider hook admission/current installed identities only as needed, reuse completed evidence. No responsibility/kernel identity writes or success override. No repeating device posts without a concrete new discriminator. Local analysis and bounded read-only device inventory permitted, credentials transient env only. No builds/deploy/restart/source/Git changes; do not touch user's live desktop.
+
+Deliver a concrete minimal next experiment with exact missing inputs and expected distinguishing outcomes. Preserve failed hypotheses; helper trust/path observations are current-device witnesses, not universal trust guarantees. Write docs/evidence/devin-d050-empty-tcc-reply-producer-20261019.md and coordination/_relay/devin-050-backend-result.md. STOP after standalone terminal and file line:
+(handover to codex now)

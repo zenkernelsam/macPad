@@ -1,0 +1,8 @@
+{
+  "time": "2026-10-18T11:13:46.573Z",
+  "local_time": "2026-10-18T19:13:46+08:00",
+  "frontend": {"session_id":"02A55FDA-3ED9-47B0-AD3A-DCF4E26FD263","tty":"/dev/ttys000","pid":38533,"cwd":"/Users/ciscohe/Desktop/macPad","binding_verified":true,"r019":"handed over and accepted","r020":"dispatched read-only publisher Identifier audit"},
+  "backend": {"session_id":"C455E1A7-FC18-4473-9B6D-22F619785362","tty":"/dev/ttys001","pid":39300,"cwd":"/Users/ciscohe/Desktop/macPad","binding_verified":true,"r012":"Working arm64/arm64e clean build; no handover"},
+  "actions": {"frontend_body_sent_once":false,"backend_mid_task_messages":0,"device_operations_by_coordinator":0},
+  "acceptance": {"xpc_fix_runtime":"pending","windowserver_pixels_tcc_input":"not accepted"}
+}

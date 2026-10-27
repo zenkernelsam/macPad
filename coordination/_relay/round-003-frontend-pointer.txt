@@ -1,0 +1,1 @@
+请执行 coordination/_relay/round-003-to-frontend.md：只修 F1 并补回归测试，本轮你拥有明确路径的 Git 提交权；后端并行只读取证，不构建。完成写 evidence/result 并明确 handover。

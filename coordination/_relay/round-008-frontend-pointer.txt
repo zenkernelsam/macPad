@@ -1,0 +1,1 @@
+请执行 coordination/_relay/round-008-to-frontend.md：分析已定位的精确Ventura libquarantine getter实现及103产生分支，不再查错误libSystem stub；缺输入时给最小提取manifest。只读离线，不改源码/Git/设备。完成handover。

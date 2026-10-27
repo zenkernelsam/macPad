@@ -1,0 +1,9 @@
+{
+  "time": "2026-10-18T10:53:16.594Z",
+  "local_time": "2026-10-18T18:53:16+08:00",
+  "frontend": {"session_id":"02A55FDA-3ED9-47B0-AD3A-DCF4E26FD263","tty":"/dev/ttys000","pid":38533,"cwd":"/Users/ciscohe/Desktop/macPad","binding_verified":true,"r018":"handed over and accepted","r019":"dispatched read-only scope review"},
+  "backend": {"session_id":"C455E1A7-FC18-4473-9B6D-22F619785362","tty":"/dev/ttys001","pid":39300,"cwd":"/Users/ciscohe/Desktop/macPad","binding_verified":true,"r011":"handed over and accepted","r012":"dispatched one-variable implementation/deploy/owned-generation validation"},
+  "finding": {"defect":"raw MSFindSymbol address passed to blraaz x19","confirmed":"runtime+static","authorized_change":"sign only direct __xpc_bootstrap_services call with A-key/zero"},
+  "acceptance": {"windowserver_pixels_tcc_input":"still unaccepted"},
+  "actions": {"device_operations_by_coordinator":0,"mid_task_messages":0}
+}

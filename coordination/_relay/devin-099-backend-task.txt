@@ -1,0 +1,1 @@
+Offline final cross-review only: verify the edited D097 grant text now matches D060/D068/D069/R014 exactly; specifically boot-epoch vs WS generation, foreign precheck errno, hook-return-103 caveat, and no unaudited launchd/tccd claim. Report any remaining overstatement; do not execute or alter runner/device/Git.

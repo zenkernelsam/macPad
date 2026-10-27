@@ -1,0 +1,36 @@
+stage=app-socket pid=10595 sample=1 kind=11 keycode=124 producer-to-socket=0.513ms
+stage=app-queue pid=10595 sample=1 kind=11 keycode=124 producer-to-queue=2.420ms delivery=post-event
+stage=app-dispatch pid=10595 sample=0 kind=down keycode=124 producer-to-app=2.685ms post-to-app=-1.000ms event=80568.493185 app=80568.495871 route=uncorrelated
+stage=app-socket pid=10595 sample=2 kind=12 keycode=124 producer-to-socket=2.768ms
+stage=app-queue pid=10595 sample=2 kind=12 keycode=124 producer-to-queue=3.222ms delivery=post-event
+stage=app-dispatch pid=10595 sample=0 kind=up keycode=124 producer-to-app=12.036ms post-to-app=-1.000ms event=80568.493203 app=80568.505239 route=uncorrelated
+stage=app-socket pid=10595 sample=1 kind=11 keycode=2 producer-to-socket=0.271ms
+stage=app-queue pid=10595 sample=1 kind=11 keycode=2 producer-to-queue=0.575ms delivery=post-event
+stage=app-dispatch pid=10595 sample=0 kind=down keycode=2 producer-to-app=0.652ms post-to-app=-1.000ms event=80606.897217 app=80606.897869 route=uncorrelated
+stage=app-socket pid=10595 sample=2 kind=12 keycode=2 producer-to-socket=0.715ms
+stage=app-queue pid=10595 sample=2 kind=12 keycode=2 producer-to-queue=0.806ms delivery=post-event
+stage=app-dispatch pid=10595 sample=0 kind=up keycode=2 producer-to-app=19.987ms post-to-app=-1.000ms event=80606.897236 app=80606.917223 route=uncorrelated
+stage=app-socket pid=10595 sample=1 kind=11 keycode=3 producer-to-socket=0.313ms
+stage=app-queue pid=10595 sample=1 kind=11 keycode=3 producer-to-queue=0.633ms delivery=post-event
+stage=app-socket pid=10595 sample=2 kind=12 keycode=3 producer-to-socket=0.769ms
+stage=app-queue pid=10595 sample=2 kind=12 keycode=3 producer-to-queue=0.849ms delivery=post-event
+stage=app-dispatch pid=10595 sample=0 kind=down keycode=3 producer-to-app=0.876ms post-to-app=-1.000ms event=80618.766774 app=80618.767651 route=uncorrelated
+stage=app-dispatch pid=10595 sample=0 kind=up keycode=3 producer-to-app=37.679ms post-to-app=-1.000ms event=80618.766799 app=80618.804478 route=uncorrelated
+stage=app-socket pid=10595 sample=1 kind=11 keycode=2 producer-to-socket=0.243ms
+stage=app-queue pid=10595 sample=1 kind=11 keycode=2 producer-to-queue=0.570ms delivery=post-event
+stage=app-dispatch pid=10595 sample=0 kind=down keycode=2 producer-to-app=0.719ms post-to-app=-1.000ms event=80663.012669 app=80663.013388 route=uncorrelated
+stage=app-socket pid=10595 sample=2 kind=12 keycode=2 producer-to-socket=0.772ms
+stage=app-queue pid=10595 sample=2 kind=12 keycode=2 producer-to-queue=0.892ms delivery=post-event
+stage=app-dispatch pid=10595 sample=0 kind=up keycode=2 producer-to-app=33.107ms post-to-app=-1.000ms event=80663.012687 app=80663.045794 route=uncorrelated
+stage=app-socket pid=10595 sample=1 kind=11 keycode=51 producer-to-socket=0.341ms
+stage=app-queue pid=10595 sample=1 kind=11 keycode=51 producer-to-queue=0.720ms delivery=post-event
+stage=app-dispatch pid=10595 sample=0 kind=down keycode=51 producer-to-app=0.881ms post-to-app=-1.000ms event=80700.009593 app=80700.010474 route=uncorrelated
+stage=app-socket pid=10595 sample=2 kind=12 keycode=51 producer-to-socket=0.922ms
+stage=app-queue pid=10595 sample=2 kind=12 keycode=51 producer-to-queue=1.210ms delivery=post-event
+stage=app-dispatch pid=10595 sample=0 kind=up keycode=51 producer-to-app=47.981ms post-to-app=-1.000ms event=80700.009630 app=80700.057611 route=uncorrelated
+stage=app-socket pid=10595 sample=1 kind=11 keycode=53 producer-to-socket=0.531ms
+stage=app-queue pid=10595 sample=1 kind=11 keycode=53 producer-to-queue=1.137ms delivery=post-event
+stage=app-socket pid=10595 sample=2 kind=12 keycode=53 producer-to-socket=1.467ms
+stage=app-dispatch pid=10595 sample=0 kind=down keycode=53 producer-to-app=1.577ms post-to-app=-1.000ms event=80700.766220 app=80700.767797 route=uncorrelated
+stage=app-queue pid=10595 sample=2 kind=12 keycode=53 producer-to-queue=1.867ms delivery=post-event
+stage=app-dispatch pid=10595 sample=0 kind=up keycode=53 producer-to-app=79.640ms post-to-app=-1.000ms event=80700.766251 app=80700.845891 route=uncorrelated

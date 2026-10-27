@@ -1,0 +1,30 @@
+{
+  "time": "2026-10-18T09:52:46.487Z",
+  "local_time": "2026-10-18T17:52:46+08:00",
+  "frontend": {
+    "session_id": "02A55FDA-3ED9-47B0-AD3A-DCF4E26FD263",
+    "name": "macPad移植-前端",
+    "tty": "/dev/ttys000",
+    "pid": 38533,
+    "cwd": "/Users/ciscohe/Desktop/macPad",
+    "binding_verified": true,
+    "handover_ready": false,
+    "state": "Working; searching existing local shared-cache UUID/mapping/fixup inputs for R013"
+  },
+  "backend": {
+    "session_id": "C455E1A7-FC18-4473-9B6D-22F619785362",
+    "name": "macPad移植-后端",
+    "tty": "/dev/ttys001",
+    "pid": 39300,
+    "cwd": "/Users/ciscohe/Desktop/macPad",
+    "binding_verified": true,
+    "handover_ready": false,
+    "state": "Working; R010 frozen clean-tree package/device acceptance setup"
+  },
+  "actions": {
+    "messages_sent": 0,
+    "device_operations_by_coordinator": 0,
+    "deep_review_of_moving_results": 0
+  },
+  "next": "existing scheduled wake"
+}

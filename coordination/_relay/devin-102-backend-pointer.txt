@@ -1,0 +1,1 @@
+Read coordination/_relay/devin-102-backend-task.md. Trace exact tccd requesting/accessing/returned token identity validation and nil identity versus getter-error producers. Offline only; no device or setters. Save raw evidence and D102 handover.

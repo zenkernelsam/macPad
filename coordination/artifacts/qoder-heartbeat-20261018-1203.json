@@ -1,0 +1,21 @@
+{
+  "time": "2026-10-18T12:03:46.727Z",
+  "frontend": {
+    "pid": 38533,
+    "tty": "/dev/ttys000",
+    "binding_verified": true,
+    "title": "Ready",
+    "relay_handover_ready": false,
+    "limit": "historical Thinking text; actual busy state not established"
+  },
+  "backend": {
+    "pid": 39300,
+    "tty": "/dev/ttys001",
+    "binding_verified": true,
+    "state": "Working; SSH restored, R013 cleanup running",
+    "handover_ready": false
+  },
+  "messages_sent": 0,
+  "coordinator_device_operations": 0,
+  "new_acceptance": false
+}

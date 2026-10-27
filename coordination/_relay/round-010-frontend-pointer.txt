@@ -1,0 +1,1 @@
+请执行 coordination/_relay/round-010-to-frontend.md：用已保存WS spindump与精确UUID/slide符号化main-thread停滞，验证是否真进pacing wait；仅离线证据，不改源码/Git/设备。后端做有限F11H控制并补齐现有采样文件，完成handover。

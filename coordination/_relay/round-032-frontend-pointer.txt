@@ -1,0 +1,1 @@
+请执行 coordination/_relay/round-032-to-frontend.md；用修正后的独立校验器审核已落盘R031候选，不打断后端，完成文档并 handover。

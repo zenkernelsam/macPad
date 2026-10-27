@@ -1,0 +1,1 @@
+Frontend: coordination/_relay/devin-196-frontend-task.md. Read-only frozen D193 cleanup/execution-test review; backend separately owns scanner/main repair.

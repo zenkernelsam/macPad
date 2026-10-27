@@ -1,12 +1,12 @@
 {
-  "checked_at": "2026-10-15T07:04:46.988614+08:00",
+  "checked_at": "2026-10-18T17:29:20.012968+08:00",
   "session_id": "EE473D24-793C-48E3-B8A9-2298BB40327F",
   "cli_pid": 86525,
   "agent_pid": 90827,
   "tty": "/dev/ttys001",
   "cwd": "/Users/ciscohe/Desktop/macPad",
   "binding_verified": true,
-  "state": "R008_WORKING",
+  "state": "QODER_R012_R009_WORKING",
   "observation": "Same session displays Typing / Guide Devin while it works. Screen shows edits to cold-trust manifest prerequisite coverage and the worker starting the TCC readiness refactor. These are in-progress changes, not reviewed fixes or runtime acceptance.",
   "handover_ready": false,
   "coordination_block_resolved": true,
@@ -14,9 +14,58 @@
   "cr_sent_this_check": 0,
   "scheduler_changed": false,
   "reviewer_checkpoint": "95382f4dd97b52765359f40ffbc6db33cab43ccd",
-  "git_write_owner": "Devin",
-  "next_action": "Wait for explicit handover; no mid-work guidance, deep review or duplicate dispatch.",
+  "git_write_owner": "Frontend owns provider integration; backend read-only isolation audit.",
+  "next_action": "Stop this scheduled check; workers continue current packets. Next timer checks completed handovers.",
   "receipt": "artifacts/R008-dispatch-receipt.json",
-  "screen": "artifacts/R008-heartbeat-20261015-070351.json",
-  "deep_review_performed": false
+  "screen": "artifacts/user-shutdown-handover-20261015.json",
+  "deep_review_performed": false,
+  "shutdown_verified": true,
+  "qoder_frontend": {
+    "role": "macPad移植-前端",
+    "pid": 38533,
+    "tty": "/dev/ttys000",
+    "session_id": "02A55FDA-3ED9-47B0-AD3A-DCF4E26FD263",
+    "cwd": "/Users/ciscohe/Desktop/macPad",
+    "body_sha256": "728f19e7b831813a38aad02f64e2135d3a5062d3cb10d5d5a516a157a2e2529a",
+    "body_sent_once": true,
+    "cr_sent_once": true
+  },
+  "qoder_backend": {
+    "role": "macPad移植-后端",
+    "pid": 39300,
+    "tty": "/dev/ttys001",
+    "session_id": "C455E1A7-FC18-4473-9B6D-22F619785362",
+    "cwd": "/Users/ciscohe/Desktop/macPad",
+    "body_sha256": "adfe11c826877cfdb58fb7a2d52cdcdebff08e07d06eab249060d2816306e5ae",
+    "body_sent_once": true,
+    "cr_sent_once": true,
+    "credentials": "sent only in transient terminal message; never persisted"
+  },
+  "technical_dispatch_sent": true,
+  "last_read": {
+    "frontend": {
+      "pid": 38533,
+      "tty": "/dev/ttys000",
+      "session_id": "02A55FDA-3ED9-47B0-AD3A-DCF4E26FD263",
+      "state": "Working; editing package artifact verifier for provider payload"
+    },
+    "backend": {
+      "pid": 39300,
+      "tty": "/dev/ttys001",
+      "session_id": "C455E1A7-FC18-4473-9B6D-22F619785362",
+      "state": "Working; investigating isolated compiler service bootstrap and existing private-identifier bundle"
+    }
+  },
+  "qoder_device_address_received": "192.168.68.63",
+  "qoder_device_port": 2222,
+  "frontend_review": "APPROVED_WITH_LIMITS",
+  "frontend_head": "d3c4ecf",
+  "frontend_handover": true,
+  "frontend_round_002_sent": true,
+  "frontend_round_002_cr_sent": true,
+  "frontend_round_002_marker_verified": true,
+  "frontend_round_002": "CHANGES_REQUESTED",
+  "frontend_finding": "F1 global flag bypasses exact-window requirement",
+  "backend_owner": "package-build-and-R008",
+  "wake_policy": "Existing scheduled task only; goal mode disabled by human. No internal polling or sleep loop."
 }

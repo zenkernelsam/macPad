@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-18T15:05:52.944908+08:00",
+  "finished": "2026-10-18T15:05:53.979480+08:00",
+  "command": "set -e\nexport PATH=/var/jb/usr/bin:/var/jb/usr/sbin:/usr/bin:/usr/sbin:/bin:/sbin\nB=/var/mobile/macws_r008_preinstall_20261018/libmachook-clean\nmkdir -p \"$B\"\ncp -p /var/jb/usr/macOS/lib/libmachook.dylib \"$B/\"\ncp -p /var/jb/usr/macOS/lib/libmachook_arm64.dylib \"$B/\"\nFAT=/var/tmp/libmachook-165.dylib\nLIB=/var/jb/usr/macOS/lib/libmachook.dylib\nLIB64=/var/jb/usr/macOS/lib/libmachook_arm64.dylib\nENT=/var/jb/usr/macOS/bin/entitlements.plist\npython3 /var/jb/usr/macOS/bin/set_macos_version.py \"$FAT\"\nT1=\"${LIB}.sdk165-new.$$\"; T2=\"${LIB64}.sdk165-new.$$\"\nlipo \"$FAT\" -thin arm64e -output \"$T1\"\nlipo \"$FAT\" -thin arm64 -output \"$T2\"\nchmod 755 \"$T1\" \"$T2\"\nldid -S\"$ENT\" -M \"$T1\"; ldid -S\"$ENT\" -M \"$T1\"\nldid -S\"$ENT\" -M \"$T2\"; ldid -S\"$ENT\" -M \"$T2\"\nrm -f \"$LIB\" \"$LIB64\"\nmv \"$T1\" \"$LIB\"; mv \"$T2\" \"$LIB64\"\nfor d in /var/mnt/rootfs/usr/local/lib; do\n  rm -f \"$d/libmachook.dylib\" \"$d/libmachook_arm64.dylib\"\n  cp -p \"$LIB\" \"$d/libmachook.dylib\"\n  cp -p \"$LIB64\" \"$d/libmachook_arm64.dylib\"\ndone\nfor f in \"$LIB\" \"$LIB64\"; do\n  for a in arm64 arm64e; do\n    h=$(ldid -arch \"$a\" -h \"$f\" 2>/dev/null | grep CDHash= | cut -c8-)\n    [ -n \"$h\" ] && jbctl trustcache add \"$h\" >/dev/null 2>&1 || true\n    [ -z \"$h\" ] || jbctl trustcache info 2>/dev/null | grep -qi \"$h\" || { echo \"NOT_TRUSTED $f $a $h\"; exit 1; }\n  done\ndone\nlipo -info \"$LIB\"; lipo -info \"$LIB64\"\nsha256sum \"$LIB\" \"$LIB64\"\necho LIB165_DEPLOY_RC=0\n",
+  "command_sha256": "74f821642a68caad6f6228ee6f1ce759f623d10a9d8d7229b05721dc82260794",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "[slice-0:0x100000c/0x0] LC_BUILD_VERSION platform=2 minos=0xe0000 sdk=0x1a0200 -> macOS 13.0\n[slice-1:0x100000c/0x80000002] LC_BUILD_VERSION platform=2 minos=0xe0000 sdk=0x1a0200 -> macOS 13.0\npatched /var/tmp/libmachook-165.dylib\nNon-fat file: /var/jb/usr/macOS/lib/libmachook.dylib is architecture: arm64e\nNon-fat file: /var/jb/usr/macOS/lib/libmachook_arm64.dylib is architecture: arm64\n8b3069db839ab47221ff008fc04bd7f50fbdb8f0c2c15e18a35a25a3082150bd  /var/jb/usr/macOS/lib/libmachook.dylib\nfb8c8229ac951aee533bb1a0118a2cd911b06ffa0e27101402668dacc1605b8a  /var/jb/usr/macOS/lib/libmachook_arm64.dylib\nLIB165_DEPLOY_RC=0\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

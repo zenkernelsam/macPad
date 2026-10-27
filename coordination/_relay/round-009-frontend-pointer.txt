@@ -1,0 +1,1 @@
+精确Ventura libquarantine现已在 analysis/r005-responsibility-inputs/，请执行 coordination/_relay/round-009-to-frontend.md，完成真实helper/policy/selector/103边界分析，修正errno唯一归因。只读离线、不改源码/Git/设备；完成handover。

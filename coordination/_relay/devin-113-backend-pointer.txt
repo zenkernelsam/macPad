@@ -1,0 +1,1 @@
+Read coordination/_relay/devin-113-backend-task.md. Produce standalone bounded-memory diagnostic transport and D111 adapter, verified by D112 controls plus producer-saturation/stalled-writer tests. No frontend moving files, device or production changes. Return D113 handover.

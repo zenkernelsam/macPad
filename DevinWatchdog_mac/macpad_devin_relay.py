@@ -16,6 +16,7 @@ import iterm2
 PROJECT = Path(__file__).resolve().parents[1]
 ROLE = 'macPad移植'
 HANDOVER = {'(handover to codex now)', '(handover to codex)'}
+HANDOVER_REMINDER = '行政交接确认：请只确认已有后台任务是否结束及清理状态，保存当前结果后独立一行回复 (handover to codex now)。不要继续实验、开发或访问设备。'
 
 
 def marker_visible(screen, marker):
@@ -31,13 +32,34 @@ def handover_ready(screen):
     if not markers or not prompts or markers[-1] >= prompts[-1]:
         return False
     # Ignore an old handover remaining above a newly started CLI session.
-    if any('Devin CLI' in line or '[macPad relay ' in line
+    if any(line.strip() == 'Devin CLI' or '[macPad relay ' in line
            for line in lines[markers[-1] + 1:]):
         return False
     footer = '\n'.join(lines[-12:])
     return not any(text in footer for text in (
         'Guide Devin', 'esc twice to interrupt', 'Press Enter to send queued',
         '↵ accept', 'esc close', '[Pasted text #'))
+
+
+def reminder_ready(screen):
+    text = screen.replace('\x00', ' ')
+    lines = text.splitlines()
+    prompts = [i for i, line in enumerate(lines)
+               if re.fullmatch(r'\s*❭ Ask Devin to build features, fix bugs, or work on your code\s*', line)]
+    if len(prompts) != 1 or 'Running in background' not in text:
+        return False
+    if any(re.match(r'^\s*❭', line) for line in lines if line != lines[prompts[0]]):
+        return False
+    return not any(word in text for word in (
+        'Guide Devin', 'esc twice to interrupt', 'Press Enter to send queued',
+        '↵ accept', 'esc close', '[Pasted text #', 'Thinking ·', 'Typing ·'))
+
+
+def require_no_children(pid):
+    rows = subprocess.check_output(
+        ['ps', '-axo', 'pid=,ppid='], text=True, timeout=5).splitlines()
+    if any(len(row.split()) == 2 and int(row.split()[1]) == pid for row in rows):
+        raise RuntimeError('Worker has child processes; reminder not sent')
 
 
 def live_processes(tty):
@@ -112,18 +134,31 @@ async def main(connection, args):
             print(record['screen'])
         return
     require_recipient(record, args)
-    if not record['handover_ready']:
+    reminder = args.action == 'remind-handover'
+    if reminder:
+        if args.file or not reminder_ready(record['screen']):
+            raise RuntimeError('No empty idle background-notification prompt; reminder not sent')
+        require_no_children(record['agent_pid'])
+    elif not record['handover_ready']:
         raise RuntimeError('No explicit idle handover; task/review not sent')
-    body = args.file.read_text().strip()
+    body = HANDOVER_REMINDER if reminder else args.file.read_text().strip()
     if not body or '\n' in body or len(body) > 600:
         raise RuntimeError('Relay requires one short report/task pointer (maximum 600 characters)')
     digest = hashlib.sha256(body.encode()).hexdigest()
     marker = '[macPad relay ' + digest[:12] + '-' + uuid.uuid4().hex[:8] + ']'
     if args.dry_run:
         print(json.dumps({'input_sent': False, 'dry_run': True,
-                          'identity': identity(record), 'handover_ready': True}))
+                          'identity': identity(record),
+                          'handover_ready': record['handover_ready'],
+                          'administrative_reminder': reminder}))
         return
     expected = identity(record)
+    if reminder:
+        receipt_dir = PROJECT / 'tmp' / 'handover-reminders'
+        receipt_dir.mkdir(parents=True, exist_ok=True)
+        key = hashlib.sha256(repr(expected).encode()).hexdigest()
+        with (receipt_dir / (key + '.json')).open('x') as receipt:
+            json.dump({'identity': expected, 'state': 'reserved-before-send'}, receipt)
     await session.async_send_text(body, suppress_broadcast=True)
     await asyncio.sleep(.5)
     draft, draft_session = await snapshot(connection)
@@ -138,6 +173,8 @@ async def main(connection, args):
     if identity(after) != expected or not marker_visible(after['screen'], marker) \
             or 'Guide Devin' in after['screen'] or 'Press Enter to send queued' in after['screen']:
         raise RuntimeError('Draft marker/identity not verified; no CR sent; never repaste automatically')
+    if reminder:
+        require_no_children(after['agent_pid'])
     # Exactly one CR; no working-session guide/queued flush/overlay keys.
     await current_session.async_send_text('\r', suppress_broadcast=True)
     print(json.dumps({'body_sent_once': True, 'cr_sent_once': True,
@@ -146,22 +183,26 @@ async def main(connection, args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('action', choices=('read', 'send'))
+    parser.add_argument('action', choices=('read', 'send', 'remind-handover'))
     parser.add_argument('file', type=Path, nargs='?')
     parser.add_argument('--expected-session-id')
     parser.add_argument('--expected-pid', type=int)
     parser.add_argument('--dry-run', action='store_true')
     parser.add_argument('--json', action='store_true')
+    parser.add_argument('--role', default=ROLE)
     args = parser.parse_args()
+    ROLE = args.role
+    if args.action == 'remind-handover' and (args.file or not args.expected_session_id or not args.expected_pid):
+        parser.error('remind-handover requires session/PID and forbids a message file')
     if args.action == 'send' and (not args.file or not args.expected_session_id or not args.expected_pid):
         parser.error('send requires file, --expected-session-id and --expected-pid from a fresh read')
     lock = None
     try:
-        if args.action == 'send' and not args.dry_run:
+        if args.action in ('send', 'remind-handover') and not args.dry_run:
             (PROJECT / 'tmp').mkdir(exist_ok=True)
             lock = (PROJECT / 'tmp' / 'macpad-relay.lock').open('a')
             fcntl.flock(lock.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
         iterm2.run_until_complete(lambda c: main(c, args), retry=False)
-    except (RuntimeError, subprocess.SubprocessError, BlockingIOError) as error:
+    except (RuntimeError, subprocess.SubprocessError, OSError) as error:
         print(str(error), file=sys.stderr)
         sys.exit(2)

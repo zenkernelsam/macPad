@@ -1,0 +1,1 @@
+Offline-only closeout: document the corrected panel-freshness boundary from D041 seq~1176 versus D094 seq12530, verify no later panel capture exists, and preserve the existing reopen generation+visible-window contract. No device/capture/build/source/restart/Git. Return concise handover.

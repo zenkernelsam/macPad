@@ -1,0 +1,1 @@
+请执行 coordination/_relay/round-030-to-frontend.md；独立验证 exact-profile bitstream 重编码与负向用例，不打断后端，完成文档并 handover。

@@ -1,0 +1,1 @@
+请执行 coordination/_relay/round-014-backend-result-task.md：按R009隔离endpoint方案做一次有限F11H type15完整请求/LLVM错误捕获，仅独占disposable client/service，不启动WS或改共享compiler/包/策略；清理并写证据后handover。

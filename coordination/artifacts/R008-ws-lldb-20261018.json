@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-18T14:39:17.907618+08:00",
+  "finished": "2026-10-18T14:39:18.312520+08:00",
+  "command": "/var/jb/usr/bin/lldb -p 24175 -o \"thread backtrace all\" -o \"process detach\" -o \"quit\" 2>&1",
+  "command_sha256": "10d12f30f8c13cac854ea0342b2504702b59f6a7fa2b0dc790cfb21178fc1a2e",
+  "exit": 127,
+  "timeout": false,
+  "stdout": "zsh:1: no such file or directory: /var/jb/usr/bin/lldb\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

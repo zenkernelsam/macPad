@@ -1,0 +1,3 @@
+# D200 frontend — minimal services-pass observer ABI audit
+
+Read-only exact-binary audit of D198's proposed CGXRunOneServicesPass entry 0x33C63C. Verify pinned SkyLight UUID/hash, exact prologue bytes, register/argument/return ABI, internal waits and branch/return behavior, provider relocatability of the entry window, and whether wrapping its entry/exit preserves behavior on every exit. Cross-check existing D140/D142 evidence and existing permits to avoid duplicate work. Explicitly separate disassembly facts from unresolved ABI guesses and identify what runtime observation would be needed. No edits/builds/permits/hooks/device or integration authorization. Save concise report and formal handover.

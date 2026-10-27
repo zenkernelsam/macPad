@@ -1,0 +1,3 @@
+# D056 preliminary backend review
+
+Rejected launch premise: current launchdchrootexec/main.m119 explicitly sets POSIX_SPAWN_SETEXEC and133 passes flags to posix_spawnattr_setflags. Commented legacy line114 is not operative. No source proof of orphaned new PID. Installed binary identity still requires verification; no global responsibility inheritance conclusion. Universal no-populated-verdict/only-remaining-avenue/kernel-API-nonexistence assertions exceed evidence. D057 correct historical claim and exact indirect-handler admission/attribution order, local only. Frontend D056 still active and not interrupted.

@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-18T13:40:15.599210+08:00",
+  "finished": "2026-10-18T13:40:17.065724+08:00",
+  "command": "export PATH=/var/jb/usr/bin:/var/jb/usr/sbin:/usr/bin:/usr/sbin:/bin:/sbin; export DEBIAN_FRONTEND=noninteractive; /var/jb/usr/bin/dpkg -i /var/tmp/macws-r008-full.deb 2>&1; echo DPKG_INSTALL_RC=$?",
+  "command_sha256": "19bd264ebdc1864093fda76f819e2e44324b26213c472d30fe77373301e4c79b",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "(Reading database ... 14352 files and directories currently installed.)\nPreparing to unpack /var/tmp/macws-r008-full.deb ...\nUnpacking com.kdt.macosbooter (0.3.4) over (0.3.4) ...\ndpkg: warning: unable to delete old directory '/var/jb/usr/local/bin': Directory not empty\ndpkg: warning: unable to delete old directory '/var/jb/usr/local': Directory not empty\ndpkg: dependency problems prevent configuration of com.kdt.macosbooter:\n com.kdt.macosbooter depends on odcctools; however:\n  Package odcctools is not installed.\n\ndpkg: error processing package com.kdt.macosbooter (--install):\n dependency problems - leaving unconfigured\nProcessing triggers for uikittools (2.1.8) ...\nProcessing triggers for org.coolstar.sileo (2.5.1) ...\nErrors were encountered while processing:\n com.kdt.macosbooter\nDPKG_INSTALL_RC=1\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

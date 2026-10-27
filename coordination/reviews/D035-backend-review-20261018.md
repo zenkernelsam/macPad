@@ -1,0 +1,3 @@
+# D035 backend review
+
+Dynamic self-pins removed; four candidate permits have independently stated expected identities/prologues, preserving R012 PAC hunk. Build success not acceptance. Reject deploy: publicSwapEnd first instruction CBZ b4000080 is denied by current provider stolen-window classifier even after permission; authenticated terminal tail branch needs explicit semantics audit. Frontend active D035 independent audit confirms PC-relative refusal in interim screen (formal result pending). Actual WS architecture UUID also unresolved. D036 backend assigned exact relocation/safe-route feasibility and justified local correction only, no device deployment. Frontend not interrupted. No frames/pixels acceptance.

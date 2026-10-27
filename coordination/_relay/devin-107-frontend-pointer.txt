@@ -1,0 +1,1 @@
+Read coordination/_relay/devin-107-frontend-task.md. Create isolated diagnostic patch/parser candidate under analysis only, with complete timing boundaries and focused parser verification. No production edits/device/build/deploy/restart. Return concrete D107 artifacts plus handover.

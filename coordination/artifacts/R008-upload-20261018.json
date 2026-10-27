@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-18T13:40:09.764412+08:00",
+  "finished": "2026-10-18T13:40:10.633753+08:00",
+  "command": "upload packages/com.kdt.macosbooter_0.3.4_iphoneos-arm64.deb -> /var/tmp/macws-r008-full.deb",
+  "command_sha256": "5a290db3eb91265377a40f8608d3aed8ed7a963cf1cb896bab3a9cbaf1d595bc",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "",
+  "stderr": "",
+  "upload_source_sha256": "9b346beabe95db6aa9210a763241a6107b8e9980f4e7268eb939ea5cafe02c3c",
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

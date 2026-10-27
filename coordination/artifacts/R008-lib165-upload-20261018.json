@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-18T15:05:52.144682+08:00",
+  "finished": "2026-10-18T15:05:52.734413+08:00",
+  "command": "upload /tmp/macpad-r008-clean/libmachook/.theos/obj/libmachook.dylib -> /var/tmp/libmachook-165.dylib",
+  "command_sha256": "141cb6bb456055329954a9fc5b7521a32d72dd89af647f32654463d973fe5acc",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "",
+  "stderr": "",
+  "upload_source_sha256": "bf311d3085fe7f7ddba41b19ac2e1600312bf3397d5df9cf5e24aead56b466f2",
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

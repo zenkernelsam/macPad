@@ -1,0 +1,10 @@
+# D040 frontend — restored milestone ledger + next input acceptance plan
+
+D039 accepted for inspected PNG+advancing composite evidence. Coordinator independently viewed frame-macos-desktop.png: forest/lake wallpaper, Finder menu bar and Dock visible under Host overlay. Display restoration accepted, not input/interactive usability. Backend still owns D037 final writeup; do not interrupt.
+
+Local read-only source/evidence audit, own docs only. (1) Consolidate exact restored baseline source/build/deployed hashes, launch flags, static wallpaper identity (if known), correct runtime witnesses and cleanup/session-stopped fact. Correct D039 wording inconsistencies in YOUR doc/result: 'no saved capture PNG' is stale once PNG saved; no direct live changed-byte/UUID read means cache/behavioral evidence with limits, not exact mapped-byte proof. 'first since Oct12' not established; historical10-13 visible evidence exists. Distinguish causal evidence for whole declared bundle from individual4 target isolation; no unsupported zero-confound assertion.
+
+(2) Design next bounded input acceptance ladder based on CURRENT known F1 exact-window route/provider deployment and latest responsibility/TCC findings (D033/earlier R003-R004, native vs chroot). Read both share lessons/current code; don't rebuild capabilities already present. Separate exact AppInput PID/window delivery from global SLSPostEventRecord policy path. Identify one existing app/window test with visible text/cursor consequence and sequence/timestamps, then minimal probe if missing; require raw explicit reply dictionary and exact WindowServer error semantics for global acceptance. No TCC override, new identity spoof, constant-return hook or artificial success. Report likely producing-layer next step with FACT/THEORY and exact available tool paths, not speculative fix.
+
+No device/build/source/Git changes, no backend shared artifact edits. Write docs/evidence/devin-d040-restored-baseline-input-plan-20261019.md and coordination/_relay/devin-040-frontend-result.md. STOP after handover.
+(handover to codex now)

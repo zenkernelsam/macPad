@@ -1,0 +1,1 @@
+Frontend: coordination/_relay/devin-192-frontend-task.md. Read-only verify special-reply-port right ownership and cleanup against frozen source; do not inspect moving D190.

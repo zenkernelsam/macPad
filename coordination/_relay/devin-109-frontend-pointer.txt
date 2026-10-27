@@ -1,0 +1,1 @@
+Read coordination/_relay/devin-109-frontend-task.md. Repair isolated candidate concurrency/identity/interval-union invariants with adversarial tests; do not apply production patch or deploy. Return D109 artifacts and handover.

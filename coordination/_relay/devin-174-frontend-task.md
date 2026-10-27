@@ -1,0 +1,3 @@
+# D174 frontend — D173 image identity and cap fail-closed audit
+
+Read-only review of the D173 candidate after its reported repairs. Determine whether recovered `uuid_lo64` is sufficient for the D165 requirement of identical SkyLight image UUID (full 128-bit UUID), whether current file/in-memory schema carries enough information, and how to label or close that gap without inventing identity. Audit `tids_capped` and `pend_overflow` paths to determine whether any affected sample can still be scored after truncation. Check related arithmetic/bounds and fixtures. Give concrete file/line findings and ACCEPT / CHANGES_REQUESTED verdict. Do not edit source/tests, build, access device, or authorize integration. Save a concise note and formal handover.

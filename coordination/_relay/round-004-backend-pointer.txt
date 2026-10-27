@@ -1,0 +1,1 @@
+请执行 coordination/_relay/round-004-to-backend.md：独占设备做native-vs-chroot responsibility只读边界对照，先验证精确ABI；必要时一个有限诊断helper，禁止setter/内核写入/权限绕过，不重建包。沿用临时SSH授权，不落凭据。完成证据、清理及handover。

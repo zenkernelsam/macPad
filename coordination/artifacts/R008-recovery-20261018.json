@@ -1,0 +1,12 @@
+{
+  "started": "2026-10-18T15:24:58.704151+08:00",
+  "finished": "2026-10-18T15:25:04.474201+08:00",
+  "command": "export PATH=/var/jb/usr/bin:/var/jb/usr/sbin:/usr/bin:/usr/sbin:/bin:/sbin\necho \"PRE_WS=$(launchctl list 2>/dev/null | awk '$3==\"UIKitApplication:com.macwsguide.windowserver\"{print $1}')\"\necho \"PRE_TCCD=$(launchctl list 2>/dev/null | awk '$3==\"com.macwsguide.tccd-system\"{print $1}')\"\nWS=$(launchctl list 2>/dev/null | awk '$3==\"UIKitApplication:com.macwsguide.windowserver\"{print $1}')\n[ -n \"$WS\" ] || { echo NO_WS; exit 1; }\nkill -TERM \"$WS\"\necho \"KILLED=$WS rc=$?\"\ni=0\nwhile [ $i -lt 36 ]; do\n  i=$((i+1)); sleep 5\n  NOW_WS=$(launchctl list 2>/dev/null | awk '$3==\"UIKitApplication:com.macwsguide.windowserver\"{print $1}')\n  NOW_TCCD=$(launchctl list 2>/dev/null | awk '$3==\"com.macwsguide.tccd-system\"{print $1}')\n  echo \"T+${i}x5s WS=$NOW_WS TCCD=$NOW_TCCD\"\n  [ -n \"$NOW_WS\" ] && [ \"$NOW_WS\" != \"$WS\" ] && echo \"RECOVERY_WS_OBSERVED\"\n  [ -n \"$NOW_TCCD\" ] && [ \"$NOW_TCCD\" != \"$(launchctl list 2>/dev/null | awk '$3==\"com.macwsguide.tccd-system\"{print $1}')\" ] || true\n  if [ -n \"$NOW_WS\" ] && [ \"$NOW_WS\" != \"$WS\" ] && [ -n \"$NOW_TCCD\" ]; then break; fi\ndone\necho \"=== WATCHDOG LOG\"\ngrep -E \"reconnecting|recovered|tccd transport|did not recover|replacement WindowServer|GUI clients reconnected\" /var/jb/var/mobile/macos_gui_watchdog.log 2>/dev/null | tail -12\necho \"=== TCCD PRINT\"\nlaunchctl print user/501/com.macwsguide.tccd-system 2>&1 | grep -E \"state =|pid =|com.apple.macosbooter\" | head -6\necho \"=== FINAL\"\nps -axo pid,etime,command | grep \"Resources/WindowServer\" | grep -v grep\n",
+  "command_sha256": "7d016f5891c7075eb536689009233dfaac4286a2abcc3b0f5fda19c43ae44277",
+  "exit": 0,
+  "timeout": false,
+  "stdout": "PRE_WS=38911\nPRE_TCCD=38754\nKILLED=38911 rc=0\nT+1x5s WS=39302 TCCD=38754\nRECOVERY_WS_OBSERVED\n=== WATCHDOG LOG\n[macos_gui] watchdog: reconnecting GUI clients to replacement WindowServer 39302\n=== TCCD PRINT\n\tstate = running\n\tpid = 38754\n\t\t\"com.apple.macosbooter.tccd.system\" = {\n=== FINAL\n39302       00:05 /System/Library/PrivateFrameworks/SkyLight.framework/Resources/WindowServer -virtualonly -daemon\n",
+  "stderr": "",
+  "upload_source_sha256": null,
+  "limit": "A timeout kills the local SSH process group; remote work may need explicit cleanup."
+}

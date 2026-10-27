@@ -1,0 +1,1 @@
+请执行 coordination/_relay/round-011-to-frontend.md：使用后端已复制spindump和严格匹配的images/UUID/slide/libmachook身份，判断主线程是否确实在pacing wait；仅离线取证，不猜、不改源码/Git/设备。完成handover。

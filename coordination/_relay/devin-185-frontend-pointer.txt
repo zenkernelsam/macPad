@@ -1,0 +1,1 @@
+Frontend: coordination/_relay/devin-185-frontend-task.md. Independently audit D184's UUID once-only publication repair; no code/device/product integration.

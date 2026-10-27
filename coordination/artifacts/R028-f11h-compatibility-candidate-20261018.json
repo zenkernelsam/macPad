@@ -1,0 +1,155 @@
+{
+  "schema": "macws-r028-f11h-compatibility-candidate-evidence-v1",
+  "date": "2026-10-18",
+  "timezone": "Asia/Hong_Kong",
+  "packet": "coordination/_relay/round-028-to-backend.md",
+  "categorical": "Provenance reconciled: the disputed original slices are the same 6,944-byte MTLB record (payload 6,916/ce018722; payload+8 zero padding 6,924/454ad619; wrapper 6,936/e3876cba). The only semantic wire change between original and converted F11H is the LLVM16 intrinsic-attribute auto-upgrade on the lifetime declarations (original [argmemonly,nounwind] -> converted [argmemonly,nocallback,nofree,nosync,nounwind,willreturn]); R027 textual equality is the reader's in-memory upgrade. A candidate was built by retargeting the original F11H record in place to the same-length air64-apple-ios19-macabi, preserving all original wire attributes/body/metadata. Direct type-15 A/B: control hits Unknown attribute kind (71)/Connection interrupted; candidate has no ID71 and returns a real compiler reply errorMessage=Target OS is incompatible., error=2. The wire-attribute blocker is bypassed; the target-OS check is the next blocker. The library-path attempt was invalid because the metal2metal adapter routed to the installed companion. No production compiler/WS/generation/package/source/Git/policy/marker change.",
+  "invariants": {
+    "production_compiler_or_ws_run": false,
+    "production_service_generation_restart": false,
+    "package_source_git_policy_marker_changes": false,
+    "attribute_removal_or_stripping": false,
+    "reader_check_patched": false,
+    "assert_bypass_or_fake_success": false,
+    "owned_processes_remaining": 0,
+    "production_compiler_count_before_after": [14, 14]
+  },
+  "provenance": {
+    "original_metallib": {
+      "path": "analysis/r006-mps-f11h/mpsimage.orig.metallib",
+      "bytes": 16448932,
+      "sha256": "376ded7ee154429f6950656eb668b26af27fc6149b734b11dd48a33d68fe4285",
+      "f11h_record_offset": 11426375,
+      "f11h_record_size": 6944,
+      "f11h_record_sha256": "0fa8f789101d5c7d9f292e0ccc068950d7495a2a853588b4067ccdd873778e2c",
+      "wrapper_bytes": 6936,
+      "wrapper_sha256": "e3876cbacf3936f328ea1e025e917aa51bf712e7bfb8a264ec759ed5b888e6d5",
+      "wrapper_bcoff": 20,
+      "wrapper_bcsize": 6916,
+      "payload_sha256": "ce018722f1d9058534380e6fa0aade64cdaef3cbbd0e806d02d769810273ec9b",
+      "file_minus_header_bytes": 6924,
+      "file_minus_header_sha256": "454ad619475cc081e7d57de78d6d4e2f0abdc818c5c7d38e230f72739c806264",
+      "trailing_padding_bytes": 8,
+      "trailing_padding_hex": "0000000000000000"
+    },
+    "converted_metallib": {
+      "path": "analysis/r006-mps-f11h/mpsimage.conv.metallib",
+      "bytes": 17294324,
+      "sha256": "342738608c912eab663879868288299e38147ea64d45b74f57bc0dd12761b2de",
+      "f11h_record_offset": 12085927,
+      "f11h_record_size": 7392,
+      "wrapper_sha256": "6aeb00477fa3ca6ab59a9a125d22e2c6a3791fb3ff6873a890703871bc9f28f7",
+      "payload_bytes": 7372,
+      "payload_sha256": "042303be36e32a7c2755ffae074fc66e99bc6260009b3abcb970a5d87167b849",
+      "trailing_padding_bytes": 0
+    },
+    "reconciliation": "one F11H record; 6,924/454ad619 includes 8 zero padding after the wrapper-declared payload; 6,916/ce018722 is the payload; no conflicting originals"
+  },
+  "wire": {
+    "source_audit": "frontend R027: LLVM16 wire ID71=nocallback, 34=zext, 45=argmemonly, 62=nofree, 63=nosync, 61=willreturn, 86=memory",
+    "original_groups": {
+      "grp4": [0, 45, 0, 18],
+      "grp7": [0, 45, 0, 43, 0, 18, 0, 21],
+      "entries": 14
+    },
+    "converted_groups": {
+      "grp4": [0, 45, 0, 71, 0, 62, 0, 63, 0, 18, 0, 61],
+      "grp7": [0, 45, 0, 18],
+      "grp9": [0, 45, 0, 43, 0, 18, 0, 21],
+      "entries": 16
+    },
+    "semantic_change": "lifetime function group upgraded only; group split/renumbering is serialization consequence"
+  },
+  "auto_upgrade": {
+    "fact": "LLVM16 canonical intrinsic attributes are applied on function construction/upgrade, so any llvm-dis/as round-trip rewrites the lifetime record",
+    "sources": {
+      "BitcodeReader_globalCleanup": "analysis/r027-attribute-wire/llvm16/BitcodeReader.cpp:3676-3684 (UpgradeIntrinsicFunction)",
+      "AutoUpgrade_setAttributes": "analysis/r028-f11h/llvm16/AutoUpgrade.cpp:1174-1181",
+      "Function_ctor_setAttributes": "analysis/r028-f11h/llvm16/Function.cpp:418-422",
+      "Intrinsics_lifetime": "analysis/r028-f11h/llvm16/Intrinsics.td:1191-1196",
+      "source_hashes": {
+        "AutoUpgrade.cpp": "3fc40c49a7d6f26917e704624125805e5233fd221e6da080cda547b8264ea7a1",
+        "Function.cpp": "58aebe9868ac4e41d44f1b4e30f3ea639316e6391e59917ad8875f3bb1b3c67e",
+        "Intrinsics.td": "7e3deee1549c42afe87e2d69bf76f59cf9683eeee7d13e756885f3132b76c75b"
+      }
+    },
+    "consequence": "R027 textual equality was the reader's in-memory upgrade, not wire preservation"
+  },
+  "candidate": {
+    "mechanism": "in-place same-length target retarget of the original F11H record; no llvm-dis/as, no attribute removal",
+    "source_triple": "air64-apple-macosx13.4.0 (24 bytes)",
+    "target_triple": "air64-apple-ios19-macabi (24 bytes)",
+    "triple_offset_in_record": 6873,
+    "changed_bytes": 12,
+    "module": {
+      "bytes": 6944,
+      "sha256": "2f2de66bf924ca5e5e563a1c53822d967354ee323cbd53eac4e40dfc3a025b1b",
+      "wire_groups_identical_to_original": true,
+      "wire_id71_present": false
+    },
+    "metallib": {
+      "bytes": 17293876,
+      "sha256": "ebfd4f923b2dbd4cd684a5b4cb243b14c5cce5f573194d5de6d8dd2d2658fb37",
+      "bitcode_size_before": 14739456,
+      "bitcode_size_after": 14739008,
+      "bitcode_delta": -448,
+      "functions_total": 1825,
+      "other_modules_byte_identical_to_converted": true,
+      "container_target_fields_unchanged": true
+    },
+    "type15_data": {
+      "bytes": 7184,
+      "sha256": "38f086cf8628975a9c32ae2244519e29380006ae1935740b849a916b51ecaf18",
+      "module_size_field": "0x64=0x1B20",
+      "total_fields": "0x68/0x74/0x84/0xA4/0xD0=0x1C10",
+      "wrapper_bcsize": "0x1B04"
+    },
+    "builder_sha256": "fc3009f31d528c8d64b1a75be4224833369238156075fac49448fd424f2e65bc"
+  },
+  "ab": {
+    "library_path_attempt": {
+      "valid_for_candidate": false,
+      "reason": "metal2metal adapter fixed route directory resolves the installed companion; both control and candidate sent the converted module (length 7632, fnv 0b867f3663545473)"
+    },
+    "direct_replay_control": {
+      "data_sha256": "ffa7daa51d8de4493c06c8c3e65717b116521d4e9fb6cc89fa8e89f91cbe2e90",
+      "bytes": 7632,
+      "fnv1a64": "0b867f3663545473",
+      "service_pid": 90530,
+      "diag": "R024-DIAG-FATAL: Unknown attribute kind (71) (Producer: 'LLVM16.0.0' Reader: 'LLVM ')",
+      "reply": "XPCErrorDescription = Connection interrupted"
+    },
+    "direct_replay_candidate": {
+      "data_sha256": "38f086cf8628975a9c32ae2244519e29380006ae1935740b849a916b51ecaf18",
+      "bytes": 7184,
+      "fnv1a64": "8d7a319691fc99eb",
+      "service_pid": 90568,
+      "diag": "R024-DIAG-LOADED/HOOK-INSTALLED changed=1; no R024-DIAG-FATAL",
+      "reply": {"errorMessage": "Target OS is incompatible.", "error": 2}
+    },
+    "hook": "MTLCompiler+0x7985c, prologue d503237f... -> 58000050..., changed=1",
+    "acceptance": "real compiler reply with downstream Target OS error; ID71 gone; full specialized function not produced; disappearance of 71 alone not treated as success"
+  },
+  "next_artifact": "a real bitstream re-encoder (or supported writer) changing the original record triple to the 28-byte air64-apple-ios19.0.0-macabi while preserving all other records, then the same direct A/B; no byte patch of variable-length records",
+  "cleanup": {
+    "device_evidence": "/var/mobile/macws_r028_evidence_20261018/ (owned/r014, owned/r028/candidate, logs/diag-raw.log, crashes)",
+    "production_paths_absent": true,
+    "owned_processes_remaining": 0,
+    "production_compiler_count": 14,
+    "native": {"SpringBoard": 872, "tccd": 883, "backboardd": 905},
+    "package": "0.3.4 install ok installed",
+    "provider_sha256": "b2ae21da42704b1d584f2b655e837f7db62a10f2a035b3f741adc819ce1423e7",
+    "libmachook_arm64e_sha256": "47f78880f6de1fadc9faabbf79d16ccc56cfba2feb5a45e2155e09c22c2d9432",
+    "libmachook_arm64_sha256": "6de9b6880495c3e0f431c2fc0e328b4420aecac178391d466fa71b141efcbd18",
+    "markers_absent": true,
+    "r024_reused_trustcache": ["b3e29eef5732b354712a1e1fc1ec28b99fa55e31", "d0b584a81182108449251b878ff940efd5243516", "44767b6abe8e0f91c5f5c242dad18656e8f42039"],
+    "r028_trustcache": ["dd8a01ce20096897ce585af4a2aedc9fc7fe785d", "2f0d5143bd063b79659b2aceee8b73bd7f39d724"]
+  },
+  "corrections": {
+    "slice_definitions": "R026/R027: 6,924/454ad619 is payload+8 zero padding; 6,916/ce018722 is the wrapper-declared payload; one original record",
+    "text_equality": "R027 textual equality is the LLVM16 intrinsic auto-upgrade, not wire preservation",
+    "wire_attribution": "R026 ZeroExt remains withdrawn; wire ID71=nocallback"
+  },
+  "host_evidence": "analysis/r028-f11h/ {provenance.json, candidate-summary.json, build_candidate.py, modules, control/candidate data, direct replay logs, device-evidence}",
+  "device_evidence": "/var/mobile/macws_r028_evidence_20261018/"
+}
